@@ -14,50 +14,99 @@ write_catalog <- function(x, name) {
 }
 
 markers <- data.frame(
-  marker_id = c("COI", "ITS_FUNGAL", "18S", "16S_PROK", "16S_MT", "28S"),
+  marker_id = c("COI", "12S_MT", "ITS_FUNGAL", "18S", "16S_PROK", "16S_MT", "28S"),
   display_name = c(
-    "Animal COI", "Fungal ITS", "Eukaryotic 18S",
+    "Animal COI", "Vertebrate mitochondrial 12S", "Fungal ITS", "Eukaryotic 18S",
     "Bacterial / archaeal 16S", "Animal mitochondrial 16S", "Eukaryotic 28S"
   ),
   molecule_context = c(
-    "mitochondrial", "nuclear rDNA", "nuclear rDNA",
+    "mitochondrial", "mitochondrial", "nuclear rDNA", "nuclear rDNA",
     "prokaryotic rDNA", "mitochondrial", "nuclear rDNA"
   ),
   coordinate_reference = c(
-    "NC_001322.1", "FN812768.2", "PR2/SILVA release-specific",
+    "NC_001322.1", "NCBI vertebrate panel release-specific", "FN812768.2", "PR2/SILVA release-specific",
     "SILVA release-specific", "NCBI taxon-panel release-specific",
     "SILVA LSU release-specific"
   ),
   reference_version = c(
-    "NC_001322.1", "FN812768.2", "planned", "planned", "planned", "planned"
+    "NC_001322.1", "planned", "FN812768.2", "planned", "planned", "planned", "planned"
   ),
-  reference_length = c(1536L, 739L, NA, NA, NA, NA),
+  reference_length = c(1536L, NA, 739L, NA, NA, NA, NA),
   coordinate_model = c(
-    "sequence", "sequence_with_landmarks", "landmark_alignment",
+    "sequence", "sequence_alignment", "sequence_with_landmarks", "landmark_alignment",
     "landmark_alignment", "sequence_alignment", "landmark_alignment"
   ),
-  status = c("active", "pilot", "planned", "planned", "planned", "planned"),
+  status = c("active", "planned", "pilot", "planned", "planned", "planned", "planned"),
   screening_artifact_id = c(
-    "coi_order_alignments", "its_fn812768_screen", "", "", "", ""
+    "coi_order_alignments", "", "its_fn812768_screen", "", "", "", ""
   ),
   expanded_artifact_id = c(
-    "coi_gurten2026", "its_unite_future", "", "", "", ""
+    "coi_gurten2026", "", "its_unite_future", "", "", "", ""
   ),
-  source_name = c("NCBI / PrimerMiner", "UNITE / NCBI", "PR2 / SILVA", "SILVA", "NCBI", "SILVA"),
+  source_name = c("NCBI / PrimerMiner", "NCBI", "UNITE / NCBI", "PR2 / SILVA", "SILVA", "NCBI", "SILVA"),
   source_url = c(
     "https://www.ncbi.nlm.nih.gov/nuccore/NC_001322.1",
+    "https://www.ncbi.nlm.nih.gov/",
     "https://unite.ut.ee/primers.php",
     "https://pr2-database.org/", "https://www.arb-silva.de/",
     "https://www.ncbi.nlm.nih.gov/", "https://www.arb-silva.de/"
   ),
   available_lineage_ranks = c(
-    "order|family|subfamily|genus|sequence", "primer_catalog", "planned",
+    "order|family|subfamily|genus|sequence", "planned", "primer_catalog", "planned",
     "planned", "planned", "planned"
   ),
-  geographic_fields = c("country|locality|lat_lon", "planned", "planned", "planned", "planned", "planned"),
+  geographic_fields = c("country|locality|lat_lon", "planned", "planned", "planned", "planned", "planned", "planned"),
   stringsAsFactors = FALSE
 )
 write_catalog(markers, "markers.csv")
+
+organism_groups <- data.frame(
+  group_id = c(
+    "METAZOA", "ARTHROPODS", "FISH", "BIRDS", "ZOOPLANKTON",
+    "FUNGI", "BACTERIA", "ARCHAEA", "PROTISTS", "PHYTOPLANKTON",
+    "PLANT_MICROBIOME"
+  ),
+  label = c(
+    "Animals", "Arthropods", "Fish", "Birds", "Zooplankton",
+    "Fungi", "Bacteria", "Archaea", "Protists", "Phytoplankton",
+    "Plant microbiomes"
+  ),
+  icon = c("🐾", "🕷️", "🐟", "🐦", "🦐", "🍄", "🦠", "◉", "🧫", "🌊", "🌿"),
+  description = c(
+    "Broad metazoan diversity", "Insects, arachnids and other arthropods",
+    "Marine and freshwater fishes", "Avian environmental DNA",
+    "Metazoan plankton communities", "Fungal communities and phylogenetic profiling",
+    "Environmental and host-associated bacteria", "Archaeal community profiling",
+    "Microbial eukaryotes and protists", "Algal and protist plankton",
+    "Bacteria associated with roots, leaves and rhizospheres"
+  ),
+  sort_order = seq_len(11),
+  stringsAsFactors = FALSE
+)
+write_catalog(organism_groups, "organism_groups.csv")
+
+marker_group_rows <- list(
+  COI = c(METAZOA = "primary", ARTHROPODS = "primary", FISH = "secondary", ZOOPLANKTON = "secondary"),
+  `12S_MT` = c(METAZOA = "primary", FISH = "primary", BIRDS = "primary"),
+  ITS_FUNGAL = c(FUNGI = "primary"),
+  `18S` = c(METAZOA = "secondary", FUNGI = "secondary", PROTISTS = "primary", PHYTOPLANKTON = "primary", ZOOPLANKTON = "primary"),
+  `16S_PROK` = c(BACTERIA = "primary", ARCHAEA = "primary", PLANT_MICROBIOME = "primary"),
+  `16S_MT` = c(METAZOA = "primary", ARTHROPODS = "primary", FISH = "primary", ZOOPLANKTON = "secondary"),
+  `28S` = c(FUNGI = "primary", PROTISTS = "primary", PHYTOPLANKTON = "primary", METAZOA = "secondary")
+)
+marker_organism_groups <- do.call(rbind, lapply(names(marker_group_rows), function(marker_id) {
+  relationships <- marker_group_rows[[marker_id]]
+  data.frame(
+    marker_id = marker_id,
+    group_id = names(relationships),
+    relationship = unname(relationships),
+    evidence_note = "Established or complementary use documented in the 2016–2026 primer compendium; marker membership does not imply uniform primer coverage.",
+    source_url = "https://github.com/sven9r/primer-atlas/blob/main/docs/marker-targets.md",
+    stringsAsFactors = FALSE
+  )
+}))
+rownames(marker_organism_groups) <- NULL
+write_catalog(marker_organism_groups, "marker_organism_groups.csv")
 
 landmarks <- data.frame(
   marker_id = c(

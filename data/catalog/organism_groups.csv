@@ -1,0 +1,12 @@
+"group_id","label","icon","description","sort_order"
+"METAZOA","Animals","🐾","Broad metazoan diversity",1
+"ARTHROPODS","Arthropods","🕷️","Insects, arachnids and other arthropods",2
+"FISH","Fish","🐟","Marine and freshwater fishes",3
+"BIRDS","Birds","🐦","Avian environmental DNA",4
+"ZOOPLANKTON","Zooplankton","🦐","Metazoan plankton communities",5
+"FUNGI","Fungi","🍄","Fungal communities and phylogenetic profiling",6
+"BACTERIA","Bacteria","🦠","Environmental and host-associated bacteria",7
+"ARCHAEA","Archaea","◉","Archaeal community profiling",8
+"PROTISTS","Protists","🧫","Microbial eukaryotes and protists",9
+"PHYTOPLANKTON","Phytoplankton","🌊","Algal and protist plankton",10
+"PLANT_MICROBIOME","Plant microbiomes","🌿","Bacteria associated with roots, leaves and rhizospheres",11

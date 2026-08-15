@@ -16,6 +16,55 @@ iupac_match_matrix <- outer(
 )
 dimnames(iupac_match_matrix) <- list(iupac_codes, iupac_codes)
 
+reference_binding_profile <- function(
+  rows, country, direction, primer_sequence,
+  country_column = "country_or_territory"
+) {
+  binding_column <- paste0(direction, "_binding_sequence_primer_oriented")
+  required <- c(country_column, binding_column)
+  if (!all(required %in% names(rows))) {
+    stop("Reference binding profile is missing: ", paste(setdiff(required, names(rows)), collapse = ", "))
+  }
+  primer_sequence <- clean_sequence(primer_sequence)
+  values <- as.character(rows[[binding_column]][rows[[country_column]] == country])
+  values <- values[!is.na(values)]
+  empty <- data.frame(
+    direction = character(), primer_position_5_to_3 = integer(),
+    primer_base = character(), n_total = integer(), n_available = integer(),
+    consensus = character(), consensus_support = numeric(),
+    incompatible_fraction = numeric(), stringsAsFactors = FALSE
+  )
+  if (!length(values) || !nchar(primer_sequence)) return(empty)
+  do.call(rbind, lapply(seq_len(nchar(primer_sequence)), function(position) {
+    bases <- toupper(substring(values, position, position))
+    available <- bases %in% setdiff(iupac_codes, "-")
+    observed <- bases[available]
+    primer_base <- substring(primer_sequence, position, position)
+    counts <- sort(table(observed), decreasing = TRUE)
+    consensus <- if (length(counts)) names(counts)[1] else NA_character_
+    compatible <- if (length(observed)) {
+      vapply(
+        observed,
+        function(base) isTRUE(iupac_match_matrix[primer_base, base]),
+        logical(1)
+      )
+    } else {
+      logical()
+    }
+    data.frame(
+      direction = direction,
+      primer_position_5_to_3 = position,
+      primer_base = primer_base,
+      n_total = length(values),
+      n_available = sum(available),
+      consensus = consensus,
+      consensus_support = if (length(counts)) unname(counts[1]) / sum(counts) else NA_real_,
+      incompatible_fraction = if (length(compatible)) mean(!compatible) else NA_real_,
+      stringsAsFactors = FALSE
+    )
+  }))
+}
+
 mismatch_multiplier_matrix <- outer(
   iupac_codes,
   iupac_codes,

@@ -7,9 +7,10 @@ pairs <- read.csv("data/catalog/primer_pairs.csv", stringsAsFactors = FALSE)
 facets <- read.csv("data/catalog/primer_pair_facets.csv", stringsAsFactors = FALSE)
 unite <- read.csv("data/catalog/unite_primers.csv", stringsAsFactors = FALSE)
 geometry <- read.csv("data/derived/marker_pair_geometry.csv", stringsAsFactors = FALSE)
+marker_groups <- read.csv("data/catalog/marker_organism_groups.csv", stringsAsFactors = FALSE)
 
 stopifnot(
-  setequal(markers$marker_id, c("COI", "ITS_FUNGAL", "18S", "16S_PROK", "16S_MT", "28S")),
+  setequal(markers$marker_id, c("COI", "12S_MT", "ITS_FUNGAL", "18S", "16S_PROK", "16S_MT", "28S")),
   sum(pairs$marker_id == "COI") == 25L,
   sum(pairs$marker_id == "ITS_FUNGAL") >= 8L,
   all(c("application", "target_taxon", "environment", "design_intent") %in% facets$facet_type),
@@ -19,7 +20,9 @@ stopifnot(
   ),
   nrow(unite) >= 100L,
   all(grepl("^[ACGTRYSWKMBDHVNI]+$", unite$sequence)),
-  all(c("COI", "ITS_FUNGAL") %in% geometry$marker_id)
+  all(c("COI", "ITS_FUNGAL") %in% geometry$marker_id),
+  all(c("12S_MT", "COI", "16S_MT") %in% marker_groups$marker_id[marker_groups$group_id == "FISH"]),
+  all(c("FUNGI", "PROTISTS", "PHYTOPLANKTON") %in% marker_groups$group_id[marker_groups$marker_id == "28S"])
 )
 
 geo <- normalize_geo_loc_name(c("USA:Hawaii", "Morocco: Atlas Mountains", NA))

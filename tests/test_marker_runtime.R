@@ -4,6 +4,7 @@ source("R/functions.R")
 pairs <- read.csv("data/catalog/primer_pairs.csv", stringsAsFactors = FALSE)
 facets <- read.csv("data/catalog/primer_pair_facets.csv", stringsAsFactors = FALSE)
 landmarks <- read.csv("data/catalog/marker_landmarks.csv", stringsAsFactors = FALSE)
+marker_groups <- read.csv("data/catalog/marker_organism_groups.csv", stringsAsFactors = FALSE)
 
 or_result <- filter_pair_facets(
   pairs$pair_id, facets,
@@ -33,5 +34,14 @@ cross_marker <- tryCatch({
   FALSE
 }, error = function(e) TRUE)
 stopifnot(cross_marker)
+
+app_source <- paste(readLines("app.R", warn = FALSE), collapse = "\n")
+stopifnot(
+  all(c("FISH", "BIRDS") %in% marker_groups$group_id[marker_groups$marker_id == "12S_MT"]),
+  grepl('"Region comparison"', app_source, fixed = TRUE),
+  grepl('"region_position_differences"', app_source, fixed = TRUE),
+  grepl('"region_sequences"', app_source, fixed = TRUE),
+  grepl('"map_organism"', app_source, fixed = TRUE)
+)
 
 message("Marker switching, landmark, facet, and cross-marker rejection checks passed.")

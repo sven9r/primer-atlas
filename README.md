@@ -3,8 +3,8 @@
 An open-source Shiny atlas for exploring where metabarcoding primers bind and
 why particular lineage–primer combinations may be vulnerable to mismatch or
 missing-reference bias. Animal COI is active; fungal ITS is the first pilot.
-Eukaryotic 18S, bacterial/archaeal 16S, animal mitochondrial 16S, and 28S have
-stable registry entries for later releases.
+Vertebrate mitochondrial 12S, eukaryotic 18S, bacterial/archaeal 16S, animal
+mitochondrial 16S, and 28S have stable registry entries for later releases.
 
 The public architecture separates four layers:
 
@@ -19,7 +19,12 @@ See [DEPLOYMENT.md](DEPLOYMENT.md) for the remaining account configuration.
 
 ## Marker-aware behavior
 
-Primer pairs belong to one marker. Applications are normalized to `barcoding`,
+Markers and biological targets are separate many-to-many dimensions: fish can
+route to 12S, mitochondrial 16S, COI, or complementary 18S evidence, while 28S
+can route independently to fungi, phytoplankton, protists, or other eukaryotes.
+The interface therefore starts with an icon-assisted organism-group choice and
+then shows primary, complementary, active, pilot, or planned loci. Primer pairs
+still belong to one marker. Applications are normalized to `barcoding`,
 `bulk_community`, `edna`, and `diet`; environments, target taxa, and design
 intent are separate many-to-many facets. Filters use OR within a facet and AND
 between facets. Original use-case labels and claim wording remain preserved in
@@ -30,6 +35,11 @@ The fungal ITS pilot imports an attributed snapshot of the
 the 18S–ITS1–5.8S–ITS2–28S landmark architecture on FN812768.2. It does not
 scrape UNITE during user sessions, and its current single-reference placements
 are explicitly distinguished from expanded fungal lineage evidence.
+
+The Region Comparison tab joins exact primer-binding sequences to accession-level
+reference geography. It compares two countries or territories at each primer
+position, retains exact sequences, and reports within-order summaries so a
+taxonomic sampling difference is not mislabelled a regional PCR effect.
 
 ## Releases
 

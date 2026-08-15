@@ -26,12 +26,68 @@ release_table <- function(name, fallback, col_types = NULL) {
 primers <- read_csv("data/primers.csv", show_col_types = FALSE)
 citations <- read_csv("data/citations.csv", show_col_types = FALSE)
 marker_registry <- read_csv("data/catalog/markers.csv", show_col_types = FALSE)
+organism_groups <- read_csv("data/catalog/organism_groups.csv", show_col_types = FALSE)
+marker_organism_groups <- read_csv("data/catalog/marker_organism_groups.csv", show_col_types = FALSE)
 marker_landmarks <- read_csv("data/catalog/marker_landmarks.csv", show_col_types = FALSE)
 catalog_pairs <- read_csv("data/catalog/primer_pairs.csv", show_col_types = FALSE)
 catalog_oligos <- read_csv("data/catalog/oligos.csv", show_col_types = FALSE)
 catalog_links <- read_csv("data/catalog/pair_oligos.csv", show_col_types = FALSE)
 primer_facets <- read_csv("data/catalog/primer_pair_facets.csv", show_col_types = FALSE)
 catalog_claims <- read_csv("data/catalog/claims.csv", show_col_types = FALSE)
+
+organism_group_choices <- c(
+  "All organism groups" = "ALL",
+  setNames(
+    organism_groups$group_id,
+    paste(organism_groups$icon, organism_groups$label)
+  )
+)
+released_marker_rows <- marker_registry |>
+  filter(status %in% c("active", "pilot"))
+marker_rows_for_organism <- function(group_id, released_only = FALSE) {
+  rows <- marker_registry
+  if (!is.null(group_id) && length(group_id) && group_id != "ALL") {
+    ids <- marker_organism_groups$marker_id[
+      marker_organism_groups$group_id == group_id
+    ]
+    rows <- rows |> filter(marker_id %in% ids)
+  }
+  if (released_only) rows <- rows |> filter(status %in% c("active", "pilot"))
+  rows
+}
+marker_guidance_ui <- function(group_id) {
+  if (is.null(group_id) || !length(group_id) || group_id == "ALL") {
+    return(div(
+      class = "marker-guidance",
+      strong("Marker and target are separate choices. "),
+      "Choose an organism group to see primary and complementary loci."
+    ))
+  }
+  group <- organism_groups |> filter(group_id == !!group_id) |> slice(1)
+  links <- marker_organism_groups |>
+    filter(group_id == !!group_id) |>
+    left_join(marker_registry, by = "marker_id") |>
+    arrange(factor(relationship, levels = c("primary", "secondary")), display_name)
+  if (!nrow(links)) return(NULL)
+  div(
+    class = "marker-guidance",
+    strong(paste(group$icon, group$label)),
+    div(class = "tiny mb-1", group$description),
+    lapply(seq_len(nrow(links)), function(i) {
+      div(
+        class = "marker-guidance-row",
+        span(
+          links$display_name[i],
+          if (links$relationship[i] == "secondary") " · complementary" else ""
+        ),
+        span(
+          class = paste("status-chip", links$status[i]),
+          links$status[i]
+        )
+      )
+    })
+  )
+}
 its_primer_rows <- catalog_links |>
   inner_join(catalog_oligos, by = "oligo_id") |>
   inner_join(catalog_pairs |> select(pair_id, pair_label, reported_amplicon_bp,
@@ -479,6 +535,22 @@ body.detail-switching .deep-detail-card {
 .custom-panel summary { cursor:pointer; color:var(--green); font-weight:800; margin-bottom:8px; }
 .custom-panel textarea { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:.78rem; }
 .tiny { font-size:.75rem; color:#65716a; }
+.organism-picker .shiny-options-group { display:flex; flex-wrap:wrap; gap:7px; }
+.organism-picker .radio-inline { margin:0!important; padding:7px 10px 7px 30px;
+  border:1px solid var(--line); border-radius:999px; background:#fffdf8;
+  font-size:.75rem; font-weight:750; }
+.organism-picker .radio-inline:has(input:checked) { border-color:var(--green);
+  background:var(--mint); color:var(--green); box-shadow:inset 0 0 0 1px var(--green); }
+.marker-guidance { margin:8px 0 12px; padding:10px 12px; border-radius:12px;
+  background:#fffdf8; border:1px solid var(--line); font-size:.75rem; }
+.marker-guidance-row { display:flex; justify-content:space-between; gap:8px;
+  padding:4px 0; border-top:1px solid #ebe8df; }
+.marker-guidance-row:first-child { border-top:0; }
+.status-chip { border-radius:999px; padding:2px 7px; font-size:.64rem;
+  font-weight:800; white-space:nowrap; background:#e7e5de; color:#58635c; }
+.status-chip.active { background:#dcebe3; color:#16664b; }
+.status-chip.pilot { background:#fbefd0; color:#8a5a00; }
+.region-position-diff { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; }
 @media(max-width:900px){
   .institution-banner { align-items:flex-start; padding:8px 14px; gap:10px; }
   .banner-support { gap:8px; flex-wrap:wrap; }
@@ -815,6 +887,15 @@ ui <- page_navbar(
         sidebar = sidebar(
           width = 340,
           h4("Build the view"),
+          div(
+            class = "organism-picker",
+            radioButtons(
+              "map_organism", "What are you looking for?",
+              choices = organism_group_choices,
+              selected = "ALL", inline = TRUE
+            )
+          ),
+          uiOutput("map_marker_guidance"),
           selectInput(
             "map_marker", "Marker",
             choices = setNames(
@@ -1304,6 +1385,15 @@ ui <- page_navbar(
         sidebar = sidebar(
           width = 330,
           h4("Persistent evidence scope"),
+          div(
+            class = "organism-picker",
+            radioButtons(
+              "lineage_organism", "Organism group",
+              choices = organism_group_choices,
+              selected = "ALL", inline = TRUE
+            )
+          ),
+          uiOutput("lineage_marker_guidance"),
           selectInput(
             "lineage_marker", "Marker",
             choices = setNames(
@@ -1330,6 +1420,77 @@ ui <- page_navbar(
           nav_panel("Genera", uiOutput("lineage_genera_ui")),
           nav_panel("Sequences", uiOutput("lineage_sequence_note"), DTOutput("lineage_sequences")),
           nav_panel("Sources and downloads", uiOutput("lineage_sources"))
+        )
+      )
+    )
+  ),
+  nav_panel(
+    "Region comparison",
+    div(
+      class = "container-fluid",
+      hero,
+      div(
+        class = "callout",
+        strong("Compare reference sequences—not regional amplification probability. "),
+        "This view tests whether primer-binding sequences represented in two reference-geography subsets differ. Geography can proxy taxonomy, collection effort, and database bias, so the order-stratified table and located/all denominators remain visible."
+      ),
+      br(),
+      layout_sidebar(
+        sidebar = sidebar(
+          width = 340,
+          h4("Choose two reference subsets"),
+          selectInput(
+            "region_marker", "Marker",
+            choices = c("Animal COI · active" = "COI"), selected = "COI"
+          ),
+          selectizeInput(
+            "region_pair", "Primer pair",
+            choices = setNames(
+              pair_meta$pair_id[pair_meta$marker_id == "COI"],
+              pair_meta$pair_label[pair_meta$marker_id == "COI"]
+            ), selected = "MCO"
+          ),
+          selectizeInput("region_a", "Reference region A", choices = NULL),
+          selectizeInput("region_b", "Reference region B", choices = NULL),
+          selectizeInput("region_order", "Taxonomic stratum", choices = "All", selected = "All"),
+          uiOutput("region_denominator_note"),
+          div(
+            class = "tiny",
+            "Only accessions with reported source geography enter this comparison. Locality-level comparisons will follow as geographic coverage grows."
+          )
+        ),
+        navset_card_tab(
+          id = "region_tabs",
+          nav_panel(
+            "Overview",
+            uiOutput("region_metrics"),
+            uiOutput("region_interpretation"),
+            DTOutput("region_order_comparison")
+          ),
+          nav_panel(
+            "Binding-site differences",
+            div(class = "tiny mb-2", "One row per primer position. Consensus bases, support, and incompatible-template fractions are reported separately for each reference subset."),
+            DTOutput("region_position_differences")
+          ),
+          nav_panel(
+            "Sequences",
+            div(class = "tiny mb-2", "Filter exact accessions, organisms, taxonomy, locations, penalties, and primer-oriented binding sequences."),
+            DTOutput("region_sequences")
+          ),
+          nav_panel(
+            "Method & limits",
+            h4("What is compared"),
+            p("The atlas joins accession-level source geography to the selected primer pair’s exact reference scores. It compares binding-site availability, PrimerMiner penalty summaries, and base composition at every primer position."),
+            h4("What is not inferred"),
+            p("A geographic difference is not an environmental effect or an amplification probability. Taxonomic composition, database availability, sequence quality, and sampling effort can all generate the pattern."),
+            h4("Recommended reading order"),
+            tags$ol(
+              tags$li("Check located/all denominators and sample sizes."),
+              tags$li("Check the within-order comparison for taxonomic confounding."),
+              tags$li("Inspect positions with different consensus or mismatch fractions."),
+              tags$li("Open exact sequences before drawing a biological conclusion.")
+            )
+          )
         )
       )
     )
@@ -1402,11 +1563,48 @@ ui <- page_navbar(
 )
 
 server <- function(input, output, session) {
+  marker_choice_labels <- function(rows) {
+    setNames(
+      rows$marker_id,
+      paste0(
+        rows$display_name,
+        ifelse(rows$status == "pilot", " · pilot", "")
+      )
+    )
+  }
   output$data_status <- renderUI({
     if (!is.null(coi_release_state) && isTRUE(coi_release_state$stale)) {
       div(class = "callout tiny m-2", strong("Stale-data notice: "), "R2 was unavailable, so the repository-pinned successful release is active.")
     }
   })
+  output$map_marker_guidance <- renderUI(marker_guidance_ui(input$map_organism))
+  output$lineage_marker_guidance <- renderUI(marker_guidance_ui(input$lineage_organism))
+  observeEvent(input$map_organism, {
+    rows <- marker_rows_for_organism(input$map_organism, released_only = TRUE)
+    if (!nrow(rows)) rows <- released_marker_rows
+    selected <- if (!is.null(input$map_marker) && input$map_marker %in% rows$marker_id) {
+      input$map_marker
+    } else {
+      rows$marker_id[1]
+    }
+    updateSelectInput(
+      session, "map_marker",
+      choices = marker_choice_labels(rows), selected = selected
+    )
+  }, ignoreInit = FALSE)
+  observeEvent(input$lineage_organism, {
+    rows <- marker_rows_for_organism(input$lineage_organism, released_only = TRUE)
+    if (!nrow(rows)) rows <- released_marker_rows
+    selected <- if (!is.null(input$lineage_marker) && input$lineage_marker %in% rows$marker_id) {
+      input$lineage_marker
+    } else {
+      rows$marker_id[1]
+    }
+    updateSelectInput(
+      session, "lineage_marker",
+      choices = marker_choice_labels(rows), selected = selected
+    )
+  }, ignoreInit = FALSE)
   observeEvent(input$select_all, {
     updateCheckboxGroupInput(
       session, "pair_select",
@@ -4562,6 +4760,215 @@ server <- function(input, output, session) {
       div(class = "callout tiny", "Original third-party licensing and attribution apply. Annual software and redistributable-data snapshots are prepared for Zenodo DOI deposition.")
     )
   })
+
+  region_geography <- reactive({
+    release_table("geography", "data/derived/reference_geography.csv") |>
+      mutate(
+        accession = as.character(accession),
+        country_or_territory = na_if(country_or_territory, ""),
+        locality = na_if(locality, "")
+      )
+  }) |> bindCache(input$region_marker)
+
+  observe({
+    geo <- region_geography() |>
+      filter(!is.na(country_or_territory)) |>
+      count(country_or_territory, sort = TRUE)
+    countries <- geo$country_or_territory
+    if (!length(countries)) return()
+    region_a <- if ("USA" %in% countries) "USA" else countries[1]
+    alternatives <- setdiff(countries, region_a)
+    region_b <- if ("Canada" %in% alternatives) "Canada" else alternatives[1]
+    updateSelectizeInput(
+      session, "region_a", choices = countries, selected = region_a,
+      server = TRUE
+    )
+    updateSelectizeInput(
+      session, "region_b", choices = countries,
+      selected = if (length(region_b)) region_b else region_a,
+      server = TRUE
+    )
+  })
+
+  region_pair_scores <- reactive({
+    req(input$region_pair)
+    path <- file.path(
+      "data", "derived",
+      paste0("claimed_", tolower(input$region_pair), "_centroid_scores.csv.gz")
+    )
+    if (file.exists(path)) return(read_csv(path, show_col_types = FALSE))
+    artifact_name <- paste0("exact_", tolower(input$region_pair))
+    artifact <- if (!is.null(coi_release_state)) {
+      coi_release_state$manifest$artifacts[[artifact_name]]
+    } else {
+      NULL
+    }
+    if (is.null(artifact)) return(tibble())
+    tryCatch(as_tibble(atlas_read_artifact(artifact)), error = function(e) tibble())
+  }) |> bindCache(input$region_pair)
+
+  observe({
+    scores <- region_pair_scores()
+    orders <- if (nrow(scores) && "order" %in% names(scores)) {
+      sort(unique(na.omit(scores$order[nzchar(scores$order)])))
+    } else {
+      character()
+    }
+    current <- if (!is.null(input$region_order) && input$region_order %in% c("All", orders)) {
+      input$region_order
+    } else {
+      "All"
+    }
+    updateSelectizeInput(
+      session, "region_order", choices = c("All", orders),
+      selected = current, server = TRUE
+    )
+  })
+
+  region_joined <- reactive({
+    req(input$region_a, input$region_b)
+    scores <- region_pair_scores()
+    if (!nrow(scores)) return(tibble())
+    geo <- region_geography() |>
+      select(
+        accession, country_or_territory, locality, normalized_location,
+        geographic_resolution, latitude, longitude
+      )
+    x <- scores |>
+      mutate(accession = as.character(accession)) |>
+      left_join(geo, by = "accession") |>
+      filter(country_or_territory %in% c(input$region_a, input$region_b))
+    if (!is.null(input$region_order) && input$region_order != "All") {
+      x <- x |> filter(order == input$region_order)
+    }
+    x
+  })
+
+  output$region_denominator_note <- renderUI({
+    req(input$region_a, input$region_b)
+    geo <- region_geography()
+    located <- sum(!is.na(geo$country_or_territory))
+    count_a <- sum(geo$country_or_territory == input$region_a, na.rm = TRUE)
+    count_b <- sum(geo$country_or_territory == input$region_b, na.rm = TRUE)
+    div(
+      class = "callout tiny",
+      strong(format(located, big.mark = ","), " / ", format(nrow(geo), big.mark = ","), " eligible references are located."),
+      br(), input$region_a, ": ", format(count_a, big.mark = ","),
+      " · ", input$region_b, ": ", format(count_b, big.mark = ","),
+      " · missing: ", format(nrow(geo) - located, big.mark = ",")
+    )
+  })
+
+  output$region_metrics <- renderUI({
+    x <- region_joined()
+    n_a <- sum(x$country_or_territory == input$region_a, na.rm = TRUE)
+    n_b <- sum(x$country_or_territory == input$region_b, na.rm = TRUE)
+    scorable <- if (nrow(x)) mean(x$pair_scorable %in% TRUE) else NA_real_
+    div(
+      class = "metric-row",
+      div(class = "metric", tags$b(format(n_a, big.mark = ",")), span(paste(input$region_a, "references"))),
+      div(class = "metric", tags$b(format(n_b, big.mark = ",")), span(paste(input$region_b, "references"))),
+      div(class = "metric", tags$b(ifelse(is.na(scorable), "—", paste0(round(100 * scorable, 1), "%"))), span("Both sites scorable")),
+      div(class = "metric", tags$b(ifelse(is.null(input$region_order), "All", input$region_order)), span("Taxonomic stratum"))
+    )
+  })
+
+  summarize_region_orders <- function(rows, country, prefix) {
+    rows |>
+      filter(country_or_territory == country, !is.na(order), nzchar(order)) |>
+      group_by(order) |>
+      summarise(
+        n_centroids = n(),
+        source_records = sum(cluster_size, na.rm = TRUE),
+        pair_scorable_fraction = mean(pair_scorable %in% TRUE),
+        pair_median_penalty = if (any(pair_scorable %in% TRUE)) {
+          median(pair_penalty[pair_scorable %in% TRUE], na.rm = TRUE)
+        } else {
+          NA_real_
+        },
+        .groups = "drop"
+      ) |>
+      rename_with(~paste0(prefix, .x), -order)
+  }
+
+  region_order_table <- reactive({
+    x <- region_joined()
+    if (!nrow(x) || identical(input$region_a, input$region_b)) return(tibble())
+    a <- summarize_region_orders(x, input$region_a, "a_")
+    b <- summarize_region_orders(x, input$region_b, "b_")
+    full_join(a, b, by = "order") |>
+      mutate(
+        median_penalty_difference_b_minus_a = b_pair_median_penalty - a_pair_median_penalty,
+        scorable_fraction_difference_b_minus_a = b_pair_scorable_fraction - a_pair_scorable_fraction
+      ) |>
+      arrange(desc(pmax(coalesce(a_n_centroids, 0L), coalesce(b_n_centroids, 0L))))
+  })
+
+  output$region_interpretation <- renderUI({
+    if (identical(input$region_a, input$region_b)) {
+      return(div(class = "callout taxon-alert", strong("Choose two different reference regions.")))
+    }
+    comparison <- region_order_table()
+    if (!nrow(comparison)) {
+      return(div(class = "callout", strong("No comparable located sequences are available for this scope.")))
+    }
+    shared <- sum(!is.na(comparison$a_n_centroids) & !is.na(comparison$b_n_centroids))
+    div(
+      class = "callout taxon-info",
+      strong(shared, " orders occur in both selected reference subsets. "),
+      "Interpret the unstratified totals only after checking this table: unequal order composition can create an apparent geographic primer difference."
+    )
+  })
+
+  output$region_order_comparison <- renderDT({
+    datatable(
+      region_order_table(), filter = "top", rownames = FALSE,
+      options = list(pageLength = 15, scrollX = TRUE)
+    )
+  }, server = TRUE)
+
+  region_position_table <- reactive({
+    x <- region_joined()
+    if (!nrow(x) || identical(input$region_a, input$region_b)) return(tibble())
+    pair_primers <- primers |> filter(pair_id == input$region_pair)
+    profiles <- lapply(c("forward", "reverse"), function(direction) {
+      primer_sequence <- pair_primers$sequence[pair_primers$direction == direction][1]
+      if (is.na(primer_sequence) || !nzchar(primer_sequence)) return(tibble())
+      a <- reference_binding_profile(x, input$region_a, direction, primer_sequence) |>
+        rename_with(~paste0("a_", .x), -c(direction, primer_position_5_to_3, primer_base))
+      b <- reference_binding_profile(x, input$region_b, direction, primer_sequence) |>
+        rename_with(~paste0("b_", .x), -c(direction, primer_position_5_to_3, primer_base))
+      full_join(a, b, by = c("direction", "primer_position_5_to_3", "primer_base")) |>
+        mutate(
+          consensus_differs = a_consensus != b_consensus,
+          incompatible_fraction_difference_b_minus_a = b_incompatible_fraction - a_incompatible_fraction
+        )
+    })
+    bind_rows(profiles) |> arrange(direction, primer_position_5_to_3)
+  })
+
+  output$region_position_differences <- renderDT({
+    datatable(
+      region_position_table(), filter = "top", rownames = FALSE,
+      class = "compact stripe region-position-diff",
+      options = list(pageLength = 25, scrollX = TRUE)
+    )
+  }, server = TRUE)
+
+  output$region_sequences <- renderDT({
+    x <- region_joined()
+    keep <- intersect(c(
+      "accession", "organism_label", "scientific_name_ncbi", "order",
+      "family", "subfamily", "genus", "cluster_size", "country_or_territory",
+      "locality", "pair_scorable", "pair_penalty",
+      "forward_binding_sequence_primer_oriented",
+      "reverse_binding_sequence_primer_oriented"
+    ), names(x))
+    datatable(
+      x[, keep, drop = FALSE], filter = "top", rownames = FALSE,
+      options = list(pageLength = 20, scrollX = TRUE)
+    )
+  }, server = TRUE)
 
   thermal <- reactive({
     pair_thermal_summary(primers, input$sodium, input$ta_offset)

@@ -2743,7 +2743,7 @@
   },
   "files": {
     "app.R": {
-      "checksum": "f00f7225b54aa36c88c22e60f00bcd32"
+      "checksum": "6ad814bc68be7035a8cb5ae9190d2d4d"
     },
     "data/catalog/claims.csv": {
       "checksum": "a3b2633e368e87aa5d8dec680d04f1e6"
@@ -2751,11 +2751,17 @@
     "data/catalog/marker_landmarks.csv": {
       "checksum": "9e40e8406910f76a63515abed46dd6c9"
     },
+    "data/catalog/marker_organism_groups.csv": {
+      "checksum": "f66a41cea7dac33452ca60210dc8a71a"
+    },
     "data/catalog/markers.csv": {
-      "checksum": "0bdb751b14a40ed2667cd2bfd0bee92a"
+      "checksum": "b36d64417ffa49ee39f19fdfc1df560b"
     },
     "data/catalog/oligos.csv": {
       "checksum": "84b0de16db5b88e1251f6d72165d212b"
+    },
+    "data/catalog/organism_groups.csv": {
+      "checksum": "e07c371e14f2f10b95d472f91eb5aa19"
     },
     "data/catalog/pair_oligos.csv": {
       "checksum": "a6fd947d8ec3f648eeab0113b4dea20a"
@@ -2765,6 +2771,9 @@
     },
     "data/catalog/primer_pairs.csv": {
       "checksum": "8b105c8bcee9d2fa989c15f2311cf614"
+    },
+    "data/catalog/regression_ozyptila_nospid.csv": {
+      "checksum": "ab38b117f2d31531febe43e47cc4df84"
     },
     "data/catalog/sources.csv": {
       "checksum": "ce0209d959d56d2a61a7603f2df38d4d"
@@ -3040,7 +3049,7 @@
       "checksum": "cd2d622e7c4959616a5152deb3314056"
     },
     "R/functions.R": {
-      "checksum": "3eaf852d7d2d456f10ee23285626e73a"
+      "checksum": "0b8135548921fa241dbc1c06a26c5c6f"
     },
     "renv.lock": {
       "checksum": "9b45e00aa4ab64ab1d7d44606c1000ae"

@@ -7,7 +7,7 @@ body:
     id: marker
     attributes:
       label: Marker
-      options: [Animal COI, Fungal ITS, Eukaryotic 18S, Bacterial / archaeal 16S, Animal mitochondrial 16S, Eukaryotic 28S]
+      options: [Animal COI, Vertebrate mitochondrial 12S, Fungal ITS, Eukaryotic 18S, Bacterial / archaeal 16S, Animal mitochondrial 16S, Eukaryotic 28S]
     validations: {required: true}
   - type: input
     id: pair_name

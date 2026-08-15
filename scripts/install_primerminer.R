@@ -21,38 +21,10 @@ if (length(missing)) {
 }
 
 commit <- "9c5e4fb7a4934f590f8df3f6300550a94b04e7f3"
-work_dir <- tempfile("primerminer_install_")
-dir.create(work_dir)
-on.exit(unlink(work_dir, recursive = TRUE, force = TRUE), add = TRUE)
-
-repo_dir <- file.path(work_dir, "PrimerMiner")
-status <- system2(
-  "git",
-  c(
-    "clone", "--quiet", "--no-checkout",
-    "https://github.com/VascoElbrecht/PrimerMiner.git",
-    shQuote(repo_dir)
-  )
-)
-if (status != 0) stop("Could not clone PrimerMiner.")
-
-status <- system2("git", c("-C", shQuote(repo_dir), "checkout", "--quiet", commit))
-if (status != 0) stop("Could not check out the pinned PrimerMiner commit.")
-
-package_dir <- file.path(repo_dir, "PrimerMiner")
-description_path <- file.path(package_dir, "DESCRIPTION")
-description <- readLines(description_path)
-
-# BOLDconnectR 1.0 now pulls a large spatial-analysis dependency tree and is
-# not needed for the NCBI-only workflow used here. PrimerMiner's NCBI download,
-# clustering, plotting, and evaluate_primer functions do not call it. The
-# compatibility patch is isolated to the temporary installation source.
-description <- sub(
-  "^Depends: BOLDconnectR, ",
-  "Depends: ",
-  description
-)
-writeLines(description, description_path)
+package_dir <- file.path(project_root, "vendor", "PrimerMiner")
+if (!file.exists(file.path(package_dir, "DESCRIPTION"))) {
+  stop("The pinned vendored PrimerMiner source is missing.")
+}
 
 status <- system2(
   file.path(R.home("bin"), "R"),
@@ -70,7 +42,7 @@ manifest <- data.frame(
     system2("mafft", "--version", stdout = TRUE, stderr = TRUE)[1]
   ),
   installation = c(
-    "project-local .Rlib; BOLDconnectR dependency removed for NCBI-only compatibility",
+    "project-local .Rlib; pinned vendored source; BOLDconnectR removed for NCBI-only compatibility",
     "https://github.com/VascoElbrecht/PrimerMiner",
     Sys.which("vsearch"),
     Sys.which("mafft")

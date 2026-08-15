@@ -4,7 +4,7 @@
 suppressPackageStartupMessages(library(rsconnect))
 
 app_files <- c(
-  "app.R", "R", "www", "data/catalog", "data/pinned",
+  "app.R", "R", "www", "vendor/PrimerMiner", "data/catalog", "data/pinned",
   "data/releases/COI/latest.json", "data/releases/ITS_FUNGAL/latest.json",
   "data/reference/coi_reference_NC_001322.1.fasta",
   "data/reference/its_fungal_reference_FN812768.2.fasta",

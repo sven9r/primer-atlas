@@ -1,0 +1,2357 @@
+cat("", file="log.txt", sep="", append=T)
+getwd
+getwd()
+Download_GB <- function(taxon, folder=NULL, marker=c("COi", "CO1", "COXi", "COX1"), maxlength=2000, custom_query=NULL){#
+#
+cat(paste(Sys.time(), "- Downloading GenBank sequence data\n\n"), file="log.txt", sep="", append=T)#
+#
+if (is.null(custom_query)){cat(paste("Search query: REPLACE_WITH_TAXA", "[Organism] AND (", paste(c(marker), collapse=" OR "), ") AND 1:",maxlength ,"[Sequence Length]\n\n", sep=""), file="log.txt", sep="", append=T)} else {cat(paste("Search query: REPLACE_WITH_TAXA", custom_query, "\n\n", sep=""), file="log.txt", sep="", append=T)}#
+#
+folder_path <- ""#
+if(!is.null(folder)){dir.create(folder, showWarnings=F)#
+folder_path <- paste(folder, "/", sep="")#
+cat(paste("#GB_data: Folder ",folder, "\n", sep=""), file="log.txt", sep="", append=T)#
+} else {cat(paste("#GB_data: ", "\n", sep=""), file="log.txt", sep="", append=T)}#
+cat("Taxon\tSequences\tdownl_time\n", file="log.txt", sep="", append=T)#
+#
+library("rentrez")#
+#
+for (k in 1:length(taxon)){#
+time <- Sys.time() # get time#
+#
+# download IDs#
+if (is.null(custom_query)){#
+searchQ <- paste(taxon[k],"[Organism] AND (", paste(c(marker), collapse=" OR "), ") AND 1:",maxlength ,"[Sequence Length]", sep="")#
+} else {searchQ <- paste(taxon, custom_query, sep="")}#
+#
+search_results <- entrez_search(db="nuccore", term=searchQ, retmax=9999999)#
+if(length(search_results$ids)!=0){#
+#
+i <- 1#
+while (!is.na(search_results$ids[i])){#
+temp <- search_results$ids[i:(i+499)]#
+temp <- temp[!is.na(temp)]#
+downloaded_sequ <- entrez_fetch(db="nuccore", id=temp, rettype="fasta")#
+if (downloaded_Sequ[1]!="resource temporarily unavailable (4)."){#
+cat(downloaded_sequ, file=paste(folder_path, taxon[k], "_GB.fasta", sep=""), sep="", append=T)#
+i <- i + 500} # only write in file if data downloaded!#
+Sys.sleep(0.5)#
+}#
+#
+meep <- read.fasta(paste(folder_path, taxon[k], "_GB.fasta", sep=""))#
+if(length(meep)!=length(search_results$ids)){#
+paste("WARNING: Something went wrong with the download. Numer of files in GB does not match number of downloaded files!")#
+cat(paste(paste("\nWARNING: Something went wrong with the download. Numer of files in GB does not match number of downloaded files!\n\n"), file="log.txt", sep="", append=T)#
+#
+}#
+#
+}#
+time <- Sys.time() - time#
+print(paste("Downloaded ", length(search_results$ids)," sequences for ", taxon[k], "  in ", format(time, digits=2), sep=""))#
+cat(paste(taxon[k],"\t", length(search_results$ids), "\t", format(time, digits=2), "\n", sep=""), file="log.txt", sep="", append=T)#
+}#
+#
+cat("#GB_data_end\n\n", file="log.txt", sep="", append=T)#
+}
+getwd()
+cat(temp, paste("../mito_no_marker/",sub(pattern, "\\1", readin[k]), ".fasta", sep=""), append=T)
+?points
+plot(c(1,2,3), pch=21)
+plot(c(1,2,3))
+paste("PrimerMiner", "/afsdf", sep="")
+library("DgenPrimer")
+if(range[-1]==1){""}else{"s"}
+if(2==1){""}else{"s"}
+if(uni_mito_coi==1){""}else{"s"}
+uni_mito_coi <- 1
+if(uni_mito_coi==1){""}else{"s"}
+uni_mito_coi <- 2
+if(uni_mito_coi==1){""}else{"s"}
+print(if(uni_mito_coi==1){""}else{"s"})
+Mito_GB2fasta <- function(files, marker=c("COX1", "COXi", "CO1", "COi"), add=100, rm_dup=T, pattern="\\.gb$", no_marker=T, setwd=NULL){#
+#
+if(!is.null(setwd)){logfile <- paste(setwd, "/log.txt", sep="")} else {logfile <- "log.txt"}#
+#
+cat(paste(Sys.time(), " - Converting Mito Genbank to fasta\n\n"), file=logfile, sep="", append=T)#
+cat("#mito_gb2fasta\nGBfile\tnoMito\tunique\n", file=logfile, sep="", append=T)#
+#
+readin <- grep(pattern, files)#
+if (length(readin)==0){#
+	folders <- files#
+	readin <- c()}else{#
+folders <- files[-readin]#
+readin <- files[readin]}#
+#
+no_coi_mito <- NULL#
+#
+for (i in folders){#
+readin <- c(list.files(path=i, pattern=pattern, full.names=T), readin)#
+}#
+folder_path <- paste(folders, "/", sep="")#
+for (k in 1:length(readin)){#
+#
+# extract fasta file!#
+gb <- readLines(readin[k])#
+sequence_exp <- NULL#
+#
+range <- grep("//", gb)#
+range <- c(1, range)#
+for (i in 1:length(range[-1])){#
+temp <- gb[range[i]:range[i+1]]#
+#
+query <- paste("/(gene|CDS|product)=\"(", paste(marker, sep="", collapse="|") ,")\"", sep="")#
+cds_pos <- grep("( gene   | CDS   | rRNA   )", temp)#
+COX1 <- cds_pos[grep(query, temp[cds_pos+1], ignore.case=T)[1]]#
+COX1 <- temp[COX1]#
+if(grepl("join", COX1)){COX1 <- c(NA, NA)} else{#
+COX1 <- gsub("[[:alpha:]<> ()]", "", COX1)#
+COX1 <- as.numeric(c(gsub("(.*)\\.\\..*$", "\\1", COX1), gsub(".*\\.\\.(.*)$", "\\1", COX1)))}#
+#
+if (!is.na(COX1[1])&!is.na(COX1[2])){#
+sequ <- temp[(grep("ORIGIN      ", temp)+2):length(temp)-1]#
+sequ <- paste(gsub("[ 1234567890]", "", sequ), collapse="")#
+#
+sequ <- substr(sequ, COX1[1]-add, COX1[2]+add)#
+sequ_name <- gsub(".* (.*)$", "\\1", temp[grep("ACCESSION ", temp)])#
+sequence_exp <- c(sequence_exp, paste(">", sequ_name, "\n", sep=""), paste(sequ, "\n", sep=""))} else { # export mito with no marker#
+no_coi_mito <- c(no_coi_mito, gsub(".* (.*)$", "\\1", temp[grep("ACCESSION ", temp)]))#
+if (no_marker){dir.create("mito_no_marker", showWarnings=F)#
+Fname <- sub(pattern, "\\1", readin[k])#
+Fname <- sub(".*/(.*)", "\\1", Fname)#
+#torder <- readLines(logfile)[grep("#mito_data: Folder .*", readLines(logfile))][1]#
+#torder <- sub("#mito_data: Folder (.*)", "\\1", torder)#
+Fname1 <- paste("mito_no_marker/", setwd, if(!is.null(setwd)){"_"}, Fname, ".gb", sep="")#
+#
+if(temp[1]=="//") ( temp <- temp[-c(1,2)])#
+#
+cat(temp, file=Fname1, sep="\n", append=T)}#
+}#
+}#
+if (!is.null(sequence_exp)){#
+if (rm_dup){#
+dup <- !duplicated(sequence_exp[seq(2, length(sequence_exp), 2)])#
+sequence_exp <- sequence_exp[rep(dup, each = 2)]}#
+#
+cat(sequence_exp, file=paste(sub(pattern, "\\1", readin[k]), ".fasta", sep=""), sep="") # overwrite old files#
+#
+# check number of unique sequences#
+uni_mito_coi <- length(unique(sequence_exp[seq(2, length(sequence_exp), 2)])) } else {uni_mito_coi <- 0}#
+print(paste("Converted ", length(range[-1])," mitogenome", if(range[-1]==1){""}else{"s"}," of ", readin[k], " to ", uni_mito_coi, " unique ", marker[1], " sequence", if(uni_mito_coi==1){""}else{"s"},".", sep=""))#
+cat(paste(readin[k],"\t", length(range[-1]), "\t", uni_mito_coi, "\n", sep=""), file=logfile, sep="", append=T)#
+}#
+#
+cat("#mito_gb2fasta_end\n\n", file=logfile, sep="", append=T)#
+#
+if (!is.null(no_coi_mito)){#
+cat(paste("Mitogenomes in which no marker sequences were detected:", paste(no_coi_mito, collapse=", "), "\n\n"), file=logfile, sep="", append=T)}#
+print(paste("\nMitogenomes in which no marker sequences were detected:", paste(no_coi_mito, collapse=", "), "\n"), file=logfile, sep="", append=T)}#
+}
+Mito_GB2fasta <- function(files, marker=c("COX1", "COXi", "CO1", "COi"), add=100, rm_dup=T, pattern="\\.gb$", no_marker=T, setwd=NULL){#
+#
+if(!is.null(setwd)){logfile <- paste(setwd, "/log.txt", sep="")} else {logfile <- "log.txt"}#
+#
+cat(paste(Sys.time(), " - Converting Mito Genbank to fasta\n\n"), file=logfile, sep="", append=T)#
+cat("#mito_gb2fasta\nGBfile\tnoMito\tunique\n", file=logfile, sep="", append=T)#
+#
+readin <- grep(pattern, files)#
+if (length(readin)==0){#
+	folders <- files#
+	readin <- c()}else{#
+folders <- files[-readin]#
+readin <- files[readin]}#
+#
+no_coi_mito <- NULL#
+#
+for (i in folders){#
+readin <- c(list.files(path=i, pattern=pattern, full.names=T), readin)#
+}#
+folder_path <- paste(folders, "/", sep="")#
+for (k in 1:length(readin)){#
+#
+# extract fasta file!#
+gb <- readLines(readin[k])#
+sequence_exp <- NULL#
+#
+range <- grep("//", gb)#
+range <- c(1, range)#
+for (i in 1:length(range[-1])){#
+temp <- gb[range[i]:range[i+1]]#
+#
+query <- paste("/(gene|CDS|product)=\"(", paste(marker, sep="", collapse="|") ,")\"", sep="")#
+cds_pos <- grep("( gene   | CDS   | rRNA   )", temp)#
+COX1 <- cds_pos[grep(query, temp[cds_pos+1], ignore.case=T)[1]]#
+COX1 <- temp[COX1]#
+if(grepl("join", COX1)){COX1 <- c(NA, NA)} else{#
+COX1 <- gsub("[[:alpha:]<> ()]", "", COX1)#
+COX1 <- as.numeric(c(gsub("(.*)\\.\\..*$", "\\1", COX1), gsub(".*\\.\\.(.*)$", "\\1", COX1)))}#
+#
+if (!is.na(COX1[1])&!is.na(COX1[2])){#
+sequ <- temp[(grep("ORIGIN      ", temp)+2):length(temp)-1]#
+sequ <- paste(gsub("[ 1234567890]", "", sequ), collapse="")#
+#
+sequ <- substr(sequ, COX1[1]-add, COX1[2]+add)#
+sequ_name <- gsub(".* (.*)$", "\\1", temp[grep("ACCESSION ", temp)])#
+sequence_exp <- c(sequence_exp, paste(">", sequ_name, "\n", sep=""), paste(sequ, "\n", sep=""))} else { # export mito with no marker#
+no_coi_mito <- c(no_coi_mito, gsub(".* (.*)$", "\\1", temp[grep("ACCESSION ", temp)]))#
+if (no_marker){dir.create("mito_no_marker", showWarnings=F)#
+Fname <- sub(pattern, "\\1", readin[k])#
+Fname <- sub(".*/(.*)", "\\1", Fname)#
+#torder <- readLines(logfile)[grep("#mito_data: Folder .*", readLines(logfile))][1]#
+#torder <- sub("#mito_data: Folder (.*)", "\\1", torder)#
+Fname1 <- paste("mito_no_marker/", setwd, if(!is.null(setwd)){"_"}, Fname, ".gb", sep="")#
+#
+if(temp[1]=="//") ( temp <- temp[-c(1,2)])#
+#
+cat(temp, file=Fname1, sep="\n", append=T)}#
+}#
+}#
+if (!is.null(sequence_exp)){#
+if (rm_dup){#
+dup <- !duplicated(sequence_exp[seq(2, length(sequence_exp), 2)])#
+sequence_exp <- sequence_exp[rep(dup, each = 2)]}#
+#
+cat(sequence_exp, file=paste(sub(pattern, "\\1", readin[k]), ".fasta", sep=""), sep="") # overwrite old files#
+#
+# check number of unique sequences#
+uni_mito_coi <- length(unique(sequence_exp[seq(2, length(sequence_exp), 2)])) } else {uni_mito_coi <- 0}#
+#print(paste("Converted ", length(range[-1])," mitogenome", if(range[-1]==1){""}else{"s"}," of ", readin[k], " to ", uni_mito_coi, " unique ", marker[1], " sequence", if(uni_mito_coi==1){""}else{"s"},".", sep=""))#
+cat(paste(readin[k],"\t", length(range[-1]), "\t", uni_mito_coi, "\n", sep=""), file=logfile, sep="", append=T)#
+}#
+#
+cat("#mito_gb2fasta_end\n\n", file=logfile, sep="", append=T)#
+#
+if (!is.null(no_coi_mito)){#
+cat(paste("Mitogenomes in which no marker sequences were detected:", paste(no_coi_mito, collapse=", "), "\n\n"), file=logfile, sep="", append=T)}#
+print(paste("\nMitogenomes in which no marker sequences were detected:", paste(no_coi_mito, collapse=", "), "\n"), file=logfile, sep="", append=T)}#
+}
+# 150504#
+#
+setwd("~/Documents/UNI_und_VORLESUNGEN/11 phd projects/1 meta FINNLAND/1 R scripte/1 Package DegPrime/1 package files/PrimerMiner_v0.08/R")
+entropy
+library("seqinr")
+entropy
+library("caTools")
+entropy
+library("caTools")
+library("seqinr")
+entropy
+# 150504#
+#
+setwd("~/Documents/UNI_und_VORLESUNGEN/11 phd projects/1 meta FINNLAND/1 R scripte/1 Package DegPrime/1 package files/PrimerMiner_v0.08/R")
+# 150504#
+#
+setwd("~/Documents/UNI_und_VORLESUNGEN/11 phd projects/1 meta FINNLAND/1 R scripte/1 Package DegPrime/1 package files/PrimerMiner_v0.08/R")#
+#
+# library("caTools")#
+library("seqinr")#
+#
+entropy <- function(fasta, outputplot="myplot.pdf", threshold=0.1, makeplot=T, window=10){#
+#
+upac <- read.csv(text=c("ID,comment,A,T,C,G,farbe#
+A,Adenine,1,0,0,0,F#
+C,Cytosine,0,0,1,0,F#
+G,Guanine,0,0,0,1,F#
+T,Thymine,0,1,0,0,F#
+R,A or G,0.5,0,0,0.5,T#
+Y,C or T,0,0.5,0.5,0,T#
+S,G or C,0,0,0.5,0.5,T#
+W,A or T,0.5,0.5,0,0,T#
+K,G or T,0,0.5,0,0.5,T#
+M,A or C,0.5,0,0.5,0,T#
+B,C or G or T,0,0.3,0.3,0.3,T#
+D,A or G or T,0.3,0.3,0,0.3,T#
+H,A or C or T,0.3,0.3,0.3,0,T#
+V,A or C or G,0.3,0,0.3,0.3,T#
+N,any base,0,0,0,0,T#
+-,gap,0,0,0,0,T"), stringsAsFactors=F)#
+#
+plotcol <- c("Red", "Green", "Blue", "Yellow")#
+covcol <- c("Green", "Orange", "Red", "Black")#
+alignment <- read.fasta(fasta, seqonly=T)#
+alignment <- strsplit(unlist(alignment), split="")#
+alignment <- matrix(unlist(alignment), nrow=length(alignment), ncol=length(alignment[[1]]), byrow=T)#
+if(makeplot){pdf(outputplot, height=6, width=ncol(alignment)*0.1, useDingbats=F)#
+plot(-3, ylim=c(0.3,13), xlim=c(0,ncol(alignment)+1), xaxt="n", xlab="")#
+}#
+meep <- c()#
+for (i in 1:ncol(alignment)){#
+data <- alignment[,i]#
+#
+temp <- match(data, upac$ID)#
+colu <- upac[temp, 3:6]#
+#
+hey <- colSums(colu)#
+#
+# shanon entropy#
+p <- hey / sum(hey)#
+meep <- rbind(meep, c("ID"=i, p, "entropy"=-sum(log2(p) * p, na.rm=T), "nucleotides"=length(which(p>threshold))))#
+#
+#plot#
+if(makeplot){#
+rect(i-0.5, 0, i+0.5, 0.6, col= plotcol[which.max(p)], border=NA)#
+text(i, 0.3, names(p)[which.max(p)], cex=0.75)#
+#
+# plot nucleotide cov boxes#
+rect(i-0.5, 0.8, i+0.5, 1.4, col= covcol[length(which(p>threshold))], border=NA)#
+#
+#plot nucleotide composition#
+padd <- c(0, p)*2#
+for (m in 2:5){#
+rect(i-0.5, sum(padd[1:m-1])+1.7, i+0.5, sum(padd[1:m])+1.7, col=plotcol[m-1])}#
+} # end plot#
+#
+}#
+if(makeplot){#
+lines(c(0, i), c(6,6), col="Lightgrey")#
+lines(c(0, i), c(8,8), col="Lightgrey")#
+lines(c(0, i), c(10,10), col="Lightgrey")#
+lines(runmean(meep[,6]*4+4, k=window), col="black")#
+#
+points(meep[,6]*4+4)#
+rect(0, 4, i, 12)#
+axis(side=1, at=seq(0, ncol(alignment), 10), lab=seq(0, ncol(alignment), 10))#
+axis(side=1, at=seq(5, ncol(alignment), 10), lab=F)#
+text(0, 13, paste(fasta, "N:", nrow(alignment)), pos=4)#
+dev.off()}#
+#
+return(meep)#
+}#
+temp <- entropy(files[1], "new.pdf")#
+# get files!#
+files <- list.files("../../1 COi contigs/", full.names=T)#
+#
+filenames <- list.files("../../1 COi contigs/", full.names=F)#
+filenames <- gsub(".fasta", ".pdf", filenames)#
+filenames <- paste("entro_v9_plots/", filenames, sep="")#
+pdf(file="merged.pdf", useDingbats=F, width=20, height=6)#
+plot(-2, ylim=c(0,2), xlim=c(0,658), xaxt="n", xlab="")#
+#
+linecol <- rep("Gray", 15)#
+linecol[c(1:3, 12)] <- c("Green", "Red", "Blue", "Yellow")#
+#
+for (j in c(4:11,13,14,15,12,1:3)){#
+temp <- entropy(files[j], filenames[j])#
+lines(runmean(temp[,6], k=20), col=c(linecol[j], 0.5))	#
+}#
+axis(side=1, at=seq(0, 658, 10), lab=seq(0, 658, 10), las=2)#
+#axis(side=1, at=seq(5, 658, 10), lab=F)#
+#
+dev.off()#
+# Primers in one plot!!#
+covcol <- c("Green", "Orange", "Red", "Black")#
+listnames <- list.files("~/Documents/UNI_und_VORLESUNGEN/11 phd projects/1 Meta SCHMALNAU/1 COi contigs", full.names=F)#
+#
+list <- c()#
+for (x in 1:15){#
+list[[x]] <- entropy(files[x], filenames[x], makeplot=F)#
+}#
+plotcol <- c("Red", "Green", "Blue", "Yellow")#
+primerplot <- function(start=1, end=20, rw=F, threshold=0.1){#
+#
+plot(-3, xlim=c(-5,(abs(start-end)+2)), ylim=c(0,20), xaxt="n", xlab="")#
+#
+for (k in 15:1){#
+#
+#plot nucleotide composition#
+padd <- cbind(0, list[[k]][start:end,2:5])#
+#
+for (i in 1:nrow(padd)){#
+for (m in 2:5){#
+rect(i-0.5, sum(padd[i,1:m-1])+3+1*k, i+0.5, sum(padd[i, 1:m])+3+1*k, col=plotcol[m-1])}#
+}#
+text(-0.5, 3.5+1*k, gsub(".._(.*)_folmer.*", "\\1", listnames[k]), pos=2)#
+#
+}#
+#
+# below berechnen#
+meep <- start:end#
+#
+for (h in 1:nrow(padd)){#
+#
+temp <- list[[s]][meep[h], 2:5]#
+for (s in 2:15){#
+temp <- rbind(temp+list[[s]][meep[h], 2:5])#
+}#
+p <- temp / sum(temp)#
+#
+#make plot#
+#
+padd <- cbind(0, p*2)#
+for (m in 2:5){#
+rect(h-0.5, sum(padd[1:m-1])+1.75, h+0.5, sum(padd[1:m])+1.75, col=plotcol[m-1])}#
+#
+rect(h-0.5, 0, h+0.5, 0.6, col= plotcol[which.max(p)], border=NA)#
+text(h, 0.3, names(as.data.frame(p))[which.max(p)], cex=0.75)#
+#
+# plot nucleotide cov boxes#
+rect(h-0.5, 0.8, h+0.5, 1.4, col= covcol[length(which(p>threshold))], border=NA)#
+}#
+#
+axis(side=1, at=seq(0, abs(start-end), 10), lab=seq(start-1, end, 10), las=2)#
+axis(side=1, at=seq(5, 658, 10), lab=F)#
+#
+}#
+pdf("primerplot_complete.pdf", height=6, width=100)#
+#
+primerplot(1, 658)#
+#
+dev.off()#
+primerplot(1,11)
+# 150504#
+#
+setwd("~/Documents/UNI_und_VORLESUNGEN/11 phd projects/1 Meta SCHMALNAU/1 R scripte/entropy")#
+#install.packages("caTools")#
+library("caTools")#
+library("seqinr")#
+#
+#fasta <- "01_Plecoptera_folmer.fasta"#
+# function!!!#
+entropy <- function(fasta, outputplot="myplot.pdf", threshold=0.1, makeplot=T, window=10){#
+#
+upac <- read.csv(text=c("ID,comment,A,T,C,G,farbe#
+A,Adenine,1,0,0,0,F#
+C,Cytosine,0,0,1,0,F#
+G,Guanine,0,0,0,1,F#
+T,Thymine,0,1,0,0,F#
+R,A or G,0.5,0,0,0.5,T#
+Y,C or T,0,0.5,0.5,0,T#
+S,G or C,0,0,0.5,0.5,T#
+W,A or T,0.5,0.5,0,0,T#
+K,G or T,0,0.5,0,0.5,T#
+M,A or C,0.5,0,0.5,0,T#
+B,C or G or T,0,0.3,0.3,0.3,T#
+D,A or G or T,0.3,0.3,0,0.3,T#
+H,A or C or T,0.3,0.3,0.3,0,T#
+V,A or C or G,0.3,0,0.3,0.3,T#
+N,any base,0,0,0,0,T#
+-,gap,0,0,0,0,T"), stringsAsFactors=F)#
+#
+plotcol <- c("Red", "Green", "Blue", "Yellow")#
+covcol <- c("Green", "Orange", "Red", "Black")#
+alignment <- read.fasta(fasta, seqonly=T)#
+alignment <- strsplit(unlist(alignment), split="")#
+alignment <- matrix(unlist(alignment), nrow=length(alignment), ncol=length(alignment[[1]]), byrow=T)#
+if(makeplot){pdf(outputplot, height=6, width=ncol(alignment)*0.1, useDingbats=F)#
+plot(-3, ylim=c(0.3,13), xlim=c(0,ncol(alignment)+1), xaxt="n", xlab="")#
+}#
+meep <- c()#
+for (i in 1:ncol(alignment)){#
+data <- alignment[,i]#
+#
+temp <- match(data, upac$ID)#
+colu <- upac[temp, 3:6]#
+#
+hey <- colSums(colu)#
+#
+# shanon entropy#
+p <- hey / sum(hey)#
+meep <- rbind(meep, c("ID"=i, p, "entropy"=-sum(log2(p) * p, na.rm=T), "nucleotides"=length(which(p>threshold))))#
+#
+#plot#
+if(makeplot){#
+rect(i-0.5, 0, i+0.5, 0.6, col= plotcol[which.max(p)], border=NA)#
+text(i, 0.3, names(p)[which.max(p)], cex=0.75)#
+#
+# plot nucleotide cov boxes#
+rect(i-0.5, 0.8, i+0.5, 1.4, col= covcol[length(which(p>threshold))], border=NA)#
+#
+#plot nucleotide composition#
+padd <- c(0, p)*2#
+for (m in 2:5){#
+rect(i-0.5, sum(padd[1:m-1])+1.7, i+0.5, sum(padd[1:m])+1.7, col=plotcol[m-1])}#
+} # end plot#
+#
+}#
+if(makeplot){#
+lines(c(0, i), c(6,6), col="Lightgrey")#
+lines(c(0, i), c(8,8), col="Lightgrey")#
+lines(c(0, i), c(10,10), col="Lightgrey")#
+lines(runmean(meep[,6]*4+4, k=window), col="black")#
+#
+points(meep[,6]*4+4)#
+rect(0, 4, i, 12)#
+axis(side=1, at=seq(0, ncol(alignment), 10), lab=seq(0, ncol(alignment), 10))#
+axis(side=1, at=seq(5, ncol(alignment), 10), lab=F)#
+text(0, 13, paste(fasta, "N:", nrow(alignment)), pos=4)#
+dev.off()}#
+#
+return(meep)#
+}#
+temp <- entropy(files[1], "new.pdf")#
+# get files!#
+files <- list.files("../../1 COi contigs/", full.names=T)#
+#
+filenames <- list.files("../../1 COi contigs/", full.names=F)#
+filenames <- gsub(".fasta", ".pdf", filenames)#
+filenames <- paste("entro_v9_plots/", filenames, sep="")#
+pdf(file="merged.pdf", useDingbats=F, width=20, height=6)#
+plot(-2, ylim=c(0,2), xlim=c(0,658), xaxt="n", xlab="")#
+#
+linecol <- rep("Gray", 15)#
+linecol[c(1:3, 12)] <- c("Green", "Red", "Blue", "Yellow")#
+#
+for (j in c(4:11,13,14,15,12,1:3)){#
+temp <- entropy(files[j], filenames[j])#
+lines(runmean(temp[,6], k=20), col=c(linecol[j], 0.5))	#
+}#
+axis(side=1, at=seq(0, 658, 10), lab=seq(0, 658, 10), las=2)#
+#axis(side=1, at=seq(5, 658, 10), lab=F)#
+#
+dev.off()#
+############
+#############
+# Primers in one plot!!#
+covcol <- c("Green", "Orange", "Red", "Black")#
+listnames <- list.files("../../1 COi contigs/", full.names=F)#
+#
+list <- c()#
+for (x in 1:15){#
+list[[x]] <- entropy(files[x], filenames[x], makeplot=F)#
+}#
+plotcol <- c("Red", "Green", "Blue", "Yellow")#
+primerplot <- function(start=1, end=20, rw=F, threshold=0.1){#
+#
+plot(-3, xlim=c(-5,(abs(start-end)+2)), ylim=c(0,20), xaxt="n", xlab="")#
+#
+for (k in 15:1){#
+#
+#plot nucleotide composition#
+padd <- cbind(0, list[[k]][start:end,2:5])#
+#
+for (i in 1:nrow(padd)){#
+for (m in 2:5){#
+rect(i-0.5, sum(padd[i,1:m-1])+3+1*k, i+0.5, sum(padd[i, 1:m])+3+1*k, col=plotcol[m-1])}#
+}#
+text(-0.5, 3.5+1*k, gsub(".._(.*)_folmer.*", "\\1", listnames[k]), pos=2)#
+#
+}#
+#
+# below berechnen#
+meep <- start:end#
+#
+for (h in 1:nrow(padd)){#
+#
+temp <- list[[s]][meep[h], 2:5]#
+for (s in 2:15){#
+temp <- rbind(temp+list[[s]][meep[h], 2:5])#
+}#
+p <- temp / sum(temp)#
+#
+#make plot#
+#
+padd <- cbind(0, p*2)#
+for (m in 2:5){#
+rect(h-0.5, sum(padd[1:m-1])+1.75, h+0.5, sum(padd[1:m])+1.75, col=plotcol[m-1])}#
+#
+rect(h-0.5, 0, h+0.5, 0.6, col= plotcol[which.max(p)], border=NA)#
+text(h, 0.3, names(as.data.frame(p))[which.max(p)], cex=0.75)#
+#
+# plot nucleotide cov boxes#
+rect(h-0.5, 0.8, h+0.5, 1.4, col= covcol[length(which(p>threshold))], border=NA)#
+}#
+#
+axis(side=1, at=seq(0, abs(start-end), 10), lab=seq(start-1, end, 10), las=2)#
+axis(side=1, at=seq(5, 658, 10), lab=F)#
+#
+}#
+pdf("primerplot_complete.pdf", height=6, width=100)#
+#
+primerplot(1, 658)#
+#
+dev.off()#
+primerplot(1,11)
+files <- list.files("~/Documents/UNI_und_VORLESUNGEN/11 phd projects/1 Meta SCHMALNAU/1 COi contigs", full.names=T)
+filenames <- list.files("~/Documents/UNI_und_VORLESUNGEN/11 phd projects/1 Meta SCHMALNAU/1 COi contigs", full.names=F)
+filenames
+# 150504#
+#
+setwd("~/Documents/UNI_und_VORLESUNGEN/11 phd projects/1 meta FINNLAND/1 R scripte/1 Package DegPrime/1 package files/PrimerMiner_v0.08/R")#
+#library("caTools")#
+library("seqinr")#
+#
+# function!!!#
+entropy <- function(fasta, outputplot="myplot.pdf", threshold=0.1, makeplot=T, window=10){#
+#
+upac <- read.csv(text=c("ID,comment,A,T,C,G,farbe#
+A,Adenine,1,0,0,0,F#
+C,Cytosine,0,0,1,0,F#
+G,Guanine,0,0,0,1,F#
+T,Thymine,0,1,0,0,F#
+R,A or G,0.5,0,0,0.5,T#
+Y,C or T,0,0.5,0.5,0,T#
+S,G or C,0,0,0.5,0.5,T#
+W,A or T,0.5,0.5,0,0,T#
+K,G or T,0,0.5,0,0.5,T#
+M,A or C,0.5,0,0.5,0,T#
+B,C or G or T,0,0.3,0.3,0.3,T#
+D,A or G or T,0.3,0.3,0,0.3,T#
+H,A or C or T,0.3,0.3,0.3,0,T#
+V,A or C or G,0.3,0,0.3,0.3,T#
+N,any base,0,0,0,0,T#
+-,gap,0,0,0,0,T"), stringsAsFactors=F)#
+#
+plotcol <- c("Red", "Green", "Blue", "Yellow")#
+covcol <- c("Green", "Orange", "Red", "Black")#
+alignment <- read.fasta(fasta, seqonly=T)#
+alignment <- strsplit(unlist(alignment), split="")#
+alignment <- matrix(unlist(alignment), nrow=length(alignment), ncol=length(alignment[[1]]), byrow=T)#
+if(makeplot){pdf(outputplot, height=6, width=ncol(alignment)*0.1, useDingbats=F)#
+plot(-3, ylim=c(0.3,13), xlim=c(0,ncol(alignment)+1), xaxt="n", xlab="")#
+}#
+meep <- c()#
+for (i in 1:ncol(alignment)){#
+data <- alignment[,i]#
+#
+temp <- match(data, upac$ID)#
+colu <- upac[temp, 3:6]#
+#
+hey <- colSums(colu)#
+#
+# shanon entropy#
+p <- hey / sum(hey)#
+meep <- rbind(meep, c("ID"=i, p, "entropy"=-sum(log2(p) * p, na.rm=T), "nucleotides"=length(which(p>threshold))))#
+#
+#plot#
+if(makeplot){#
+rect(i-0.5, 0, i+0.5, 0.6, col= plotcol[which.max(p)], border=NA)#
+text(i, 0.3, names(p)[which.max(p)], cex=0.75)#
+#
+# plot nucleotide cov boxes#
+rect(i-0.5, 0.8, i+0.5, 1.4, col= covcol[length(which(p>threshold))], border=NA)#
+#
+#plot nucleotide composition#
+padd <- c(0, p)*2#
+for (m in 2:5){#
+rect(i-0.5, sum(padd[1:m-1])+1.7, i+0.5, sum(padd[1:m])+1.7, col=plotcol[m-1])}#
+} # end plot#
+#
+}#
+if(makeplot){#
+lines(c(0, i), c(6,6), col="Lightgrey")#
+lines(c(0, i), c(8,8), col="Lightgrey")#
+lines(c(0, i), c(10,10), col="Lightgrey")#
+lines(runmean(meep[,6]*4+4, k=window), col="black")#
+#
+points(meep[,6]*4+4)#
+rect(0, 4, i, 12)#
+axis(side=1, at=seq(0, ncol(alignment), 10), lab=seq(0, ncol(alignment), 10))#
+axis(side=1, at=seq(5, ncol(alignment), 10), lab=F)#
+text(0, 13, paste(fasta, "N:", nrow(alignment)), pos=4)#
+dev.off()}#
+#
+return(meep)#
+}#
+files <- list.files("~/Documents/UNI_und_VORLESUNGEN/11 phd projects/1 Meta SCHMALNAU/1 COi contigs", full.names=T)#
+#
+temp <- entropy(files[1], "new.pdf")#
+# get files!#
+#
+filenames <- list.files("~/Documents/UNI_und_VORLESUNGEN/11 phd projects/1 Meta SCHMALNAU/1 COi contigs", full.names=F)#
+filenames <- gsub(".fasta", ".pdf", filenames)#
+filenames <- paste("entro_v9_plots/", filenames, sep="")#
+pdf(file="merged.pdf", useDingbats=F, width=20, height=6)#
+plot(-2, ylim=c(0,2), xlim=c(0,658), xaxt="n", xlab="")#
+#
+linecol <- rep("Gray", 15)#
+linecol[c(1:3, 12)] <- c("Green", "Red", "Blue", "Yellow")#
+#
+for (j in c(4:11,13,14,15,12,1:3)){#
+temp <- entropy(files[j], filenames[j])#
+lines(runmean(temp[,6], k=20), col=c(linecol[j], 0.5))	#
+}#
+axis(side=1, at=seq(0, 658, 10), lab=seq(0, 658, 10), las=2)#
+#axis(side=1, at=seq(5, 658, 10), lab=F)#
+#
+dev.off()#
+############
+#############
+# Primers in one plot!!#
+covcol <- c("Green", "Orange", "Red", "Black")#
+listnames <- list.files("../../1 COi contigs/", full.names=F)#
+#
+list <- c()#
+for (x in 1:15){#
+list[[x]] <- entropy(files[x], filenames[x], makeplot=F)#
+}#
+plotcol <- c("Red", "Green", "Blue", "Yellow")#
+primerplot <- function(start=1, end=20, rw=F, threshold=0.1){#
+#
+plot(-3, xlim=c(-5,(abs(start-end)+2)), ylim=c(0,20), xaxt="n", xlab="")#
+#
+for (k in 15:1){#
+#
+#plot nucleotide composition#
+padd <- cbind(0, list[[k]][start:end,2:5])#
+#
+for (i in 1:nrow(padd)){#
+for (m in 2:5){#
+rect(i-0.5, sum(padd[i,1:m-1])+3+1*k, i+0.5, sum(padd[i, 1:m])+3+1*k, col=plotcol[m-1])}#
+}#
+text(-0.5, 3.5+1*k, gsub(".._(.*)_folmer.*", "\\1", listnames[k]), pos=2)#
+#
+}#
+#
+# below berechnen#
+meep <- start:end#
+#
+for (h in 1:nrow(padd)){#
+#
+temp <- list[[s]][meep[h], 2:5]#
+for (s in 2:15){#
+temp <- rbind(temp+list[[s]][meep[h], 2:5])#
+}#
+p <- temp / sum(temp)#
+#
+#make plot#
+#
+padd <- cbind(0, p*2)#
+for (m in 2:5){#
+rect(h-0.5, sum(padd[1:m-1])+1.75, h+0.5, sum(padd[1:m])+1.75, col=plotcol[m-1])}#
+#
+rect(h-0.5, 0, h+0.5, 0.6, col= plotcol[which.max(p)], border=NA)#
+text(h, 0.3, names(as.data.frame(p))[which.max(p)], cex=0.75)#
+#
+# plot nucleotide cov boxes#
+rect(h-0.5, 0.8, h+0.5, 1.4, col= covcol[length(which(p>threshold))], border=NA)#
+}#
+#
+axis(side=1, at=seq(0, abs(start-end), 10), lab=seq(start-1, end, 10), las=2)#
+axis(side=1, at=seq(5, 658, 10), lab=F)#
+#
+}#
+pdf("primerplot_complete.pdf", height=6, width=100)#
+#
+primerplot(1, 658)#
+#
+dev.off()#
+primerplot(1,11)
+# function!!!#
+entropy <- function(fasta, outputplot="myplot.pdf", threshold=0.1, makeplot=T, window=10){#
+{#
+#
+upac <- read.csv(text=c("ID,comment,A,T,C,G,farbe#
+A,Adenine,1,0,0,0,F#
+C,Cytosine,0,0,1,0,F#
+G,Guanine,0,0,0,1,F#
+T,Thymine,0,1,0,0,F#
+R,A or G,0.5,0,0,0.5,T#
+Y,C or T,0,0.5,0.5,0,T#
+S,G or C,0,0,0.5,0.5,T#
+W,A or T,0.5,0.5,0,0,T#
+K,G or T,0,0.5,0,0.5,T#
+M,A or C,0.5,0,0.5,0,T#
+B,C or G or T,0,0.3,0.3,0.3,T#
+D,A or G or T,0.3,0.3,0,0.3,T#
+H,A or C or T,0.3,0.3,0.3,0,T#
+V,A or C or G,0.3,0,0.3,0.3,T#
+N,any base,0,0,0,0,T#
+-,gap,0,0,0,0,T"), stringsAsFactors=F)#
+#
+alignment <- read.fasta(fasta, seqonly=T)#
+alignment <- strsplit(unlist(alignment), split="")#
+alignment <- matrix(unlist(alignment), nrow=length(alignment), ncol=length(alignment[[1]]), byrow=T)#
+}#
+meep <- c()#
+for (i in 1:ncol(alignment)){#
+data <- alignment[,i]#
+#
+temp <- match(data, upac$ID)#
+colu <- upac[temp, 3:6]#
+#
+hey <- colSums(colu)#
+#
+# shanon entropy#
+p <- hey / sum(hey)#
+meep <- rbind(meep, c("ID"=i, p, "entropy"=-sum(log2(p) * p, na.rm=T), "nucleotides"=length(which(p>threshold))))#
+}#
+#
+return(meep)#
+}
+# 150504#
+#
+setwd("~/Documents/UNI_und_VORLESUNGEN/11 phd projects/1 meta FINNLAND/1 R scripte/1 Package DegPrime/1 package files/PrimerMiner_v0.08/R")#
+#library("caTools")#
+library("seqinr")#
+#
+# function!!!#
+entropy <- function(fasta, outputplot="myplot.pdf", threshold=0.1, makeplot=T, window=10){#
+{#
+#
+upac <- read.csv(text=c("ID,comment,A,T,C,G,farbe#
+A,Adenine,1,0,0,0,F#
+C,Cytosine,0,0,1,0,F#
+G,Guanine,0,0,0,1,F#
+T,Thymine,0,1,0,0,F#
+R,A or G,0.5,0,0,0.5,T#
+Y,C or T,0,0.5,0.5,0,T#
+S,G or C,0,0,0.5,0.5,T#
+W,A or T,0.5,0.5,0,0,T#
+K,G or T,0,0.5,0,0.5,T#
+M,A or C,0.5,0,0.5,0,T#
+B,C or G or T,0,0.3,0.3,0.3,T#
+D,A or G or T,0.3,0.3,0,0.3,T#
+H,A or C or T,0.3,0.3,0.3,0,T#
+V,A or C or G,0.3,0,0.3,0.3,T#
+N,any base,0,0,0,0,T#
+-,gap,0,0,0,0,T"), stringsAsFactors=F)#
+#
+alignment <- read.fasta(fasta, seqonly=T)#
+alignment <- strsplit(unlist(alignment), split="")#
+alignment <- matrix(unlist(alignment), nrow=length(alignment), ncol=length(alignment[[1]]), byrow=T)#
+}#
+meep <- c()#
+for (i in 1:ncol(alignment)){#
+data <- alignment[,i]#
+#
+temp <- match(data, upac$ID)#
+colu <- upac[temp, 3:6]#
+#
+hey <- colSums(colu)#
+#
+# shanon entropy#
+p <- hey / sum(hey)#
+meep <- rbind(meep, c("ID"=i, p, "entropy"=-sum(log2(p) * p, na.rm=T), "nucleotides"=length(which(p>threshold))))#
+}#
+#
+return(meep)#
+}#
+files <- list.files("~/Documents/UNI_und_VORLESUNGEN/11 phd projects/1 Meta SCHMALNAU/1 COi contigs", full.names=T)#
+#
+temp <- entropy(files[1], "new.pdf")#
+# get files!#
+#
+filenames <- list.files("~/Documents/UNI_und_VORLESUNGEN/11 phd projects/1 Meta SCHMALNAU/1 COi contigs", full.names=F)#
+filenames <- gsub(".fasta", ".pdf", filenames)#
+filenames <- paste("entro_v9_plots/", filenames, sep="")#
+# Primers in one plot!!#
+covcol <- c("Green", "Orange", "Red", "Black")#
+listnames <- list.files("../../1 COi contigs/", full.names=F)#
+#
+list <- c()#
+for (x in 1:15){#
+list[[x]] <- entropy(files[x], filenames[x], makeplot=F)#
+}#
+plotcol <- c("Red", "Green", "Blue", "Yellow")#
+primerplot <- function(start=1, end=20, rw=F, threshold=0.1){#
+#
+plot(-3, xlim=c(-5,(abs(start-end)+2)), ylim=c(0,20), xaxt="n", xlab="")#
+#
+for (k in 15:1){#
+#
+#plot nucleotide composition#
+padd <- cbind(0, list[[k]][start:end,2:5])#
+#
+for (i in 1:nrow(padd)){#
+for (m in 2:5){#
+rect(i-0.5, sum(padd[i,1:m-1])+3+1*k, i+0.5, sum(padd[i, 1:m])+3+1*k, col=plotcol[m-1])}#
+}#
+text(-0.5, 3.5+1*k, gsub(".._(.*)_folmer.*", "\\1", listnames[k]), pos=2)#
+#
+}#
+#
+# below berechnen#
+meep <- start:end#
+#
+for (h in 1:nrow(padd)){#
+#
+temp <- list[[s]][meep[h], 2:5]#
+for (s in 2:15){#
+temp <- rbind(temp+list[[s]][meep[h], 2:5])#
+}#
+p <- temp / sum(temp)#
+#
+#make plot#
+#
+padd <- cbind(0, p*2)#
+for (m in 2:5){#
+rect(h-0.5, sum(padd[1:m-1])+1.75, h+0.5, sum(padd[1:m])+1.75, col=plotcol[m-1])}#
+#
+rect(h-0.5, 0, h+0.5, 0.6, col= plotcol[which.max(p)], border=NA)#
+text(h, 0.3, names(as.data.frame(p))[which.max(p)], cex=0.75)#
+#
+# plot nucleotide cov boxes#
+rect(h-0.5, 0.8, h+0.5, 1.4, col= covcol[length(which(p>threshold))], border=NA)#
+}#
+#
+axis(side=1, at=seq(0, abs(start-end), 10), lab=seq(start-1, end, 10), las=2)#
+axis(side=1, at=seq(5, 658, 10), lab=F)#
+#
+}#
+pdf("primerplot_complete.pdf", height=6, width=100)#
+#
+primerplot(1, 658)#
+#
+dev.off()
+# 150504#
+#
+setwd("~/Documents/UNI_und_VORLESUNGEN/11 phd projects/1 meta FINNLAND/1 R scripte/1 Package DegPrime/1 package files/PrimerMiner_v0.08/R")#
+#library("caTools")#
+library("seqinr")#
+#
+# function!!!#
+entropy <- function(fasta, outputplot="myplot.pdf", threshold=0.1, makeplot=T, window=10){#
+{#
+#
+upac <- read.csv(text=c("ID,comment,A,T,C,G,farbe#
+A,Adenine,1,0,0,0,F#
+C,Cytosine,0,0,1,0,F#
+G,Guanine,0,0,0,1,F#
+T,Thymine,0,1,0,0,F#
+R,A or G,0.5,0,0,0.5,T#
+Y,C or T,0,0.5,0.5,0,T#
+S,G or C,0,0,0.5,0.5,T#
+W,A or T,0.5,0.5,0,0,T#
+K,G or T,0,0.5,0,0.5,T#
+M,A or C,0.5,0,0.5,0,T#
+B,C or G or T,0,0.3,0.3,0.3,T#
+D,A or G or T,0.3,0.3,0,0.3,T#
+H,A or C or T,0.3,0.3,0.3,0,T#
+V,A or C or G,0.3,0,0.3,0.3,T#
+N,any base,0,0,0,0,T#
+-,gap,0,0,0,0,T"), stringsAsFactors=F)#
+#
+alignment <- read.fasta(fasta, seqonly=T)#
+alignment <- strsplit(unlist(alignment), split="")#
+alignment <- matrix(unlist(alignment), nrow=length(alignment), ncol=length(alignment[[1]]), byrow=T)#
+}#
+meep <- c()#
+for (i in 1:ncol(alignment)){#
+data <- alignment[,i]#
+#
+temp <- match(data, upac$ID)#
+colu <- upac[temp, 3:6]#
+#
+hey <- colSums(colu)#
+#
+# shanon entropy#
+p <- hey / sum(hey)#
+meep <- rbind(meep, c("ID"=i, p, "entropy"=-sum(log2(p) * p, na.rm=T), "nucleotides"=length(which(p>threshold))))#
+}#
+#
+return(meep)#
+}#
+files <- list.files("~/Documents/UNI_und_VORLESUNGEN/11 phd projects/1 Meta SCHMALNAU/1 COi contigs", full.names=T)#
+#
+temp <- entropy(files[1], "new.pdf")#
+# get files!#
+#
+filenames <- list.files("~/Documents/UNI_und_VORLESUNGEN/11 phd projects/1 Meta SCHMALNAU/1 COi contigs", full.names=F)#
+filenames <- gsub(".fasta", ".pdf", filenames)#
+filenames <- paste("entro_v9_plots/", filenames, sep="")#
+# Primers in one plot!!#
+covcol <- c("Green", "Orange", "Red", "Black")#
+listnames <- list.files("~/Documents/UNI_und_VORLESUNGEN/11 phd projects/1 Meta SCHMALNAU/1 COi contigs", full.names=F)#
+#
+list <- c()#
+for (x in 1:15){#
+list[[x]] <- entropy(files[x], filenames[x], makeplot=F)#
+}#
+plotcol <- c("Red", "Green", "Blue", "Yellow")#
+primerplot <- function(start=1, end=20, rw=F, threshold=0.1){#
+#
+plot(-3, xlim=c(-5,(abs(start-end)+2)), ylim=c(0,20), xaxt="n", xlab="")#
+#
+for (k in 15:1){#
+#
+#plot nucleotide composition#
+padd <- cbind(0, list[[k]][start:end,2:5])#
+#
+for (i in 1:nrow(padd)){#
+for (m in 2:5){#
+rect(i-0.5, sum(padd[i,1:m-1])+3+1*k, i+0.5, sum(padd[i, 1:m])+3+1*k, col=plotcol[m-1])}#
+}#
+text(-0.5, 3.5+1*k, gsub(".._(.*)_folmer.*", "\\1", listnames[k]), pos=2)#
+#
+}#
+#
+# below berechnen#
+meep <- start:end#
+#
+for (h in 1:nrow(padd)){#
+#
+temp <- list[[s]][meep[h], 2:5]#
+for (s in 2:15){#
+temp <- rbind(temp+list[[s]][meep[h], 2:5])#
+}#
+p <- temp / sum(temp)#
+#
+#make plot#
+#
+padd <- cbind(0, p*2)#
+for (m in 2:5){#
+rect(h-0.5, sum(padd[1:m-1])+1.75, h+0.5, sum(padd[1:m])+1.75, col=plotcol[m-1])}#
+#
+rect(h-0.5, 0, h+0.5, 0.6, col= plotcol[which.max(p)], border=NA)#
+text(h, 0.3, names(as.data.frame(p))[which.max(p)], cex=0.75)#
+#
+# plot nucleotide cov boxes#
+rect(h-0.5, 0.8, h+0.5, 1.4, col= covcol[length(which(p>threshold))], border=NA)#
+}#
+#
+axis(side=1, at=seq(0, abs(start-end), 10), lab=seq(start-1, end, 10), las=2)#
+axis(side=1, at=seq(5, 658, 10), lab=F)#
+#
+}#
+pdf("primerplot_complete.pdf", height=6, width=100)#
+#
+primerplot(1, 658)#
+#
+dev.off()
+s <- 1
+# 150504#
+#
+setwd("~/Documents/UNI_und_VORLESUNGEN/11 phd projects/1 meta FINNLAND/1 R scripte/1 Package DegPrime/1 package files/PrimerMiner_v0.08/R")#
+#library("caTools")#
+library("seqinr")#
+#
+# function!!!#
+entropy <- function(fasta, outputplot="myplot.pdf", threshold=0.1, makeplot=T, window=10){#
+{#
+#
+upac <- read.csv(text=c("ID,comment,A,T,C,G,farbe#
+A,Adenine,1,0,0,0,F#
+C,Cytosine,0,0,1,0,F#
+G,Guanine,0,0,0,1,F#
+T,Thymine,0,1,0,0,F#
+R,A or G,0.5,0,0,0.5,T#
+Y,C or T,0,0.5,0.5,0,T#
+S,G or C,0,0,0.5,0.5,T#
+W,A or T,0.5,0.5,0,0,T#
+K,G or T,0,0.5,0,0.5,T#
+M,A or C,0.5,0,0.5,0,T#
+B,C or G or T,0,0.3,0.3,0.3,T#
+D,A or G or T,0.3,0.3,0,0.3,T#
+H,A or C or T,0.3,0.3,0.3,0,T#
+V,A or C or G,0.3,0,0.3,0.3,T#
+N,any base,0,0,0,0,T#
+-,gap,0,0,0,0,T"), stringsAsFactors=F)#
+#
+alignment <- read.fasta(fasta, seqonly=T)#
+alignment <- strsplit(unlist(alignment), split="")#
+alignment <- matrix(unlist(alignment), nrow=length(alignment), ncol=length(alignment[[1]]), byrow=T)#
+}#
+meep <- c()#
+for (i in 1:ncol(alignment)){#
+data <- alignment[,i]#
+#
+temp <- match(data, upac$ID)#
+colu <- upac[temp, 3:6]#
+#
+hey <- colSums(colu)#
+#
+# shanon entropy#
+p <- hey / sum(hey)#
+meep <- rbind(meep, c("ID"=i, p, "entropy"=-sum(log2(p) * p, na.rm=T), "nucleotides"=length(which(p>threshold))))#
+}#
+#
+return(meep)#
+}#
+files <- list.files("~/Documents/UNI_und_VORLESUNGEN/11 phd projects/1 Meta SCHMALNAU/1 COi contigs", full.names=T)#
+#
+temp <- entropy(files[1], "new.pdf")#
+# get files!#
+#
+filenames <- list.files("~/Documents/UNI_und_VORLESUNGEN/11 phd projects/1 Meta SCHMALNAU/1 COi contigs", full.names=F)#
+filenames <- gsub(".fasta", ".pdf", filenames)#
+filenames <- paste("entro_v9_plots/", filenames, sep="")#
+# Primers in one plot!!#
+covcol <- c("Green", "Orange", "Red", "Black")#
+listnames <- list.files("~/Documents/UNI_und_VORLESUNGEN/11 phd projects/1 Meta SCHMALNAU/1 COi contigs", full.names=F)#
+#
+list <- c()#
+for (x in 1:15){#
+list[[x]] <- entropy(files[x], filenames[x], makeplot=F)#
+}#
+plotcol <- c("Red", "Green", "Blue", "Yellow")#
+primerplot <- function(start=1, end=20, rw=F, threshold=0.1){#
+#
+plot(-3, xlim=c(-5,(abs(start-end)+2)), ylim=c(0,20), xaxt="n", xlab="")#
+#
+for (k in 15:1){#
+#
+#plot nucleotide composition#
+padd <- cbind(0, list[[k]][start:end,2:5])#
+#
+for (i in 1:nrow(padd)){#
+for (m in 2:5){#
+rect(i-0.5, sum(padd[i,1:m-1])+3+1*k, i+0.5, sum(padd[i, 1:m])+3+1*k, col=plotcol[m-1])}#
+}#
+text(-0.5, 3.5+1*k, gsub(".._(.*)_folmer.*", "\\1", listnames[k]), pos=2)#
+#
+}#
+#
+# below berechnen#
+meep <- start:end#
+#
+for (h in 1:nrow(padd)){#
+s <- 1#
+temp <- list[[s]][meep[h], 2:5]#
+for (s in 2:15){#
+temp <- rbind(temp+list[[s]][meep[h], 2:5])#
+}#
+p <- temp / sum(temp)#
+#
+#make plot#
+#
+padd <- cbind(0, p*2)#
+for (m in 2:5){#
+rect(h-0.5, sum(padd[1:m-1])+1.75, h+0.5, sum(padd[1:m])+1.75, col=plotcol[m-1])}#
+#
+rect(h-0.5, 0, h+0.5, 0.6, col= plotcol[which.max(p)], border=NA)#
+text(h, 0.3, names(as.data.frame(p))[which.max(p)], cex=0.75)#
+#
+# plot nucleotide cov boxes#
+rect(h-0.5, 0.8, h+0.5, 1.4, col= covcol[length(which(p>threshold))], border=NA)#
+}#
+#
+axis(side=1, at=seq(0, abs(start-end), 10), lab=seq(start-1, end, 10), las=2)#
+axis(side=1, at=seq(5, 658, 10), lab=F)#
+#
+}#
+pdf("primerplot_complete.pdf", height=6, width=100)#
+#
+primerplot(1, 658)#
+#
+dev.off()
+primerplot(1, 20)
+primerplot(1, 21)
+if (start==NULL){start <- 1}
+start=NULL
+if (start==NULL){start <- 1}
+start==NULL
+if (is.null(start)){start <- 1}
+start
+listnames <- list.files("~/Documents/UNI_und_VORLESUNGEN/11 phd projects/1 Meta SCHMALNAU/1 COi contigs", full.names=F)
+x <- 1
+list[[x]] <- entropy(listnames[x])
+listnames <- list.files("~/Documents/UNI_und_VORLESUNGEN/11 phd projects/1 Meta SCHMALNAU/1 COi contigs", full.names=T)
+list[[x]] <- entropy(listnames[x])
+list
+list[1]
+nrow(list[[1]])
+entropy <- function(fasta){#
+{#
+#
+upac <- read.csv(text=c("ID,comment,A,T,C,G,farbe#
+A,Adenine,1,0,0,0,F#
+C,Cytosine,0,0,1,0,F#
+G,Guanine,0,0,0,1,F#
+T,Thymine,0,1,0,0,F#
+R,A or G,0.5,0,0,0.5,T#
+Y,C or T,0,0.5,0.5,0,T#
+S,G or C,0,0,0.5,0.5,T#
+W,A or T,0.5,0.5,0,0,T#
+K,G or T,0,0.5,0,0.5,T#
+M,A or C,0.5,0,0.5,0,T#
+B,C or G or T,0,0.3,0.3,0.3,T#
+D,A or G or T,0.3,0.3,0,0.3,T#
+H,A or C or T,0.3,0.3,0.3,0,T#
+V,A or C or G,0.3,0,0.3,0.3,T#
+N,any base,0,0,0,0,T#
+-,gap,0,0,0,0,T"), stringsAsFactors=F)#
+#
+alignment <- read.fasta(fasta, seqonly=T)#
+alignment <- strsplit(unlist(alignment), split="")#
+alignment <- matrix(unlist(alignment), nrow=length(alignment), ncol=length(alignment[[1]]), byrow=T)#
+}#
+meep <- c()#
+for (i in 1:ncol(alignment)){#
+data <- alignment[,i]#
+#
+temp <- match(data, upac$ID)#
+colu <- upac[temp, 3:6]#
+#
+hey <- colSums(colu)#
+#
+# shanon entropy#
+p <- hey / sum(hey)#
+meep <- rbind(meep, c("ID"=i, p, "entropy"=-sum(log2(p) * p, na.rm=T), "nucleotides"=length(which(p>threshold))))#
+}#
+#
+return(meep)#
+}
+listnames
+sub(".*/(.*)", "\\1", Order_names)
+Order_names=NULL
+files
+sub(".*/(.*)", "\\1", files)
+if (is.null(Order_names)){Order_names <- sub(".*/(.*)", "\\1", files)}
+sub(".*/(.*)", "\\1", files)
+files <- sub(".*/(.*)", "\\1", files)
+sub(".*/(.*)", "\\1", files)
+files <- list.files("~/Documents/UNI_und_VORLESUNGEN/11 phd projects/1 Meta SCHMALNAU/1 COi contigs", full.names=T)
+# Primers in one plot!!#
+covcol <- c("Green", "Orange", "Red", "Black")#
+listnames <- list.files("~/Documents/UNI_und_VORLESUNGEN/11 phd projects/1 Meta SCHMALNAU/1 COi contigs", full.names=T)#
+x <- 1
+list[[x]] <- entropy(listnames[x])
+x <- 1
+list <- c()
+list[[x]] <- entropy(files[x])
+entropy <- function(fasta){#
+{#
+#
+upac <- read.csv(text=c("ID,comment,A,T,C,G,farbe#
+A,Adenine,1,0,0,0,F#
+C,Cytosine,0,0,1,0,F#
+G,Guanine,0,0,0,1,F#
+T,Thymine,0,1,0,0,F#
+R,A or G,0.5,0,0,0.5,T#
+Y,C or T,0,0.5,0.5,0,T#
+S,G or C,0,0,0.5,0.5,T#
+W,A or T,0.5,0.5,0,0,T#
+K,G or T,0,0.5,0,0.5,T#
+M,A or C,0.5,0,0.5,0,T#
+B,C or G or T,0,0.3,0.3,0.3,T#
+D,A or G or T,0.3,0.3,0,0.3,T#
+H,A or C or T,0.3,0.3,0.3,0,T#
+V,A or C or G,0.3,0,0.3,0.3,T#
+N,any base,0,0,0,0,T#
+-,gap,0,0,0,0,T"), stringsAsFactors=F)#
+#
+alignment <- read.fasta(fasta, seqonly=T)#
+alignment <- strsplit(unlist(alignment), split="")#
+alignment <- matrix(unlist(alignment), nrow=length(alignment), ncol=length(alignment[[1]]), byrow=T)#
+}#
+meep <- c()#
+for (i in 1:ncol(alignment)){#
+data <- alignment[,i]#
+#
+temp <- match(data, upac$ID)#
+colu <- upac[temp, 3:6]#
+#
+hey <- colSums(colu)#
+#
+# shanon entropy#
+p <- hey / sum(hey)#
+meep <- rbind(meep, c("ID"=i, p))#
+}#
+#
+return(meep)#
+}
+list[[x]] <- entropy(files[x])
+list
+Order_names
+#library("seqinr")#
+#
+entropy <- function(fasta){#
+{#
+#
+upac <- read.csv(text=c("ID,comment,A,T,C,G,farbe#
+A,Adenine,1,0,0,0,F#
+C,Cytosine,0,0,1,0,F#
+G,Guanine,0,0,0,1,F#
+T,Thymine,0,1,0,0,F#
+R,A or G,0.5,0,0,0.5,T#
+Y,C or T,0,0.5,0.5,0,T#
+S,G or C,0,0,0.5,0.5,T#
+W,A or T,0.5,0.5,0,0,T#
+K,G or T,0,0.5,0,0.5,T#
+M,A or C,0.5,0,0.5,0,T#
+B,C or G or T,0,0.3,0.3,0.3,T#
+D,A or G or T,0.3,0.3,0,0.3,T#
+H,A or C or T,0.3,0.3,0.3,0,T#
+V,A or C or G,0.3,0,0.3,0.3,T#
+N,any base,0,0,0,0,T#
+-,gap,0,0,0,0,T"), stringsAsFactors=F)#
+#
+alignment <- read.fasta(fasta, seqonly=T)#
+alignment <- strsplit(unlist(alignment), split="")#
+alignment <- matrix(unlist(alignment), nrow=length(alignment), ncol=length(alignment[[1]]), byrow=T)#
+}#
+meep <- c()#
+for (i in 1:ncol(alignment)){#
+data <- alignment[,i]#
+#
+temp <- match(data, upac$ID)#
+colu <- upac[temp, 3:6]#
+#
+hey <- colSums(colu)#
+#
+# shanon entropy#
+p <- hey / sum(hey)#
+meep <- rbind(meep, c("ID"=i, p))#
+}#
+#
+return(meep)#
+}#
+files <- list.files("~/Documents/UNI_und_VORLESUNGEN/11 phd projects/1 Meta SCHMALNAU/1 COi contigs", full.names=T)#
+primerplot <- function(files=c("List of files"), Order_names=NULL, start=NULL, end=NULL, rw=F, threshold=0.1){#
+# Primers in one plot!!#
+covcol <- c("Green", "Orange", "Red", "Black")#
+#
+x <- 1#
+list <- c()#
+for (x in 1:15){#
+list[[x]] <- entropy(files[x])#
+}#
+#
+plotcol <- c("Red", "Green", "Blue", "Yellow")#
+if (is.null(Order_names)){Order_names <- sub(".*/(.*)", "\\1", files)}#
+if (is.null(start)){start <- 1}#
+if (is.null(end)){end <- nrow(list[[1]])}#
+plot(-3, xlim=c(-5,(abs(start-end)+2)), ylim=c(0,20), xaxt="n", xlab="")#
+#
+for (k in 15:1){#
+#
+#plot nucleotide composition#
+padd <- cbind(0, list[[k]][start:end,2:5])#
+#
+for (i in 1:nrow(padd)){#
+for (m in 2:5){#
+rect(i-0.5, sum(padd[i,1:m-1])+3+1*k, i+0.5, sum(padd[i, 1:m])+3+1*k, col=plotcol[m-1])}#
+}#
+text(-0.5, 3.5+1*k, Order_names, pos=2)#
+#
+}#
+#
+# below berechnen#
+meep <- start:end#
+#
+for (h in 1:nrow(padd)){#
+s <- 1#
+temp <- list[[s]][meep[h], 2:5]#
+for (s in 2:15){#
+temp <- rbind(temp+list[[s]][meep[h], 2:5])#
+}#
+p <- temp / sum(temp)#
+#
+#make plot#
+#
+padd <- cbind(0, p*2)#
+for (m in 2:5){#
+rect(h-0.5, sum(padd[1:m-1])+1.75, h+0.5, sum(padd[1:m])+1.75, col=plotcol[m-1])}#
+#
+rect(h-0.5, 0, h+0.5, 0.6, col= plotcol[which.max(p)], border=NA)#
+text(h, 0.3, names(as.data.frame(p))[which.max(p)], cex=0.75)#
+#
+# plot nucleotide cov boxes#
+rect(h-0.5, 0.8, h+0.5, 1.4, col= covcol[length(which(p>threshold))], border=NA)#
+}#
+#
+axis(side=1, at=seq(0, abs(start-end), 10), lab=seq(start-1, end, 10), las=2)#
+axis(side=1, at=seq(5, 658, 10), lab=F)#
+#
+}
+primerplot(1, 21)
+files <- list.files("~/Documents/UNI_und_VORLESUNGEN/11 phd projects/1 Meta SCHMALNAU/1 COi contigs", full.names=T)
+primerplot(1, 21)
+primerplot(1, 658)
+files <- list.files("~/Documents/UNI_und_VORLESUNGEN/11 phd projects/1 Meta SCHMALNAU/1 COi contigs", full.names=T)
+files
+primerplot <- function(files=c("List of files"), Order_names=NULL, start=NULL, end=NULL, rw=F, threshold=0.1){#
+# Primers in one plot!!#
+covcol <- c("Green", "Orange", "Red", "Black")#
+#
+x <- 1#
+list <- c()#
+for (x in 1:15){#
+list[[x]] <- entropy(files[x])#
+}#
+#
+plotcol <- c("Red", "Green", "Blue", "Yellow")#
+if (is.null(Order_names)){Order_names <- sub(".*/(.*)", "\\1", files)}#
+if (is.null(start)){start <- 1}#
+if (is.null(end)){end <- nrow(list[[1]])}#
+plot(-3, xlim=c(-5,(abs(start-end)+2)), ylim=c(0,20), xaxt="n", xlab="")#
+#
+for (k in 15:1){#
+#
+#plot nucleotide composition#
+padd <- cbind(0, list[[k]][start:end,2:5])#
+#
+for (i in 1:nrow(padd)){#
+for (m in 2:5){#
+rect(i-0.5, sum(padd[i,1:m-1])+3+1*k, i+0.5, sum(padd[i, 1:m])+3+1*k, col=plotcol[m-1])}#
+}#
+text(-0.5, 3.5+1*k, Order_names, pos=2)#
+#
+}#
+#
+# below berechnen#
+meep <- start:end#
+#
+for (h in 1:nrow(padd)){#
+s <- 1#
+temp <- list[[s]][meep[h], 2:5]#
+for (s in 2:15){#
+temp <- rbind(temp+list[[s]][meep[h], 2:5])#
+}#
+p <- temp / sum(temp)#
+#
+#make plot#
+#
+padd <- cbind(0, p*2)#
+for (m in 2:5){#
+rect(h-0.5, sum(padd[1:m-1])+1.75, h+0.5, sum(padd[1:m])+1.75, col=plotcol[m-1])}#
+#
+rect(h-0.5, 0, h+0.5, 0.6, col= plotcol[which.max(p)], border=NA)#
+text(h, 0.3, names(as.data.frame(p))[which.max(p)], cex=0.75)#
+#
+# plot nucleotide cov boxes#
+rect(h-0.5, 0.8, h+0.5, 1.4, col= covcol[length(which(p>threshold))], border=NA)#
+}#
+#
+axis(side=1, at=seq(0, abs(start-end), 10), lab=seq(start-1, end, 10), las=2)#
+axis(side=1, at=seq(5, 658, 10), lab=F)#
+#
+}
+primerplot(files)
+primerplot(files, end=20)
+# 150504#
+#
+setwd("~/Documents/UNI_und_VORLESUNGEN/11 phd projects/1 meta FINNLAND/1 R scripte/1 Package DegPrime/1 package files/PrimerMiner_v0.08/R")#
+#library("seqinr")#
+#
+entropy <- function(fasta){#
+{#
+#
+upac <- read.csv(text=c("ID,comment,A,T,C,G,farbe#
+A,Adenine,1,0,0,0,F#
+C,Cytosine,0,0,1,0,F#
+G,Guanine,0,0,0,1,F#
+T,Thymine,0,1,0,0,F#
+R,A or G,0.5,0,0,0.5,T#
+Y,C or T,0,0.5,0.5,0,T#
+S,G or C,0,0,0.5,0.5,T#
+W,A or T,0.5,0.5,0,0,T#
+K,G or T,0,0.5,0,0.5,T#
+M,A or C,0.5,0,0.5,0,T#
+B,C or G or T,0,0.3,0.3,0.3,T#
+D,A or G or T,0.3,0.3,0,0.3,T#
+H,A or C or T,0.3,0.3,0.3,0,T#
+V,A or C or G,0.3,0,0.3,0.3,T#
+N,any base,0,0,0,0,T#
+-,gap,0,0,0,0,T"), stringsAsFactors=F)#
+#
+alignment <- read.fasta(fasta, seqonly=T)#
+alignment <- strsplit(unlist(alignment), split="")#
+alignment <- matrix(unlist(alignment), nrow=length(alignment), ncol=length(alignment[[1]]), byrow=T)#
+}#
+meep <- c()#
+for (i in 1:ncol(alignment)){#
+data <- alignment[,i]#
+#
+temp <- match(data, upac$ID)#
+colu <- upac[temp, 3:6]#
+#
+hey <- colSums(colu)#
+#
+# shanon entropy#
+p <- hey / sum(hey)#
+meep <- rbind(meep, c("ID"=i, p))#
+}#
+#
+return(meep)#
+}#
+files <- list.files("~/Documents/UNI_und_VORLESUNGEN/11 phd projects/1 Meta SCHMALNAU/1 COi contigs", full.names=T)#
+primerplot <- function(files=c("List of files"), Order_names=NULL, start=NULL, end=NULL, rw=F, threshold=0.1){#
+# Primers in one plot!!#
+covcol <- c("Green", "Orange", "Red", "Black")#
+#
+x <- 1#
+list <- c()#
+for (x in 1:15){#
+list[[x]] <- entropy(files[x])#
+}#
+#
+plotcol <- c("Red", "Green", "Blue", "Yellow")#
+if (is.null(Order_names)){Order_names <- sub(".*/(.*)", "\\1", files)}#
+if (is.null(start)){start <- 1}#
+if (is.null(end)){end <- nrow(list[[1]])}#
+plot(-3, xlim=c(-5,(abs(start-end)+2)), ylim=c(0,20), xaxt="n", xlab="")#
+#
+for (k in 15:1){#
+#
+#plot nucleotide composition#
+padd <- cbind(0, list[[k]][start:end,2:5])#
+#
+for (i in 1:nrow(padd)){#
+for (m in 2:5){#
+rect(i-0.5, sum(padd[i,1:m-1])+3+1*k, i+0.5, sum(padd[i, 1:m])+3+1*k, col=plotcol[m-1])}#
+}#
+text(-0.5, 3.5+1*k, Order_names[k], pos=2)#
+#
+}#
+#
+# below berechnen#
+meep <- start:end#
+#
+for (h in 1:nrow(padd)){#
+s <- 1#
+temp <- list[[s]][meep[h], 2:5]#
+for (s in 2:15){#
+temp <- rbind(temp+list[[s]][meep[h], 2:5])#
+}#
+p <- temp / sum(temp)#
+#
+#make plot#
+#
+padd <- cbind(0, p*2)#
+for (m in 2:5){#
+rect(h-0.5, sum(padd[1:m-1])+1.75, h+0.5, sum(padd[1:m])+1.75, col=plotcol[m-1])}#
+#
+rect(h-0.5, 0, h+0.5, 0.6, col= plotcol[which.max(p)], border=NA)#
+text(h, 0.3, names(as.data.frame(p))[which.max(p)], cex=0.75)#
+#
+# plot nucleotide cov boxes#
+rect(h-0.5, 0.8, h+0.5, 1.4, col= covcol[length(which(p>threshold))], border=NA)#
+}#
+#
+axis(side=1, at=seq(0, abs(start-end), 10), lab=seq(start-1, end, 10), las=2)#
+axis(side=1, at=seq(5, 658, 10), lab=F)#
+#
+}#
+pdf("primerplot_complete.pdf", height=6, width=100)#
+#
+primerplot(1, 658)#
+#
+dev.off()#
+primerplot(files, end=20)
+# 150504#
+#
+setwd("~/Documents/UNI_und_VORLESUNGEN/11 phd projects/1 meta FINNLAND/1 R scripte/1 Package DegPrime/1 package files/PrimerMiner_v0.08/R")#
+#library("seqinr")#
+#
+entropy <- function(fasta){#
+{#
+#
+upac <- read.csv(text=c("ID,comment,A,T,C,G,farbe#
+A,Adenine,1,0,0,0,F#
+C,Cytosine,0,0,1,0,F#
+G,Guanine,0,0,0,1,F#
+T,Thymine,0,1,0,0,F#
+R,A or G,0.5,0,0,0.5,T#
+Y,C or T,0,0.5,0.5,0,T#
+S,G or C,0,0,0.5,0.5,T#
+W,A or T,0.5,0.5,0,0,T#
+K,G or T,0,0.5,0,0.5,T#
+M,A or C,0.5,0,0.5,0,T#
+B,C or G or T,0,0.3,0.3,0.3,T#
+D,A or G or T,0.3,0.3,0,0.3,T#
+H,A or C or T,0.3,0.3,0.3,0,T#
+V,A or C or G,0.3,0,0.3,0.3,T#
+N,any base,0,0,0,0,T#
+-,gap,0,0,0,0,T"), stringsAsFactors=F)#
+#
+alignment <- read.fasta(fasta, seqonly=T)#
+alignment <- strsplit(unlist(alignment), split="")#
+alignment <- matrix(unlist(alignment), nrow=length(alignment), ncol=length(alignment[[1]]), byrow=T)#
+}#
+meep <- c()#
+for (i in 1:ncol(alignment)){#
+data <- alignment[,i]#
+#
+temp <- match(data, upac$ID)#
+colu <- upac[temp, 3:6]#
+#
+hey <- colSums(colu)#
+#
+# shanon entropy#
+p <- hey / sum(hey)#
+meep <- rbind(meep, c("ID"=i, p))#
+}#
+#
+return(meep)#
+}#
+files <- list.files("~/Documents/UNI_und_VORLESUNGEN/11 phd projects/1 Meta SCHMALNAU/1 COi contigs", full.names=T)#
+primerplot <- function(files=c("List of files"), Order_names=NULL, start=NULL, end=NULL, threshold=0.1){#
+# Primers in one plot!!#
+covcol <- c("Green", "Orange", "Red", "Black")#
+#
+x <- 1#
+list <- c()#
+for (x in 1:15){#
+list[[x]] <- entropy(files[x])#
+}#
+#
+plotcol <- c("Red", "Green", "Blue", "Yellow")#
+if (is.null(Order_names)){Order_names <- sub(".*/(.*)", "\\1", files)}#
+if (is.null(start)){start <- 1}#
+if (is.null(end)){end <- nrow(list[[1]])}#
+plot(-3, xlim=c(-5,(abs(start-end)+2)), ylim=c(0,20), xaxt="n", xlab="")#
+#
+for (k in 15:1){#
+#
+#plot nucleotide composition#
+padd <- cbind(0, list[[k]][start:end,2:5])#
+#
+for (i in 1:nrow(padd)){#
+for (m in 2:5){#
+rect(i-0.5, sum(padd[i,1:m-1])+3+1*k, i+0.5, sum(padd[i, 1:m])+3+1*k, col=plotcol[m-1])}#
+}#
+text(-0.5, 3.5+1*k, Order_names[k], pos=2)#
+#
+}#
+#
+# below berechnen#
+meep <- start:end#
+#
+for (h in 1:nrow(padd)){#
+s <- 1#
+temp <- list[[s]][meep[h], 2:5]#
+for (s in 2:15){#
+temp <- rbind(temp+list[[s]][meep[h], 2:5])#
+}#
+p <- temp / sum(temp)#
+#
+#make plot#
+#
+padd <- cbind(0, p*2)#
+for (m in 2:5){#
+rect(h-0.5, sum(padd[1:m-1])+1.75, h+0.5, sum(padd[1:m])+1.75, col=plotcol[m-1])}#
+#
+rect(h-0.5, 0, h+0.5, 0.6, col= plotcol[which.max(p)], border=NA)#
+text(h, 0.3, names(as.data.frame(p))[which.max(p)], cex=0.75)#
+#
+# plot nucleotide cov boxes#
+rect(h-0.5, 0.8, h+0.5, 1.4, col= covcol[length(which(p>threshold))], border=NA)#
+}#
+#
+axis(side=1, at=seq(0, abs(start-end), 10), lab=seq(start-1, end, 10), las=2)#
+axis(side=1, at=seq(5, 658, 10), lab=F)#
+#
+}#
+pdf("primerplot_complete.pdf", height=6, width=100)#
+#
+primerplot(files)#
+#
+dev.off()#
+primerplot(files, end=20)
+primerplot <- function(files=c("List of files"), Order_names=NULL, start=NULL, end=NULL, threshold=0.1){#
+#
+entropy <- function(fasta){#
+{#
+upac <- read.csv(text=c("ID,comment,A,T,C,G,farbe#
+A,Adenine,1,0,0,0,F#
+C,Cytosine,0,0,1,0,F#
+G,Guanine,0,0,0,1,F#
+T,Thymine,0,1,0,0,F#
+R,A or G,0.5,0,0,0.5,T#
+Y,C or T,0,0.5,0.5,0,T#
+S,G or C,0,0,0.5,0.5,T#
+W,A or T,0.5,0.5,0,0,T#
+K,G or T,0,0.5,0,0.5,T#
+M,A or C,0.5,0,0.5,0,T#
+B,C or G or T,0,0.3,0.3,0.3,T#
+D,A or G or T,0.3,0.3,0,0.3,T#
+H,A or C or T,0.3,0.3,0.3,0,T#
+V,A or C or G,0.3,0,0.3,0.3,T#
+N,any base,0,0,0,0,T#
+-,gap,0,0,0,0,T"), stringsAsFactors=F)#
+#
+alignment <- read.fasta(fasta, seqonly=T)#
+alignment <- strsplit(unlist(alignment), split="")#
+alignment <- matrix(unlist(alignment), nrow=length(alignment), ncol=length(alignment[[1]]), byrow=T)#
+#
+}#
+#
+meep <- c()#
+for (i in 1:ncol(alignment)){#
+data <- alignment[,i]#
+#
+temp <- match(data, upac$ID)#
+colu <- upac[temp, 3:6]#
+#
+hey <- colSums(colu)#
+#
+# shanon entropy#
+p <- hey / sum(hey)#
+meep <- rbind(meep, c("ID"=i, p))#
+#
+}#
+#
+return(meep)#
+}#
+# Primers in one plot!!#
+covcol <- c("Green", "Orange", "Red", "Black")#
+#
+x <- 1#
+list <- c()#
+for (x in 1:15){#
+list[[x]] <- entropy(files[x])#
+}#
+#
+plotcol <- c("Red", "Green", "Blue", "Yellow")#
+if (is.null(Order_names)){Order_names <- sub(".*/(.*)", "\\1", files)}#
+if (is.null(start)){start <- 1}#
+if (is.null(end)){end <- nrow(list[[1]])}#
+plot(-3, xlim=c(-5,(abs(start-end)+2)), ylim=c(0,20), xaxt="n", xlab="")#
+#
+for (k in 15:1){#
+#
+#plot nucleotide composition#
+padd <- cbind(0, list[[k]][start:end,2:5])#
+#
+for (i in 1:nrow(padd)){#
+for (m in 2:5){#
+rect(i-0.5, sum(padd[i,1:m-1])+3+1*k, i+0.5, sum(padd[i, 1:m])+3+1*k, col=plotcol[m-1])}#
+}#
+text(-0.5, 3.5+1*k, Order_names[k], pos=2)#
+#
+}#
+#
+# below berechnen#
+meep <- start:end#
+#
+for (h in 1:nrow(padd)){#
+s <- 1#
+temp <- list[[s]][meep[h], 2:5]#
+for (s in 2:15){#
+temp <- rbind(temp+list[[s]][meep[h], 2:5])#
+}#
+p <- temp / sum(temp)#
+#
+#make plot#
+#
+padd <- cbind(0, p*2)#
+for (m in 2:5){#
+rect(h-0.5, sum(padd[1:m-1])+1.75, h+0.5, sum(padd[1:m])+1.75, col=plotcol[m-1])}#
+#
+rect(h-0.5, 0, h+0.5, 0.6, col= plotcol[which.max(p)], border=NA)#
+text(h, 0.3, names(as.data.frame(p))[which.max(p)], cex=0.75)#
+#
+# plot nucleotide cov boxes#
+rect(h-0.5, 0.8, h+0.5, 1.4, col= covcol[length(which(p>threshold))], border=NA)#
+}#
+#
+axis(side=1, at=seq(0, abs(start-end), 10), lab=seq(start-1, end, 10), las=2)#
+axis(side=1, at=seq(5, 658, 10), lab=F)#
+#
+}
+listFiles(~/Documents/UNI_und_VORLESUNGEN/11 phd projects/1 Meta SCHMALNAU/1 COi contigs)
+listFiles("~/Documents/UNI_und_VORLESUNGEN/11 phd projects/1 Meta SCHMALNAU/1 COi contigs")
+listfiles("~/Documents/UNI_und_VORLESUNGEN/11 phd projects/1 Meta SCHMALNAU/1 COi contigs")
+list.files("~/Documents/UNI_und_VORLESUNGEN/11 phd projects/1 Meta SCHMALNAU/1 COi contigs")
+list.files("~/Documents/UNI_und_VORLESUNGEN/11 phd projects/1 Meta SCHMALNAU/1 COi contigs", full.names=T)
+t(list.files("~/Documents/UNI_und_VORLESUNGEN/11 phd projects/1 Meta SCHMALNAU/1 COi contigs", full.names=T))
+(list.files("~/Documents/UNI_und_VORLESUNGEN/11 phd projects/1 Meta SCHMALNAU/1 COi contigs", full.names=T))[15:1]
+(list.files("~/Documents/UNI_und_VORLESUNGEN/11 phd projects/1 Meta SCHMALNAU/1 COi contigs", full.names=T))
+primerplot(c(list.files("~/Documents/UNI_und_VORLESUNGEN/11 phd projects/1 Meta SCHMALNAU/1 COi contigs", full.names=T))[15:1])
+library("seqinr")
+primerplot(c(list.files("~/Documents/UNI_und_VORLESUNGEN/11 phd projects/1 Meta SCHMALNAU/1 COi contigs", full.names=T))[15:1])
+plot_alignments <- function(files=c("List of files"), Order_names=NULL, start=NULL, end=NULL, threshold=0.1){#
+#
+entropy <- function(fasta){#
+{#
+upac <- read.csv(text=c("ID,comment,A,T,C,G,farbe#
+A,Adenine,1,0,0,0,F#
+C,Cytosine,0,0,1,0,F#
+G,Guanine,0,0,0,1,F#
+T,Thymine,0,1,0,0,F#
+R,A or G,0.5,0,0,0.5,T#
+Y,C or T,0,0.5,0.5,0,T#
+S,G or C,0,0,0.5,0.5,T#
+W,A or T,0.5,0.5,0,0,T#
+K,G or T,0,0.5,0,0.5,T#
+M,A or C,0.5,0,0.5,0,T#
+B,C or G or T,0,0.3,0.3,0.3,T#
+D,A or G or T,0.3,0.3,0,0.3,T#
+H,A or C or T,0.3,0.3,0.3,0,T#
+V,A or C or G,0.3,0,0.3,0.3,T#
+N,any base,0,0,0,0,T#
+-,gap,0,0,0,0,T"), stringsAsFactors=F)#
+#
+alignment <- read.fasta(fasta, seqonly=T)#
+alignment <- strsplit(unlist(alignment), split="")#
+alignment <- matrix(unlist(alignment), nrow=length(alignment), ncol=length(alignment[[1]]), byrow=T)#
+#
+}#
+#
+meep <- c()#
+for (i in 1:ncol(alignment)){#
+data <- alignment[,i]#
+#
+temp <- match(data, upac$ID)#
+colu <- upac[temp, 3:6]#
+#
+hey <- colSums(colu)#
+#
+# shanon entropy#
+p <- hey / sum(hey)#
+meep <- rbind(meep, c("ID"=i, p))#
+#
+}#
+#
+return(meep)#
+}#
+# Primers in one plot!!#
+covcol <- c("Green", "Orange", "Red", "Black")#
+#
+x <- 1#
+list <- c()#
+for (x in 1:15){#
+list[[x]] <- entropy(files[x])#
+}#
+#
+plotcol <- c("Red", "Green", "Blue", "Yellow")#
+if (is.null(Order_names)){Order_names <- sub(".*/(.*)", "\\1", files)}#
+if (is.null(start)){start <- 1}#
+if (is.null(end)){end <- nrow(list[[1]])}#
+plot(-3, xlim=c(-5,(abs(start-end)+2)), ylim=c(0,20), xaxt="n", xlab="")#
+#
+for (k in 15:1){#
+#
+#plot nucleotide composition#
+padd <- cbind(0, list[[k]][start:end,2:5])#
+#
+for (i in 1:nrow(padd)){#
+for (m in 2:5){#
+rect(i-0.5, sum(padd[i,1:m-1])+3+1*k, i+0.5, sum(padd[i, 1:m])+3+1*k, col=plotcol[m-1])}#
+}#
+text(-0.5, 3.5+1*k, Order_names[k], pos=2)#
+#
+}#
+#
+# below berechnen#
+meep <- start:end#
+#
+for (h in 1:nrow(padd)){#
+s <- 1#
+temp <- list[[s]][meep[h], 2:5]#
+for (s in 2:15){#
+temp <- rbind(temp+list[[s]][meep[h], 2:5])#
+}#
+p <- temp / sum(temp)#
+#
+#make plot#
+#
+padd <- cbind(0, p*2)#
+for (m in 2:5){#
+rect(h-0.5, sum(padd[1:m-1])+1.75, h+0.5, sum(padd[1:m])+1.75, col=plotcol[m-1])}#
+#
+rect(h-0.5, 0, h+0.5, 0.6, col= plotcol[which.max(p)], border=NA)#
+text(h, 0.3, names(as.data.frame(p))[which.max(p)], cex=0.75)#
+#
+# plot nucleotide cov boxes#
+rect(h-0.5, 0.8, h+0.5, 1.4, col= covcol[length(which(p>threshold))], border=NA)#
+}#
+#
+axis(side=1, at=seq(0, abs(start-end), 10), lab=seq(start-1, end, 10), las=2)#
+axis(side=1, at=seq(5, end, 10), lab=F)#
+#
+}
+lift.files()
+list.files()
+prompt(plot_alignments, "plot_alignments.Rd")
+Sys.info()[['sysname']]
+system
+sys
+sys <- Sys.info()[['sysname']]
+sys <- Sys.info()[['sysname']]#
+#
+if(sys=="Darvin")
+{sys <- "MacOX"}
+sys
+path <- paste(system.file(package="PrimerMiner"), "/vsearch-1.1.3-osx-x86_64", sep="")#
+Sys.chmod(path, mode = "0777", use_umask = TRUE)
+path
+vsearchpath <- paste(system.file(package="PrimerMiner"), "vsearch-1.1.3-linux-x86_64", sep="")
+sys <- Sys.info()[['sysname']]#
+#
+if(sys=="Darwin"){sys <- "MacOX"}#
+if(sys=="Windows"){#
+	print("WARNING: If you runing this packaga on a Windows PC, clustering will NOT work! Vsearch is used for OTU clustering and is not available for windows. Please run this package on a Mac or Lindus based system. Sorry for the inconvinience :(")#
+}
+sys
+vsearchpath="integrated"
+if (vsearchpath=="integrated"){#
+if (operating_system=="MacOS"){#
+vsearchpath <- paste(system.file(package="PrimerMiner"), "/vsearch-1.1.3-osx-x86_64", sep="")#
+Sys.chmod(vsearchpath, mode = "0777", use_umask = TRUE)} else {#
+vsearchpath <- paste(system.file(package="PrimerMiner"), "vsearch-1.1.3-linux-x86_64", sep="")#
+Sys.chmod(vsearchpath, mode = "0777", use_umask = TRUE)#
+}#
+}
+operating_system=="MacOS"
+operating_system= "MacOX" # autodetected, can be "MacOS" or "Linux"
+if (vsearchpath=="integrated"){#
+if (operating_system=="MacOS"){#
+vsearchpath <- paste(system.file(package="PrimerMiner"), "/vsearch-1.1.3-osx-x86_64", sep="")#
+Sys.chmod(vsearchpath, mode = "0777", use_umask = TRUE)} else {#
+vsearchpath <- paste(system.file(package="PrimerMiner"), "vsearch-1.1.3-linux-x86_64", sep="")#
+Sys.chmod(vsearchpath, mode = "0777", use_umask = TRUE)#
+}#
+}
+vsearchpath
+if (vsearchpath=="integrated"){#
+if (operating_system=="MacOS"){#
+vsearchpath <- paste(system.file(package="PrimerMiner"), "/vsearch-1.1.3-osx-x86_64", sep="")#
+Sys.chmod(vsearchpath, mode = "0777", use_umask = TRUE)} else {#
+vsearchpath <- paste(system.file(package="PrimerMiner"), "/vsearch-1.1.3-linux-x86_64", sep="")#
+Sys.chmod(vsearchpath, mode = "0777", use_umask = TRUE)#
+}#
+}
+vsearchpath
+operating_system
+batch_config <- function(file){#
+#
+cat(file=file, append=F)#
+sys <- Sys.info()[['sysname']]#
+#
+if(sys=="Darwin"){sys <- "MacOSX"}#
+if(sys=="Windows"){#
+	print("WARNING: If you runing this package on a Windows PC, clustering will NOT work! Vsearch is used for OTU clustering and is not available for windows. Please run this package on a Mac or Linxs based system. Sorry for the inconvinience :(")#
+}#
+# config text#
+text_conf <- c("# Configuration file for batch download",#
+"",#
+"# General settings",#
+"Taxon_table = \"path/to/csv/name_of_table.csv\" # csv containing taxa to download",#
+"Taxon_sep = \",\" # table entries seperated by , ",#
+"Marker = c(\"COi\", \"CO1\", \"COXi\", \"COX1\") # specify target gene",#
+"Download = T # if FALSE, no data will be downloaded ",#
+"Merge_and_Cluster_data = T # if set to FALSE, sequences are not merged / clustered",#
+"Skip_if_complete = T # if the data for a group was completely downloaded + clustered PrimerMiner will not download / cluster the data in the respecitve folder again. Set \"Skip_if_complete\" and \"Download\" to \"F\" if you like all data to be reclustered but not downloaded again",#
+"",#
+"# NCBI download, see ?Download_GB for details",#
+"download_GB = T",#
+"merge_GB = T",#
+"maxlength_GB = 2000",#
+"custom_query_GB = NULL",#
+"clipping_left_GB = 26",#
+"clipping_rigth_GB = 26",#
+"",#
+"# Mitochondria download, see ?Download_mito and ?Mito_GB2fasta for details",#
+"download_mt = T",#
+"merge_mt = T",#
+"minlength_mt = 2001",#
+"maxlength_mt = 80000",#
+"custom_query_mt = NULL",#
+"clipping_left_mt = 0",#
+"clipping_rigth_mt = 0",#
+"add_mt = 100",#
+"rm_dup = T",#
+"no_marker = T",#
+"",#
+"# BOLD download, see ?Download_BOLD for details",#
+"download_bold = T",#
+"merge_bold = T",#
+"clipping_left_bold = 26",#
+"clipping_rigth_bold = 26",#
+"",#
+"# Clustering sequences, see ?Clustering for details",#
+paste("operating_system= \"", sys, "\" # autodetected, can be \"MacOSX\" or \"Linux\"", sep=""), #
+"vsearchpath = \"integrated\" # uses the Vsearch that comes with the R package. Use \"Vsearch\" for your local Vsearch install, or paste the path to the executable.",#
+"id = 0.97",#
+"cmd = NULL",#
+"threshold =  \"Majority\"",#
+"",#
+"# Write summary statistics",#
+"summstats = T")#
+cat(text_conf, file=file, append=T, sep="\n")#
+#
+}
+batch_download <- function(table, config){#
+source("config.txt")#
+if(is.data.frame(table)){} else {table <- read.csv(table, sep= Taxon_sep, stringsAsFactors=F)}#
+folder <- which(table[,1]!="")#
+folder <- c(folder, nrow(table)+1)#
+#
+table[folder,]#
+#
+for (i in 1:(length(folder)-1)){#
+subFolder <- table[folder[i],1]#
+subStart <- folder[i]+1#
+subEnd <- folder[i+1]-1#
+#
+dir.create(subFolder, showWarnings=F)#
+#setwd(subFolder) # set up folder and paste files!#
+#
+subFolderPath <- paste(subFolder, "/", subFolder, sep="") # set op filepath#
+# define range!#
+if (table[subEnd,2]==""){taxa <- subFolder} else {#
+taxa <- table[subStart:subEnd, 2]}#
+# check if downloading and clustering is already done!#
+download_and_cluster <- T # tipicly data has not been processed#
+#
+if(Skip_if_complete){#
+done <- file.exists(paste(subFolder, "/", "done.txt", sep=""))#
+if(done){#
+download_and_cluster <- F # DON'T REDOWNLOAD DATA#
+print("")#
+time <- readLines(paste(subFolder, "/", "done.txt", sep=""), warn=F)#
+print(paste("Data for *", subFolder, "* was already downloaded and clustered on ", time[1], " and will thus be skipped. Turn Skip_if_complete to F, if you like data to be redownloaded and reclustered or delete the file done.txt in the foleder ", subFolder,  sep=""))#
+}#
+#
+if(download_and_cluster){#
+#
+# download data!#
+#
+if (Download){#
+if (download_bold){Download_BOLD(taxa, folder= subFolderPath, setwd=subFolder)}#
+if (download_GB){Download_GB(taxa, folder= subFolderPath, marker=Marker, maxlength= maxlength_GB, custom_query= custom_query_GB, setwd=subFolder)}#
+if (download_mt){Download_mito(taxa, folder= subFolderPath, minlength= minlength_mt, maxlength= maxlength_mt, custom_query = custom_query_mt, setwd=subFolder)#
+	if (length(list.files(subFolderPath, pattern="mito.gb$"))>0){#
+		print("")#
+		Mito_GB2fasta(subFolderPath, marker=Marker, add= add_mt, rm_dup= rm_dup, no_marker= no_marker, setwd=subFolder)}#
+}#
+}#
+print("")#
+# merge files!#
+if (Merge_and_Cluster_data){#
+all_file_TF <- c()#
+#
+if (merge_bold){#
+BOLD_fasta <- paste(subFolderPath, "_Bold.fasta", sep="")#
+#
+if(length(list.files(subFolderPath, pattern="BOLD\\.fasta$"))>0){#
+Merge_fasta(files=subFolderPath, save= BOLD_fasta, clip_left= clipping_left_bold, clip_right= clipping_rigth_bold, pattern="BOLD\\.fasta$", setwd=subFolder)#
+all_file_TF <- c(all_file_TF, BOLD_fasta)}#
+}#
+#
+if (merge_GB){#
+if(length(list.files(subFolderPath, pattern="GB\\.fasta$"))>0){#
+GB_fasta <- paste(subFolderPath, "_GB.fasta", sep="")#
+Merge_fasta(subFolderPath, save= GB_fasta, clip_left= clipping_left_GB, clip_right= clipping_rigth_GB, pattern="GB\\.fasta$", setwd=subFolder)#
+all_file_TF <- c(all_file_TF, GB_fasta)}#
+}#
+#
+if (merge_mt) {#
+if(length(list.files(subFolderPath, pattern="[mito]\\.fasta$"))>0){#
+mito_fasta <- paste(subFolderPath, "_mito.fasta", sep="")#
+Merge_fasta(subFolderPath, save= mito_fasta, clip_left= clipping_left_mt, clip_right= clipping_rigth_mt, pattern="[mito]\\.fasta$", setwd=subFolder)#
+all_file_TF <- c(all_file_TF, mito_fasta)}#
+}#
+#
+# all files together#
+all_fasta <- paste(subFolder, "/", subFolder, "_all.fasta", sep="")#
+Merge_fasta(all_file_TF, save=all_fasta , clip_left=0, clip_right=0, setwd=subFolder)#
+print("")#
+all_fasta <- paste(subFolder, "_all.fasta", sep="")#
+#
+Clustering(all_fasta, vsearchpath= vsearchpath, id=id, threshold=threshold, setwd=subFolder)#
+print("")#
+print("-------------------")#
+print("")#
+cat(file=paste(subFolder, "/", "done.txt", sep=""), paste(Sys.time()))#
+#
+}#
+}# download and cluster or not!#
+#
+} # folder end#
+#
+# write summary statistics#
+if(summstats){#
+download_stats(table)#
+}#
+#
+print("")#
+print("We are all done here. Please use a porgram like Geneious to create sequence  alignments. reffer to the manual on GitHub for further instructions!")#
+print("https://github.com/VascoElbrecht/PrimerMiner")#
+} # function end
+}
+batch_download <- function(table, config){#
+source("config.txt")#
+if(is.data.frame(table)){} else {table <- read.csv(table, sep= Taxon_sep, stringsAsFactors=F)}#
+folder <- which(table[,1]!="")#
+folder <- c(folder, nrow(table)+1)#
+#
+table[folder,]#
+#
+for (i in 1:(length(folder)-1)){#
+subFolder <- table[folder[i],1]#
+subStart <- folder[i]+1#
+subEnd <- folder[i+1]-1#
+#
+dir.create(subFolder, showWarnings=F)#
+#setwd(subFolder) # set up folder and paste files!#
+#
+subFolderPath <- paste(subFolder, "/", subFolder, sep="") # set op filepath#
+# define range!#
+if (table[subEnd,2]==""){taxa <- subFolder} else {#
+taxa <- table[subStart:subEnd, 2]}#
+# check if downloading and clustering is already done!#
+download_and_cluster <- T # tipicly data has not been processed#
+#
+if(Skip_if_complete){#
+done <- file.exists(paste(subFolder, "/", "done.txt", sep=""))#
+if(done){#
+download_and_cluster <- F # DON'T REDOWNLOAD DATA#
+print("")#
+time <- readLines(paste(subFolder, "/", "done.txt", sep=""), warn=F)#
+print(paste("Data for *", subFolder, "* was already downloaded and clustered on ", time[1], " and will thus be skipped. Turn Skip_if_complete to F, if you like data to be redownloaded and reclustered or delete the file done.txt in the foleder ", subFolder,  sep=""))#
+}}#
+#
+if(download_and_cluster){#
+#
+# download data!#
+#
+if (Download){#
+if (download_bold){Download_BOLD(taxa, folder= subFolderPath, setwd=subFolder)}#
+if (download_GB){Download_GB(taxa, folder= subFolderPath, marker=Marker, maxlength= maxlength_GB, custom_query= custom_query_GB, setwd=subFolder)}#
+if (download_mt){Download_mito(taxa, folder= subFolderPath, minlength= minlength_mt, maxlength= maxlength_mt, custom_query = custom_query_mt, setwd=subFolder)#
+	if (length(list.files(subFolderPath, pattern="mito.gb$"))>0){#
+		print("")#
+		Mito_GB2fasta(subFolderPath, marker=Marker, add= add_mt, rm_dup= rm_dup, no_marker= no_marker, setwd=subFolder)}#
+}#
+}#
+print("")#
+# merge files!#
+if (Merge_and_Cluster_data){#
+all_file_TF <- c()#
+#
+if (merge_bold){#
+BOLD_fasta <- paste(subFolderPath, "_Bold.fasta", sep="")#
+#
+if(length(list.files(subFolderPath, pattern="BOLD\\.fasta$"))>0){#
+Merge_fasta(files=subFolderPath, save= BOLD_fasta, clip_left= clipping_left_bold, clip_right= clipping_rigth_bold, pattern="BOLD\\.fasta$", setwd=subFolder)#
+all_file_TF <- c(all_file_TF, BOLD_fasta)}#
+}#
+#
+if (merge_GB){#
+if(length(list.files(subFolderPath, pattern="GB\\.fasta$"))>0){#
+GB_fasta <- paste(subFolderPath, "_GB.fasta", sep="")#
+Merge_fasta(subFolderPath, save= GB_fasta, clip_left= clipping_left_GB, clip_right= clipping_rigth_GB, pattern="GB\\.fasta$", setwd=subFolder)#
+all_file_TF <- c(all_file_TF, GB_fasta)}#
+}#
+#
+if (merge_mt) {#
+if(length(list.files(subFolderPath, pattern="[mito]\\.fasta$"))>0){#
+mito_fasta <- paste(subFolderPath, "_mito.fasta", sep="")#
+Merge_fasta(subFolderPath, save= mito_fasta, clip_left= clipping_left_mt, clip_right= clipping_rigth_mt, pattern="[mito]\\.fasta$", setwd=subFolder)#
+all_file_TF <- c(all_file_TF, mito_fasta)}#
+}#
+#
+# all files together#
+all_fasta <- paste(subFolder, "/", subFolder, "_all.fasta", sep="")#
+Merge_fasta(all_file_TF, save=all_fasta , clip_left=0, clip_right=0, setwd=subFolder)#
+print("")#
+all_fasta <- paste(subFolder, "_all.fasta", sep="")#
+#
+Clustering(all_fasta, vsearchpath= vsearchpath, id=id, threshold=threshold, setwd=subFolder)#
+print("")#
+print("-------------------")#
+print("")#
+cat(file=paste(subFolder, "/", "done.txt", sep=""), paste(Sys.time()))#
+#
+}#
+}# download and cluster or not!#
+#
+} # folder end#
+#
+# write summary statistics#
+if(summstats){#
+download_stats(table)#
+}#
+#
+print("")#
+print("We are all done here. Please use a porgram like Geneious to create sequence  alignments. reffer to the manual on GitHub for further instructions!")#
+print("https://github.com/VascoElbrecht/PrimerMiner")#
+} # function end
+evaluate_primer <- function(alignment_imp, primer_sequ, start, stop, forward = T, save=NULL, gap_NA=T, N_NA=T, mm_position=NULL, mm_type=NULL, adjacent=2){#
+#
+# load defults or load csv#
+if(is.null(mm_position)){print("Pleas supply a table indicating penalty scorres for the mismatch possitions. Please see http://www. XXXX for details")#
+stop()} else {pos <- read.csv(mm_position)}#
+#
+if(is.null(mm_type)){print("Mismatch types are ignored.")} else {#
+type <- read.csv(mm_type)#
+print(paste("Mismatch types are considered using the table:", mm_type, sep="") )#
+}#
+# nucleotide table#
+upac <- read.csv(text=c("ID,comment,A,T,C,G, comp#
+A,Adenine,1,0,0,0,T#
+C,Cytosine,0,0,1,0,G#
+G,Guanine,0,0,0,1,C#
+T,Thymine,0,1,0,0,A#
+R,A or G,0.5,0,0,0.5,Y#
+Y,C or T,0,0.5,0.5,0,R#
+S,G or C,0,0,0.5,0.5,S#
+W,A or T,0.5,0.5,0,0,W#
+K,G or T,0,0.5,0,0.5,M#
+M,A or C,0.5,0,0.5,0,K#
+B,C or G or T,0,0.3,0.3,0.3,V#
+D,A or G or T,0.3,0.3,0,0.3,H#
+H,A or C or T,0.3,0.3,0.3,0,D#
+V,A or C or G,0.3,0,0.3,0.3,B#
+N,any base,0.25,0.25,0.25,0.25,N#
+I,inosine,0.25,0.25,0.25,0.25,N#
+-,gap,0,0,0,0,-"), stringsAsFactors=F)#
+#
+upac[upac==0.3] <- 1/3#
+upac.score <- upac[,3:6] > 0#
+# import alignment an make matrix#
+alignment1 <- read.fasta(alignment_imp, seqonly=T)#
+alignment1  <- toupper(alignment1)#
+alignment <- unlist(strsplit(alignment1, split=""))#
+alignment <- matrix(alignment, nrow=length(alignment1), ncol=nchar(alignment1[1]), byrow=T)#
+#
+# order start stop - in case it was written in the "wrong" order#
+temp <- sort(c(start, stop))#
+start <- temp[1]#
+stop <- temp[2]#
+#
+if(stop+1 - start == nchar(primer_sequ)){ # check primer length#
+print(paste(primer_sequ, " is ", nchar(primer_sequ), "bp long and length matches the propposed region" ,sep=""))#
+} else {print("WARNING: length of the given region does NOT match the primer length. The script will crash now!")}#
+#
+primer <- strsplit(primer_sequ, "")[[1]] # spit primer into nuceleotides#
+#
+# extract regoin where primer does bind#
+primer_region <- alignment[,start:stop]#
+if(!forward){ # make rev comp of alignment!#
+primer_region <- primer_region[,ncol(primer_region):1]#
+primer_region <- matrix(upac$comp[match(primer_region, upac$ID)], nrow=nrow(primer_region), ncol=ncol(primer_region), byrow=F)#
+}#
+primer_woble <- upac[match(primer, upac$ID), 3:6] # get wobble scores for priemr#
+row.names(primer_woble) <- 1:nrow(primer_woble)#
+primer_woble <- primer_woble>0 # T = base present in wobble#
+primer_woble <- data.frame(primer_woble)#
+#
+scores <- NULL#
+#
+if (length(alignment1)==1){primer_region <- rbind(primer_region, primer_region)#
+primer_region_1 <- TRUE} else {primer_region_1 <- FALSE}# duplicate row if only one sequence!#
+#
+for(i in 1:length(primer)){#
+#
+sequ <- upac[match(primer_region[,i], upac$ID), 3:6]#
+sequ <- sequ>0#
+sequ <- data.frame(sequ) # determine what bases are present in sequ#
+#
+woble <- rowSums(sequ) # wobles in sequ#
+#
+sequ[,1] <- sequ[,1]-unlist(primer_woble[i,])[1]*2#
+sequ[,2] <- sequ[,2]-unlist(primer_woble[i,])[2]*2#
+sequ[,3] <- sequ[,3]-unlist(primer_woble[i,])[3]*2#
+sequ[,4] <- sequ[,4]-unlist(primer_woble[i,])[4]*2#
+#
+error <- which(!rowSums(sequ==-1)>0) # sequences that do not match the primer woble#
+numberofmatches <- rowSums(sequ==-1)#
+match <- rep(0, nrow(sequ)) # #
+#
+sequ2 <- sequ#
+sequ2[sequ2==-2] <- 0 # remove -2 (= not a match)#
+sequ2[sequ2==-1] <- 1#
+wob_sequ_adj_factor <- numberofmatches/rowSums(sequ2)#
+wob_sequ_adj_factor[error] <- 1#
+#wob_sequ_adj_factor[is.na(wob_sequ_adj_factor)] <- 1#
+wob_sequ_adj_factor <- as.vector(wob_sequ_adj_factor) # adjust for wobbles in sequence#
+#
+match[error] <- pos[length(primer)+1-i,2]#
+match[wob_sequ_adj_factor<1] <- pos[length(primer)+1-i,2]#
+#
+# adjustment of mismatch type#
+if(!is.null(mm_type)){#
+#
+sequ3 <- sequ2#
+sequ3[,unlist(primer_woble[i,])] <- 0 # keep missmatches#
+#
+mm <- !unlist(primer_woble[i,]) # not matching bases in primer#
+#
+type <- read.csv(mm_type)#
+#
+type_scoes <- rep(0, nrow(sequ3)) # empty table#
+for (m in c(1:4)[mm]){ # cycle trough primer base#
+#
+type_temp <- 0 # calculate scores for individual mm of primer base in sequ#
+for(n in 2:5){#
+type_temp <- cbind(type_temp, sequ3[n-1]*type[m,n])#
+}#
+type_temp[type_temp==0] <- NA#
+type_temp <- rowMeans(type_temp, na.rm=T)#
+#
+type_scoes <- cbind(type_scoes, type_temp)#
+}#
+#
+type_scoes <- cbind(type_scoes, NA)#
+#
+type_scoes <- rowMeans(type_scoes, na.rm=T)#
+type_scoes[is.na(type_scoes)] <- 1#
+#
+match <- match* type_scoes#
+}#
+# end mismatch type#
+if(gap_NA){match[primer_region[,i]=="-"] <- NA} else {match[primer_region[,i]=="-"] <- pos[length(primer)+1-i,2]}# mark gaps#
+if(N_NA){match[primer_region[,i]=="N"] <- NA} else {match[primer_region[,i]=="-"] <- pos[length(primer)+1-i,2]} # mark N s as NAs#
+#
+match <- round(match* wob_sequ_adj_factor, digits=2)#
+#
+scores <- cbind(scores, match)#
+#
+}#
+#
+# calculate increased error score for adjacent bases, factor has to be biger than 1!#
+if(adjacent>1){ #
+#
+for (i in 1:(ncol(scores)-1)){#
+adjTT <- paste(scores[,i]>0, scores[,(i+1)]>0)=="TRUE TRUE" # find adjacent values#
+scores[,i][adjTT] <- scores[,i][adjTT]* adjacent#
+scores[,(i+1)][adjTT] <- scores[,(i+1)][adjTT]* adjacent#
+}#
+#
+}#
+scores <- data.frame(scores)#
+names(scores) <- paste("V", length(primer):1, sep="")#
+#
+exp <- 1:nrow(primer_region) # save revcomp of primer region#
+for(k in 1:nrow(primer_region)){#
+exp[k] <- paste(primer_region[k,], collapse="")#
+}#
+#
+scores <- data.frame("sequ"= exp, scores, "sum"=rowSums(scores))#
+row.names(scores) <- 1:nrow(scores)#
+if(primer_region_1){scores <- scores[1,]}# remove duplicated row, as only one sequence#
+#
+if(!is.null(save)){write.csv(scores, save)} else {print("no save file given!")}# save#
+#
+print("I'm done = )")#
+#
+}#
+#prompt(evaluate_primer, "evaluate_primer.Rd")
+prompt(evaluate_primer, "evaluate_primer.Rd")
+message("")#
+message("-------------------")#
+message("")
+message(" ")
+print(paste("Downloaded ", length(search_results$ids)," mitogenomes for ", taxon[k], " in ", format(time, digits=2), ".", sep=""), file=logfile, sep="", append=T)
+message(paste(readin, sep=""))
+readin <- c("dsfadsf", "sdffs")
+message(paste(readin, sep=""))
+paste(readin, sep="")
+message(paste(readin, sep=" "))
+message(paste(readin, sep="_"))
+message(paste(readin, sep="", collapse=" "))
+message(paste(readin, collapse=" "))
+library("PrimerMiner")
+taxon <- "Plecoptera"
+k <- 1
+maxlength <- 19999999
+taxon <- "Plecoptera"#
+k <- 1#
+minlength<- 500#
+maxlength <- 19999
+searchQ <- paste(taxon[k],"[Organism] AND mitochondrion[filter] AND genome AND ", minlength, ":", maxlength ,"[Sequence Length]", sep="")
+searchQ
+search_results <- entrez_search(db="nuccore", term=searchQ, retmax=9999999)
+search_results
+length(search_results$ids)
+search_results$ids
+paste("http://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nuccore&id=", search_results$ids[i], "&rettype=gb&retmode=text", sep=""), destfile=paste(folder_path, taxon[k], "_mito.gb", sep=""), mode="a", quiet=T)
+paste("http://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nuccore&id=", search_results$ids[i], "&rettype=gb&retmode=text", sep=""), destfile=paste(folder_path, taxon[k], "_mito.gb", sep="")
+i <- 1
+paste("http://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nuccore&id=", search_results$ids[i], "&rettype=gb&retmode=text", sep="")
+folder_path
+folder_path <- "~/Desktop/"
+download.file(paste("http://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nuccore&id=", search_results$ids[i], "&rettype=gb&retmode=text", sep=""), destfile=paste(folder_path, taxon[k], "_mito.gb", sep=""), mode="a", quiet=T)}
+download.file(paste("http://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nuccore&id=", search_results$ids[i], "&rettype=gb&retmode=text", sep=""), destfile=paste(folder_path, taxon[k], "_mito.gb", sep=""), mode="a", quiet=T)
+download.file(paste("http://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nuccore&id=", search_results$ids[i], "&rettype=gb&retmode=text", sep=""), destfile=paste(folder_path, taxon[k], "_mito.gb", sep=""), mode="a", quiet=F)
+?download.file
+download.file(paste("http://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nuccore&id=", search_results$ids[i], "&rettype=gb&retmode=text", sep=""), destfile=paste(folder_path, taxon[k], "_mito.gb", sep=""), mode="a", quiet=T, method="curl")
+library("BOLDconnectR")
+getwd()
+library("BOLDconnectR")
+bold.apikey("")
+bold.apikey("adwq")
+bold.apikey
+bold.apikey("4E5E7873-F5DA-4409-8CF8-D15A4822AE11")
+bold.data <- bold.public.search(taxonomy = "Dinocras")
+bold.data
+bold.data <- bold.public.search(taxonomy = "Dinocras")
+bold.data
+bold.apikey("4E5E7873-F5DA-4409-8CF8-D15A4822AE11xasdasd")
+bold.data <- bold.public.search(taxonomy = "Dinocras")
+bold.apikey("4E5E7873-F5DA-4409-8CF8-D15A4822AE1")
+bold.data <- bold.public.search(taxonomy = "Dinocras")
+bold.apikey("4E5E7873-F5DA-4409-8CF8-D15A4822AE11")

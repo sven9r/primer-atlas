@@ -16,6 +16,7 @@ data/primerminer/**
 !data/primerminer/aligned_reference/
 !data/primerminer/aligned_reference/*.fasta
 data/provenance/**
+!data/provenance/order_alignment_manifest.csv
 data/legacy_prototype/**
 
 data/derived/**

@@ -9,17 +9,15 @@ overall <- read_csv(
   show_col_types = FALSE
 )
 
-score_paths <- file.path(
-  "data",
-  "derived",
-  paste0("claimed_", tolower(pair_ids), "_centroid_scores.csv.gz")
+pair_templates <- nanoparquet::read_parquet(
+  "data/pinned/COI/2026-08-14/pair_templates.parquet"
 )
 
 stopifnot(
   length(pair_ids) == 25L,
   setequal(overall$pair_id, pair_ids),
   nrow(overall) == length(pair_ids),
-  all(file.exists(score_paths)),
+  setequal(unique(pair_templates$pair_id), pair_ids),
   all(overall$n_centroids == 67352L),
   all(overall$pair_scorable_fraction >= 0),
   all(overall$pair_scorable_fraction <= 1)
@@ -37,15 +35,11 @@ required_score_columns <- c(
   "forward_binding_sequence_primer_oriented",
   "reverse_binding_sequence_primer_oriented"
 )
-for (path in score_paths) {
-  header <- names(read.csv(
-    gzfile(path),
-    nrows = 1L,
-    stringsAsFactors = FALSE,
-    check.names = FALSE
-  ))
-  stopifnot(all(required_score_columns %in% header))
-}
+required_pair_template_columns <- setdiff(
+  required_score_columns,
+  c("accession", "family", "genus")
+)
+stopifnot(all(required_pair_template_columns %in% names(pair_templates)))
 
 app_source <- paste(readLines("app.R", warn = FALSE), collapse = "\n")
 function_source <- paste(

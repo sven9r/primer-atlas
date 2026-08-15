@@ -4,7 +4,7 @@ project_root <- normalizePath(getwd(), mustWork = TRUE)
 
 spidprey_path <- file.path(
   project_root,
-  "data", "derived", "claimed_nospid_centroid_scores.csv.gz"
+  "data", "catalog", "regression_ozyptila_nospid.csv"
 )
 targeted_path <- file.path(
   project_root,
@@ -15,7 +15,7 @@ app_path <- file.path(project_root, "app.R")
 stopifnot(file.exists(spidprey_path), file.exists(targeted_path), file.exists(app_path))
 
 spidprey <- read.csv(
-  gzfile(spidprey_path),
+  spidprey_path,
   stringsAsFactors = FALSE,
   check.names = FALSE
 )

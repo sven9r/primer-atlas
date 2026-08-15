@@ -14,16 +14,14 @@ stored_order <- read.csv(
   file.path(project_root, "data", "derived", "order_pair_summary.csv"),
   stringsAsFactors = FALSE
 )
-stored_templates <- read.csv(
-  file.path(project_root, "data", "derived", "pair_template_scores.csv"),
-  stringsAsFactors = FALSE,
-  colClasses = c(template = "character")
-)
-stored_positions <- read.csv(
-  file.path(project_root, "data", "derived", "primer_position_scores.csv"),
-  stringsAsFactors = FALSE,
-  colClasses = c(template = "character")
-)
+stored_templates <- nanoparquet::read_parquet(file.path(
+  project_root, "data", "pinned", "COI", "2026-08-14",
+  "pair_templates.parquet"
+))
+stored_positions <- nanoparquet::read_parquet(file.path(
+  project_root, "data", "pinned", "COI", "2026-08-14",
+  "primer_positions.parquet"
+))
 
 pair_id <- "BEEPRIME"
 order_name <- "Hymenoptera"

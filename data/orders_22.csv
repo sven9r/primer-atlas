@@ -1,0 +1,24 @@
+order,environment_group,selection_note
+Amphipoda,aquatic,Common freshwater and marine crustacean order
+Araneae,terrestrial,Common predator order in arthropod metabarcoding
+Blattodea,terrestrial,Common detritivore and pest order
+Coleoptera,both,Highly diverse and frequent in terrestrial and freshwater surveys
+Decapoda,both,Common freshwater and marine crustacean order
+Diptera,both,Highly diverse and frequent in freshwater and terrestrial surveys
+Ephemeroptera,aquatic,Core freshwater biomonitoring order
+Hemiptera,both,Common terrestrial and aquatic insect order
+Hymenoptera,terrestrial,Highly diverse and frequent in eDNA and metabarcoding
+Isopoda,both,Common terrestrial and aquatic crustacean order
+Lepidoptera,terrestrial,Frequent diet and biodiversity metabarcoding target
+Megaloptera,aquatic,Freshwater biomonitoring order
+Neuroptera,terrestrial,Common predatory insect order
+Odonata,aquatic,Core freshwater biomonitoring order
+Orthoptera,terrestrial,Common grassland and diet metabarcoding target
+Plecoptera,aquatic,Core freshwater biomonitoring order
+Psocodea,terrestrial,Common small-bodied terrestrial insect order
+Siphonaptera,terrestrial,Common vertebrate-associated order
+Thysanoptera,terrestrial,Common plant-associated and pest order
+Trichoptera,aquatic,Core freshwater biomonitoring order
+Acari,terrestrial,Composite arachnid display group requested for soil and litter metabarcoding; not a single modern order
+Collembola,terrestrial,Composite hexapod display group requested for soil and litter metabarcoding; not a single modern order
+Bivalvia,aquatic,Mollusk class added to validate lineage-focused COI primers such as MollCOI253; displayed as a composite taxonomic group

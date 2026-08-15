@@ -1,0 +1,43 @@
+"family","genus","species_listed_in_supplement","subfamily","n_centroids","source_records_represented","n_pair_scorable","pair_scorable_fraction","forward_median_penalty","reverse_median_penalty","pair_median_penalty","pair_mean_penalty","pair_p90_penalty","weighted_mean_pair_penalty","perfect_match_fraction_among_scorable","terminal_3_mismatch_fraction_among_scorable"
+"Andrenidae","Andrena",224,"Andreninae",166,230,151,0.909638554216867,22.3,7.9,47.5,70.0468874172185,168.4,70.0827230046949,0,0.105960264900662
+"Andrenidae","Panurginus",6,"Panurginae",2,2,2,1,0,2.8,2.8,2.8,5.04,2.8,0.5,0
+"Andrenidae","Camptopoeum",1,"subfamily unresolved",0,0,0,,,,,,,,,
+"Andrenidae","Panurgus",2,"subfamily unresolved",0,0,0,,,,,,,,,
+"Apidae","Anthophora",25,"Apinae",9,9,7,0.777777777777778,96.4,29.82,157,163.612857142857,306.712,163.612857142857,0,0.142857142857143
+"Apidae","Apis",4,"Apinae",7,8,7,1,7.85,0,7.85,8.52857142857143,16,8.44375,0.285714285714286,0
+"Apidae","Bombus",168,"Apinae",67,444,56,0.835820895522388,0,0,5.6,51.8889285714286,68.6,11.6944757033248,0.464285714285714,0.0357142857142857
+"Apidae","Eucera",20,"Apinae",4,6,2,0.5,190.25,5.1,195.35,195.35,234.19,171.075,0,0
+"Apidae","Melecta",3,"Apinae",2,2,2,1,60.375,95.565,155.94,155.94,223.212,155.94,0,0
+"Apidae","Epeolus",22,"Nomadinae",1,1,1,1,48.55,85.45,134,134,134,134,0,0
+"Apidae","Nomada",79,"Nomadinae",29,33,27,0.931034482758621,63.2,0,63.2,68.7340740740741,74.958,68.5206666666667,0,0
+"Apidae","Triepeolus",5,"Nomadinae",3,3,3,1,4.65,29.38,34.03,85.1933333333333,180.326,85.1933333333333,0,0.333333333333333
+"Apidae","Amegilla",3,"subfamily unresolved",0,0,0,,,,,,,,,
+"Apidae","Biastes",1,"subfamily unresolved",0,0,0,,,,,,,,,
+"Apidae","Epeoloides",1,"subfamily unresolved",0,0,0,,,,,,,,,
+"Apidae","Thyreus",2,"subfamily unresolved",0,0,0,,,,,,,,,
+"Apidae","Ceratina",78,"Xylocopinae",11,67,11,1,12.4,0,18,30.3772727272727,87.65,16.4746268656716,0,0
+"Apidae","Xylocopa",12,"Xylocopinae",1,1,1,1,45,10.2,55.2,55.2,55.2,55.2,0,0
+"Colletidae","Colletes",32,"Colletinae",7,7,6,0.857142857142857,0,10.2,10.2,21.0416666666667,42.725,21.0416666666667,0,0
+"Colletidae","Hylaeus",41,"Hylaeinae",18,44,18,1,5.6,5.6,17.35,37.3422222222222,131.545,68.8818181818182,0.222222222222222,0
+"Halictidae","Halictus",18,"Halictinae",5,7,4,0.8,13.725,15.8,42.675,82.8625,176.195,67.0416666666667,0,0.25
+"Halictidae","Lasioglossum",248,"Halictinae",64,130,54,0.84375,0,10.2,13.45,48.4098148148148,162.375,45.868220338983,0.0925925925925926,0.0555555555555556
+"Halictidae","Seladonia",5,"Halictinae",4,17,4,1,16.05,5.6,21.65,20.575,21.65,21.3970588235294,0,0
+"Halictidae","Sphecodes",44,"Halictinae",18,21,17,0.944444444444444,4.3,44.945,55.64,65.305294117647,112.29,59.2715,0.117647058823529,0.0588235294117647
+"Halictidae","Dufourea",6,"Rophitinae",5,5,5,1,89,45.15,91.8,145.34,263.63,145.34,0,0.4
+"Halictidae","Systropha",2,"subfamily unresolved",0,0,0,,,,,,,,,
+"Megachilidae","Anthidiellum",2,"Megachilinae",1,1,1,1,15.85,5.6,21.45,21.45,21.45,21.45,0,0
+"Megachilidae","Anthidium",11,"Megachilinae",4,7,4,1,28.675,10.2,38.875,41.525,55.4,40.2071428571429,0,0
+"Megachilidae","Chelostoma",5,"Megachilinae",2,2,2,1,23.475,10.2,33.675,33.675,37.215,33.675,0,0
+"Megachilidae","Coelioxys",16,"Megachilinae",9,10,8,0.888888888888889,12.4,0,21.925,88.125,250.775,79.7111111111111,0.125,0.25
+"Megachilidae","Dioxys",1,"Megachilinae",1,1,1,1,82.1,18.45,100.55,100.55,100.55,100.55,0,0
+"Megachilidae","Heriades",8,"Megachilinae",6,7,6,1,19.8,0,34.8,47.0166666666667,86.45,45.2714285714286,0,0
+"Megachilidae","Hoplitis",16,"Megachilinae",12,18,12,1,12.4,0,15.2,34.35,90.4,44.6777777777778,0,0
+"Megachilidae","Megachile",56,"Megachilinae",22,79,22,1,25.75,5.6,37.725,80.6772727272727,190.945,114.606962025316,0,0
+"Megachilidae","Osmia",95,"Megachilinae",94,127,91,0.968085106382979,139.7,0,148.4,143.586593406593,207.1,139.077258064516,0,0.021978021978022
+"Megachilidae","Stelis",23,"Megachilinae",15,15,15,1,12.4,0,12.4,24.9953333333333,55.46,24.9953333333333,0,0
+"Megachilidae","Icteranthidium",2,"subfamily unresolved",0,0,0,,,,,,,,,
+"Megachilidae","Pseudoanthidium",1,"subfamily unresolved",0,0,0,,,,,,,,,
+"Megachilidae","Trachusa",1,"subfamily unresolved",0,0,0,,,,,,,,,
+"Melittidae","Melitta",2,"Melittinae",1,1,1,1,24.15,241.55,265.7,265.7,265.7,265.7,0,0
+"Melittidae","Dasypoda",2,"subfamily unresolved",0,0,0,,,,,,,,,
+"Melittidae","Macropis",2,"subfamily unresolved",0,0,0,,,,,,,,,

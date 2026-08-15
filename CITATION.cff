@@ -1,0 +1,9 @@
+cff-version: 1.2.0
+message: "If you use the Public Multi-Marker Primer Atlas, cite the software release and the original primer and reference-data sources shown by the atlas."
+title: "Public Multi-Marker Primer Atlas"
+type: software
+authors:
+  - family-names: "Schmelzle"
+    given-names: "Sven"
+repository-code: "https://github.com/sven9r/primer-atlas"
+license: MIT

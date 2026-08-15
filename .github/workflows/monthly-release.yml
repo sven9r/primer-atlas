@@ -1,0 +1,77 @@
+name: Monthly marker release
+on:
+  schedule:
+    - cron: "0 6 1 * *"
+  workflow_dispatch:
+permissions:
+  contents: write
+  issues: write
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        marker: [COI, ITS_FUNGAL]
+    runs-on: ubuntu-latest
+    env:
+      MARKER_ID: ${{ matrix.marker }}
+      RELEASE_ID: ${{ github.run_id }}-${{ matrix.marker }}
+      R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+      R2_BUCKET: ${{ secrets.R2_BUCKET }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      ATLAS_DATA_BASE_URL: ${{ vars.ATLAS_DATA_BASE_URL }}
+      ATLAS_MANIFEST_BASE_URL: ${{ vars.ATLAS_DATA_BASE_URL }}/releases
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.12"}
+      - uses: r-lib/actions/setup-r@v2
+      - uses: r-lib/actions/setup-renv@v2
+      - name: Install marker-build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y mafft vsearch
+          python -m pip install pandas lxml html5lib
+          Rscript scripts/install_primerminer.R
+      - name: Build marker independently
+        run: |
+          python scripts/import_unite_primers.py
+          Rscript scripts/build_catalog.R
+          Rscript scripts/download_marker_references.R
+          Rscript scripts/build_marker_geometry.R
+          if [ "$MARKER_ID" = COI ]; then
+            Rscript scripts/build_22_group_alignments.R
+            Rscript scripts/build_primer_positions.R
+            Rscript scripts/build_order_scores.R
+            Rscript scripts/download_gurten2026_reference.R
+            Rscript scripts/fetch_gurten2026_bee_taxonomy.R
+            Rscript scripts/build_gurten2026_beeprime_scores.R
+            Rscript scripts/download_targeted_complete_cox1.R
+            Rscript scripts/build_targeted_zbj_reference_scores.R
+            Rscript scripts/build_claimed_primer_scores.R
+            N_GEO_RECORDS=5000 Rscript scripts/fetch_reference_geography.R
+          fi
+          Rscript scripts/build_release.R "$MARKER_ID"
+      - name: Hard release gates
+        run: |
+          Rscript scripts/validate_release.R "$MARKER_ID"
+          if [ "$MARKER_ID" = COI ]; then
+            Rscript tests/test_custom_primer_gate.R
+            Rscript tests/test_claimed_primer_reference.R
+            Rscript -e 'source("app.R", local=new.env()); message("Application startup passed")'
+          fi
+      - name: Stage and atomically promote in R2
+        run: bash scripts/publish_r2.sh
+      - name: Upload QA evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: qa-${{ matrix.marker }}-${{ github.run_id }}
+          path: data/releases/${{ matrix.marker }}/
+      - name: Open failure issue
+        if: failure()
+        env: {GH_TOKEN: "${{ github.token }}"}
+        run: |
+          gh issue create --title "Monthly release failed: ${MARKER_ID} ${RELEASE_ID}" \
+            --body "The marker-specific build or release gate failed. Previous latest.json remains active. See workflow run: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"

@@ -1,0 +1,73 @@
+source_table_row,order,common_name,taxon,inferred_rank,genus,target,detected,target_bool,detected_bool,source_doi,source_supplement_doi
+4,Arachnida,mite,Acari,higher_taxon,Acari,no,no,FALSE,FALSE,10.3897/mbmg.10.183708,10.3897/mbmg.10.183708.suppl1
+5,Arachnida,harvestman,Mitopus sp.,genus,Mitopus,no,no,FALSE,FALSE,10.3897/mbmg.10.183708,10.3897/mbmg.10.183708.suppl1
+7,Diptera,fly,Calliphora sp.,genus,Calliphora,no,no,FALSE,FALSE,10.3897/mbmg.10.183708,10.3897/mbmg.10.183708.suppl1
+8,Diptera,,Dolichopodidae,family_or_subfamily,,no,no,FALSE,FALSE,10.3897/mbmg.10.183708,10.3897/mbmg.10.183708.suppl1
+9,Diptera,,"Musca domestica Linnaeus, 1758",species_or_complex,Musca,no,yes,FALSE,TRUE,10.3897/mbmg.10.183708,10.3897/mbmg.10.183708.suppl1
+10,Diptera,,Phoridae,family_or_subfamily,,no,yes,FALSE,TRUE,10.3897/mbmg.10.183708,10.3897/mbmg.10.183708.suppl1
+11,Diptera,,Tabanidae,family_or_subfamily,,no,yes,FALSE,TRUE,10.3897/mbmg.10.183708,10.3897/mbmg.10.183708.suppl1
+12,Diptera,gnat,Sciaridae,family_or_subfamily,,no,no,FALSE,FALSE,10.3897/mbmg.10.183708,10.3897/mbmg.10.183708.suppl1
+13,Diptera,hoverfly,"Episyrphus balteatus (De Geer, 1776)",species_or_complex,Episyrphus,no,yes,FALSE,TRUE,10.3897/mbmg.10.183708,10.3897/mbmg.10.183708.suppl1
+14,Diptera,,"Eristalis arbustorum (Linnaeus, 1758)",species_or_complex,Eristalis,no,no,FALSE,FALSE,10.3897/mbmg.10.183708,10.3897/mbmg.10.183708.suppl1
+15,Diptera,,"Eristalis pseudorupium Kanervo, 1938",species_or_complex,Eristalis,no,no,FALSE,FALSE,10.3897/mbmg.10.183708,10.3897/mbmg.10.183708.suppl1
+16,Diptera,,"Eristalis tenax (Linnaeus, 1758)",species_or_complex,Eristalis,no,no,FALSE,FALSE,10.3897/mbmg.10.183708,10.3897/mbmg.10.183708.suppl1
+17,Diptera,,"Helophilus hybridus Loew, 1846",species_or_complex,Helophilus,no,no,FALSE,FALSE,10.3897/mbmg.10.183708,10.3897/mbmg.10.183708.suppl1
+18,Diptera,midge,Cecidomyiidae,family_or_subfamily,,no,yes,FALSE,TRUE,10.3897/mbmg.10.183708,10.3897/mbmg.10.183708.suppl1
+19,Diptera,,Chironomidae,family_or_subfamily,,no,no,FALSE,FALSE,10.3897/mbmg.10.183708,10.3897/mbmg.10.183708.suppl1
+20,Diptera,mosquito,"Culex pipiens Linnaeus, 1758",species_or_complex,Culex,no,no,FALSE,FALSE,10.3897/mbmg.10.183708,10.3897/mbmg.10.183708.suppl1
+21,Diptera,,"Culiseta annulata (Schrank, 1776)",species_or_complex,Culiseta,no,no,FALSE,FALSE,10.3897/mbmg.10.183708,10.3897/mbmg.10.183708.suppl1
+23,Coleoptera,ceral leaf beetle,"Oulema melanopus (Linnaeus, 1761)",species_or_complex,Oulema,no,no,FALSE,FALSE,10.3897/mbmg.10.183708,10.3897/mbmg.10.183708.suppl1
+24,Coleoptera,pollen beetle,Meligethes sp.,genus,Meligethes,no,no,FALSE,FALSE,10.3897/mbmg.10.183708,10.3897/mbmg.10.183708.suppl1
+25,Coleoptera,scarab beetle,"Phyllopertha horticola (Linnaeus, 1758)",species_or_complex,Phyllopertha,no,no,FALSE,FALSE,10.3897/mbmg.10.183708,10.3897/mbmg.10.183708.suppl1
+26,Coleoptera,,Aphodius sp.,genus,Aphodius,no,yes,FALSE,TRUE,10.3897/mbmg.10.183708,10.3897/mbmg.10.183708.suppl1
+27,Coleoptera,weevil,Curculinoidae,family_or_subfamily,,no,no,FALSE,FALSE,10.3897/mbmg.10.183708,10.3897/mbmg.10.183708.suppl1
+29,Hemiptera,aphid,"Acyrthosiphon pisum (Harris, 1776)",species_or_complex,Acyrthosiphon,no,no,FALSE,FALSE,10.3897/mbmg.10.183708,10.3897/mbmg.10.183708.suppl1
+30,Hemiptera,,"Metopolophium dirhodum Mordvilko, 1914",species_or_complex,Metopolophium,no,no,FALSE,FALSE,10.3897/mbmg.10.183708,10.3897/mbmg.10.183708.suppl1
+31,Hemiptera,,"Sitobion avenae (Fabricius, 1775)",species_or_complex,Sitobion,no,no,FALSE,FALSE,10.3897/mbmg.10.183708,10.3897/mbmg.10.183708.suppl1
+32,Hemiptera,bug,Orius sp.,genus,Orius,no,yes,FALSE,TRUE,10.3897/mbmg.10.183708,10.3897/mbmg.10.183708.suppl1
+33,Hemiptera,cicada,Cicadidae,family_or_subfamily,,no,no,FALSE,FALSE,10.3897/mbmg.10.183708,10.3897/mbmg.10.183708.suppl1
+34,Hemiptera,mirid,Miridae,family_or_subfamily,,no,no,FALSE,FALSE,10.3897/mbmg.10.183708,10.3897/mbmg.10.183708.suppl1
+36,Hymenoptera,ant,"Lasius niger (Linnaeus, 1758)",species_or_complex,Lasius,no,yes,FALSE,TRUE,10.3897/mbmg.10.183708,10.3897/mbmg.10.183708.suppl1
+37,Hymenoptera,bee,"Andrena hattorfiana (Fabricius, 1775)",species_or_complex,Andrena,yes,yes,TRUE,TRUE,10.3897/mbmg.10.183708,10.3897/mbmg.10.183708.suppl1
+38,Hymenoptera,,"Anthidium manicatum (Linnaeus, 1758)",species_or_complex,Anthidium,yes,yes,TRUE,TRUE,10.3897/mbmg.10.183708,10.3897/mbmg.10.183708.suppl1
+39,Hymenoptera,,"Anthophora furcata (Panzer, 1798)",species_or_complex,Anthophora,yes,yes,TRUE,TRUE,10.3897/mbmg.10.183708,10.3897/mbmg.10.183708.suppl1
+40,Hymenoptera,,"Apis mellifera Linnaeus, 1758",species_or_complex,Apis,yes,yes,TRUE,TRUE,10.3897/mbmg.10.183708,10.3897/mbmg.10.183708.suppl1
+41,Hymenoptera,,"Bombus humilis Illiger, 1806",species_or_complex,Bombus,yes,yes,TRUE,TRUE,10.3897/mbmg.10.183708,10.3897/mbmg.10.183708.suppl1
+42,Hymenoptera,,"Bombus pascuorum (Scopoli, 1763)",species_or_complex,Bombus,yes,yes,TRUE,TRUE,10.3897/mbmg.10.183708,10.3897/mbmg.10.183708.suppl1
+43,Hymenoptera,,"Bombus pratorum (Linnaeus, 1761)",species_or_complex,Bombus,yes,yes,TRUE,TRUE,10.3897/mbmg.10.183708,10.3897/mbmg.10.183708.suppl1
+44,Hymenoptera,,"Bombus sylvarum (Linnaeus, 1761)",species_or_complex,Bombus,yes,yes,TRUE,TRUE,10.3897/mbmg.10.183708,10.3897/mbmg.10.183708.suppl1
+45,Hymenoptera,,"Bombus terrestris compl. (Linnaeus, 1758)",species_or_complex,Bombus,yes,yes,TRUE,TRUE,10.3897/mbmg.10.183708,10.3897/mbmg.10.183708.suppl1
+46,Hymenoptera,,"Bombus argillaceus (Scopoli, 1763)",species_or_complex,Bombus,yes,yes,TRUE,TRUE,10.3897/mbmg.10.183708,10.3897/mbmg.10.183708.suppl1
+47,Hymenoptera,,"Ceratina chalybea Chevrier, 1872",species_or_complex,Ceratina,yes,no,TRUE,FALSE,10.3897/mbmg.10.183708,10.3897/mbmg.10.183708.suppl1
+48,Hymenoptera,,"Ceratina cyanea (Kirby, 1802)",species_or_complex,Ceratina,yes,no,TRUE,FALSE,10.3897/mbmg.10.183708,10.3897/mbmg.10.183708.suppl1
+49,Hymenoptera,,"Chelostoma rapunculi (Lepeletier, 1841)",species_or_complex,Chelostoma,yes,yes,TRUE,TRUE,10.3897/mbmg.10.183708,10.3897/mbmg.10.183708.suppl1
+50,Hymenoptera,,"Coelioxys aurolimbatus Förster, 1853",species_or_complex,Coelioxys,yes,yes,TRUE,TRUE,10.3897/mbmg.10.183708,10.3897/mbmg.10.183708.suppl1
+51,Hymenoptera,,"Coelioxys elongata Lepeletier, 1841",species_or_complex,Coelioxys,yes,yes,TRUE,TRUE,10.3897/mbmg.10.183708,10.3897/mbmg.10.183708.suppl1
+52,Hymenoptera,,"Colletes daviesanus Smith, 1846",species_or_complex,Colletes,yes,yes,TRUE,TRUE,10.3897/mbmg.10.183708,10.3897/mbmg.10.183708.suppl1
+53,Hymenoptera,,"Ephedrus plagiator (Nees, 1811)",species_or_complex,Ephedrus,no,yes,FALSE,TRUE,10.3897/mbmg.10.183708,10.3897/mbmg.10.183708.suppl1
+54,Hymenoptera,,"Eucera longicornis (Linnaeus, 1758)",species_or_complex,Eucera,yes,no,TRUE,FALSE,10.3897/mbmg.10.183708,10.3897/mbmg.10.183708.suppl1
+55,Hymenoptera,,"Eucera nigrescens Pérez, 1879",species_or_complex,Eucera,yes,yes,TRUE,TRUE,10.3897/mbmg.10.183708,10.3897/mbmg.10.183708.suppl1
+56,Hymenoptera,,"Halictus simplex compl. Blüthgen, 1923",species_or_complex,Halictus,yes,yes,TRUE,TRUE,10.3897/mbmg.10.183708,10.3897/mbmg.10.183708.suppl1
+57,Hymenoptera,,"Halictus tumulorum (Linnaeus, 1758)",species_or_complex,Halictus,yes,yes,TRUE,TRUE,10.3897/mbmg.10.183708,10.3897/mbmg.10.183708.suppl1
+58,Hymenoptera,,"Heriades truncorum (Linnaeus, 1758)",species_or_complex,Heriades,yes,yes,TRUE,TRUE,10.3897/mbmg.10.183708,10.3897/mbmg.10.183708.suppl1
+59,Hymenoptera,,"Hylaeus communis Nylander, 1852",species_or_complex,Hylaeus,yes,yes,TRUE,TRUE,10.3897/mbmg.10.183708,10.3897/mbmg.10.183708.suppl1
+60,Hymenoptera,,"Lasioglossum calceatum (Scopoli, 1763)",species_or_complex,Lasioglossum,yes,yes,TRUE,TRUE,10.3897/mbmg.10.183708,10.3897/mbmg.10.183708.suppl1
+61,Hymenoptera,,"Lasioglossum malachurum (Kirby, 1802)",species_or_complex,Lasioglossum,yes,yes,TRUE,TRUE,10.3897/mbmg.10.183708,10.3897/mbmg.10.183708.suppl1
+62,Hymenoptera,,"Megachile willughbiella (Kirby, 1802)",species_or_complex,Megachile,yes,yes,TRUE,TRUE,10.3897/mbmg.10.183708,10.3897/mbmg.10.183708.suppl1
+63,Hymenoptera,,"Melitta leporina (Panzer, 1799)",species_or_complex,Melitta,yes,yes,TRUE,TRUE,10.3897/mbmg.10.183708,10.3897/mbmg.10.183708.suppl1
+64,Hymenoptera,,"Nomada armata Herrich-Schäffer, 1839",species_or_complex,Nomada,yes,yes,TRUE,TRUE,10.3897/mbmg.10.183708,10.3897/mbmg.10.183708.suppl1
+65,Hymenoptera,,"Osmia bicornis (Linnaeus, 1758)",species_or_complex,Osmia,yes,yes,TRUE,TRUE,10.3897/mbmg.10.183708,10.3897/mbmg.10.183708.suppl1
+66,Hymenoptera,,"Osmia cornuta (Latreille, 1805)",species_or_complex,Osmia,yes,yes,TRUE,TRUE,10.3897/mbmg.10.183708,10.3897/mbmg.10.183708.suppl1
+67,Hymenoptera,,"Panurgus banksianus (Kirby, 1802)",species_or_complex,Panurgus,yes,yes,TRUE,TRUE,10.3897/mbmg.10.183708,10.3897/mbmg.10.183708.suppl1
+68,Hymenoptera,,"Seladonia subaurata (Rossi, 1792)",species_or_complex,Seladonia,yes,yes,TRUE,TRUE,10.3897/mbmg.10.183708,10.3897/mbmg.10.183708.suppl1
+69,Hymenoptera,,"Sphecodes monilicornis (Kirby, 1802)",species_or_complex,Sphecodes,yes,yes,TRUE,TRUE,10.3897/mbmg.10.183708,10.3897/mbmg.10.183708.suppl1
+70,Hymenoptera,,"Stelis phaeoptera (Kirby, 1802)",species_or_complex,Stelis,yes,yes,TRUE,TRUE,10.3897/mbmg.10.183708,10.3897/mbmg.10.183708.suppl1
+71,Hymenoptera,,"Stelis punctulatissima (Kirby, 1802)",species_or_complex,Stelis,yes,yes,TRUE,TRUE,10.3897/mbmg.10.183708,10.3897/mbmg.10.183708.suppl1
+72,Hymenoptera,,"Systropha curvicornis (Scopoli, 1770)",species_or_complex,Systropha,yes,yes,TRUE,TRUE,10.3897/mbmg.10.183708,10.3897/mbmg.10.183708.suppl1
+73,Hymenoptera,,"Xylocopa valga Gerstäcker, 1872",species_or_complex,Xylocopa,yes,no,TRUE,FALSE,10.3897/mbmg.10.183708,10.3897/mbmg.10.183708.suppl1
+74,Hymenoptera,,"Xylocopa violacea (Linnaeus, 1758)",species_or_complex,Xylocopa,yes,no,TRUE,FALSE,10.3897/mbmg.10.183708,10.3897/mbmg.10.183708.suppl1
+75,Hymenoptera,wasp,"Ephedrus plagiator (Nees, 1811)",species_or_complex,Ephedrus,no,yes,FALSE,TRUE,10.3897/mbmg.10.183708,10.3897/mbmg.10.183708.suppl1
+76,Hymenoptera,,"Praon volucre (Haliday, 1833)",species_or_complex,Praon,no,no,FALSE,FALSE,10.3897/mbmg.10.183708,10.3897/mbmg.10.183708.suppl1
+78,Lepidoptera,butterfly,"Pieris rapae (Linnaeus, 1758)",species_or_complex,Pieris,no,no,FALSE,FALSE,10.3897/mbmg.10.183708,10.3897/mbmg.10.183708.suppl1
+79,Lepidoptera,moth,"Tuta absoluta (Meyrick, 1917)",species_or_complex,Tuta,no,no,FALSE,FALSE,10.3897/mbmg.10.183708,10.3897/mbmg.10.183708.suppl1
+81,Thysanoptera,thrips,"Frankliniella tenuicornis (Uzel, 1895)",species_or_complex,Frankliniella,no,no,FALSE,FALSE,10.3897/mbmg.10.183708,10.3897/mbmg.10.183708.suppl1

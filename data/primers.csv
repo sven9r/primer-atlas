@@ -1,0 +1,51 @@
+pair_id,pair_label,primer_name,direction,sequence,reported_amplicon_bp,use_case,target,reported_ta_c,source_key,source_note
+MCO,Leray 313,mlCOIintF,forward,GGWACWGGWTGAACWGTWTAYCCYCC,365,broad metabarcoding,Metazoa,46,leray2013,Google Drive Primer List
+MCO,Leray 313,Fol-degen-rev,reverse,TANACYTCNGGRTGNCCRAARAAYCA,365,broad metabarcoding,Arthropoda,46,yu2012,Google Drive Primer List
+LERAY_XT,Leray-XT,mICOIintF-XT,forward,GGWACWRGWTGRACWITITAYCCYCC,365,eDNA / broad metabarcoding,Eukaryota,45,wangensteen2018,Common eDNA primer
+LERAY_XT,Leray-XT,jgHCO2198,reverse,TAIACYTCIGGRTGICCRAARAAYCA,365,eDNA / broad metabarcoding,Metazoa,45,geller2013,Common eDNA primer
+ARF,ARF1 + Fol-degen,ARF1,forward,GCNCCWGAYATRGCNTTYCCNCG,467,bulk arthropods,Arthropoda,46,gibson2014,Google Drive Primer List
+ARF,ARF1 + Fol-degen,Fol-degen-rev,reverse,TANACYTCNGGRTGNCCRAARAAYCA,467,bulk arthropods,Arthropoda,46,yu2012,Google Drive Primer List
+ZBJ_ART,ZBJ-Art,ZBJ-ArtF1c,forward,AGATATTGGAACWTTATATTTTATTTTTGG,211,diet metabarcoding,Arthropoda,46,zeale2011,Google Drive Primer List
+ZBJ_ART,ZBJ-Art,ZBJ-ArtR2c,reverse,WACTAATCAATTWCCAAATCCTCC,211,diet metabarcoding,Arthropoda,46,zeale2011,Google Drive Primer List
+ZBJ_ART_DEG,ZBJ-Art degenerate,ZBJ-ArtF1c_deg,forward,RGAYATYGGWACHYTWTAYTTYHTHTTYGG,211,diet metabarcoding,Arthropoda,46,elbrecht2019,Degenerate comparison variant published and experimentally tested by Elbrecht et al. 2019
+ZBJ_ART_DEG,ZBJ-Art degenerate,ZBJ-ArtR2c_deg,reverse,WAYTARTCARTTWCCRAAHCCHCC,211,diet metabarcoding,Arthropoda,46,elbrecht2019,Degenerate comparison variant published and experimentally tested by Elbrecht et al. 2019; converted from the left-pointing alignment display to 5-prime-to-3-prime orientation
+FWH2,fwh2,fwhF2,forward,GGDACWGGWTGAACWGTWTAYCCHCC,254,freshwater metabarcoding,Freshwater invertebrates,58,vamos2017,Google Drive Primer List
+FWH2,fwh2,fwhR2n,reverse,GTRATWGCHCCDGCTARWACWGG,254,freshwater metabarcoding,Freshwater invertebrates,58,vamos2017,Sequence corrected to published 5-prime-to-3-prime orientation
+BF2_BR2,BF2 + BR2,BF2,forward,GCHCCHGAYATRGCHTTYCC,421,freshwater metabarcoding,Freshwater invertebrates,50,elbrecht2017b,Elbrecht and Leese freshwater set
+BF2_BR2,BF2 + BR2,BR2,reverse,TCDGGRTGNCCRAARAAYCA,421,freshwater metabarcoding,Freshwater invertebrates,50,elbrecht2017b,Elbrecht and Leese freshwater set
+BF1_BR1,BF1 + BR1,BF1,forward,ACWGGWTGRACWGTNTAYCC,257,freshwater metabarcoding,Freshwater invertebrates,50,elbrecht2017b,Elbrecht and Leese freshwater set
+BF1_BR1,BF1 + BR1,BR1,reverse,ARYATDGTRATDGCHCCDGC,257,freshwater metabarcoding,Freshwater invertebrates,50,elbrecht2017b,Elbrecht and Leese freshwater set
+FOLMER,Folmer barcode,LCO1490,forward,GGTCAACAAATCATAAAGATATTGG,710,regular barcoding,Metazoa,45,folmer1994,Google Drive Primer List
+FOLMER,Folmer barcode,HCO2198,reverse,TAAACTTCAGGGTGACCAAAAAATCA,710,regular barcoding,Metazoa,45,folmer1994,Google Drive Primer List
+ANML,ANML,LCO1490,forward,GGTCAACAAATCATAAAGATATTGG,236,eDNA / broad metabarcoding,Animals,48,folmer1994,Google Drive Primer List
+ANML,ANML,CO1-CFMRa,reverse,GGWACTAATCAATTTCCAAATCC,236,eDNA / broad metabarcoding,Animals,48,jusino2019,Google Drive Primer List
+NOPLANT,NoPlant,NoPlantF_270,forward,RGCHTTYCCHCGWATAAAYAAYATAAG,116,plant-associated arthropods,Arthropoda,46,krehenwinkel2022,Google Drive Primer List
+NOPLANT,NoPlant,mlCOIintR_W,reverse,GRGGRTAWACWGTTCAWCCWGTNCC,116,plant-associated arthropods,Arthropoda,46,krehenwinkel2022,Google Drive Primer List
+NOSPID,Spidprey,Spidprey_F,forward,RGCHTTYCCHCGAHTAAAYAAYA,115,spider gut content,Arthropod prey,45,melcher2024,Published spider-exclusion pair
+NOSPID,Spidprey,Spidprey_R,reverse,RGGRTANACNGTTCAWCCWGT,115,spider gut content,Arthropod prey,45,melcher2024,Published spider-exclusion pair
+VERT,Vertebrate COI,Mod_RepCOI_F,forward,TNTTYTCMACYAACCACAAAGA,244,vertebrate diet metabarcoding,Vertebrata,48,reeves2018,Google Drive Primer List; amplicon and Ta checked against publication
+VERT,Vertebrate COI,VERTCOI_7216_R,reverse,CARAAGCTYATGTTRTTYATDCG,244,vertebrate diet metabarcoding,Vertebrata,48,reeves2018,Google Drive Primer List; amplicon and Ta checked against publication
+BEEPRIME,BeePrime,BeePrimeF,forward,ATGAATTAATAATGATCANATYTATAAYWC,252,bee eDNA metabarcoding,Bees (Apiformes),50,beeprime2026,Published pair; paper labels the primer-excluded BeePrime marker as 198 bp
+BEEPRIME,BeePrime,BeePrimeR,reverse,GGATAWACWGTTCAWCCWGTWCC,252,bee eDNA metabarcoding,Bees (Apiformes),50,beeprime2026,Published pair; paper labels the primer-excluded BeePrime marker as 198 bp
+NOSPI2_LAURELIN,NoSpi2 + Laurelin,NoSpi2_F,forward,TTYCCHCGWATAAAYAAYATAAG,110,spider gut content,Arthropod prey,,lafage2020,Original NoSpi2 primer combined with Laurelin_R as shown by Melcher et al. 2024
+NOSPI2_LAURELIN,NoSpi2 + Laurelin,Laurelin_R,reverse,GGRTAWACWGTTCAWCCWGT,110,spider gut content,Arthropod prey,,cuff2021,Original Laurelin_R primer combined with NoSpi2_F as shown by Melcher et al. 2024
+BF2_BR1,BF2 + BR1,BF2,forward,GCHCCHGAYATRGCHTTYCC,322,freshwater metabarcoding,Freshwater macroinvertebrates,50,elbrecht2017b,Primer-excluded 322-bp target; full alignment-derived product is reported separately
+BF2_BR1,BF2 + BR1,BR1,reverse,ARYATDGTRATDGCHCCDGC,322,freshwater metabarcoding,Freshwater macroinvertebrates,50,elbrecht2017b,Primer-excluded 322-bp target; full alignment-derived product is reported separately
+BF1_BR2,BF1 + BR2,BF1,forward,ACWGGWTGRACWGTNTAYCC,316,freshwater metabarcoding,Freshwater macroinvertebrates,50,elbrecht2017b,Primer-excluded 316-bp target; full alignment-derived product is reported separately
+BF1_BR2,BF1 + BR2,BR2,reverse,TCDGGRTGNCCRAARAAYCA,316,freshwater metabarcoding,Freshwater macroinvertebrates,50,elbrecht2017b,Primer-excluded 316-bp target; full alignment-derived product is reported separately
+BF3_BR2,BF3 + BR2,BF3,forward,CCHGAYATRGCHTTYCCHCG,418,bulk arthropods,Terrestrial arthropods,46,elbrecht2019,Recommended long-fragment terrestrial assay; 418-bp primer-excluded target and approximately 458-bp full product
+BF3_BR2,BF3 + BR2,BR2,reverse,TCDGGRTGNCCRAARAAYCA,418,bulk arthropods,Terrestrial arthropods,46,elbrecht2019,Recommended long-fragment terrestrial assay; 418-bp primer-excluded target and approximately 458-bp full product
+FWH1,fwh1,fwhF1,forward,YTCHACWAAYCAYAARGAYATYGG,178,diet / degraded DNA,Arthropods and predator DNA,45,vamos2017,Primer sequence from Vamos et al.; 178-bp target and 222-bp full product; 45 C is the common-program benchmark used by Tournayre et al. 2020
+FWH1,fwh1,fwhR1,reverse,ARTCARTTWCCRAAHCCHCC,178,diet / degraded DNA,Arthropods and predator DNA,45,vamos2017,Primer sequence from Vamos et al.; 178-bp target and 222-bp full product; 45 C is the common-program benchmark used by Tournayre et al. 2020
+FWH2_EPTDR2N,fwh2 + EPTDr2n,fwhF2,forward,GGDACWGGWTGAACWGTWTAYCCHCC,142,freshwater water eDNA,Benthic macroinvertebrates,48,vamos2017,Forward primer from Vamos et al.; Leese et al. used a six-cycle 60 C to 24-cycle 48 C step-down protocol
+FWH2_EPTDR2N,fwh2 + EPTDr2n,EPTDr2n,reverse,CAAACAAATARDGGTATTCGDTY,142,freshwater water eDNA,Benthic macroinvertebrates,48,leese2021,Target-focused reverse primer; 142-bp primer-excluded region; reported step-down PCR ends at 48 C
+HEXCOI,HexCOI,HexCOIF4,forward,HCCHGAYATRGCHTTYCC,322,insect metabarcoding,Hexapoda,45,marquina2019,Computationally designed insect-focused primer; 322-bp target and 358-bp full product; 45 C is the comparative Tournayre et al. program
+HEXCOI,HexCOI,HexCOIR4,reverse,TATDGTRATDGCHCCNGC,322,insect metabarcoding,Hexapoda,45,marquina2019,Computationally designed insect-focused primer; 322-bp target and 358-bp full product; 45 C is the comparative Tournayre et al. program
+BR5_ARR5,BR5,B,forward,CCIGAYATRGCITTYCCICG,310,freshwater metabarcoding,Freshwater benthic macroinvertebrates,46,hajibabaei2019,Also called BR5 or B plus ArR5; 310-bp primer-excluded target
+BR5_ARR5,BR5,ArR5,reverse,GTRATIGCICCIGCIARIACIGG,310,freshwater metabarcoding,Freshwater benthic macroinvertebrates,46,hajibabaei2019,Also called BR5 or B plus ArR5; 310-bp primer-excluded target
+F230R,F230R,LCO1490,forward,GGTCAACAAATCATAAAGATATTGG,229,freshwater metabarcoding,Metazoan invertebrates,46,hajibabaei2019,Also called LCO1490 plus 230_R; 229-bp primer-excluded target
+F230R,F230R,230_R,reverse,CTTATRTTRTTTATICGIGGRAAIGC,229,freshwater metabarcoding,Arthropods,46,hajibabaei2019,Also called LCO1490 plus 230_R; 229-bp primer-excluded target
+FISH_F2_R1,FishF2 + FishR1,FishF2,forward,TCGACTAATCATAAAGATATCGGCAC,655,fish barcoding / eDNA,Fishes,52,ward2005,Original fish COI oligo used by the 2026 Andean eDNA workflow; 655-bp primer-excluded barcode
+FISH_F2_R1,FishF2 + FishR1,FishR1,reverse,TAGACTTCTGGGTGGCCAAAGAATCA,655,fish barcoding / eDNA,Fishes,52,ward2005,Original fish COI oligo used by the 2026 Andean eDNA workflow; 655-bp primer-excluded barcode
+MOLLCOI253,MollCOI253,MollCOI253_F,forward,GGAGTAGGAACTGGTTGGAC,253,mollusk eDNA,Marine mollusks,57,shi2024,Paper reports a 253-bp product and 57 C primer table value; empirical genomic and eDNA PCR used 53 C
+MOLLCOI253,MollCOI253,MollCOI253_R,reverse,CAGCTGCTAACACAGGCA,253,mollusk eDNA,Marine mollusks,57,shi2024,Paper reports a 253-bp product and 57 C primer table value; empirical genomic and eDNA PCR used 53 C

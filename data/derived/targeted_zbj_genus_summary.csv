@@ -1,0 +1,967 @@
+"pair_id","pair_label","source_group","family","genus","n_sequences","n_species","n_pair_scorable","pair_scorable_fraction","forward_median_penalty","reverse_median_penalty","pair_median_penalty","pair_p90_penalty","perfect_match_fraction_among_scorable","terminal_3_mismatch_fraction_among_scorable"
+"ZBJ_ART","ZBJ-Art","Acari","Acaridae","Rhizoglyphus",1,1,1,1,120.07,313.65,433.72,433.72,0,1
+"ZBJ_ART","ZBJ-Art","Acari","Allothyridae","Allothyrus",1,1,1,1,81.55,6.45,88,88,0,0
+"ZBJ_ART","ZBJ-Art","Acari","Ameronothridae","Ameronothrus",1,1,1,1,166.47,5.1,171.57,171.57,0,1
+"ZBJ_ART","ZBJ-Art","Acari","Argasidae","Alectorobius",6,5,6,1,316.17,172.35,488.52,768.895,0,1
+"ZBJ_ART","ZBJ-Art","Acari","Argasidae","Argas",2,2,2,1,232.625,92.4,325.025,363.925,0,1
+"ZBJ_ART","ZBJ-Art","Acari","Argasidae","Chiropterargas",1,1,1,1,291.55,278.17,569.72,569.72,0,1
+"ZBJ_ART","ZBJ-Art","Acari","Argasidae","Navis",2,1,2,1,121.75,18.15,139.9,139.9,0,0
+"ZBJ_ART","ZBJ-Art","Acari","Argasidae","Ogadenus",3,1,3,1,131.75,288.9,420.65,420.65,0,0.666666666666667
+"ZBJ_ART","ZBJ-Art","Acari","Argasidae","Ornithodoros",19,9,19,1,222.8,174.05,333.05,453.22,0,0.842105263157895
+"ZBJ_ART","ZBJ-Art","Acari","Argasidae","Otobius",2,2,2,1,95,278.2,373.2,404.28,0,1
+"ZBJ_ART","ZBJ-Art","Acari","Argasidae","Reticulinasus",2,2,2,1,200.4,118.325,318.725,363.985,0,0.5
+"ZBJ_ART","ZBJ-Art","Acari","Argasidae","Secretargas",1,1,1,1,311.1,245.15,556.25,556.25,0,1
+"ZBJ_ART","ZBJ-Art","Acari","Arrenuridae","Arrenurus",1,1,1,1,249.5,0,249.5,249.5,0,1
+"ZBJ_ART","ZBJ-Art","Acari","Blattisociidae","Blattisocius",2,2,2,1,580.475,28.575,609.05,648.05,0,1
+"ZBJ_ART","ZBJ-Art","Acari","Demodicidae","Demodex",1,1,1,1,1229.05,116.82,1345.87,1345.87,0,1
+"ZBJ_ART","ZBJ-Art","Acari","Dermanyssidae","Dermanyssus",1,1,1,1,990.4,199.5,1189.9,1189.9,0,1
+"ZBJ_ART","ZBJ-Art","Acari","Ereynetidae","Riccardoella",1,1,1,1,288.65,29.45,318.1,318.1,0,1
+"ZBJ_ART","ZBJ-Art","Acari","Eriophyidae","Aceria",1,1,1,1,3.1,219.1,222.2,222.2,0,1
+"ZBJ_ART","ZBJ-Art","Acari","Eriophyidae","Epitrimerus",1,1,1,1,222.15,250.2,472.35,472.35,0,1
+"ZBJ_ART","ZBJ-Art","Acari","Eriophyidae","Leipothrix",1,1,1,1,196.95,21.4,218.35,218.35,0,0
+"ZBJ_ART","ZBJ-Art","Acari","Eviphididae","Copriphis",2,2,0,0,,91.575,,,,
+"ZBJ_ART","ZBJ-Art","Acari","Fortuyniidae","Fortuynia",1,1,1,1,40.85,136.62,177.47,177.47,0,1
+"ZBJ_ART","ZBJ-Art","Acari","Glycyphagidae","Lepidoglyphus",1,1,1,1,100.45,192.5,292.95,292.95,0,0
+"ZBJ_ART","ZBJ-Art","Acari","Haemogamasidae","Eulaelaps",2,2,2,1,278.12,56.075,334.195,336.919,0,1
+"ZBJ_ART","ZBJ-Art","Acari","Histiostomatidae","Histiostoma",1,1,1,1,239,377.5,616.5,616.5,0,1
+"ZBJ_ART","ZBJ-Art","Acari","Hygrobatidae","Hygrobates",1,1,1,1,112.95,103.1,216.05,216.05,0,1
+"ZBJ_ART","ZBJ-Art","Acari","Ixodidae","Amblyomma",33,17,32,0.96969696969697,84.35,90,171.55,409.445,0,0.625
+"ZBJ_ART","ZBJ-Art","Acari","Ixodidae","Dermacentor",23,5,23,1,103.2,318.45,421.65,421.65,0,1
+"ZBJ_ART","ZBJ-Art","Acari","Ixodidae","Haemaphysalis",55,13,55,1,81.55,84.9,166.45,234.8,0,0.545454545454545
+"ZBJ_ART","ZBJ-Art","Acari","Ixodidae","Hyalomma",2,2,2,1,81.55,120.935,202.485,265.657,0,0.5
+"ZBJ_ART","ZBJ-Art","Acari","Ixodidae","Ixodes",24,18,24,1,81.55,148.435,256.45,611.034,0,0.708333333333333
+"ZBJ_ART","ZBJ-Art","Acari","Ixodidae","Rhipicentor",1,1,1,1,81.55,57.75,139.3,139.3,0,0
+"ZBJ_ART","ZBJ-Art","Acari","Ixodidae","Rhipicephalus",19,9,19,1,81.55,29.45,135.7,258.18,0,0.421052631578947
+"ZBJ_ART","ZBJ-Art","Acari","Laelapidae","Echinolaelaps",1,1,1,1,188.6,100.4,289,289,0,1
+"ZBJ_ART","ZBJ-Art","Acari","Laelapidae","Tropilaelaps",1,1,1,1,2799.87,60,2859.87,2859.87,0,1
+"ZBJ_ART","ZBJ-Art","Acari","Liodidae","Poroliodes",1,1,1,1,561.2,6.95,568.15,568.15,0,1
+"ZBJ_ART","ZBJ-Art","Acari","Macrochelidae","Macrocheles",1,1,1,1,2998.64,68.35,3066.99,3066.99,0,1
+"ZBJ_ART","ZBJ-Art","Acari","Parasitidae","Cycetogamasus",1,1,0,0,,125,,,,
+"ZBJ_ART","ZBJ-Art","Acari","Parasitidae","Poecilochirus",1,1,0,0,,194.1,,,,
+"ZBJ_ART","ZBJ-Art","Acari","Phytoseiidae","Amblyseius",1,1,1,1,507.2,159.3,666.5,666.5,0,1
+"ZBJ_ART","ZBJ-Art","Acari","Phytoseiidae","Neoseiulus",1,1,1,1,496.55,13.45,510,510,0,1
+"ZBJ_ART","ZBJ-Art","Acari","Phytoseiidae","Typhlodromus",1,1,1,1,2023.6,60.95,2084.55,2084.55,0,1
+"ZBJ_ART","ZBJ-Art","Acari","Psoroptidae","Psoroptes",1,1,1,1,70.6,215.15,285.75,285.75,0,1
+"ZBJ_ART","ZBJ-Art","Acari","Pyroglyphidae","Dermatophagoides",1,1,1,1,85.6,121.7,207.3,207.3,0,1
+"ZBJ_ART","ZBJ-Art","Acari","Rhinonyssidae","Ptilonyssus",1,1,1,1,669.4,232.8,902.2,902.2,0,1
+"ZBJ_ART","ZBJ-Art","Acari","Sarcoptidae","Sarcoptes",2,1,2,1,20.4,22.9,43.3,43.3,0,0
+"ZBJ_ART","ZBJ-Art","Acari","Sperchontidae","Sperchon",1,1,1,1,515.35,41.85,557.2,557.2,0,0
+"ZBJ_ART","ZBJ-Art","Acari","Tetranychidae","Oligonychus",1,1,1,1,131.8,5.1,136.9,136.9,0,1
+"ZBJ_ART","ZBJ-Art","Acari","Tetranychidae","Tetranychus",7,4,7,1,376.95,21.4,398.35,412.15,0,1
+"ZBJ_ART","ZBJ-Art","Acari","Trombiculidae","Leptotrombidium",2,2,2,1,879.975,75.01,954.985,1058.093,0,1
+"ZBJ_ART","ZBJ-Art","Acari","Trombiculidae","Pentidionis",1,1,1,1,1587.1,74,1661.1,1661.1,0,1
+"ZBJ_ART","ZBJ-Art","Acari","Trombiculidae","Walchia",1,1,1,1,1737.65,33.15,1770.8,1770.8,0,1
+"ZBJ_ART","ZBJ-Art","Acari","Unionicolidae","Neumania",1,1,1,1,360.22,130.5,490.72,490.72,0,0
+"ZBJ_ART","ZBJ-Art","Acari","Urodinychidae","Uroobovella",1,1,1,1,476.55,232.25,708.8,708.8,0,1
+"ZBJ_ART","ZBJ-Art","Coleoptera","Attelabidae","Deporaus",1,1,1,1,3.55,18.2,21.75,21.75,0,0
+"ZBJ_ART","ZBJ-Art","Coleoptera","Brentidae","Cylas",4,1,4,1,201.1,27.67,228.77,228.77,0,1
+"ZBJ_ART","ZBJ-Art","Coleoptera","Buprestidae","Anthaxia",1,1,1,1,99.92,222.35,322.27,322.27,0,1
+"ZBJ_ART","ZBJ-Art","Coleoptera","Buprestidae","Lamprodila",1,1,1,1,231.85,133.15,365,365,0,1
+"ZBJ_ART","ZBJ-Art","Coleoptera","Cantharidae","Lycocerus",1,1,1,1,19.62,169.8,189.42,189.42,0,1
+"ZBJ_ART","ZBJ-Art","Coleoptera","Cantharidae","Podabrus",1,1,1,1,104.52,132.7,237.22,237.22,0,1
+"ZBJ_ART","ZBJ-Art","Coleoptera","Cantharidae","Themus",1,1,1,1,49.72,181.55,231.27,231.27,0,1
+"ZBJ_ART","ZBJ-Art","Coleoptera","Carabidae","Amara",1,1,1,1,3.1,18.15,21.25,21.25,0,0
+"ZBJ_ART","ZBJ-Art","Coleoptera","Carabidae","Bembidion",2,1,2,1,3.1,0,3.1,3.1,0,0
+"ZBJ_ART","ZBJ-Art","Coleoptera","Carabidae","Blethisa",1,1,1,1,3.1,0,3.1,3.1,0,0
+"ZBJ_ART","ZBJ-Art","Coleoptera","Carabidae","Carabus",1,1,1,1,33.2,126.75,159.95,159.95,0,1
+"ZBJ_ART","ZBJ-Art","Coleoptera","Carabidae","Harpalus",1,1,1,1,125.7,0,125.7,125.7,0,1
+"ZBJ_ART","ZBJ-Art","Coleoptera","Carabidae","Pterostichus",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART","ZBJ-Art","Coleoptera","Carabidae","Rhyzodiastes",1,1,1,1,178.7,186.65,365.35,365.35,0,1
+"ZBJ_ART","ZBJ-Art","Coleoptera","Carabidae","Scarites",1,1,1,1,3.1,169.8,172.9,172.9,0,1
+"ZBJ_ART","ZBJ-Art","Coleoptera","Cerambycidae","Aegolipton",1,1,1,1,68.05,30.1,98.15,98.15,0,0
+"ZBJ_ART","ZBJ-Art","Coleoptera","Cerambycidae","Allotraeus",1,1,1,1,34.4,47.8,82.2,82.2,0,0
+"ZBJ_ART","ZBJ-Art","Coleoptera","Cerambycidae","Batocera",1,1,1,1,483.65,6.95,490.6,490.6,0,1
+"ZBJ_ART","ZBJ-Art","Coleoptera","Cerambycidae","Callipogon",1,1,1,1,93.85,94.92,188.77,188.77,0,0
+"ZBJ_ART","ZBJ-Art","Coleoptera","Cerambycidae","Chlorophorus",2,2,2,1,80.175,114.585,194.76,204.952,0,0.5
+"ZBJ_ART","ZBJ-Art","Coleoptera","Cerambycidae","Grammoptera",1,1,1,1,44.4,280.95,325.35,325.35,0,1
+"ZBJ_ART","ZBJ-Art","Coleoptera","Cerambycidae","Mesosa",1,1,1,1,472.75,56.65,529.4,529.4,0,0
+"ZBJ_ART","ZBJ-Art","Coleoptera","Cerambycidae","Monochamus",1,1,1,1,99.92,155.65,255.57,255.57,0,0
+"ZBJ_ART","ZBJ-Art","Coleoptera","Cerambycidae","Morimospasma",2,2,2,1,164.905,121.95,286.855,287.027,0,1
+"ZBJ_ART","ZBJ-Art","Coleoptera","Cerambycidae","Rhagium",1,1,1,1,55.22,11.75,66.97,66.97,0,0
+"ZBJ_ART","ZBJ-Art","Coleoptera","Cerambycidae","Stenocorus",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART","ZBJ-Art","Coleoptera","Cerambycidae","Xylotrechus",1,1,1,1,53.75,148.65,202.4,202.4,0,0
+"ZBJ_ART","ZBJ-Art","Coleoptera","Cerambycidae","Xystrocera",1,1,1,1,89.55,169.8,259.35,259.35,0,1
+"ZBJ_ART","ZBJ-Art","Coleoptera","Chrysomelidae","Adiscus",1,1,1,1,93.25,0,93.25,93.25,0,0
+"ZBJ_ART","ZBJ-Art","Coleoptera","Chrysomelidae","Agetocera",1,1,1,1,18.45,141.55,160,160,0,1
+"ZBJ_ART","ZBJ-Art","Coleoptera","Chrysomelidae","Altica",1,1,1,1,270.15,112.15,382.3,382.3,0,0
+"ZBJ_ART","ZBJ-Art","Coleoptera","Chrysomelidae","Aspidomorpha",1,1,1,1,3.55,11.55,15.1,15.1,0,0
+"ZBJ_ART","ZBJ-Art","Coleoptera","Chrysomelidae","Basilepta",1,1,1,1,11.77,100.4,112.17,112.17,0,0
+"ZBJ_ART","ZBJ-Art","Coleoptera","Chrysomelidae","Basiprionota",1,1,1,1,55.9,6.95,62.85,62.85,0,0
+"ZBJ_ART","ZBJ-Art","Coleoptera","Chrysomelidae","Brontispa",1,1,1,1,103.05,52.6,155.65,155.65,0,0
+"ZBJ_ART","ZBJ-Art","Coleoptera","Chrysomelidae","Bruchidius",1,1,1,1,22.75,218.05,240.8,240.8,0,1
+"ZBJ_ART","ZBJ-Art","Coleoptera","Chrysomelidae","Chaetocnema",1,1,1,1,85.8,103.05,188.85,188.85,0,1
+"ZBJ_ART","ZBJ-Art","Coleoptera","Chrysomelidae","Chrysodinopsis",1,1,1,1,3.55,224.5,228.05,228.05,0,1
+"ZBJ_ART","ZBJ-Art","Coleoptera","Chrysomelidae","Downesia",1,1,0,0,,30.1,,,,
+"ZBJ_ART","ZBJ-Art","Coleoptera","Chrysomelidae","Glyphocassis",1,1,1,1,22,169.8,191.8,191.8,0,1
+"ZBJ_ART","ZBJ-Art","Coleoptera","Chrysomelidae","Macroplea",1,1,1,1,61.4,39.55,100.95,100.95,0,0
+"ZBJ_ART","ZBJ-Art","Coleoptera","Chrysomelidae","Mimastra",1,1,1,1,4.3,11.75,16.05,16.05,0,0
+"ZBJ_ART","ZBJ-Art","Coleoptera","Chrysomelidae","Monolepta",1,1,1,1,34.4,0,34.4,34.4,0,0
+"ZBJ_ART","ZBJ-Art","Coleoptera","Chrysomelidae","Oomorphoides",1,1,1,1,41.85,77.9,119.75,119.75,0,0
+"ZBJ_ART","ZBJ-Art","Coleoptera","Chrysomelidae","Phyllobrotica",1,1,1,1,50.2,316.32,366.52,366.52,0,1
+"ZBJ_ART","ZBJ-Art","Coleoptera","Chrysomelidae","Spilopyra",1,1,1,1,195.4,118.6,314,314,0,1
+"ZBJ_ART","ZBJ-Art","Coleoptera","Chrysomelidae","Taophila",1,1,1,1,141.94,37.05,178.99,178.99,0,1
+"ZBJ_ART","ZBJ-Art","Coleoptera","Cleridae","Callimerus",1,1,1,1,3.1,48.25,51.35,51.35,0,0
+"ZBJ_ART","ZBJ-Art","Coleoptera","Cleridae","Clerus",1,1,1,1,149.85,98.3,248.15,248.15,0,1
+"ZBJ_ART","ZBJ-Art","Coleoptera","Cleridae","Pieleus",1,1,1,1,81.4,63.6,145,145,0,0
+"ZBJ_ART","ZBJ-Art","Coleoptera","Cleridae","Stigmatium",1,1,1,1,183.15,0,183.15,183.15,0,1
+"ZBJ_ART","ZBJ-Art","Coleoptera","Coccinellidae","Cheilomenes",1,1,1,1,197.05,142.77,339.82,339.82,0,1
+"ZBJ_ART","ZBJ-Art","Coleoptera","Coccinellidae","Henosepilachna",1,1,1,1,286.75,107.35,394.1,394.1,0,0
+"ZBJ_ART","ZBJ-Art","Coleoptera","Coccinellidae","Illeis",1,1,1,1,317.15,131.02,448.17,448.17,0,1
+"ZBJ_ART","ZBJ-Art","Coleoptera","Coccinellidae","Megalocaria",1,1,1,1,254.55,0,254.55,254.55,0,0
+"ZBJ_ART","ZBJ-Art","Coleoptera","Coccinellidae","Nephus",1,1,1,1,466.95,18.2,485.15,485.15,0,0
+"ZBJ_ART","ZBJ-Art","Coleoptera","Coccinellidae","Scymnus",4,4,4,1,236.15,104.95,341.1,395.999,0,0.25
+"ZBJ_ART","ZBJ-Art","Coleoptera","Cucujidae","Cucujus",1,1,1,1,159.17,135.1,294.27,294.27,0,1
+"ZBJ_ART","ZBJ-Art","Coleoptera","Cucujidae","Platisus",1,1,1,1,60.47,36.35,96.82,96.82,0,0
+"ZBJ_ART","ZBJ-Art","Coleoptera","Curculionidae","Aclees",1,1,1,1,0,181.55,181.55,181.55,0,1
+"ZBJ_ART","ZBJ-Art","Coleoptera","Curculionidae","Blosyrus",1,1,1,1,192.14,91.35,283.49,283.49,0,1
+"ZBJ_ART","ZBJ-Art","Coleoptera","Curculionidae","Callirhopalus",1,1,1,1,30.1,11.75,41.85,41.85,0,0
+"ZBJ_ART","ZBJ-Art","Coleoptera","Curculionidae","Catapionus",1,1,1,1,3.2,196.85,200.05,200.05,0,1
+"ZBJ_ART","ZBJ-Art","Coleoptera","Curculionidae","Ceutorhynchus",2,2,2,1,15.05,106,121.05,185.21,0,0
+"ZBJ_ART","ZBJ-Art","Coleoptera","Curculionidae","Dendroctonus",1,1,1,1,81.5,6.45,87.95,87.95,0,0
+"ZBJ_ART","ZBJ-Art","Coleoptera","Curculionidae","Dereodus",1,1,1,1,0,158.27,158.27,158.27,0,0
+"ZBJ_ART","ZBJ-Art","Coleoptera","Curculionidae","Dinoplatypus",1,1,1,1,110.79,120.1,230.89,230.89,0,1
+"ZBJ_ART","ZBJ-Art","Coleoptera","Curculionidae","Dryocoetes",1,1,1,1,4.3,18.2,22.5,22.5,0,0
+"ZBJ_ART","ZBJ-Art","Coleoptera","Curculionidae","Eubrychius",1,1,1,1,84.9,188.5,273.4,273.4,0,1
+"ZBJ_ART","ZBJ-Art","Coleoptera","Curculionidae","Homorosoma",1,1,1,1,0,135.02,135.02,135.02,0,0
+"ZBJ_ART","ZBJ-Art","Coleoptera","Curculionidae","Hylastes",1,1,1,1,0,196.85,196.85,196.85,0,1
+"ZBJ_ART","ZBJ-Art","Coleoptera","Curculionidae","Hypothenemus",2,2,2,1,65.125,261.35,326.475,358.855,0,1
+"ZBJ_ART","ZBJ-Art","Coleoptera","Curculionidae","Mecysmoderes",1,1,1,1,60.2,96.02,156.22,156.22,0,0
+"ZBJ_ART","ZBJ-Art","Coleoptera","Curculionidae","Microplontus",1,1,1,1,0,104.5,104.5,104.5,0,1
+"ZBJ_ART","ZBJ-Art","Coleoptera","Curculionidae","Nematocerus",1,1,1,1,22.4,11.75,34.15,34.15,0,0
+"ZBJ_ART","ZBJ-Art","Coleoptera","Curculionidae","Niphades",1,1,1,1,19.62,58.05,77.67,77.67,0,0
+"ZBJ_ART","ZBJ-Art","Coleoptera","Curculionidae","Odoiporus",1,1,1,1,0,211.65,211.65,211.65,0,1
+"ZBJ_ART","ZBJ-Art","Coleoptera","Curculionidae","Orthotomicus",1,1,1,1,16.75,312.05,328.8,328.8,0,1
+"ZBJ_ART","ZBJ-Art","Coleoptera","Curculionidae","Pimelocerus",1,1,1,1,64.05,130.5,194.55,194.55,0,0
+"ZBJ_ART","ZBJ-Art","Coleoptera","Curculionidae","Pityogenes",1,1,1,1,9.15,187.65,196.8,196.8,0,1
+"ZBJ_ART","ZBJ-Art","Coleoptera","Curculionidae","Rhyncholobus",1,1,1,1,0,103.05,103.05,103.05,0,1
+"ZBJ_ART","ZBJ-Art","Coleoptera","Curculionidae","Scolytoplatypus",1,1,1,1,53.4,18.7,72.1,72.1,0,0
+"ZBJ_ART","ZBJ-Art","Coleoptera","Curculionidae","Scolytus",1,1,1,1,55.9,5.1,61,61,0,0
+"ZBJ_ART","ZBJ-Art","Coleoptera","Curculionidae","Sirocalodes",1,1,1,1,8.9,0,8.9,8.9,0,0
+"ZBJ_ART","ZBJ-Art","Coleoptera","Curculionidae","Sternochetus",1,1,1,1,13.2,96.95,110.15,110.15,0,1
+"ZBJ_ART","ZBJ-Art","Coleoptera","Curculionidae","Tomicus",1,1,1,1,55.9,90,145.9,145.9,0,1
+"ZBJ_ART","ZBJ-Art","Coleoptera","Curculionidae","Trigonopterus",3,3,3,1,242,132.17,410.27,418.87,0,1
+"ZBJ_ART","ZBJ-Art","Coleoptera","Curculionidae","Trypodendron",1,1,0,0,,102.8,,,,
+"ZBJ_ART","ZBJ-Art","Coleoptera","Curculionidae","Xylosandrus",2,2,2,1,108.875,26.05,134.925,198.825,0,0.5
+"ZBJ_ART","ZBJ-Art","Coleoptera","Dermestidae","Trogoderma",1,1,1,1,497.7,29.9,527.6,527.6,0,1
+"ZBJ_ART","ZBJ-Art","Coleoptera","Dytiscidae","Acilius",1,1,1,1,53.3,10.75,64.05,64.05,0,0
+"ZBJ_ART","ZBJ-Art","Coleoptera","Dytiscidae","Agabus",1,1,1,1,3.1,7.85,10.95,10.95,0,0
+"ZBJ_ART","ZBJ-Art","Coleoptera","Dytiscidae","Graphoderus",1,1,0,0,,0,,,,
+"ZBJ_ART","ZBJ-Art","Coleoptera","Dytiscidae","Hygrotus",1,1,1,1,3.1,91,94.1,94.1,0,0
+"ZBJ_ART","ZBJ-Art","Coleoptera","Dytiscidae","Lancetes",2,2,0,0,,10.75,,,,
+"ZBJ_ART","ZBJ-Art","Coleoptera","Dytiscidae","Limbodessus",5,5,1,0.2,448.5,102.6,592.92,592.92,0,1
+"ZBJ_ART","ZBJ-Art","Coleoptera","Dytiscidae","Mystonectes",1,1,1,1,306.49,133.15,439.64,439.64,0,1
+"ZBJ_ART","ZBJ-Art","Coleoptera","Dytiscidae","Porhydrus",1,1,1,1,245.9,16.85,262.75,262.75,0,0
+"ZBJ_ART","ZBJ-Art","Coleoptera","Dytiscidae","Scarodytes",1,1,1,1,301.8,84.9,386.7,386.7,0,1
+"ZBJ_ART","ZBJ-Art","Coleoptera","Elateridae","Athousius",1,1,1,1,450.19,37.05,487.24,487.24,0,1
+"ZBJ_ART","ZBJ-Art","Coleoptera","Elateridae","Cryptalaus",1,1,1,1,492.45,144.9,637.35,637.35,0,1
+"ZBJ_ART","ZBJ-Art","Coleoptera","Elateridae","Ludioschema",1,1,1,1,83.85,92.05,175.9,175.9,0,0
+"ZBJ_ART","ZBJ-Art","Coleoptera","Elateridae","Melanotus",1,1,1,1,92.75,0,92.75,92.75,0,0
+"ZBJ_ART","ZBJ-Art","Coleoptera","Gyrinidae","Dineutus",1,1,1,1,14.85,0,14.85,14.85,0,0
+"ZBJ_ART","ZBJ-Art","Coleoptera","Hydraenidae","Ochthebius",6,6,0,0,,140.975,,,,
+"ZBJ_ART","ZBJ-Art","Coleoptera","Hydrophilidae","Cercyon",1,1,1,1,156.65,176.25,332.9,332.9,0,1
+"ZBJ_ART","ZBJ-Art","Coleoptera","Lampyridae","Diaphanes",2,2,2,1,12.425,51.525,63.95,112.55,0,0.5
+"ZBJ_ART","ZBJ-Art","Coleoptera","Lampyridae","Emeia",1,1,1,1,3.2,36.55,39.75,39.75,0,0
+"ZBJ_ART","ZBJ-Art","Coleoptera","Lampyridae","Pygoluciola",2,2,2,1,46,48.25,94.25,128.21,0,0.5
+"ZBJ_ART","ZBJ-Art","Coleoptera","Lampyridae","Pyrocoelia",3,3,3,1,12.1,23.3,57.97,69.026,0,0
+"ZBJ_ART","ZBJ-Art","Coleoptera","Lampyridae","Sclerotia",1,1,1,1,52.1,54.7,106.8,106.8,0,0
+"ZBJ_ART","ZBJ-Art","Coleoptera","Lampyridae","Vesta",1,1,1,1,33.65,155.1,188.75,188.75,0,0
+"ZBJ_ART","ZBJ-Art","Coleoptera","Lucanidae","Dorcus",2,2,2,1,443.74,120.275,564.015,567.235,0,1
+"ZBJ_ART","ZBJ-Art","Coleoptera","Lucanidae","Hexarthrius",1,1,1,1,453.8,91.85,545.65,545.65,0,1
+"ZBJ_ART","ZBJ-Art","Coleoptera","Lucanidae","Himaloaesalus",1,1,1,1,280.87,91.85,372.72,372.72,0,0
+"ZBJ_ART","ZBJ-Art","Coleoptera","Lucanidae","Prosopocoilus",1,1,1,1,709.7,233.55,943.25,943.25,0,1
+"ZBJ_ART","ZBJ-Art","Coleoptera","Lycidae","Lycostomus",1,1,1,1,77.9,57.15,135.05,135.05,0,0
+"ZBJ_ART","ZBJ-Art","Coleoptera","Lymexylidae","Atractocerus",3,1,3,1,163.35,109.5,272.85,275.69,0,1
+"ZBJ_ART","ZBJ-Art","Coleoptera","Lymexylidae","Lymexylon",1,1,1,1,22.72,206.35,229.07,229.07,0,1
+"ZBJ_ART","ZBJ-Art","Coleoptera","Lymexylidae","Melittomma",2,2,2,1,163.495,136.4,299.895,335.659,0,1
+"ZBJ_ART","ZBJ-Art","Coleoptera","Meloidae","Berberomeloe",1,1,1,1,293.6,100.4,394,394,0,1
+"ZBJ_ART","ZBJ-Art","Coleoptera","Meloidae","Epicauta",2,2,2,1,179.75,263.87,443.62,443.62,0,1
+"ZBJ_ART","ZBJ-Art","Coleoptera","Meloidae","Mylabris",1,1,1,1,160.05,357.67,517.72,517.72,0,1
+"ZBJ_ART","ZBJ-Art","Coleoptera","Meloidae","Pseudabris",1,1,1,1,284.89,318.67,603.56,603.56,0,1
+"ZBJ_ART","ZBJ-Art","Coleoptera","Melyridae","Carphurus",1,1,1,1,3.55,199.7,203.25,203.25,0,1
+"ZBJ_ART","ZBJ-Art","Coleoptera","Melyridae","Cyrtosus",1,1,1,1,0,6.95,6.95,6.95,0,0
+"ZBJ_ART","ZBJ-Art","Coleoptera","Melyridae","Intybia",1,1,1,1,242.69,0,242.69,242.69,0,1
+"ZBJ_ART","ZBJ-Art","Coleoptera","Nitidulidae","Aethina",1,1,1,1,39,211.65,250.65,250.65,0,1
+"ZBJ_ART","ZBJ-Art","Coleoptera","Nitidulidae","Epuraea",2,2,2,1,81.215,78.175,159.39,187.63,0,0.5
+"ZBJ_ART","ZBJ-Art","Coleoptera","Nitidulidae","Glischrochilus",1,1,1,1,163.19,218.1,381.29,381.29,0,1
+"ZBJ_ART","ZBJ-Art","Coleoptera","Nitidulidae","Lamiogethes",2,2,2,1,87.825,132.725,220.55,295.15,0,1
+"ZBJ_ART","ZBJ-Art","Coleoptera","Nitidulidae","Meligethes",2,2,2,1,15.45,107.6,123.05,131.93,0,0.5
+"ZBJ_ART","ZBJ-Art","Coleoptera","Nitidulidae","Omosita",1,1,1,1,72.12,182.75,254.87,254.87,0,1
+"ZBJ_ART","ZBJ-Art","Coleoptera","Ptinidae","Ernobius",1,1,0,0,,300.3,,,,
+"ZBJ_ART","ZBJ-Art","Coleoptera","Rhagophthalmidae","Diplocladon",1,1,1,1,88.45,0,88.45,88.45,0,1
+"ZBJ_ART","ZBJ-Art","Coleoptera","Rhagophthalmidae","Rhagophthalmus",1,1,1,1,144.35,0,144.35,144.35,0,1
+"ZBJ_ART","ZBJ-Art","Coleoptera","Scarabaeidae","Anomala",2,2,2,1,540.75,75.425,616.175,633.355,0,1
+"ZBJ_ART","ZBJ-Art","Coleoptera","Scarabaeidae","Callistethus",1,1,1,1,350.39,194.4,544.79,544.79,0,1
+"ZBJ_ART","ZBJ-Art","Coleoptera","Scarabaeidae","Cheirotonus",1,1,1,1,527.6,43.5,571.1,571.1,0,0
+"ZBJ_ART","ZBJ-Art","Coleoptera","Scarabaeidae","Cyphochilus",1,1,1,1,389.2,267.8,657,657,0,1
+"ZBJ_ART","ZBJ-Art","Coleoptera","Scarabaeidae","Dynastes",1,1,1,1,266.55,172.15,438.7,438.7,0,1
+"ZBJ_ART","ZBJ-Art","Coleoptera","Scarabaeidae","Euchirus",1,1,1,1,502.3,12.05,514.35,514.35,0,0
+"ZBJ_ART","ZBJ-Art","Coleoptera","Scarabaeidae","Eudicella",1,1,1,1,320.25,222.35,542.6,542.6,0,1
+"ZBJ_ART","ZBJ-Art","Coleoptera","Scarabaeidae","Gametis",1,1,1,1,364.57,222.35,586.92,586.92,0,1
+"ZBJ_ART","ZBJ-Art","Coleoptera","Scarabaeidae","Gymnopleurus",1,1,1,1,246.35,103.05,349.4,349.4,0,1
+"ZBJ_ART","ZBJ-Art","Coleoptera","Scarabaeidae","Kibakoganea",2,2,2,1,354.75,291.125,645.875,650.455,0,1
+"ZBJ_ART","ZBJ-Art","Coleoptera","Scarabaeidae","Mimela",1,1,1,1,242.8,54.7,297.5,297.5,0,0
+"ZBJ_ART","ZBJ-Art","Coleoptera","Scarabaeidae","Onthophagus",1,1,1,1,100.4,103.05,203.45,203.45,0,1
+"ZBJ_ART","ZBJ-Art","Coleoptera","Scarabaeidae","Oryctes",2,2,2,1,451,192.45,643.45,689.45,0,1
+"ZBJ_ART","ZBJ-Art","Coleoptera","Scarabaeidae","Popillia",10,1,10,1,265.55,41.85,307.4,307.4,0,0
+"ZBJ_ART","ZBJ-Art","Coleoptera","Scarabaeidae","Trichogomphus",1,1,1,1,445.4,6.95,452.35,452.35,0,0
+"ZBJ_ART","ZBJ-Art","Coleoptera","Silphidae","Silpha",1,1,1,1,4.3,133.15,137.45,137.45,0,1
+"ZBJ_ART","ZBJ-Art","Coleoptera","Silvanidae","Macrohyliota",1,1,1,1,5.6,280.95,286.55,286.55,0,1
+"ZBJ_ART","ZBJ-Art","Coleoptera","Staphylinidae","Anotylus",1,1,1,1,42.02,77.35,119.37,119.37,0,0
+"ZBJ_ART","ZBJ-Art","Coleoptera","Staphylinidae","Anthobium",1,1,0,0,,18.7,,,,
+"ZBJ_ART","ZBJ-Art","Coleoptera","Staphylinidae","Creophilus",1,1,1,1,19.62,100.4,120.02,120.02,0,0
+"ZBJ_ART","ZBJ-Art","Coleoptera","Staphylinidae","Rugilus",1,1,1,1,100.3,169.8,270.1,270.1,0,1
+"ZBJ_ART","ZBJ-Art","Coleoptera","Tenebrionidae","Anaedus",1,1,1,1,89.55,37.05,126.6,126.6,0,0
+"ZBJ_ART","ZBJ-Art","Coleoptera","Tenebrionidae","Blaps",1,1,1,1,117.05,6.45,123.5,123.5,0,0
+"ZBJ_ART","ZBJ-Art","Coleoptera","Tenebrionidae","Cteniopinus",1,1,1,1,60.2,18.7,78.9,78.9,0,0
+"ZBJ_ART","ZBJ-Art","Coleoptera","Tenebrionidae","Machla",1,1,1,1,89.55,5.1,94.65,94.65,0,0
+"ZBJ_ART","ZBJ-Art","Coleoptera","Tenebrionidae","Opatrum",2,2,2,1,93.775,123.125,216.9,233.46,0,0.5
+"ZBJ_ART","ZBJ-Art","Coleoptera","Tenebrionidae","Pelecyphorus",1,1,1,1,247.7,107.35,355.05,355.05,0,1
+"ZBJ_ART","ZBJ-Art","Coleoptera","Tenebrionidae","Strongylium",1,1,1,1,77.9,30.1,108,108,0,0
+"ZBJ_ART","ZBJ-Art","Coleoptera","Tenebrionidae","Tenebrio",4,2,4,1,52.1,30.1,82.2,204.21,0,0.25
+"ZBJ_ART","ZBJ-Art","Coleoptera","Tenebrionidae","Tribolium",1,1,1,1,170.9,48.3,219.2,219.2,0,1
+"ZBJ_ART","ZBJ-Art","Coleoptera","Tenebrionidae","Ulomoides",1,1,1,1,107.7,6.95,114.65,114.65,0,0
+"ZBJ_ART","ZBJ-Art","Coleoptera","Tetratomidae","Penthe",1,1,1,1,84.9,199.9,284.8,284.8,0,1
+"ZBJ_ART","ZBJ-Art","Coleoptera","Tetratomidae","Tetratoma",1,1,1,1,108.75,176.75,285.5,285.5,0,1
+"ZBJ_ART","ZBJ-Art","Coleoptera","Trogidae","Omorgus",1,1,1,1,457.4,11.75,469.15,469.15,0,0
+"ZBJ_ART","ZBJ-Art","Coleoptera","Vesperidae","Philus",1,1,1,1,108.3,177.65,285.95,285.95,0,1
+"ZBJ_ART","ZBJ-Art","Collembola","Actaletidae","Spinactaletes",1,1,1,1,215.24,280.95,496.19,496.19,0,1
+"ZBJ_ART","ZBJ-Art","Collembola","Bourletiellidae","Bourletiella",1,1,1,1,122.4,92.35,214.75,214.75,0,0
+"ZBJ_ART","ZBJ-Art","Collembola","Dicyrtomidae","Dicyrtomina",2,2,2,1,205.475,109.025,314.5,366.22,0,1
+"ZBJ_ART","ZBJ-Art","Collembola","Entomobryidae","Dicranocentrus",1,1,1,1,282,312.05,594.05,594.05,0,1
+"ZBJ_ART","ZBJ-Art","Collembola","Entomobryidae","Drepanosira",1,1,1,1,282.15,276.65,558.8,558.8,0,1
+"ZBJ_ART","ZBJ-Art","Collembola","Entomobryidae","Homidia",2,2,2,1,122.625,175.975,298.6,346.12,0,0.5
+"ZBJ_ART","ZBJ-Art","Collembola","Entomobryidae","Lepidocyrtus",1,1,1,1,163.9,304.07,467.97,467.97,0,1
+"ZBJ_ART","ZBJ-Art","Collembola","Entomobryidae","Seira",5,4,5,1,78.65,107.35,183.3,238.5,0,0.2
+"ZBJ_ART","ZBJ-Art","Collembola","Entomobryidae","Sinella",1,1,1,1,78.65,110.2,188.85,188.85,0,0
+"ZBJ_ART","ZBJ-Art","Collembola","Hypogastruridae","Ceratophysella",1,1,1,1,155.35,250.25,405.6,405.6,0,1
+"ZBJ_ART","ZBJ-Art","Collembola","Hypogastruridae","Gomphiocephalus",1,1,1,1,96.45,110.55,207,207,0,0
+"ZBJ_ART","ZBJ-Art","Collembola","Isotomidae","Ballistura",1,1,1,1,89.75,254.62,344.37,344.37,0,1
+"ZBJ_ART","ZBJ-Art","Collembola","Isotomidae","Cryptopygus",3,2,3,1,138.59,153.6,231,364.64,0,0.666666666666667
+"ZBJ_ART","ZBJ-Art","Collembola","Isotomidae","Folsomia",3,1,3,1,94.05,142.05,236.1,424.332,0,1
+"ZBJ_ART","ZBJ-Art","Collembola","Isotomidae","Folsomotoma",1,1,1,1,141.69,95.65,237.34,237.34,0,1
+"ZBJ_ART","ZBJ-Art","Collembola","Isotomidae","Isotomurus",1,1,1,1,150.2,18.7,168.9,168.9,0,0
+"ZBJ_ART","ZBJ-Art","Collembola","Isotomidae","Kaylathalia",1,1,1,1,81.55,126.25,207.8,207.8,0,1
+"ZBJ_ART","ZBJ-Art","Collembola","Isotomidae","Metisotoma",1,1,1,1,187.25,329.72,516.97,516.97,0,1
+"ZBJ_ART","ZBJ-Art","Collembola","Isotomidae","Proisotoma",1,1,1,1,200.6,58.05,258.65,258.65,0,0
+"ZBJ_ART","ZBJ-Art","Collembola","Isotomidae","Semicerura",1,1,1,1,167.2,35.2,202.4,202.4,0,1
+"ZBJ_ART","ZBJ-Art","Collembola","Neanuridae","Anurida",2,2,2,1,285.535,146.56,432.095,463.819,0,1
+"ZBJ_ART","ZBJ-Art","Collembola","Neanuridae","Australonura",1,1,1,1,714.35,341.65,1056,1056,0,1
+"ZBJ_ART","ZBJ-Art","Collembola","Neanuridae","Bilobella",1,1,1,1,237.4,227.37,464.77,464.77,0,1
+"ZBJ_ART","ZBJ-Art","Collembola","Neanuridae","Friesea",3,3,3,1,297.5,187.15,461.55,508.51,0,1
+"ZBJ_ART","ZBJ-Art","Collembola","Neanuridae","Lobella",2,1,2,1,268.75,181.55,450.3,450.3,0,1
+"ZBJ_ART","ZBJ-Art","Collembola","Neanuridae","Megalanura",1,1,1,1,109.34,103.05,212.39,212.39,0,1
+"ZBJ_ART","ZBJ-Art","Collembola","Neanuridae","Pseudachorutes",1,1,1,1,245.9,121.45,367.35,367.35,0,1
+"ZBJ_ART","ZBJ-Art","Collembola","Neanuridae","Yuukianura",1,1,1,1,272.87,218.05,490.92,490.92,0,1
+"ZBJ_ART","ZBJ-Art","Collembola","Neelidae","Megalothorax",1,1,1,1,122.89,18.7,141.59,141.59,0,0
+"ZBJ_ART","ZBJ-Art","Collembola","Oncopoduridae","Oncopodura",1,1,1,1,118.85,205.25,324.1,324.1,0,1
+"ZBJ_ART","ZBJ-Art","Collembola","Onychiuridae","Allonychiurus",1,1,1,1,261.75,84.9,346.65,346.65,0,1
+"ZBJ_ART","ZBJ-Art","Collembola","Onychiuridae","Bionychiurus",1,1,1,1,378.1,100.4,478.5,478.5,0,0
+"ZBJ_ART","ZBJ-Art","Collembola","Onychiuridae","Orthonychiurus",1,1,1,1,582.05,248.9,830.95,830.95,0,1
+"ZBJ_ART","ZBJ-Art","Collembola","Onychiuridae","Tetrodontophora",1,1,1,1,467.7,10.75,478.45,478.45,0,1
+"ZBJ_ART","ZBJ-Art","Collembola","Orchesellidae","Orchesella",3,3,3,1,170.6,203,373.6,485.56,0,0.666666666666667
+"ZBJ_ART","ZBJ-Art","Collembola","Paronellidae","Cyphoderus",3,3,3,1,189.15,159.4,357.95,376.11,0,1
+"ZBJ_ART","ZBJ-Art","Collembola","Paronellidae","Salina",1,1,1,1,174.15,94.92,269.07,269.07,0,1
+"ZBJ_ART","ZBJ-Art","Collembola","Sminthuridae","Allacma",1,1,1,1,367.99,105.82,473.81,473.81,0,1
+"ZBJ_ART","ZBJ-Art","Collembola","Sminthuridae","Sminthurus",1,1,1,1,148.2,103.05,251.25,251.25,0,1
+"ZBJ_ART","ZBJ-Art","Collembola","Tomoceridae","Aphaenomurus",1,1,1,1,82.2,112.15,194.35,194.35,0,0
+"ZBJ_ART","ZBJ-Art","Collembola","Tomoceridae","Tomocerus",1,1,1,1,78.65,100.4,179.05,179.05,0,0
+"ZBJ_ART","ZBJ-Art","Collembola","Tullbergiidae","Tullbergia",2,2,2,1,676.04,175.125,851.165,1064.065,0,1
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Andrenidae","Andrena",1,1,1,1,609.95,59.05,669,669,0,1
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Apidae","Apis",57,4,57,1,831.34,62.2,893.54,894.96,0,1
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Apidae","Bombus",4,3,4,1,555.525,161.85,727.425,782.8,0,1
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Apidae","Melipona",2,2,2,1,809.975,72.1,882.075,1006.575,0,1
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Apidae","Scaptotrigona",2,2,2,1,598.45,92.1,690.55,710.63,0,1
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Apidae","Tetragonisca",1,1,1,1,598.45,241.9,840.35,840.35,0,1
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Apidae","Tetragonula",1,1,1,1,801.45,229.55,1031,1031,0,1
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Argidae","Aprosthema",1,1,1,1,242.8,5.1,247.9,247.9,0,0
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Athaliidae","Athalia",3,2,3,1,145.1,117.25,262.35,342.23,0,0
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Bethylidae","Sclerodermus",1,1,1,1,111.9,51.3,163.2,163.2,0,1
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Blasticotomidae","Blasticotoma",2,2,2,1,460.435,65.285,525.72,529.16,0,1
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Braconidae","Apanteles",1,1,1,1,107.35,174.9,282.25,282.25,0,1
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Braconidae","Aphidius",1,1,1,1,6.95,5.1,12.05,12.05,0,0
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Braconidae","Chelonus",1,1,1,1,29.35,270.2,299.55,299.55,0,1
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Braconidae","Cotesia",1,1,1,1,107.35,174.9,282.25,282.25,0,1
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Braconidae","Cyanopterus",1,1,1,1,249.75,180,429.75,429.75,0,1
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Braconidae","Fopius",1,1,1,1,272.2,50.2,322.4,322.4,0,0
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Braconidae","Meteorus",1,1,1,1,269.1,176.25,445.35,445.35,0,1
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Braconidae","Microplitis",1,1,1,1,29.35,169.8,199.15,199.15,0,1
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Braconidae","Spathius",1,1,1,1,400.7,105.5,506.2,506.2,0,0
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Cephidae","Cephus",2,2,2,1,123.165,10.975,134.14,179.692,0,0
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Cephidae","Janus",3,3,3,1,113.38,18.7,173.85,235.434,0,0
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Cephidae","Syrista",1,1,1,1,32.15,5.1,37.25,37.25,0,0
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Cephidae","Trachelus",2,2,2,1,78.74,53.135,131.875,133.607,0,0
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Ceraphronidae","Ceraphron",1,1,1,1,870.44,32.15,902.59,902.59,0,1
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Chalcididae","Haltichella",1,1,1,1,39.7,338.22,377.92,377.92,0,1
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Cimbicidae","Abia",2,2,2,1,3.2,18.15,21.35,21.35,0,0
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Cimbicidae","Cimbex",1,1,1,1,7.5,5.1,12.6,12.6,0,0
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Cimbicidae","Leptocimbex",1,1,1,1,88.1,18.15,106.25,106.25,0,1
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Cimbicidae","Odontocimbex",1,1,1,1,3.2,91.85,95.05,95.05,0,1
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Colletidae","Colletes",1,1,1,1,517.35,174.9,692.25,692.25,0,1
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Crabronidae","Philanthus",1,1,1,1,308.35,66.05,374.4,374.4,0,1
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Cynipidae","Andricus",1,1,1,1,107.35,164.2,271.55,271.55,0,1
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Cynipidae","Latuspina",1,1,1,1,6.95,54.3,61.25,61.25,0,0
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Cynipidae","Lithosaphonecrus",1,1,1,1,147.75,79.8,227.55,227.55,0,1
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Cynipidae","Synergus",3,3,3,1,226.5,79.8,306.3,1115.5,0,0.333333333333333
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Cynipidae","Trichagalma",1,1,1,1,110.9,112.17,223.07,223.07,0,0
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Diprionidae","Augomonoctenus",1,1,1,1,33.3,32.6,65.9,65.9,0,0
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Diprionidae","Gilpinia",2,2,2,1,335.95,67.725,403.675,448.455,0,0
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Diprionidae","Nesodiprion",1,1,1,1,188.5,187.95,376.45,376.45,0,1
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Encyrtidae","Anagyrus",1,1,1,1,231.45,104.5,335.95,335.95,0,0
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Encyrtidae","Encyrtus",3,3,3,1,40.15,214.6,254.75,318.886,0,0.666666666666667
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Encyrtidae","Lamennaisia",1,1,1,1,53.55,223.5,277.05,277.05,0,1
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Encyrtidae","Ooencyrtus",1,1,1,1,40.15,157,197.15,197.15,0,1
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Encyrtidae","Psyllaephagus",1,1,1,1,96.7,212.82,309.52,309.52,0,1
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Eulophidae","Neotrichoporoides",1,1,1,1,42.15,224.1,266.25,266.25,0,1
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Eupelmidae","Anastatus",1,1,1,1,10.15,191.42,201.57,201.57,0,1
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Eurytomidae","Eurytoma",1,1,1,1,84.05,72.1,156.15,156.15,0,0
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Figitidae","Leptopilina",1,1,1,1,179.85,223.42,403.27,403.27,0,0
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Formicidae","Acropyga",1,1,1,1,562.05,172.5,734.55,734.55,0,1
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Formicidae","Aphaenogaster",2,2,2,1,696.275,168.96,865.235,947.063,0,1
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Formicidae","Atta",1,1,1,1,767.65,112.3,879.95,879.95,0,1
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Formicidae","Buniapone",1,1,1,1,734.4,105.7,840.1,840.1,0,1
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Formicidae","Dolichoderus",2,1,2,1,526.075,166.82,692.895,722.595,0,1
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Formicidae","Ectomomyrmex",1,1,1,1,756.95,224.1,981.05,981.05,0,1
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Formicidae","Lasius",1,1,1,1,808.9,293.3,1102.2,1102.2,0,1
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Formicidae","Lepisiota",2,1,2,1,756.95,78.55,835.5,835.5,0,1
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Formicidae","Monomorium",2,2,2,1,762.02,82.05,844.07,854.326,0,1
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Formicidae","Mycetophylax",1,1,1,1,743.05,204.35,947.4,947.4,0,1
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Formicidae","Ochetellus",1,1,1,1,491.75,67,558.75,558.75,0,1
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Formicidae","Paraponera",1,1,1,1,799,147.3,946.3,946.3,0,1
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Formicidae","Pheidole",3,3,3,1,496.05,112.3,608.35,726.854,0,1
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Formicidae","Polyrhachis",2,1,2,1,532.095,195.375,727.47,838.054,0,1
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Formicidae","Pseudomyrmex",2,2,2,1,748.665,123.5,872.165,877.193,0,1
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Formicidae","Solenopsis",2,2,2,1,553.275,114.825,668.1,696.34,0,1
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Formicidae","Stenamma",1,1,1,1,3509.18,331.72,3840.9,3840.9,0,1
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Formicidae","Tapinoma",1,1,1,1,585.74,282.1,867.84,867.84,0,1
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Formicidae","Temnothorax",1,1,1,1,636.85,288.55,925.4,925.4,0,1
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Formicidae","Tetramorium",1,1,1,1,812.85,243.25,1056.1,1056.1,0,1
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Ibaliidae","Ibalia",1,1,1,1,12.55,114.82,127.37,127.37,0,0
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Ichneumonidae","Agriotypus",1,1,1,1,59.45,111.95,171.4,171.4,0,0
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Ichneumonidae","Scambus",1,1,1,1,83.5,169.8,253.3,253.3,0,1
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Megachilidae","Megachile",1,1,1,1,638.65,119.6,758.25,758.25,0,1
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Pamphiliidae","Acantholyda",1,1,0,0,,273.07,,,,
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Pelecinidae","Pelecinus",1,1,1,1,101.4,61.75,163.15,163.15,0,1
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Pteromalidae","Nasonia",2,1,2,1,77.8,52.425,130.225,132.805,0,0
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Scelionidae","Telenomus",1,1,1,1,453.8,18.15,471.95,471.95,0,0
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Tenthredinidae","Anafenusa",1,1,1,1,59.1,55.3,114.4,114.4,0,0
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Tenthredinidae","Cladiucha",1,1,1,1,3.2,40.3,43.5,43.5,0,0
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Tenthredinidae","Conaspidia",4,4,3,0.75,3.2,0,3.2,34.4,0,0
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Tenthredinidae","Dolerus",1,1,1,1,3.2,30.1,33.3,33.3,0,0
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Tenthredinidae","Eriocampa",2,2,2,1,57.2,47.55,104.75,134.35,0,0.5
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Tenthredinidae","Fenusa",1,1,1,1,34.5,140.2,174.7,174.7,0,1
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Tenthredinidae","Fenusella",1,1,1,1,12.1,105.5,117.6,117.6,0,0
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Tenthredinidae","Hoplocampa",1,1,0,0,,0,,,,
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Tenthredinidae","Macrophya",1,1,1,1,118.2,105.5,223.7,223.7,0,1
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Tenthredinidae","Megabeleses",1,1,1,1,3.2,49.75,52.95,52.95,0,0
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Tenthredinidae","Metallus",1,1,1,1,51.75,11.75,63.5,63.5,0,0
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Tenthredinidae","Nematus",1,1,1,1,226.75,5.1,231.85,231.85,0,1
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Tenthredinidae","Neostromboceros",2,1,2,1,165.22,5.1,170.32,170.32,0,0
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Tenthredinidae","Pristiphora",1,1,1,1,139.2,48.25,187.45,187.45,0,0
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Tenthredinidae","Rocalia",1,1,1,1,7.5,11.55,19.05,19.05,0,0
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Tenthredinidae","Siobla",1,1,1,1,163.05,5.1,168.15,168.15,0,0
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Tenthredinidae","Trichiocampus",1,1,0,0,,92.75,,,,
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Trichogrammatidae","Trichogramma",1,1,1,1,53.9,139.2,193.1,193.1,0,1
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Trigonalidae","Taeniogonalos",1,1,1,1,108.9,79.45,188.35,188.35,0,0
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Vespidae","Eustenogaster",1,1,1,1,77.9,174.9,252.8,252.8,0,1
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Vespidae","Parapolybia",3,3,3,1,54.5,85.4,135.6,239.88,0,0.333333333333333
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Vespidae","Polistes",2,2,2,1,42.3,140.2,182.5,244.1,0,0.5
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Vespidae","Rhynchium",1,1,1,1,220.85,70.9,291.75,291.75,0,0
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Vespidae","Vespa",5,4,5,1,510.2,74.75,584.95,653.77,0,1
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Vespidae","Vespula",1,1,1,1,484.8,181.35,666.15,666.15,0,1
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Adelidae","Nemophora",1,1,1,1,142.4,100.4,242.8,242.8,0,0
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Bombycidae","Bombyx",65,2,65,1,0,0,0,0,1,0
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Bombycidae","Rondotia",1,1,1,1,0,5.1,5.1,5.1,0,0
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Callidulidae","Callidula",1,1,1,1,50.2,128.07,178.27,178.27,0,0
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Cosmopterigidae","Meleonoma",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Cossidae","Endoxyla",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Crambidae","Chilo",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Crambidae","Herpetogramma",1,1,1,1,0,6.45,6.45,6.45,0,0
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Crambidae","Ostrinia",2,2,2,1,0,88.375,88.375,153.515,0,0.5
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Crambidae","Parotis",1,1,1,1,50.2,0,50.2,50.2,0,0
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Crambidae","Prophantis",1,1,1,1,22.4,5.1,27.5,27.5,0,0
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Crambidae","Pygospila",1,1,1,1,22.4,0,22.4,22.4,0,0
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Crambidae","Sinomphisa",1,1,1,1,22.4,18.5,40.9,40.9,0,0
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Crambidae","Syllepte",1,1,1,1,25.95,0,25.95,25.95,0,0
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Endromidae","Mustilia",1,1,1,1,0,5.1,5.1,5.1,0,0
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Endromidae","Oberthueria",2,2,2,1,0,47.55,47.55,81.51,0,0.5
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Epipyropidae","Epipomponia",1,1,1,1,34.15,39.55,73.7,73.7,0,0
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Erebidae","Asota",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Erebidae","Catocala",1,1,1,1,0,135.1,135.1,135.1,0,1
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Erebidae","Chrysopera",1,1,1,1,51.65,169.8,221.45,221.45,0,1
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Erebidae","Ercheia",1,1,1,1,0,100.4,100.4,100.4,0,0
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Erebidae","Hemichloridia",1,1,1,1,21.55,48.25,69.8,69.8,0,0
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Erebidae","Rusicada",1,1,1,1,0,6.45,6.45,6.45,0,0
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Erebidae","Singara",1,1,1,1,0,5.1,5.1,5.1,0,0
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Erebidae","Thyas",1,1,1,1,18.45,169.8,188.25,188.25,0,1
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Gelechiidae","Monochroa",1,1,1,1,19.62,11.75,31.37,31.37,0,0
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Gelechiidae","Phthorimaea",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Gelechiidae","Sitotroga",1,1,1,1,18.45,0,18.45,18.45,0,0
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Gelechiidae","Tuta",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Geometridae","Biston",1,1,1,1,130.5,0,130.5,130.5,0,0
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Geometridae","Erannis",1,1,1,1,18.45,185.3,203.75,203.75,0,1
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Geometridae","Jankowskia",1,1,1,1,3.1,0,3.1,3.1,0,0
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Geometridae","Xanthabraxas",1,1,1,1,0,30.1,30.1,30.1,0,0
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Hepialidae","Thitarodes",1,1,1,1,0,176.75,176.75,176.75,0,1
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Hesperiidae","Abraximorpha",1,1,1,1,0,39.55,39.55,39.55,0,0
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Hesperiidae","Coladenia",1,1,1,1,0,18.15,18.15,18.15,0,0
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Hesperiidae","Erynnis",1,1,1,1,0,6.95,6.95,6.95,0,0
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Hesperiidae","Gerosis",1,1,1,1,4.3,18.15,22.45,22.45,0,0
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Hesperiidae","Hasora",1,1,1,1,3.55,0,3.55,3.55,0,0
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Hesperiidae","Lotongus",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Hesperiidae","Megathymus",1,1,1,1,0,21.4,21.4,21.4,0,0
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Hesperiidae","Tagiades",1,1,1,1,30.1,6.45,36.55,36.55,0,0
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Lasiocampidae","Dendrolimus",1,1,1,1,3.55,0,3.55,3.55,0,0
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Limacodidae","Iragoides",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Limacodidae","Scopelodes",1,1,1,1,0,11.75,11.75,11.75,0,0
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Lycaenidae","Ahlbergia",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Lycaenidae","Catochrysops",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Lycaenidae","Coreana",1,1,1,1,0,100.4,100.4,100.4,0,0
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Noctuidae","Acronicta",2,2,2,1,24.875,20.725,45.6,49.64,0,0
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Noctuidae","Athetis",2,1,2,1,0,0,0,0,1,0
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Noctuidae","Ctenoplusia",1,1,1,1,22.4,0,22.4,22.4,0,0
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Noctuidae","Helicoverpa",1,1,1,1,0,187.95,187.95,187.95,0,1
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Noctuidae","Mythimna",2,2,2,1,0,18.15,18.15,18.15,0,0
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Noctuidae","Sarbanissa",1,1,1,1,22.4,11.55,33.95,33.95,0,0
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Noctuidae","Spodoptera",39,1,39,1,0,18.15,18.15,18.15,0,0.0256410256410256
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Noctuidae","Striacosta",1,1,1,1,18.45,50.2,68.65,68.65,0,0
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Notodontidae","Clostera",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Notodontidae","Uropyia",1,1,1,1,0,12.05,12.05,12.05,0,0
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Nymphalidae","Apatura",1,1,1,1,22.4,50.2,72.6,72.6,0,0
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Nymphalidae","Argynnis",1,1,1,1,0,6.95,6.95,6.95,0,0
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Nymphalidae","Athyma",1,1,1,1,3.1,0,3.1,3.1,0,0
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Nymphalidae","Calinaga",1,1,1,1,0,5.1,5.1,5.1,0,0
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Nymphalidae","Callerebia",1,1,1,1,50.2,46,96.2,96.2,0,0
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Nymphalidae","Dophla",1,1,1,1,3.1,0,3.1,3.1,0,0
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Nymphalidae","Euthalia",1,1,1,1,0,5.1,5.1,5.1,0,0
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Nymphalidae","Hestina",1,1,1,1,42.02,174.65,216.67,216.67,0,1
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Nymphalidae","Junonia",1,1,1,1,46.32,0,46.32,46.32,0,0
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Nymphalidae","Kallimoides",2,1,2,1,22.4,5.1,27.5,27.5,0,0
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Nymphalidae","Lethe",2,2,2,1,0,23.375,23.375,37.995,0,0
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Nymphalidae","Limenitis",2,2,2,1,6,2.55,8.55,15.39,0.5,0
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Nymphalidae","Lopinga",1,1,1,1,8.9,111.95,120.85,120.85,0,0
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Nymphalidae","Maniola",1,1,1,1,0,24.6,24.6,24.6,0,0
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Nymphalidae","Melanargia",1,1,1,1,0,103.05,103.05,103.05,0,1
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Nymphalidae","Melitaea",1,1,1,1,22.4,5.1,27.5,27.5,0,0
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Nymphalidae","Ninguta",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Nymphalidae","Parasarpa",1,1,1,1,21.55,16.85,38.4,38.4,0,0
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Nymphalidae","Polyura",2,2,2,1,0,103.425,103.425,162.085,0,0.5
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Nymphalidae","Symbrenthia",1,1,1,1,22.4,35.2,57.6,57.6,0,0
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Nymphalidae","Telchinia",2,2,2,1,21.05,10.175,31.225,43.525,0,0
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Nymphalidae","Ypthima",1,1,1,1,0,12.05,12.05,12.05,0,0
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Papilionidae","Graphium",1,1,1,1,3.1,11.55,14.65,14.65,0,0
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Papilionidae","Iphiclides",1,1,1,1,8.9,0,8.9,8.9,0,0
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Papilionidae","Ornithoptera",1,1,1,1,3.1,24.6,27.7,27.7,0,0
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Papilionidae","Papilio",2,2,2,1,9.225,5.1,14.325,21.705,0,0
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Papilionidae","Parnassius",5,5,5,1,0,5.1,11.55,39.28,0.2,0
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Papilionidae","Zerynthia",1,1,1,1,0,100.4,100.4,100.4,0,0
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Pieridae","Aporia",1,1,1,1,23.92,29.9,53.82,53.82,0,0
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Pieridae","Colias",1,1,1,1,0,18.5,18.5,18.5,0,0
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Pieridae","Delias",1,1,1,1,54.5,27.67,82.17,82.17,0,0
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Pieridae","Pieris",3,1,3,1,50.2,0,50.2,50.2,0,0
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Pieridae","Pontia",2,1,2,1,73.15,29.9,103.05,139.41,0,0.5
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Plutellidae","Plutella",1,1,1,1,266.32,90,356.32,356.32,0,1
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Psychidae","Eumeta",1,1,1,1,169.8,47.8,217.6,217.6,0,1
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Pyralidae","Amyelois",1,1,1,1,42.02,0,42.02,42.02,0,0
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Pyralidae","Nyctegretis",1,1,1,1,22.4,50.2,72.6,72.6,0,0
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Saturniidae","Antheraea",1,1,1,1,18.45,6.45,24.9,24.9,0,0
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Saturniidae","Gonimbrasia",1,1,1,1,18.45,106.85,125.3,125.3,0,0
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Saturniidae","Loepa",1,1,1,1,22.4,6.45,28.85,28.85,0,0
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Scythrididae","Scythris",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Sphingidae","Adhemarius",1,1,1,1,0,23.3,23.3,23.3,0,0
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Sphingidae","Ambulyx",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Sphingidae","Amplypterus",1,1,1,1,0,84.9,84.9,84.9,0,1
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Sphingidae","Cechenena",1,1,1,1,0,23.8,23.8,23.8,0,0
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Sphingidae","Manduca",1,1,1,1,0,84.9,84.9,84.9,0,1
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Sphingidae","Orecta",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Sphingidae","Theretra",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Tortricidae","Acleris",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Tortricidae","Ancylis",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Tortricidae","Choristoneura",2,2,2,1,236.45,0,236.45,327.37,0,0.5
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Tortricidae","Leguminivora",7,1,7,1,3.1,0,3.1,7.8,0,0
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Tortricidae","Lobesia",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Tortricidae","Matsumuraeses",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Zygaenidae","Histia",1,1,1,1,31.3,0,31.3,31.3,0,0
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Zygaenidae","Pidorus",1,1,1,1,0,6.45,6.45,6.45,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Acari","Acaridae","Rhizoglyphus",1,1,1,1,38.02,56.9,94.92,94.92,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Acari","Allothyridae","Allothyrus",1,1,1,1,78,6.45,84.45,84.45,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Acari","Ameronothridae","Ameronothrus",1,1,1,1,17.62,0,17.62,17.62,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Acari","Argasidae","Alectorobius",6,5,6,1,254.8,7.15,284.825,536.895,0,0.833333333333333
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Acari","Argasidae","Argas",2,2,2,1,154,3.925,157.925,236.105,0,0.5
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Acari","Argasidae","Chiropterargas",1,1,1,1,187.6,46.12,233.72,233.72,0,1
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Acari","Argasidae","Navis",2,1,2,1,17.8,11.2,29,29,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Acari","Argasidae","Ogadenus",3,1,3,1,78,0,78,78,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Acari","Argasidae","Ornithodoros",19,9,19,1,92,15.85,123.9,167.486,0,0.0526315789473684
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Acari","Argasidae","Otobius",2,2,2,1,47.9,66.49,114.39,178.982,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Acari","Argasidae","Reticulinasus",2,2,2,1,78,3.225,81.225,83.805,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Acari","Argasidae","Secretargas",1,1,1,1,337.65,6.45,344.1,344.1,0,1
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Acari","Arrenuridae","Arrenurus",1,1,1,1,250.64,0,250.64,250.64,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Acari","Blattisociidae","Blattisocius",2,2,2,1,530.535,0,530.535,567.123,0,1
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Acari","Demodicidae","Demodex",1,1,1,1,619.95,60.12,680.07,680.07,0,1
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Acari","Dermanyssidae","Dermanyssus",1,1,1,1,545,29.7,574.7,574.7,0,1
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Acari","Ereynetidae","Riccardoella",1,1,1,1,169.8,10.75,180.55,180.55,0,1
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Acari","Eriophyidae","Aceria",1,1,1,1,0,21.75,21.75,21.75,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Acari","Eriophyidae","Epitrimerus",1,1,1,1,63.22,25.5,88.72,88.72,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Acari","Eriophyidae","Leipothrix",1,1,1,1,216.12,5.6,221.72,221.72,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Acari","Eviphididae","Copriphis",2,2,0,0,,11.2,,,,
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Acari","Fortuyniidae","Fortuynia",1,1,1,1,0,51.72,51.72,51.72,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Acari","Glycyphagidae","Lepidoglyphus",1,1,1,1,38.02,179.63,217.65,217.65,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Acari","Haemogamasidae","Eulaelaps",2,2,2,1,196.015,11.625,207.64,211.328,0,1
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Acari","Histiostomatidae","Histiostoma",1,1,1,1,45.2,107.3,152.5,152.5,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Acari","Hygrobatidae","Hygrobates",1,1,1,1,91.47,6.45,97.92,97.92,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Acari","Ixodidae","Amblyomma",33,17,32,0.96969696969697,78,0,84.45,153.835,0,0.03125
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Acari","Ixodidae","Dermacentor",23,5,23,1,99.65,11.2,110.85,111.69,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Acari","Ixodidae","Haemaphysalis",55,13,55,1,78,10.75,88.75,89.2,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Acari","Ixodidae","Hyalomma",2,2,2,1,78,120.035,198.035,260.487,0,0.5
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Acari","Ixodidae","Ixodes",24,18,24,1,78,5.6,83.6,181.567,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Acari","Ixodidae","Rhipicentor",1,1,1,1,108.1,17.65,125.75,125.75,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Acari","Ixodidae","Rhipicephalus",19,9,19,1,78,0,86.4,116.87,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Acari","Laelapidae","Echinolaelaps",1,1,1,1,119.2,0,119.2,119.2,0,1
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Acari","Laelapidae","Tropilaelaps",1,1,1,1,1780.8,11.2,1792,1792,0,1
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Acari","Liodidae","Poroliodes",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Acari","Macrochelidae","Macrocheles",1,1,1,1,1841,11.2,1852.2,1852.2,0,1
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Acari","Parasitidae","Cycetogamasus",1,1,0,0,,17.65,,,,
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Acari","Parasitidae","Poecilochirus",1,1,0,0,,25.5,,,,
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Acari","Phytoseiidae","Amblyseius",1,1,1,1,484.8,24.2,509,509,0,1
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Acari","Phytoseiidae","Neoseiulus",1,1,1,1,502.42,13.45,515.87,515.87,0,1
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Acari","Phytoseiidae","Typhlodromus",1,1,1,1,1780.8,10.75,1791.55,1791.55,0,1
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Acari","Psoroptidae","Psoroptes",1,1,1,1,20.4,17.8,38.2,38.2,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Acari","Pyroglyphidae","Dermatophagoides",1,1,1,1,20.4,29.85,50.25,50.25,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Acari","Rhinonyssidae","Ptilonyssus",1,1,1,1,619.2,27.8,647,647,0,1
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Acari","Sarcoptidae","Sarcoptes",2,1,2,1,20.4,17.8,38.2,38.2,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Acari","Sperchontidae","Sperchon",1,1,1,1,250.64,0,250.64,250.64,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Acari","Tetranychidae","Oligonychus",1,1,1,1,122.4,0,122.4,122.4,0,1
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Acari","Tetranychidae","Tetranychus",7,4,7,1,140.02,5.6,140.02,145.62,0,1
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Acari","Trombiculidae","Leptotrombidium",2,2,2,1,801.045,13.835,814.88,909.304,0,1
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Acari","Trombiculidae","Pentidionis",1,1,1,1,982.79,0,982.79,982.79,0,1
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Acari","Trombiculidae","Walchia",1,1,1,1,1067.29,5.6,1072.89,1072.89,0,1
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Acari","Unionicolidae","Neumania",1,1,1,1,250.64,0,250.64,250.64,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Acari","Urodinychidae","Uroobovella",1,1,1,1,179.4,117.13,296.53,296.53,0,1
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Attelabidae","Deporaus",1,1,1,1,0,6.45,6.45,6.45,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Brentidae","Cylas",4,1,4,1,169.8,27.67,197.47,197.47,0,1
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Buprestidae","Anthaxia",1,1,1,1,0,19.05,19.05,19.05,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Buprestidae","Lamprodila",1,1,1,1,0,11.2,11.2,11.2,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Cantharidae","Lycocerus",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Cantharidae","Podabrus",1,1,1,1,0,10.75,10.75,10.75,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Cantharidae","Themus",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Carabidae","Amara",1,1,1,1,0,11.2,11.2,11.2,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Carabidae","Bembidion",2,1,2,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Carabidae","Blethisa",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Carabidae","Carabus",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Carabidae","Harpalus",1,1,1,1,17.62,0,17.62,17.62,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Carabidae","Pterostichus",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Carabidae","Rhyzodiastes",1,1,1,1,169.8,0,169.8,169.8,0,1
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Carabidae","Scarites",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Cerambycidae","Aegolipton",1,1,1,1,60.2,0,60.2,60.2,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Cerambycidae","Allotraeus",1,1,1,1,0,10.75,10.75,10.75,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Cerambycidae","Batocera",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Cerambycidae","Callipogon",1,1,1,1,0,46.12,46.12,46.12,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Cerambycidae","Chlorophorus",2,2,2,1,0,25.035,25.035,36.103,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Cerambycidae","Grammoptera",1,1,1,1,14,208.85,222.85,222.85,0,1
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Cerambycidae","Mesosa",1,1,1,1,0,6.45,6.45,6.45,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Cerambycidae","Monochamus",1,1,1,1,0,6.45,6.45,6.45,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Cerambycidae","Morimospasma",2,2,2,1,24.97,0,24.97,44.946,0.5,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Cerambycidae","Rhagium",1,1,1,1,83.07,0,83.07,83.07,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Cerambycidae","Stenocorus",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Cerambycidae","Xylotrechus",1,1,1,1,0,11.2,11.2,11.2,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Cerambycidae","Xystrocera",1,1,1,1,26.02,0,26.02,26.02,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Chrysomelidae","Adiscus",1,1,1,1,17.62,0,17.62,17.62,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Chrysomelidae","Agetocera",1,1,1,1,0,6.45,6.45,6.45,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Chrysomelidae","Altica",1,1,1,1,0,117.13,117.13,117.13,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Chrysomelidae","Aspidomorpha",1,1,1,1,0,6.45,6.45,6.45,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Chrysomelidae","Basilepta",1,1,1,1,18.32,0,18.32,18.32,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Chrysomelidae","Basiprionota",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Chrysomelidae","Brontispa",1,1,1,1,0,10.75,10.75,10.75,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Chrysomelidae","Bruchidius",1,1,1,1,0,11.2,11.2,11.2,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Chrysomelidae","Chaetocnema",1,1,1,1,0,11.2,11.2,11.2,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Chrysomelidae","Chrysodinopsis",1,1,1,1,0,17.65,17.65,17.65,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Chrysomelidae","Downesia",1,1,0,0,,0,,,,
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Chrysomelidae","Glyphocassis",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Chrysomelidae","Macroplea",1,1,1,1,0,11.2,11.2,11.2,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Chrysomelidae","Mimastra",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Chrysomelidae","Monolepta",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Chrysomelidae","Oomorphoides",1,1,1,1,26.2,14.3,40.5,40.5,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Chrysomelidae","Phyllobrotica",1,1,1,1,0,46.12,46.12,46.12,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Chrysomelidae","Spilopyra",1,1,1,1,173,6.45,179.45,179.45,0,1
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Chrysomelidae","Taophila",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Cleridae","Callimerus",1,1,1,1,0,11.2,11.2,11.2,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Cleridae","Clerus",1,1,1,1,0,6.45,6.45,6.45,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Cleridae","Pieleus",1,1,1,1,0,6.45,6.45,6.45,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Cleridae","Stigmatium",1,1,1,1,8.4,0,8.4,8.4,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Coccinellidae","Cheilomenes",1,1,1,1,17.62,46.12,63.74,63.74,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Coccinellidae","Henosepilachna",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Coccinellidae","Illeis",1,1,1,1,0,46.12,46.12,46.12,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Coccinellidae","Megalocaria",1,1,1,1,17.62,0,17.62,17.62,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Coccinellidae","Nephus",1,1,1,1,117.13,6.45,123.58,123.58,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Coccinellidae","Scymnus",4,4,4,1,0,35.81,35.81,98.182,0.25,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Cucujidae","Cucujus",1,1,1,1,83.07,0,83.07,83.07,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Cucujidae","Platisus",1,1,1,1,0,17.65,17.65,17.65,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Curculionidae","Aclees",1,1,1,1,0,198.1,198.1,198.1,0,1
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Curculionidae","Blosyrus",1,1,1,1,0,6.45,6.45,6.45,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Curculionidae","Callirhopalus",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Curculionidae","Catapionus",1,1,1,1,3.2,6.45,9.65,9.65,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Curculionidae","Ceutorhynchus",2,2,2,1,0,16.35,16.35,20.83,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Curculionidae","Dendroctonus",1,1,1,1,0,6.45,6.45,6.45,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Curculionidae","Dereodus",1,1,1,1,0,46.12,46.12,46.12,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Curculionidae","Dinoplatypus",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Curculionidae","Dryocoetes",1,1,1,1,0,6.45,6.45,6.45,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Curculionidae","Eubrychius",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Curculionidae","Homorosoma",1,1,1,1,0,27.67,27.67,27.67,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Curculionidae","Hylastes",1,1,1,1,0,6.45,6.45,6.45,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Curculionidae","Hypothenemus",2,2,2,1,0,5.375,5.375,9.675,0.5,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Curculionidae","Mecysmoderes",1,1,1,1,0,38.87,38.87,38.87,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Curculionidae","Microplontus",1,1,1,1,0,7.85,7.85,7.85,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Curculionidae","Nematocerus",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Curculionidae","Niphades",1,1,1,1,0,7.85,7.85,7.85,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Curculionidae","Odoiporus",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Curculionidae","Orthotomicus",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Curculionidae","Pimelocerus",1,1,1,1,59.75,0,59.75,59.75,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Curculionidae","Pityogenes",1,1,1,1,8.4,19.05,27.45,27.45,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Curculionidae","Rhyncholobus",1,1,1,1,0,11.2,11.2,11.2,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Curculionidae","Scolytoplatypus",1,1,1,1,3.2,0,3.2,3.2,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Curculionidae","Scolytus",1,1,1,1,29.38,0,29.38,29.38,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Curculionidae","Sirocalodes",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Curculionidae","Sternochetus",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Curculionidae","Tomicus",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Curculionidae","Trigonopterus",3,3,3,1,169.8,35.52,215.12,255.08,0,1
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Curculionidae","Trypodendron",1,1,0,0,,10.75,,,,
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Curculionidae","Xylosandrus",2,2,2,1,0,9.3,9.3,16.74,0.5,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Dermestidae","Trogoderma",1,1,1,1,229.55,11.2,240.75,240.75,0,1
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Dytiscidae","Acilius",1,1,1,1,0,10.75,10.75,10.75,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Dytiscidae","Agabus",1,1,1,1,0,7.85,7.85,7.85,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Dytiscidae","Graphoderus",1,1,0,0,,0,,,,
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Dytiscidae","Hygrotus",1,1,1,1,0,19.05,19.05,19.05,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Dytiscidae","Lancetes",2,2,0,0,,10.75,,,,
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Dytiscidae","Limbodessus",5,5,1,0.2,0,0,52.57,52.57,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Dytiscidae","Mystonectes",1,1,1,1,0,11.2,11.2,11.2,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Dytiscidae","Porhydrus",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Dytiscidae","Scarodytes",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Elateridae","Athousius",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Elateridae","Cryptalaus",1,1,1,1,0,11.2,11.2,11.2,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Elateridae","Ludioschema",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Elateridae","Melanotus",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Gyrinidae","Dineutus",1,1,1,1,17.62,0,17.62,17.62,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Hydraenidae","Ochthebius",6,6,0,0,,0,,,,
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Hydrophilidae","Cercyon",1,1,1,1,0,6.45,6.45,6.45,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Lampyridae","Diaphanes",2,2,2,1,3.2,5.6,8.8,13.28,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Lampyridae","Emeia",1,1,1,1,3.2,6.45,9.65,9.65,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Lampyridae","Pygoluciola",2,2,2,1,0,11.2,11.2,11.2,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Lampyridae","Pyrocoelia",3,3,3,1,3.2,6.45,9.65,31.786,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Lampyridae","Sclerotia",1,1,1,1,0,17.65,17.65,17.65,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Lampyridae","Vesta",1,1,1,1,0,17.65,17.65,17.65,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Lucanidae","Dorcus",2,2,2,1,200.65,12.75,213.4,218.384,0,1
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Lucanidae","Hexarthrius",1,1,1,1,229.55,0,229.55,229.55,0,1
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Lucanidae","Himaloaesalus",1,1,1,1,0,6.45,6.45,6.45,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Lucanidae","Prosopocoilus",1,1,1,1,59.75,11.2,70.95,70.95,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Lycidae","Lycostomus",1,1,1,1,29.38,0,29.38,29.38,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Lymexylidae","Atractocerus",3,1,3,1,8.4,17.65,26.05,49.554,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Lymexylidae","Lymexylon",1,1,1,1,0,6.45,6.45,6.45,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Lymexylidae","Melittomma",2,2,2,1,18.06,12.05,30.11,34.382,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Meloidae","Berberomeloe",1,1,1,1,21.65,0,21.65,21.65,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Meloidae","Epicauta",2,2,2,1,77.82,65.17,142.99,142.99,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Meloidae","Mylabris",1,1,1,1,60.2,53.97,114.17,114.17,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Meloidae","Pseudabris",1,1,1,1,99.47,65.17,164.64,164.64,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Melyridae","Carphurus",1,1,1,1,0,209.3,209.3,209.3,0,1
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Melyridae","Cyrtosus",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Melyridae","Intybia",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Nitidulidae","Aethina",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Nitidulidae","Epuraea",2,2,2,1,20.01,7.15,27.16,42.168,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Nitidulidae","Glischrochilus",1,1,1,1,14,204.55,218.55,218.55,0,1
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Nitidulidae","Lamiogethes",2,2,2,1,0,5.375,5.375,9.675,0.5,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Nitidulidae","Meligethes",2,2,2,1,0,5.6,5.6,10.08,0.5,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Nitidulidae","Omosita",1,1,1,1,0,7.85,7.85,7.85,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Ptinidae","Ernobius",1,1,0,0,,0,,,,
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Rhagophthalmidae","Diplocladon",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Rhagophthalmidae","Rhagophthalmus",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Scarabaeidae","Anomala",2,2,2,1,13.01,3.225,16.235,29.223,0.5,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Scarabaeidae","Callistethus",1,1,1,1,0,17.65,17.65,17.65,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Scarabaeidae","Cheirotonus",1,1,1,1,29.38,6.45,35.83,35.83,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Scarabaeidae","Cyphochilus",1,1,1,1,37.78,14.3,52.08,52.08,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Scarabaeidae","Dynastes",1,1,1,1,134.75,0,134.75,134.75,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Scarabaeidae","Euchirus",1,1,1,1,148.75,12.05,160.8,160.8,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Scarabaeidae","Eudicella",1,1,1,1,0,117.13,117.13,117.13,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Scarabaeidae","Gametis",1,1,1,1,18.32,19.05,37.37,37.37,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Scarabaeidae","Gymnopleurus",1,1,1,1,0,11.2,11.2,11.2,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Scarabaeidae","Kibakoganea",2,2,2,1,0,58.565,58.565,105.417,0.5,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Scarabaeidae","Mimela",1,1,1,1,0,17.65,17.65,17.65,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Scarabaeidae","Onthophagus",1,1,1,1,0,11.2,11.2,11.2,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Scarabaeidae","Oryctes",2,2,2,1,0,113.475,113.475,195.295,0,0.5
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Scarabaeidae","Popillia",10,1,10,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Scarabaeidae","Trichogomphus",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Silphidae","Silpha",1,1,1,1,0,11.2,11.2,11.2,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Silvanidae","Macrohyliota",1,1,1,1,8.4,10.75,19.15,19.15,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Staphylinidae","Anotylus",1,1,1,1,14,25.5,39.5,39.5,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Staphylinidae","Anthobium",1,1,0,0,,0,,,,
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Staphylinidae","Creophilus",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Staphylinidae","Rugilus",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Tenebrionidae","Anaedus",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Tenebrionidae","Blaps",1,1,1,1,0,6.45,6.45,6.45,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Tenebrionidae","Cteniopinus",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Tenebrionidae","Machla",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Tenebrionidae","Opatrum",2,2,2,1,0,76.215,76.215,123.067,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Tenebrionidae","Pelecyphorus",1,1,1,1,169.8,0,169.8,169.8,0,1
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Tenebrionidae","Strongylium",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Tenebrionidae","Tenebrio",4,2,4,1,0,0,0,102.557,0.75,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Tenebrionidae","Tribolium",1,1,1,1,0,6.45,6.45,6.45,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Tenebrionidae","Ulomoides",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Tetratomidae","Penthe",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Tetratomidae","Tetratoma",1,1,1,1,29.38,0,29.38,29.38,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Trogidae","Omorgus",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Vesperidae","Philus",1,1,1,1,59.75,205.95,265.7,265.7,0,1
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Collembola","Actaletidae","Spinactaletes",1,1,1,1,89.86,10.75,100.61,100.61,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Collembola","Bourletiellidae","Bourletiella",1,1,1,1,78,0,78,78,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Collembola","Dicyrtomidae","Dicyrtomina",2,2,2,1,103.875,5.6,109.475,110.575,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Collembola","Entomobryidae","Dicranocentrus",1,1,1,1,304.34,117.13,421.47,421.47,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Collembola","Entomobryidae","Drepanosira",1,1,1,1,81.85,6.45,88.3,88.3,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Collembola","Entomobryidae","Homidia",2,2,2,1,78.025,72.99,151.015,203.507,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Collembola","Entomobryidae","Lepidocyrtus",1,1,1,1,68.6,252.07,320.67,320.67,0,1
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Collembola","Entomobryidae","Seira",5,4,5,1,60.2,0,60.2,137.768,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Collembola","Entomobryidae","Sinella",1,1,1,1,60.2,11.2,71.4,71.4,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Collembola","Hypogastruridae","Ceratophysella",1,1,1,1,86.4,6.45,92.85,92.85,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Collembola","Hypogastruridae","Gomphiocephalus",1,1,1,1,78,6.45,84.45,84.45,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Collembola","Isotomidae","Ballistura",1,1,1,1,95.62,27.67,123.29,123.29,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Collembola","Isotomidae","Cryptopygus",3,2,3,1,78,11.2,89.2,97.44,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Collembola","Isotomidae","Folsomia",3,1,3,1,95.62,0,95.62,161.652,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Collembola","Isotomidae","Folsomotoma",1,1,1,1,78,10.75,88.75,88.75,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Collembola","Isotomidae","Isotomurus",1,1,1,1,78,0,78,78,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Collembola","Isotomidae","Kaylathalia",1,1,1,1,78,7.85,85.85,85.85,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Collembola","Isotomidae","Metisotoma",1,1,1,1,113.65,169.7,283.35,283.35,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Collembola","Isotomidae","Proisotoma",1,1,1,1,81.85,7.85,89.7,89.7,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Collembola","Isotomidae","Semicerura",1,1,1,1,78,0,78,78,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Collembola","Neanuridae","Anurida",2,2,2,1,58.175,88.075,146.25,224.01,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Collembola","Neanuridae","Australonura",1,1,1,1,243.55,124.98,368.53,368.53,0,1
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Collembola","Neanuridae","Bilobella",1,1,1,1,229.55,38.87,268.42,268.42,0,1
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Collembola","Neanuridae","Friesea",3,3,3,1,95.4,6.45,101.85,125.386,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Collembola","Neanuridae","Lobella",2,1,2,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Collembola","Neanuridae","Megalanura",1,1,1,1,72.24,11.2,83.44,83.44,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Collembola","Neanuridae","Pseudachorutes",1,1,1,1,0,6.45,6.45,6.45,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Collembola","Neanuridae","Yuukianura",1,1,1,1,0,11.2,11.2,11.2,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Collembola","Neelidae","Megalothorax",1,1,1,1,132.44,0,132.44,132.44,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Collembola","Oncopoduridae","Oncopodura",1,1,1,1,78,53,131,131,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Collembola","Onychiuridae","Allonychiurus",1,1,1,1,209.25,0,209.25,209.25,0,1
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Collembola","Onychiuridae","Bionychiurus",1,1,1,1,159.4,0,159.4,159.4,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Collembola","Onychiuridae","Orthonychiurus",1,1,1,1,269,21.95,290.95,290.95,0,1
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Collembola","Onychiuridae","Tetrodontophora",1,1,1,1,307.55,10.75,318.3,318.3,0,1
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Collembola","Orchesellidae","Orchesella",3,3,3,1,90.3,0,92,99.24,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Collembola","Paronellidae","Cyphoderus",3,3,3,1,95.85,5.6,95.85,196.65,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Collembola","Paronellidae","Salina",1,1,1,1,60.2,46.12,106.32,106.32,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Collembola","Sminthuridae","Allacma",1,1,1,1,310.95,53.97,364.92,364.92,0,1
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Collembola","Sminthuridae","Sminthurus",1,1,1,1,90.3,11.2,101.5,101.5,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Collembola","Tomoceridae","Aphaenomurus",1,1,1,1,60.2,117.13,177.33,177.33,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Collembola","Tomoceridae","Tomocerus",1,1,1,1,60.2,117.13,177.33,177.33,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Collembola","Tullbergiidae","Tullbergia",2,2,2,1,469.87,74.19,544.06,733.268,0,1
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Andrenidae","Andrena",1,1,1,1,494.95,15.85,510.8,510.8,0,1
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Apidae","Apis",57,4,57,1,793.82,19.05,812.87,812.87,0,1
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Apidae","Bombus",4,3,4,1,494.95,49.2,544.15,556.61,0,1
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Apidae","Melipona",2,2,2,1,754.075,67,821.075,945.575,0,1
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Apidae","Scaptotrigona",2,2,2,1,598.45,67,665.45,665.45,0,1
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Apidae","Tetragonisca",1,1,1,1,598.45,67,665.45,665.45,0,1
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Apidae","Tetragonula",1,1,1,1,598.45,67,665.45,665.45,0,1
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Argidae","Aprosthema",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Athaliidae","Athalia",3,2,3,1,122.7,0,122.7,129.42,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Bethylidae","Sclerodermus",1,1,1,1,108.35,11.2,119.55,119.55,0,1
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Blasticotomidae","Blasticotoma",2,2,2,1,176.8,24.21,201.01,209.618,0,1
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Braconidae","Apanteles",1,1,1,1,6.95,0,6.95,6.95,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Braconidae","Aphidius",1,1,1,1,6.95,0,6.95,6.95,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Braconidae","Chelonus",1,1,1,1,6.95,0,6.95,6.95,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Braconidae","Cotesia",1,1,1,1,6.95,0,6.95,6.95,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Braconidae","Cyanopterus",1,1,1,1,6.95,10.2,17.15,17.15,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Braconidae","Fopius",1,1,1,1,143.43,0,143.43,143.43,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Braconidae","Meteorus",1,1,1,1,26.3,6.45,32.75,32.75,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Braconidae","Microplitis",1,1,1,1,6.95,0,6.95,6.95,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Braconidae","Spathius",1,1,1,1,63.5,0,63.5,63.5,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Cephidae","Cephus",2,2,2,1,10.15,0,10.15,10.15,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Cephidae","Janus",3,3,3,1,10.15,0,39.53,109.73,0.333333333333333,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Cephidae","Syrista",1,1,1,1,10.15,0,10.15,10.15,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Cephidae","Trachelus",2,2,2,1,10.15,17.06,27.21,40.858,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Ceraphronidae","Ceraphron",1,1,1,1,622.5,15.3,637.8,637.8,0,1
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Chalcididae","Haltichella",1,1,1,1,39.7,113.12,152.82,152.82,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Cimbicidae","Abia",2,2,2,1,3.2,11.2,14.4,14.4,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Cimbicidae","Cimbex",1,1,1,1,3.2,0,3.2,3.2,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Cimbicidae","Leptocimbex",1,1,1,1,3.2,11.2,14.4,14.4,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Cimbicidae","Odontocimbex",1,1,1,1,3.2,0,3.2,3.2,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Colletidae","Colletes",1,1,1,1,494.95,0,494.95,494.95,0,1
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Crabronidae","Philanthus",1,1,1,1,299.45,49.2,348.65,348.65,0,1
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Cynipidae","Andricus",1,1,1,1,6.95,49.2,56.15,56.15,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Cynipidae","Latuspina",1,1,1,1,6.95,49.2,56.15,56.15,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Cynipidae","Lithosaphonecrus",1,1,1,1,6.95,74.7,81.65,81.65,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Cynipidae","Synergus",3,3,3,1,176.75,74.7,251.45,439.29,0,0.333333333333333
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Cynipidae","Trichagalma",1,1,1,1,6.95,95.32,102.27,102.27,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Diprionidae","Augomonoctenus",1,1,1,1,3.2,11.2,14.4,14.4,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Diprionidae","Gilpinia",2,2,2,1,62.95,3.225,66.175,68.755,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Diprionidae","Nesodiprion",1,1,1,1,3.2,11.2,14.4,14.4,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Encyrtidae","Anagyrus",1,1,1,1,40.15,49.2,89.35,89.35,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Encyrtidae","Encyrtus",3,3,3,1,40.15,78.2,118.35,126.246,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Encyrtidae","Lamennaisia",1,1,1,1,56.35,72.6,128.95,128.95,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Encyrtidae","Ooencyrtus",1,1,1,1,40.15,67,107.15,107.15,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Encyrtidae","Psyllaephagus",1,1,1,1,96.7,106.52,203.22,203.22,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Eulophidae","Neotrichoporoides",1,1,1,1,19.75,49.2,68.95,68.95,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Eupelmidae","Anastatus",1,1,1,1,10.15,106.52,116.67,116.67,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Eurytomidae","Eurytoma",1,1,1,1,40.15,67,107.15,107.15,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Figitidae","Leptopilina",1,1,1,1,208.05,106.52,314.57,314.57,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Formicidae","Acropyga",1,1,1,1,523.55,67,590.55,590.55,0,1
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Formicidae","Aphaenogaster",2,2,2,1,606.525,84.06,690.585,720.957,0,1
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Formicidae","Atta",1,1,1,1,661.55,67,728.55,728.55,0,1
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Formicidae","Buniapone",1,1,1,1,551.5,60.4,611.9,611.9,0,1
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Formicidae","Dolichoderus",2,1,2,1,491.75,121.52,613.27,615.51,0,1
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Formicidae","Ectomomyrmex",1,1,1,1,491.75,49.2,540.95,540.95,0,1
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Formicidae","Lasius",1,1,1,1,491.75,78.2,569.95,569.95,0,1
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Formicidae","Lepisiota",2,1,2,1,491.75,73.45,565.2,565.2,0,1
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Formicidae","Monomorium",2,2,2,1,691.425,67,758.425,782.325,0,1
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Formicidae","Mycetophylax",1,1,1,1,664.75,67,731.75,731.75,0,1
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Formicidae","Ochetellus",1,1,1,1,491.75,67,558.75,558.75,0,1
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Formicidae","Paraponera",1,1,1,1,548.3,67,615.3,615.3,0,1
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Formicidae","Pheidole",3,3,3,1,491.75,73.45,565.2,614.712,0,1
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Formicidae","Polyrhachis",2,1,2,1,513.545,70.225,583.77,598.626,0,1
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Formicidae","Pseudomyrmex",2,2,2,1,491.75,78.2,569.95,569.95,0,1
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Formicidae","Solenopsis",2,2,2,1,551.5,72.375,623.875,628.175,0,1
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Formicidae","Stenamma",1,1,1,1,2938.55,116.62,3055.17,3055.17,0,1
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Formicidae","Tapinoma",1,1,1,1,598.84,265.1,863.94,863.94,0,1
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Formicidae","Temnothorax",1,1,1,1,491.75,271.55,763.3,763.3,0,1
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Formicidae","Tetramorium",1,1,1,1,491.75,73.45,565.2,565.2,0,1
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Ibaliidae","Ibalia",1,1,1,1,15.35,99.97,115.32,115.32,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Ichneumonidae","Agriotypus",1,1,1,1,6.95,6.45,13.4,13.4,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Ichneumonidae","Scambus",1,1,1,1,26.3,0,26.3,26.3,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Megachilidae","Megachile",1,1,1,1,616.25,7.85,624.1,624.1,0,1
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Pamphiliidae","Acantholyda",1,1,0,0,,46.12,,,,
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Pelecinidae","Pelecinus",1,1,1,1,101.4,6.45,107.85,107.85,0,1
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Pteromalidae","Nasonia",2,1,2,1,59.35,52.425,111.775,114.355,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Scelionidae","Telenomus",1,1,1,1,84.5,11.2,95.7,95.7,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Tenthredinidae","Anafenusa",1,1,1,1,3.2,0,3.2,3.2,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Tenthredinidae","Cladiucha",1,1,1,1,3.2,10.2,13.4,13.4,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Tenthredinidae","Conaspidia",4,4,3,0.75,3.2,0,3.2,3.2,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Tenthredinidae","Dolerus",1,1,1,1,3.2,0,3.2,3.2,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Tenthredinidae","Eriocampa",2,2,2,1,3.2,0,3.2,3.2,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Tenthredinidae","Fenusa",1,1,1,1,3.2,0,3.2,3.2,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Tenthredinidae","Fenusella",1,1,1,1,3.2,0,3.2,3.2,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Tenthredinidae","Hoplocampa",1,1,0,0,,0,,,,
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Tenthredinidae","Macrophya",1,1,1,1,3.2,0,3.2,3.2,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Tenthredinidae","Megabeleses",1,1,1,1,3.2,42.8,46,46,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Tenthredinidae","Metallus",1,1,1,1,3.2,0,3.2,3.2,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Tenthredinidae","Nematus",1,1,1,1,173,0,173,173,0,1
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Tenthredinidae","Neostromboceros",2,1,2,1,3.2,0,3.2,3.2,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Tenthredinidae","Pristiphora",1,1,1,1,86.27,11.2,97.47,97.47,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Tenthredinidae","Rocalia",1,1,1,1,3.2,6.45,9.65,9.65,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Tenthredinidae","Siobla",1,1,1,1,3.2,0,3.2,3.2,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Tenthredinidae","Trichiocampus",1,1,0,0,,7.85,,,,
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Trichogrammatidae","Trichogramma",1,1,1,1,37.37,49.2,86.57,86.57,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Trigonalidae","Taeniogonalos",1,1,1,1,55.5,13.45,68.95,68.95,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Vespidae","Eustenogaster",1,1,1,1,6.95,0,6.95,6.95,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Vespidae","Parapolybia",3,3,3,1,0,0,0,163.64,0.666666666666667,0.333333333333333
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Vespidae","Polistes",2,2,2,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Vespidae","Rhynchium",1,1,1,1,224.17,19.05,243.22,243.22,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Vespidae","Vespa",5,4,5,1,491.75,34.25,526,624.31,0,1
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Vespidae","Vespula",1,1,1,1,484.8,204.55,689.35,689.35,0,1
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Adelidae","Nemophora",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Bombycidae","Bombyx",65,2,65,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Bombycidae","Rondotia",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Callidulidae","Callidula",1,1,1,1,0,27.67,27.67,27.67,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Cosmopterigidae","Meleonoma",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Cossidae","Endoxyla",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Crambidae","Chilo",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Crambidae","Herpetogramma",1,1,1,1,0,6.45,6.45,6.45,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Crambidae","Ostrinia",2,2,2,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Crambidae","Parotis",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Crambidae","Prophantis",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Crambidae","Pygospila",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Crambidae","Sinomphisa",1,1,1,1,0,6.45,6.45,6.45,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Crambidae","Syllepte",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Endromidae","Mustilia",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Endromidae","Oberthueria",2,2,2,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Epipyropidae","Epipomponia",1,1,1,1,17.62,11.2,28.82,28.82,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Erebidae","Asota",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Erebidae","Catocala",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Erebidae","Chrysopera",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Erebidae","Ercheia",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Erebidae","Hemichloridia",1,1,1,1,0,11.2,11.2,11.2,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Erebidae","Rusicada",1,1,1,1,0,6.45,6.45,6.45,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Erebidae","Singara",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Erebidae","Thyas",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Gelechiidae","Monochroa",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Gelechiidae","Phthorimaea",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Gelechiidae","Sitotroga",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Gelechiidae","Tuta",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Geometridae","Biston",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Geometridae","Erannis",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Geometridae","Jankowskia",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Geometridae","Xanthabraxas",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Hepialidae","Thitarodes",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Hesperiidae","Abraximorpha",1,1,1,1,0,11.2,11.2,11.2,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Hesperiidae","Coladenia",1,1,1,1,0,11.2,11.2,11.2,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Hesperiidae","Erynnis",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Hesperiidae","Gerosis",1,1,1,1,0,11.2,11.2,11.2,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Hesperiidae","Hasora",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Hesperiidae","Lotongus",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Hesperiidae","Megathymus",1,1,1,1,0,5.6,5.6,5.6,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Hesperiidae","Tagiades",1,1,1,1,0,6.45,6.45,6.45,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Lasiocampidae","Dendrolimus",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Limacodidae","Iragoides",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Limacodidae","Scopelodes",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Lycaenidae","Ahlbergia",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Lycaenidae","Catochrysops",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Lycaenidae","Coreana",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Noctuidae","Acronicta",2,2,2,1,7,8.825,15.825,23.325,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Noctuidae","Athetis",2,1,2,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Noctuidae","Ctenoplusia",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Noctuidae","Helicoverpa",1,1,1,1,0,11.2,11.2,11.2,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Noctuidae","Mythimna",2,2,2,1,0,11.2,11.2,11.2,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Noctuidae","Sarbanissa",1,1,1,1,0,6.45,6.45,6.45,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Noctuidae","Spodoptera",39,1,39,1,0,11.2,11.2,11.2,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Noctuidae","Striacosta",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Notodontidae","Clostera",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Notodontidae","Uropyia",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Nymphalidae","Apatura",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Nymphalidae","Argynnis",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Nymphalidae","Athyma",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Nymphalidae","Calinaga",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Nymphalidae","Callerebia",1,1,1,1,0,17.65,17.65,17.65,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Nymphalidae","Dophla",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Nymphalidae","Euthalia",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Nymphalidae","Hestina",1,1,1,1,14,11.2,25.2,25.2,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Nymphalidae","Junonia",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Nymphalidae","Kallimoides",2,1,2,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Nymphalidae","Lethe",2,2,2,1,0,3.225,3.225,5.805,0.5,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Nymphalidae","Limenitis",2,2,2,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Nymphalidae","Lopinga",1,1,1,1,0,6.45,6.45,6.45,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Nymphalidae","Maniola",1,1,1,1,0,17.65,17.65,17.65,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Nymphalidae","Melanargia",1,1,1,1,0,11.2,11.2,11.2,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Nymphalidae","Melitaea",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Nymphalidae","Ninguta",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Nymphalidae","Parasarpa",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Nymphalidae","Polyura",2,2,2,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Nymphalidae","Symbrenthia",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Nymphalidae","Telchinia",2,2,2,1,0,3.225,3.225,5.805,0.5,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Nymphalidae","Ypthima",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Papilionidae","Graphium",1,1,1,1,0,6.45,6.45,6.45,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Papilionidae","Iphiclides",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Papilionidae","Ornithoptera",1,1,1,1,0,17.65,17.65,17.65,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Papilionidae","Papilio",2,2,2,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Papilionidae","Parnassius",5,5,5,1,0,0,0,13.26,0.6,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Papilionidae","Zerynthia",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Pieridae","Aporia",1,1,1,1,0,11.2,11.2,11.2,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Pieridae","Colias",1,1,1,1,0,6.45,6.45,6.45,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Pieridae","Delias",1,1,1,1,0,27.67,27.67,27.67,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Pieridae","Pieris",3,1,3,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Pieridae","Pontia",2,1,2,1,0,8.825,8.825,15.885,0.5,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Plutellidae","Plutella",1,1,1,1,35.94,0,35.94,35.94,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Psychidae","Eumeta",1,1,1,1,169.8,10.75,180.55,180.55,0,1
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Pyralidae","Amyelois",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Pyralidae","Nyctegretis",1,1,1,1,14,0,14,14,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Saturniidae","Antheraea",1,1,1,1,0,6.45,6.45,6.45,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Saturniidae","Gonimbrasia",1,1,1,1,0,6.45,6.45,6.45,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Saturniidae","Loepa",1,1,1,1,0,6.45,6.45,6.45,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Scythrididae","Scythris",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Sphingidae","Adhemarius",1,1,1,1,0,6.45,6.45,6.45,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Sphingidae","Ambulyx",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Sphingidae","Amplypterus",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Sphingidae","Cechenena",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Sphingidae","Manduca",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Sphingidae","Orecta",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Sphingidae","Theretra",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Tortricidae","Acleris",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Tortricidae","Ancylis",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Tortricidae","Choristoneura",2,2,2,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Tortricidae","Leguminivora",7,1,7,1,0,0,0,7.04800000000001,0.857142857142857,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Tortricidae","Lobesia",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Tortricidae","Matsumuraeses",1,1,1,1,0,0,0,0,1,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Zygaenidae","Histia",1,1,1,1,14,0,14,14,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Zygaenidae","Pidorus",1,1,1,1,0,6.45,6.45,6.45,0,0

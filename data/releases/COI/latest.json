@@ -1,0 +1,234 @@
+{
+  "schema_version": "1.0.0",
+  "release_version": "2026-08-14",
+  "marker_id": "COI",
+  "released_at": "2026-08-15 00:39:51 UTC",
+  "upstream_sources": [
+    {
+      "name": "NCBI / PrimerMiner",
+      "url": "https://www.ncbi.nlm.nih.gov/nuccore/NC_001322.1"
+    }
+  ],
+  "coordinate_reference": "NC_001322.1",
+  "reference_version": "NC_001322.1",
+  "completeness": {
+    "taxonomy_resolved_fraction": 0.5266,
+    "geography_resolved_fraction": 0.0074
+  },
+  "previous_successful_release": {},
+  "artifacts": {
+    "overview": {
+      "url": "https://data.example.invalid/primer-atlas/releases/COI/2026-08-14/overview.parquet",
+      "local_path": "data/pinned/COI/2026-08-14/overview.parquet",
+      "bytes": 22231,
+      "rows": 575,
+      "sha256": "9e90ef1a835e48f0698f71e623fa0d01ddfa2b94c62814077d2387e9500040ee"
+    },
+    "pair_geometry": {
+      "url": "https://data.example.invalid/primer-atlas/releases/COI/2026-08-14/pair_geometry.parquet",
+      "local_path": "data/pinned/COI/2026-08-14/pair_geometry.parquet",
+      "bytes": 7620,
+      "rows": 25,
+      "sha256": "b19c24b4c7216ff6f57e613efb3d2cd82b81526acdb3f69fda6faa4c8f1ad09a"
+    },
+    "pair_templates": {
+      "url": "https://data.example.invalid/primer-atlas/releases/COI/2026-08-14/pair_templates.parquet",
+      "local_path": "data/pinned/COI/2026-08-14/pair_templates.parquet",
+      "bytes": 300586,
+      "rows": 35775,
+      "sha256": "5410d66a0ff8bae5cbe85a14c54bd70cdfe78884206ec40cc13a11b8abb9da26"
+    },
+    "primer_positions": {
+      "url": "https://data.example.invalid/primer-atlas/releases/COI/2026-08-14/primer_positions.parquet",
+      "local_path": "data/pinned/COI/2026-08-14/primer_positions.parquet",
+      "bytes": 246494,
+      "rows": 1658529,
+      "sha256": "61416e8a51121a29ecdd4d091515c2f94d7480506c0ec1515c3a306f0c0fafe4"
+    },
+    "taxonomy": {
+      "url": "https://data.example.invalid/primer-atlas/releases/COI/2026-08-14/taxonomy.parquet",
+      "local_path": "data/pinned/COI/2026-08-14/taxonomy.parquet",
+      "bytes": 2348291,
+      "rows": 67352,
+      "sha256": "13684acc9e4a24637501611aefc09fe6a52107c5b2595bfcaf5749b248b60ad1"
+    },
+    "geography": {
+      "url": "https://data.example.invalid/primer-atlas/releases/COI/2026-08-14/geography.parquet",
+      "local_path": "data/pinned/COI/2026-08-14/geography.parquet",
+      "bytes": 262404,
+      "rows": 67352,
+      "sha256": "404da0640bc1e95f863391c9cd1b2bb8a87405080b6e26c1e50f3089cbcc8bb2"
+    },
+    "families": {
+      "url": "https://data.example.invalid/primer-atlas/releases/COI/2026-08-14/families.parquet",
+      "local_path": "data/pinned/COI/2026-08-14/families.parquet",
+      "bytes": 250949,
+      "rows": 20825,
+      "sha256": "b1cffacb573eb0a947002a4475c10ad8336d25d8ef693ef8e93a407af6b3752b"
+    },
+    "subfamilies": {
+      "url": "https://data.example.invalid/primer-atlas/releases/COI/2026-08-14/subfamilies.parquet",
+      "local_path": "data/pinned/COI/2026-08-14/subfamilies.parquet",
+      "bytes": 12318,
+      "rows": 275,
+      "sha256": "f570523d2f0997aa62e21cd3409553eb0902e0afaf37baaa3f01c56a38b5575f"
+    },
+    "genera": {
+      "url": "https://data.example.invalid/primer-atlas/releases/COI/2026-08-14/genera.parquet",
+      "local_path": "data/pinned/COI/2026-08-14/genera.parquet",
+      "bytes": 1585925,
+      "rows": 138150,
+      "sha256": "48ad231d03b7b61e3fff5d516fd68580c93d4de8c7c8b0bd48ef9bedf2cb7651"
+    },
+    "exact_anml": {
+      "url": "https://data.example.invalid/primer-atlas/releases/COI/2026-08-14/exact_anml.parquet",
+      "bytes": 2633047,
+      "rows": 67352,
+      "sha256": "89815089b4e00375e07ea4632b771a956890c4521c034b00d902b8b6bcacf090"
+    },
+    "exact_arf": {
+      "url": "https://data.example.invalid/primer-atlas/releases/COI/2026-08-14/exact_arf.parquet",
+      "bytes": 2559456,
+      "rows": 67352,
+      "sha256": "b3021c8e7543d5d06b4b5860244ceadf5eff508e4a67530e25d1337abbe75247"
+    },
+    "exact_beeprime": {
+      "url": "https://data.example.invalid/primer-atlas/releases/COI/2026-08-14/exact_beeprime.parquet",
+      "bytes": 3143040,
+      "rows": 67352,
+      "sha256": "9fd1b5a788f258d326650d1d261d643bf2ba877883745301bbf27dc794955d31"
+    },
+    "exact_bf1_br1": {
+      "url": "https://data.example.invalid/primer-atlas/releases/COI/2026-08-14/exact_bf1_br1.parquet",
+      "bytes": 2734020,
+      "rows": 67352,
+      "sha256": "100d4ba6963fa1d52191bf19ee9d277e050a5a7913a2b5c022566b3c68aba73d"
+    },
+    "exact_bf1_br2": {
+      "url": "https://data.example.invalid/primer-atlas/releases/COI/2026-08-14/exact_bf1_br2.parquet",
+      "bytes": 2520076,
+      "rows": 67352,
+      "sha256": "5d06dc3e415b9ff15bc7d151129365d97330e8f280d81ff7206c517b3d6e3275"
+    },
+    "exact_bf2_br1": {
+      "url": "https://data.example.invalid/primer-atlas/releases/COI/2026-08-14/exact_bf2_br1.parquet",
+      "bytes": 2739557,
+      "rows": 67352,
+      "sha256": "eb4e442e63cfa25063a1389b7ba9d2af6468c0767a464cf422669a4ddc24cb70"
+    },
+    "exact_bf2_br2": {
+      "url": "https://data.example.invalid/primer-atlas/releases/COI/2026-08-14/exact_bf2_br2.parquet",
+      "bytes": 2533113,
+      "rows": 67352,
+      "sha256": "db73a684e64eb9d580c110771159ddb537a7bdabf18750d8c664150cf90045e2"
+    },
+    "exact_bf3_br2": {
+      "url": "https://data.example.invalid/primer-atlas/releases/COI/2026-08-14/exact_bf3_br2.parquet",
+      "bytes": 2510050,
+      "rows": 67352,
+      "sha256": "addd90fa5b78a9bb062ab2806a94729839dde750c26213c5e75da9897c91615e"
+    },
+    "exact_br5_arr5": {
+      "url": "https://data.example.invalid/primer-atlas/releases/COI/2026-08-14/exact_br5_arr5.parquet",
+      "bytes": 2690060,
+      "rows": 67352,
+      "sha256": "2e1bd5bbe85a7af39f21410ae9298d8fc3e02a85a8a97a56e7f5f21378d57fc1"
+    },
+    "exact_f230r": {
+      "url": "https://data.example.invalid/primer-atlas/releases/COI/2026-08-14/exact_f230r.parquet",
+      "bytes": 2550946,
+      "rows": 67352,
+      "sha256": "55bc1444656ac0b237e39dbc9e46450a80994f7451570f9864f49b7344dc2a9d"
+    },
+    "exact_fish_f2_r1": {
+      "url": "https://data.example.invalid/primer-atlas/releases/COI/2026-08-14/exact_fish_f2_r1.parquet",
+      "bytes": 2503064,
+      "rows": 67352,
+      "sha256": "4c186b0cb3599ca522cdd7f4b10a197c558d867e624cc2c0d2d38db8e681c4f9"
+    },
+    "exact_folmer": {
+      "url": "https://data.example.invalid/primer-atlas/releases/COI/2026-08-14/exact_folmer.parquet",
+      "bytes": 2401551,
+      "rows": 67352,
+      "sha256": "eeba1a5b64c42afd954848a9f2bb9b204a683de248fd2c02df587bb9704ee8bf"
+    },
+    "exact_fwh1": {
+      "url": "https://data.example.invalid/primer-atlas/releases/COI/2026-08-14/exact_fwh1.parquet",
+      "bytes": 2504159,
+      "rows": 67352,
+      "sha256": "0f94d7e33ebc298d091c475de1f64a094187601c4a78a56ef5f6294b91e1b775"
+    },
+    "exact_fwh2": {
+      "url": "https://data.example.invalid/primer-atlas/releases/COI/2026-08-14/exact_fwh2.parquet",
+      "bytes": 2911381,
+      "rows": 67352,
+      "sha256": "fe3e076524e40207d4a38920d38b4871f5a4693957e82ef04698c1c4586f3b41"
+    },
+    "exact_fwh2_eptdr2n": {
+      "url": "https://data.example.invalid/primer-atlas/releases/COI/2026-08-14/exact_fwh2_eptdr2n.parquet",
+      "bytes": 3163161,
+      "rows": 67352,
+      "sha256": "8485f35e99344ddaa6b30c162621ce0db861f98fc6321553e4a48fc14110bcf9"
+    },
+    "exact_hexcoi": {
+      "url": "https://data.example.invalid/primer-atlas/releases/COI/2026-08-14/exact_hexcoi.parquet",
+      "bytes": 2682484,
+      "rows": 67352,
+      "sha256": "eae6202df9648f50f21a89fc1de6510a8b5fbc7951eb77917fe7f60c83b3a30d"
+    },
+    "exact_leray_xt": {
+      "url": "https://data.example.invalid/primer-atlas/releases/COI/2026-08-14/exact_leray_xt.parquet",
+      "bytes": 2610419,
+      "rows": 67352,
+      "sha256": "244660a0f8a584e827a4ad99e365f038177ca8f557d5e5e73709bd20d8693393"
+    },
+    "exact_mco": {
+      "url": "https://data.example.invalid/primer-atlas/releases/COI/2026-08-14/exact_mco.parquet",
+      "bytes": 2631571,
+      "rows": 67352,
+      "sha256": "db48abcd63869567d2e3a9554a943e29e4815f205160d61298c1b051e4182210"
+    },
+    "exact_mollcoi253": {
+      "url": "https://data.example.invalid/primer-atlas/releases/COI/2026-08-14/exact_mollcoi253.parquet",
+      "bytes": 3040835,
+      "rows": 67352,
+      "sha256": "d882af812e20ce6af203b694b00adcd786fbee1222a62b887a3100d4babac21a"
+    },
+    "exact_noplant": {
+      "url": "https://data.example.invalid/primer-atlas/releases/COI/2026-08-14/exact_noplant.parquet",
+      "bytes": 2867126,
+      "rows": 67352,
+      "sha256": "48fe7c7e022c35ccb78ffd35b43ad64663c6bad282fc2103a73439e5b11afeb7"
+    },
+    "exact_nospi2_laurelin": {
+      "url": "https://data.example.invalid/primer-atlas/releases/COI/2026-08-14/exact_nospi2_laurelin.parquet",
+      "bytes": 2775696,
+      "rows": 67352,
+      "sha256": "3c41afdf0ad07b677688b938dda284f393bdfd8e673029ba6140f8757d503a26"
+    },
+    "exact_nospid": {
+      "url": "https://data.example.invalid/primer-atlas/releases/COI/2026-08-14/exact_nospid.parquet",
+      "bytes": 2813247,
+      "rows": 67352,
+      "sha256": "0a7c86b71701ac40dfa434e36b538cb6dbd6ab74e0dab069bbb2a5f537f03d04"
+    },
+    "exact_vert": {
+      "url": "https://data.example.invalid/primer-atlas/releases/COI/2026-08-14/exact_vert.parquet",
+      "bytes": 2522765,
+      "rows": 67352,
+      "sha256": "59664ed168e63c6d31d27ea644533a7526291b7860475ed7dd81c8e049a681a0"
+    },
+    "exact_zbj_art": {
+      "url": "https://data.example.invalid/primer-atlas/releases/COI/2026-08-14/exact_zbj_art.parquet",
+      "bytes": 2876269,
+      "rows": 67352,
+      "sha256": "3ebf93044a478d5e99e4e0ccef9fe6d8798d123f4aa4fafbaacf6060802f694a"
+    },
+    "exact_zbj_art_deg": {
+      "url": "https://data.example.invalid/primer-atlas/releases/COI/2026-08-14/exact_zbj_art_deg.parquet",
+      "bytes": 2787527,
+      "rows": 67352,
+      "sha256": "95d96c3b527ece08066639b598625fe40fcc56e724132780519853a40be890cd"
+    }
+  }
+}

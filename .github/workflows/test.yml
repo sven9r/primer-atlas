@@ -1,0 +1,27 @@
+name: Test atlas
+on:
+  push:
+  pull_request:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: r-lib/actions/setup-r@v2
+      - uses: r-lib/actions/setup-renv@v2
+      - name: Run regression tests
+        run: |
+          for test in \
+            tests/test_bundle_size.R \
+            tests/test_catalog_and_geography.R \
+            tests/test_claimed_primer_reference.R \
+            tests/test_custom_primer_gate.R \
+            tests/test_marker_runtime.R \
+            tests/test_order_lens_interaction.R \
+            tests/test_primer_map_domain.R \
+            tests/test_release_layer.R \
+            tests/test_runtime_custom_order_scoring.R \
+            tests/test_sequence_drilldown.R \
+            tests/test_universal_sequence_drilldown.R; do Rscript "$test"; done
+      - name: Check deployable bundle size
+        run: Rscript tests/test_bundle_size.R

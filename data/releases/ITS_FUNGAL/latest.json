@@ -1,0 +1,35 @@
+{
+  "schema_version": "1.0.0",
+  "release_version": "2026-08-14",
+  "marker_id": "ITS_FUNGAL",
+  "released_at": "2026-08-15 00:39:52 UTC",
+  "upstream_sources": [
+    {
+      "name": "UNITE / NCBI",
+      "url": "https://unite.ut.ee/primers.php"
+    }
+  ],
+  "coordinate_reference": "FN812768.2",
+  "reference_version": "FN812768.2",
+  "completeness": {
+    "taxonomy_resolved_fraction": {},
+    "geography_resolved_fraction": {}
+  },
+  "previous_successful_release": {},
+  "artifacts": {
+    "pair_geometry": {
+      "url": "https://data.example.invalid/primer-atlas/releases/ITS_FUNGAL/2026-08-14/pair_geometry.parquet",
+      "local_path": "data/pinned/ITS_FUNGAL/2026-08-14/pair_geometry.parquet",
+      "bytes": 6004,
+      "rows": 8,
+      "sha256": "e45d0a12591e2023a689c97780c4101f34e67d860fbbbc406e74d7cf1d1e1689"
+    },
+    "primer_source": {
+      "url": "https://data.example.invalid/primer-atlas/releases/ITS_FUNGAL/2026-08-14/primer_source.parquet",
+      "local_path": "data/pinned/ITS_FUNGAL/2026-08-14/primer_source.parquet",
+      "bytes": 6805,
+      "rows": 121,
+      "sha256": "c2c140cda33b02e47e22adb2b8c5042a78d57fd89e47bde6625ace076ca7ef4a"
+    }
+  }
+}

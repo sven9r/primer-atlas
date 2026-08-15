@@ -1,0 +1,7 @@
+"marker_id","display_name","molecule_context","coordinate_reference","reference_version","reference_length","coordinate_model","status","screening_artifact_id","expanded_artifact_id","source_name","source_url","available_lineage_ranks","geographic_fields"
+"COI","Animal COI","mitochondrial","NC_001322.1","NC_001322.1",1536,"sequence","active","coi_order_alignments","coi_gurten2026","NCBI / PrimerMiner","https://www.ncbi.nlm.nih.gov/nuccore/NC_001322.1","order|family|subfamily|genus|sequence","country|locality|lat_lon"
+"ITS_FUNGAL","Fungal ITS","nuclear rDNA","FN812768.2","FN812768.2",739,"sequence_with_landmarks","pilot","its_fn812768_screen","its_unite_future","UNITE / NCBI","https://unite.ut.ee/primers.php","primer_catalog","planned"
+"18S","Eukaryotic 18S","nuclear rDNA","PR2/SILVA release-specific","planned",,"landmark_alignment","planned","","","PR2 / SILVA","https://pr2-database.org/","planned","planned"
+"16S_PROK","Bacterial / archaeal 16S","prokaryotic rDNA","SILVA release-specific","planned",,"landmark_alignment","planned","","","SILVA","https://www.arb-silva.de/","planned","planned"
+"16S_MT","Animal mitochondrial 16S","mitochondrial","NCBI taxon-panel release-specific","planned",,"sequence_alignment","planned","","","NCBI","https://www.ncbi.nlm.nih.gov/","planned","planned"
+"28S","Eukaryotic 28S","nuclear rDNA","SILVA LSU release-specific","planned",,"landmark_alignment","planned","","","SILVA","https://www.arb-silva.de/","planned","planned"

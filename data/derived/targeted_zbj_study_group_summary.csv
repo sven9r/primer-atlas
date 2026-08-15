@@ -1,0 +1,17 @@
+"pair_id","pair_label","source_group","study_group","n_sequences","n_species","n_pair_scorable","pair_scorable_fraction","forward_median_penalty","reverse_median_penalty","pair_median_penalty","pair_p90_penalty","perfect_match_fraction_among_scorable","terminal_3_mismatch_fraction_among_scorable"
+"ZBJ_ART","ZBJ-Art","Acari","Acari",244,134,239,0.979508196721312,100,105.65,234.92,561.87,0,0.702928870292887
+"ZBJ_ART","ZBJ-Art","Coleoptera","Coleoptera",228,211,211,0.925438596491228,89.55,93.485,219.2,514.35,0.00947867298578199,0.535545023696682
+"ZBJ_ART","ZBJ-Art","Collembola","Collembola",61,56,61,1,172.65,142.05,357.95,520.25,0,0.737704918032787
+"ZBJ_ART","ZBJ-Art","Hymenoptera","Hymenoptera",198,137,194,0.97979797979798,513.4,64.125,653.86,893.54,0,0.721649484536082
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Boundary / convention-sensitive moths",2,2,2,1,15.65,3.225,18.875,28.815,0,0
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Butterflies (Papilionoidea)",57,53,57,1,3.1,6.95,24.6,100.4,0.105263157894737,0.0701754385964912
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Macroheterocera (macro-moth core)",140,38,140,1,0,0,0,41.5600000000001,0.514285714285714,0.0571428571428571
+"ZBJ_ART","ZBJ-Art","Lepidoptera","Microlepidoptera (operational grade)",42,36,42,1,3.1,0,9.35,178.118,0.261904761904762,0.142857142857143
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Acari","Acari",244,134,239,0.979508196721312,78,10.75,88.75,251.642,0.00418410041841004,0.158995815899582
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Coleoptera","Coleoptera",228,211,211,0.925438596491228,0,6.45,11.2,160.8,0.322274881516588,0.0947867298578199
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Collembola","Collembola",61,56,61,1,81.85,7.85,99.5,307.55,0.0327868852459016,0.147540983606557
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Hymenoptera","Hymenoptera",198,137,194,0.97979797979798,491.75,19.05,544.15,812.87,0.0309278350515464,0.587628865979381
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Boundary / convention-sensitive moths",2,2,2,1,7,3.225,10.225,13.245,0,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Butterflies (Papilionoidea)",57,53,57,1,0,0,0,17.65,0.649122807017544,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Macroheterocera (macro-moth core)",140,38,140,1,0,0,0,11.2,0.635714285714286,0
+"ZBJ_ART_DEG","ZBJ-Art degenerate","Lepidoptera","Microlepidoptera (operational grade)",42,36,42,1,0,0,0,17.258,0.80952380952381,0.0238095238095238

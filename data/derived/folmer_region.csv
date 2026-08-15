@@ -1,0 +1,2 @@
+"region","start","end","length_bp","forward_primer","reverse_primer","coordinate_method","reference_accession"
+"Folmer barcode region",42,699,658,"LCO1490","HCO2198","interior strictly between alignment-derived LCO1490 and HCO2198 3-prime ends; full primer-inclusive amplicon is reported separately","NC_001322.1"

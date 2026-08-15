@@ -1,0 +1,50 @@
+name: Propose a primer pair
+description: Propose a cited primer pair for reviewed inclusion in the atlas
+title: "Primer proposal: "
+labels: [primer-proposal, needs-curation]
+body:
+  - type: dropdown
+    id: marker
+    attributes:
+      label: Marker
+      options: [Animal COI, Fungal ITS, Eukaryotic 18S, Bacterial / archaeal 16S, Animal mitochondrial 16S, Eukaryotic 28S]
+    validations: {required: true}
+  - type: input
+    id: pair_name
+    attributes: {label: Primer-pair name}
+    validations: {required: true}
+  - type: textarea
+    id: oligos
+    attributes:
+      label: Oligos (5-prime to 3-prime)
+      description: Give forward and reverse names and IUPAC sequences.
+    validations: {required: true}
+  - type: checkboxes
+    id: applications
+    attributes:
+      label: Claimed applications
+      options:
+        - {label: Barcoding}
+        - {label: Bulk community}
+        - {label: eDNA}
+        - {label: Diet}
+  - type: textarea
+    id: target
+    attributes: {label: Target taxa, environment, and design intent}
+  - type: input
+    id: product
+    attributes: {label: Expected primer-inclusive product length}
+  - type: textarea
+    id: sources
+    attributes: {label: Sources, DOIs, and original claim wording}
+    validations: {required: true}
+  - type: textarea
+    id: diagnostics
+    attributes: {label: Atlas session diagnostics}
+  - type: checkboxes
+    id: review
+    attributes:
+      label: Curation agreement
+      options:
+        - label: I understand that submission does not add this pair automatically; citations, tests, and curator review are required.
+          required: true

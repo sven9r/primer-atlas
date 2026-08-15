@@ -102,11 +102,11 @@
       "VignetteBuilder": "knitr",
       "RemoteType": "github",
       "RemoteHost": "api.github.com",
-      "RemoteUsername": "VascoElbrecht",
-      "RemoteRepo": "PrimerMiner",
-      "RemoteSubdir": "PrimerMiner",
-      "RemoteRef": "9c5e4fb7a4934f590f8df3f6300550a94b04e7f3",
-      "RemoteSha": "9c5e4fb7a4934f590f8df3f6300550a94b04e7f3"
+      "RemoteUsername": "sven9r",
+      "RemoteRepo": "primer-atlas",
+      "RemoteSubdir": "vendor/PrimerMiner",
+      "RemoteRef": "f609e5b3365bfb26c69b4d8ec3f5619ac92b8226",
+      "RemoteSha": "f609e5b3365bfb26c69b4d8ec3f5619ac92b8226"
     },
     "R6": {
       "Package": "R6",

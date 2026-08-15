@@ -35,9 +35,14 @@ stopifnot(
 
 message("Marker catalog, multi-facet, ITS import, and geography checks passed.")
 
-geography <- read.csv("data/derived/reference_geography.csv", stringsAsFactors = FALSE, na.strings = c("", "NA"))
+geography <- nanoparquet::read_parquet(
+  "data/pinned/COI/2026-08-14/geography.parquet"
+)
+taxonomy <- nanoparquet::read_parquet(
+  "data/pinned/COI/2026-08-14/taxonomy.parquet"
+)
 stopifnot(
-  nrow(geography) == nrow(read.csv("data/derived/gurten2026_centroid_taxonomy.csv")),
+  nrow(geography) == nrow(taxonomy),
   sum(!is.na(geography$country_or_territory)) >= 500L,
   all(geography$marker_id == "COI")
 )

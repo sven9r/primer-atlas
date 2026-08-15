@@ -4531,6 +4531,7 @@ server <- function(input, output, session) {
     if (length(row) && row <= nrow(table)) table$family[row] else NULL
   })
   lineage_sequence_data <- reactive({
+    if (input$lineage_marker != "COI") return(tibble())
     x <- lineage_raw_scores()
     if (!nrow(x)) return(x)
     if (!is.null(input$lineage_target) && input$lineage_target != "All" && "order" %in% names(x)) x <- x |> filter(order == input$lineage_target)

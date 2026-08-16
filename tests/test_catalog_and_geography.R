@@ -18,11 +18,24 @@ stopifnot(
     unique(facets$facet_value[facets$facet_type == "application"]),
     c("barcoding", "bulk_community", "edna", "diet")
   ),
-  nrow(unite) >= 100L,
+  nrow(unite) == 121L,
+  sum(unite$direction == "forward") == 45L,
+  sum(unite$direction == "reverse") == 76L,
+  !anyDuplicated(paste(unite$primer_name, unite$direction, unite$sequence, sep = "|")),
   all(grepl("^[ACGTRYSWKMBDHVNI]+$", unite$sequence)),
   all(c("COI", "ITS_FUNGAL") %in% geometry$marker_id),
   all(c("12S_MT", "COI", "16S_MT") %in% marker_groups$marker_id[marker_groups$group_id == "FISH"]),
   all(c("FUNGI", "PROTISTS", "PHYTOPLANKTON") %in% marker_groups$group_id[marker_groups$marker_id == "28S"])
+)
+
+app_source <- paste(readLines("app.R", warn = FALSE), collapse = "\n")
+stopifnot(
+  grepl('"its_catalog_forward"', app_source, fixed = TRUE),
+  grepl('"its_catalog_reverse"', app_source, fixed = TRUE),
+  grepl('"its_add_catalog_pair"', app_source, fixed = TRUE),
+  grepl('DTOutput("its_map_catalog")', app_source, fixed = TRUE),
+  grepl("source-supported pair", app_source, fixed = TRUE),
+  grepl("catalog-built session combination", app_source, fixed = TRUE)
 )
 
 geo <- normalize_geo_loc_name(c("USA:Hawaii", "Morocco: Atlas Mountains", NA))

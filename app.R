@@ -40,6 +40,48 @@ catalog_links <- read_csv("data/catalog/pair_oligos.csv", show_col_types = FALSE
 primer_facets <- read_csv("data/catalog/primer_pair_facets.csv", show_col_types = FALSE)
 catalog_claims <- read_csv("data/catalog/claims.csv", show_col_types = FALSE)
 unite_catalog <- read_csv("data/catalog/unite_primers.csv", show_col_types = FALSE)
+unite_catalog <- unite_catalog |>
+  mutate(
+    catalog_id = paste(primer_name, direction, sequence, sep = "|"),
+    catalog_label = paste0(
+      primer_name, " · ", toupper(substr(direction, 1, 1)),
+      " · ", gene_locus, " · ", target,
+      ifelse(nzchar(reference), paste0(" · ", reference), " · reference not reported")
+    )
+  )
+its_forward_choices <- setNames(
+  unite_catalog$catalog_id[unite_catalog$direction == "forward"],
+  unite_catalog$catalog_label[unite_catalog$direction == "forward"]
+)
+its_reverse_choices <- setNames(
+  unite_catalog$catalog_id[unite_catalog$direction == "reverse"],
+  unite_catalog$catalog_label[unite_catalog$direction == "reverse"]
+)
+unite_catalog_table <- function() {
+  unite_catalog |>
+    transmute(
+      Primer = primer_name,
+      Direction = direction,
+      `Sequence (5′→3′)` = sequence,
+      Locus = gene_locus,
+      Target = target,
+      `Reported position` = reported_position,
+      `Known use / limitation` = remarks,
+      `Original reference` = ifelse(
+        nzchar(reference), reference, "Not reported by compilation"
+      ),
+      `Reference status` = coalesce(primary_reference_status, "not_reported"),
+      `Open reference` = paste0(
+        "<a href=\"", primary_reference_url,
+        "\" target=\"_blank\" rel=\"noopener\">",
+        ifelse(
+          primary_reference_status == "publication_cited",
+          "Find original publication ↗", "UNITE provenance ↗"
+        ),
+        "</a>"
+      )
+    )
+}
 
 organism_group_choices <- c(
   "All organism groups" = "ALL",
@@ -937,6 +979,10 @@ app_js <- "
   }).observe(document.documentElement, {childList:true, subtree:true});
 
   if (window.Shiny) {
+    Shiny.addCustomMessageHandler('click_action_button', function(message) {
+      var button = document.getElementById(message.id);
+      if (button) window.setTimeout(function() { button.click(); }, 100);
+    });
     Shiny.addCustomMessageHandler('region_globe', function(message) {
       regionGlobeState.points = message.points || [];
       regionGlobeState.labels = message.labels || regionGlobeState.labels;
@@ -952,6 +998,10 @@ app_js <- "
     });
   } else {
     document.addEventListener('shiny:connected', function() {
+      Shiny.addCustomMessageHandler('click_action_button', function(message) {
+        var button = document.getElementById(message.id);
+        if (button) window.setTimeout(function() { button.click(); }, 100);
+      });
       Shiny.addCustomMessageHandler('region_globe', function(message) {
         regionGlobeState.points = message.points || [];
         regionGlobeState.labels = message.labels || regionGlobeState.labels;
@@ -1105,6 +1155,35 @@ ui <- page_navbar(
               "NOSPID", "NOSPI2_LAURELIN"
             )
           ),
+          conditionalPanel(
+            condition = "input.map_marker == 'ITS_FUNGAL'",
+            div(
+              class = "custom-panel",
+              h5("Build from the full UNITE catalog"),
+              div(
+                class = "callout tiny mb-2",
+                strong("121 individual oligos are available: "),
+                "45 forward and 76 reverse. The pair checklist above contains only source-supported curated combinations."
+              ),
+              selectizeInput(
+                "its_catalog_forward", "Forward oligo",
+                choices = its_forward_choices,
+                selected = unname(its_forward_choices[grepl("^ITS1F ", names(its_forward_choices))][1]),
+                options = list(placeholder = "Search forward primers, targets, or citations")
+              ),
+              selectizeInput(
+                "its_catalog_reverse", "Reverse oligo",
+                choices = its_reverse_choices,
+                selected = unname(its_reverse_choices[grepl("^ITS4 ", names(its_reverse_choices))][1]),
+                options = list(placeholder = "Search reverse primers, targets, or citations")
+              ),
+              actionButton(
+                "its_add_catalog_pair", "Add selected combination to map",
+                class = "btn-primary btn-sm w-100"
+              ),
+              div(class = "tiny mt-2", "The atlas labels this as a session combination unless the exact pair has its own source-supported catalog entry.")
+            )
+          ),
           tags$details(
             class = "custom-panel",
             open = "open",
@@ -1169,6 +1248,7 @@ ui <- page_navbar(
             span(span(class = "legend-line legend-reverse"), "Reverse primer")
           ),
           uiOutput("primer_map"),
+          uiOutput("its_map_catalog_ui"),
           uiOutput("custom_diagnostic_selector"),
           uiOutput("custom_location_detail")
         )
@@ -1802,6 +1882,7 @@ server <- function(input, output, session) {
   custom_pair_collection <- reactiveVal(list())
   custom_pair_counter <- reactiveVal(0L)
   selected_custom_id <- reactiveVal(NULL)
+  its_catalog_pending <- reactiveVal(NULL)
   observeEvent(input$map_marker, {
     marker_pairs <- pair_meta |> filter(marker_id == input$map_marker)
     choices <- setNames(marker_pairs$pair_id, marker_pairs$pair_label)
@@ -1839,6 +1920,58 @@ server <- function(input, output, session) {
       ". Low-confidence reference-specific placements are labelled and should not be treated as universal binding sites."
     )
   })
+
+  observeEvent(input$its_add_catalog_pair, {
+    req(input$its_catalog_forward, input$its_catalog_reverse)
+    forward <- unite_catalog |>
+      filter(catalog_id == input$its_catalog_forward) |>
+      slice(1)
+    reverse <- unite_catalog |>
+      filter(catalog_id == input$its_catalog_reverse) |>
+      slice(1)
+    validate(need(nrow(forward) == 1L, "Select a valid forward ITS oligo."))
+    validate(need(nrow(reverse) == 1L, "Select a valid reverse ITS oligo."))
+
+    curated_sequences <- primers |>
+      filter(pair_id %in% pair_meta$pair_id[pair_meta$marker_id == "ITS_FUNGAL"]) |>
+      group_by(pair_id) |>
+      summarise(
+        forward_sequence = first(sequence[direction == "forward"], default = NA_character_),
+        reverse_sequence = first(sequence[direction == "reverse"], default = NA_character_),
+        .groups = "drop"
+      )
+    exact_pair <- curated_sequences |>
+      filter(
+        forward_sequence == forward$sequence,
+        reverse_sequence == reverse$sequence
+      ) |>
+      slice(1)
+
+    if (nrow(exact_pair)) {
+      selected <- unique(c(isolate(input$pair_select), exact_pair$pair_id))
+      updateCheckboxGroupInput(session, "pair_select", selected = selected)
+      its_catalog_pending(NULL)
+      showNotification(
+        "This exact combination is already a source-supported pair. It is now selected on the map.",
+        type = "message"
+      )
+      return()
+    }
+
+    its_catalog_pending(list(forward = forward, reverse = reverse))
+    updateSelectInput(session, "custom_marker", selected = "ITS_FUNGAL")
+    updateTextInput(
+      session, "custom_pair_name",
+      value = paste(forward$primer_name, reverse$primer_name, sep = " + ")
+    )
+    updateTextAreaInput(session, "custom_forward", value = forward$sequence)
+    updateTextAreaInput(session, "custom_reverse", value = reverse$sequence)
+    updateTextInput(session, "custom_expected_amplicon", value = "")
+    session$onFlushed(function() {
+      session$sendCustomMessage("click_action_button", list(id = "locate_custom"))
+    }, once = TRUE)
+  }, ignoreInit = TRUE)
+
   observeEvent(input$locate_custom, {
     pair_name <- trimws(input$custom_pair_name)
     if (!nzchar(pair_name)) pair_name <- "My primer pair"
@@ -1866,10 +1999,22 @@ server <- function(input, output, session) {
       return()
     }
     if (!nzchar(expected_text)) expected_amplicon <- NA_real_
-    target_order <- trimws(input$custom_target_order)
-    if (!nzchar(target_order) || identical(target_order, "__NONE__")) {
+    target_order <- if (selected_marker == "COI" &&
+      !is.null(input$custom_target_order)) {
+      trimws(input$custom_target_order)
+    } else {
+      NA_character_
+    }
+    if (is.na(target_order) || !nzchar(target_order) ||
+      identical(target_order, "__NONE__")) {
       target_order <- NA_character_
     }
+
+    pending_catalog <- its_catalog_pending()
+    from_its_catalog <- selected_marker == "ITS_FUNGAL" &&
+      !is.null(pending_catalog) &&
+      identical(forward_sequence, pending_catalog$forward$sequence[[1]]) &&
+      identical(reverse_sequence, pending_catalog$reverse$sequence[[1]])
 
     selected_reference <- if (selected_marker == "COI") coi_reference else its_reference
     selected_templates <- if (selected_marker == "COI") order_alignment_templates else NULL
@@ -1942,6 +2087,49 @@ server <- function(input, output, session) {
       source_key = "custom",
       source_note = "Entered interactively; not saved to the primer library"
     )
+    if (from_its_catalog) {
+      forward_catalog <- pending_catalog$forward
+      reverse_catalog <- pending_catalog$reverse
+      catalog_target <- paste(
+        unique(c(forward_catalog$target, reverse_catalog$target)),
+        collapse = " + "
+      )
+      catalog_keys <- unique(c(
+        forward_catalog$primary_reference_key,
+        reverse_catalog$primary_reference_key
+      ))
+      geometry <- geometry |>
+        mutate(
+          use_case = "catalog-built session combination",
+          target = catalog_target,
+          forward_primer = forward_catalog$primer_name,
+          reverse_primer = reverse_catalog$primer_name,
+          sources = paste(catalog_keys, collapse = "|")
+        )
+      custom_primers <- custom_primers |>
+        mutate(
+          primer_name = c(
+            forward_catalog$primer_name,
+            reverse_catalog$primer_name
+          ),
+          use_case = "catalog-built session combination",
+          target = catalog_target,
+          source_key = c(
+            forward_catalog$primary_reference_key,
+            reverse_catalog$primary_reference_key
+          ),
+          source_note = c(
+            paste0(
+              "Selected from the versioned UNITE compilation; original citation: ",
+              ifelse(nzchar(forward_catalog$reference), forward_catalog$reference, "not reported")
+            ),
+            paste0(
+              "Selected from the versioned UNITE compilation; original citation: ",
+              ifelse(nzchar(reverse_catalog$reference), reverse_catalog$reference, "not reported")
+            )
+          )
+        )
+    }
     order_preference <- if (selected_marker == "COI") summarize_order_preference(
       located$pair_order_support,
       expected_order = target_order
@@ -2032,6 +2220,7 @@ server <- function(input, output, session) {
     collection[[custom_id]] <- result
     custom_pair_collection(collection)
     selected_custom_id(custom_id)
+    if (from_its_catalog) its_catalog_pending(NULL)
   }, ignoreInit = TRUE)
 
   observeEvent(input$clear_custom, {
@@ -2404,7 +2593,7 @@ server <- function(input, output, session) {
       pull(source_key) |>
       unique() |>
       length()
-    div(
+    metrics <- list(
       class = "metric-row",
       div(class = "metric", tags$b(nrow(x)), span("primer pairs shown")),
       div(
@@ -2424,6 +2613,17 @@ server <- function(input, output, session) {
         span("reference-specific placement warnings")
       )
     )
+    if (identical(input$map_marker, "ITS_FUNGAL")) {
+      metrics <- append(
+        metrics,
+        list(div(
+          class = "metric",
+          tags$b(nrow(unite_catalog)),
+          span("individual ITS oligos available")
+        ))
+      )
+    }
+    do.call(div, metrics)
   })
 
   output$primer_map <- renderUI({
@@ -2719,6 +2919,37 @@ server <- function(input, output, session) {
       )
     )
   })
+
+  output$its_map_catalog_ui <- renderUI({
+    if (!identical(input$map_marker, "ITS_FUNGAL")) return(NULL)
+    card(
+      class = "mt-3",
+      card_header("Full ITS oligo catalog"),
+      div(
+        class = "callout tiny mb-3",
+        strong(nrow(unite_catalog), " individual oligos: "),
+        sum(unite_catalog$direction == "forward"), " forward and ",
+        sum(unite_catalog$direction == "reverse"), " reverse. ",
+        "Search and filter this table, then use the two selectors beside the map to test a combination. Original publications remain the primer citations; UNITE is compilation provenance."
+      ),
+      DTOutput("its_map_catalog")
+    )
+  })
+
+  output$its_map_catalog <- renderDT({
+    datatable(
+      unite_catalog_table(),
+      escape = FALSE,
+      filter = "top",
+      rownames = FALSE,
+      class = "compact stripe",
+      options = list(
+        pageLength = 20,
+        lengthMenu = c(10, 20, 50, 100),
+        scrollX = TRUE
+      )
+    )
+  }, server = TRUE)
 
   output$custom_location_detail <- renderUI({
     custom <- selected_custom_result()
@@ -5235,26 +5466,8 @@ server <- function(input, output, session) {
   })
 
   output$unite_primer_catalog <- renderDT({
-    x <- unite_catalog |>
-      transmute(
-        Primer = primer_name,
-        Direction = direction,
-        `Sequence (5′→3′)` = sequence,
-        Locus = gene_locus,
-        Target = target,
-        `Reported position` = reported_position,
-        `Known use / limitation` = remarks,
-        `Original reference` = ifelse(nzchar(reference), reference, "Not reported by compilation"),
-        `Reference status` = coalesce(primary_reference_status, "not_reported"),
-        `Open reference` = paste0(
-          "<a href=\"", primary_reference_url,
-          "\" target=\"_blank\" rel=\"noopener\">",
-          ifelse(primary_reference_status == "publication_cited", "Find original publication ↗", "UNITE provenance ↗"),
-          "</a>"
-        )
-      )
     datatable(
-      x, escape = FALSE, filter = "top", rownames = FALSE,
+      unite_catalog_table(), escape = FALSE, filter = "top", rownames = FALSE,
       class = "compact stripe",
       options = list(pageLength = 20, lengthMenu = c(10, 20, 50, 100), scrollX = TRUE)
     )

@@ -2,8 +2,8 @@
 
 An open-source Shiny atlas for exploring where metabarcoding primers bind and
 why particular lineage–primer combinations may be vulnerable to mismatch or
-missing-reference bias. Animal COI is active; fungal ITS is the first pilot.
-Vertebrate mitochondrial 12S, eukaryotic 18S, bacterial/archaeal 16S, animal
+missing-reference bias. Animal COI is active; fungal ITS and eukaryotic 18S are
+pilots. Vertebrate mitochondrial 12S, bacterial/archaeal 16S, animal
 mitochondrial 16S, and 28S have stable registry entries for later releases.
 
 The public architecture separates four layers:
@@ -39,6 +39,15 @@ sequence-valid imported primer records are searchable in the app. Each primer
 uses the publication named by UNITE as its citation; UNITE is stored separately
 as compilation provenance. Unpublished and unreported references stay visibly
 labelled instead of being converted into a generic UNITE paper citation.
+
+The 18S pilot imports PR2-primer 2.1.1 as a versioned snapshot: 321 individual
+18S primers and 123 documented primer sets. Ninety-three sets have conventional
+forward–reverse geometry that can be drawn on the 1,799 bp *Saccharomyces
+cerevisiae* FU970071 coordinate map. All sets remain searchable, including those
+without drawable coordinates, and every set retains its original reference and
+DOI. The default map highlights TAReuk V4, E572F/E1009R V4, 1391F/EukBr V9,
+and Uni18SF/Uni18SR as recognizable starting points rather than universal
+recommendations.
 
 The Region Comparison tab joins exact primer-binding sequences to accession-level
 reference geography. It compares two countries or territories at each primer

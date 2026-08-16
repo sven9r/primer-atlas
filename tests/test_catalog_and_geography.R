@@ -8,6 +8,8 @@ facets <- read.csv("data/catalog/primer_pair_facets.csv", stringsAsFactors = FAL
 unite <- read.csv("data/catalog/unite_primers.csv", stringsAsFactors = FALSE)
 geometry <- read.csv("data/derived/marker_pair_geometry.csv", stringsAsFactors = FALSE)
 marker_groups <- read.csv("data/catalog/marker_organism_groups.csv", stringsAsFactors = FALSE)
+pr2_primers <- read.csv("data/catalog/pr2_18s_primers.csv", stringsAsFactors = FALSE)
+pr2_sets <- read.csv("data/catalog/pr2_18s_primer_sets.csv", stringsAsFactors = FALSE)
 
 stopifnot(
   setequal(markers$marker_id, c("COI", "12S_MT", "ITS_FUNGAL", "18S", "16S_PROK", "16S_MT", "28S")),
@@ -28,6 +30,25 @@ stopifnot(
   all(c("FUNGI", "PROTISTS", "PHYTOPLANKTON") %in% marker_groups$group_id[marker_groups$marker_id == "28S"])
 )
 
+pr2_mappable <- with(
+  pr2_sets,
+  !is.na(forward_start) & !is.na(forward_end) &
+    !is.na(reverse_start) & !is.na(reverse_end) &
+    nzchar(forward_sequence) & nzchar(reverse_sequence) &
+    reverse_start > forward_end
+)
+stopifnot(
+  markers$status[markers$marker_id == "18S"] == "pilot",
+  markers$reference_length[markers$marker_id == "18S"] == 1799L,
+  nrow(pr2_primers) == 321L,
+  nrow(pr2_sets) == 123L,
+  sum(!is.na(pr2_primers$start_yeast)) == 244L,
+  sum(pr2_mappable) == 93L,
+  all(c("TAReuk454FWD1", "1391F", "E572F", "Uni18SF") %in% pr2_sets$forward_primer),
+  all(nzchar(pr2_sets$reference)),
+  all(pr2_sets$source_version == "2.1.1")
+)
+
 app_source <- paste(readLines("app.R", warn = FALSE), collapse = "\n")
 stopifnot(
   grepl('"its_catalog_forward"', app_source, fixed = TRUE),
@@ -36,6 +57,12 @@ stopifnot(
   grepl('DTOutput("its_map_catalog")', app_source, fixed = TRUE),
   grepl("source-supported pair", app_source, fixed = TRUE),
   grepl("catalog-built session combination", app_source, fixed = TRUE)
+  ,grepl('"PR2_18S_008"', app_source, fixed = TRUE)
+  ,grepl('"PR2_18S_017"', app_source, fixed = TRUE)
+  ,grepl('"PR2_18S_027"', app_source, fixed = TRUE)
+  ,grepl('"PR2_18S_040"', app_source, fixed = TRUE)
+  ,grepl("Documented 18S combinations", app_source, fixed = TRUE)
+  ,grepl("UNITE fungal rDNA oligos by region", app_source, fixed = TRUE)
 )
 
 geo <- normalize_geo_loc_name(c("USA:Hawaii", "Morocco: Atlas Mountains", NA))

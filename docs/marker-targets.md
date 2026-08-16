@@ -43,6 +43,17 @@ as 515F/806R refer to multiple sequence versions.
 
 Representative source: [Klindworth et al. 2013](https://doi.org/10.1093/nar/gks808).
 
+## 18S distinction
+
+The 18S pilot exposes PR2-primer 2.1.1 as two separate objects: 321 individual
+primers and 123 documented primer sets. The combination list is the primary
+selection surface. Source-mapped sets can be drawn on the 1,799 bp
+*Saccharomyces cerevisiae* FU970071 coordinate reference; sets lacking usable
+pair geometry remain searchable and are not silently discarded. V4 and V9
+assays remain distinct observation processes.
+
+Representative source: [Vaulot et al. 2022](https://doi.org/10.1111/1755-0998.13465).
+
 ## 28S distinction
 
 28S LSU is not a fungi-only marker. LR0R/LR3 and related assays are used for

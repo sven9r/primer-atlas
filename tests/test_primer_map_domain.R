@@ -77,7 +77,7 @@ positions <- c(
     app_source,
     fixed = TRUE
   )[1],
-  pair_select = regexpr('"pair_select", "Primer pairs"', app_source, fixed = TRUE)[1]
+  pair_select = regexpr('uiOutput("pair_selector_ui")', app_source, fixed = TRUE)[1]
 )
 stopifnot(
   all(positions > 0),

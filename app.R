@@ -40,6 +40,12 @@ catalog_links <- read_csv("data/catalog/pair_oligos.csv", show_col_types = FALSE
 primer_facets <- read_csv("data/catalog/primer_pair_facets.csv", show_col_types = FALSE)
 catalog_claims <- read_csv("data/catalog/claims.csv", show_col_types = FALSE)
 unite_catalog <- read_csv("data/catalog/unite_primers.csv", show_col_types = FALSE)
+pr2_18s_primers <- read_csv(
+  "data/catalog/pr2_18s_primers.csv", show_col_types = FALSE
+)
+pr2_18s_sets <- read_csv(
+  "data/catalog/pr2_18s_primer_sets.csv", show_col_types = FALSE
+)
 unite_catalog <- unite_catalog |>
   mutate(
     catalog_id = paste(primer_name, direction, sequence, sep = "|"),
@@ -57,8 +63,8 @@ its_reverse_choices <- setNames(
   unite_catalog$catalog_id[unite_catalog$direction == "reverse"],
   unite_catalog$catalog_label[unite_catalog$direction == "reverse"]
 )
-unite_catalog_table <- function() {
-  unite_catalog |>
+unite_catalog_table <- function(rows = unite_catalog) {
+  rows |>
     transmute(
       Primer = primer_name,
       Direction = direction,
@@ -147,6 +153,67 @@ its_primer_rows <- catalog_links |>
     reported_ta_c, source_key, source_note
   )
 primers <- bind_rows(primers, its_primer_rows)
+pr2_map_sets <- pr2_18s_sets |>
+  filter(
+    !is.na(forward_start), !is.na(forward_end),
+    !is.na(reverse_start), !is.na(reverse_end),
+    nzchar(forward_sequence), nzchar(reverse_sequence),
+    reverse_start > forward_end
+  ) |>
+  mutate(
+    pair_id = sprintf("PR2_18S_%03d", primer_set_id),
+    pair_label = paste(forward_primer, reverse_primer, sep = " + "),
+    source_key = paste0("pr2_18s_set_", primer_set_id),
+    target_summary = coalesce(specificity, "Broad eukaryotes"),
+    use_case_summary = paste(
+      "18S", coalesce(gene_region, "region not reported"),
+      coalesce(used_for, "documented assay"), sep = " · "
+    )
+  )
+pr2_primer_rows <- bind_rows(
+  pr2_map_sets |>
+    transmute(
+      pair_id, pair_label, primer_name = forward_primer,
+      direction = "forward", sequence = forward_sequence,
+      reported_amplicon_bp = amplicon_size,
+      use_case = use_case_summary, target = target_summary,
+      reported_ta_c = NA_real_, source_key,
+      source_note = paste0(
+        "PR2-primer 2.1.1 documented set; original citation: ", reference
+      )
+    ),
+  pr2_map_sets |>
+    transmute(
+      pair_id, pair_label, primer_name = reverse_primer,
+      direction = "reverse", sequence = reverse_sequence,
+      reported_amplicon_bp = amplicon_size,
+      use_case = use_case_summary, target = target_summary,
+      reported_ta_c = NA_real_, source_key,
+      source_note = paste0(
+        "PR2-primer 2.1.1 documented set; original citation: ", reference
+      )
+    )
+)
+primers <- bind_rows(primers, pr2_primer_rows)
+pr2_citations <- pr2_map_sets |>
+  distinct(source_key, primer_set_id, pair_label, reference, doi) |>
+  mutate(
+    category = "primer",
+    short_citation = ifelse(nzchar(reference), reference, pair_label),
+    title = paste0("18S primer set: ", pair_label),
+    year = suppressWarnings(as.numeric(str_extract(reference, "[12][0-9]{3}"))),
+    url = ifelse(
+      !is.na(doi) & nzchar(doi),
+      paste0("https://doi.org/", doi),
+      "https://app.pr2-primers.org/pr2-primers/"
+    ),
+    note = paste0(
+      "Original reference retained from PR2-primer 2.1.1; set ",
+      primer_set_id, "."
+    )
+  ) |>
+  select(key = source_key, category, short_citation, title, year, doi, url, note)
+citations <- bind_rows(citations, pr2_citations)
 if (!"unite_primers" %in% citations$key) {
   citations <- bind_rows(citations, tibble(
     key = "unite_primers", category = "primer catalog",
@@ -159,6 +226,38 @@ if (!"unite_primers" %in% citations$key) {
 primer_bindings <- read_csv("data/derived/primer_bindings.csv", show_col_types = FALSE)
 pair_meta <- read_csv("data/derived/marker_pair_geometry.csv", show_col_types = FALSE) |>
   arrange(marker_id, folmer_overlap_rank)
+pr2_pair_geometry <- pr2_map_sets |>
+  transmute(
+    pair_id,
+    pair_label,
+    use_case = use_case_summary,
+    target = target_summary,
+    forward_primer,
+    reverse_primer,
+    forward_start = as.integer(forward_start),
+    forward_end = as.integer(forward_end),
+    reverse_start = as.integer(reverse_start),
+    reverse_end = as.integer(reverse_end),
+    pair_start = as.integer(forward_start),
+    pair_end = as.integer(reverse_end),
+    aligned_amplicon_bp = as.integer(coalesce(
+      amplicon_size, reverse_end - forward_start + 1
+    )),
+    targeted_region_start = as.integer(forward_end + 1),
+    targeted_region_end = as.integer(reverse_start - 1),
+    targeted_region_bp = as.integer(pmax(0, reverse_start - forward_end - 1)),
+    folmer_overlap_bp = 0L,
+    folmer_coverage_fraction = NA_real_,
+    reference_accession = "PR2-primer 2.1.1 / FU970071",
+    sources = source_key,
+    folmer_overlap_rank = NA_integer_,
+    marker_id = "18S",
+    placement_status = "source_mapped_PR2",
+    forward_identity = NA_real_,
+    reverse_identity = NA_real_
+  )
+pair_meta <- bind_rows(pair_meta, pr2_pair_geometry) |>
+  arrange(marker_id, folmer_overlap_rank, pair_start)
 folmer_region <- read_csv("data/derived/folmer_region.csv", show_col_types = FALSE)
 coi_reference <- clean_sequence(
   parse_fasta("data/reference/coi_reference_NC_001322.1.fasta")[[1]]
@@ -623,6 +722,16 @@ body.detail-switching .deep-detail-card {
   padding:10px 0; margin:10px 0; }
 .custom-panel summary { cursor:pointer; color:var(--green); font-weight:800; margin-bottom:8px; }
 .custom-panel textarea { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:.78rem; }
+.combination-browser { margin:4px 0 16px; border:1px solid var(--line);
+  border-radius:14px; background:#fffdf8; overflow:visible; }
+.combination-browser > summary { cursor:pointer; padding:13px 16px;
+  color:var(--green); font-weight:850; }
+.combination-browser[open] > summary { border-bottom:1px solid var(--line); }
+.combination-browser-body { padding:14px 16px 16px; }
+.pair-list-show { border:1px solid var(--green); border-radius:999px;
+  padding:4px 9px; color:var(--green); background:#fffdf8; font-weight:800;
+  white-space:nowrap; cursor:pointer; }
+.pair-list-show:hover { color:#fffdf8; background:var(--green); }
 .tiny { font-size:.75rem; color:#65716a; }
 .organism-picker .shiny-options-group { display:flex; flex-wrap:wrap; gap:7px; }
 .organism-picker .radio-inline { margin:0!important; padding:7px 10px 7px 30px;
@@ -969,6 +1078,16 @@ app_js <- "
     }, 650);
   });
 
+  document.addEventListener('click', function(event) {
+    var button = event.target.closest('.pair-list-show[data-pair]');
+    if (!button || !window.Shiny) return;
+    event.preventDefault();
+    Shiny.setInputValue('pair_list_show', {
+      pair: button.dataset.pair,
+      nonce: Date.now()
+    }, {priority: 'event'});
+  });
+
   document.addEventListener('shiny:connected', wireHeatmapScrollers);
   document.addEventListener('shiny:value', function() {
     window.requestAnimationFrame(wireHeatmapScrollers);
@@ -1146,24 +1265,16 @@ ui <- page_navbar(
             "amplicon_range", "Amplicon + primers (bp)",
             min = 100, max = 750, value = c(100, 750), step = 10
           ),
-          checkboxGroupInput(
-            "pair_select", "Primer pairs",
-            choices = setNames(pair_meta$pair_id[pair_meta$marker_id == "COI"], pair_meta$pair_label[pair_meta$marker_id == "COI"]),
-            selected = c(
-              "MCO", "LERAY_XT", "ZBJ_ART", "FWH2",
-              "BF2_BR2", "ANML", "BEEPRIME",
-              "NOSPID", "NOSPI2_LAURELIN"
-            )
-          ),
+          uiOutput("pair_selector_ui"),
           conditionalPanel(
             condition = "input.map_marker == 'ITS_FUNGAL'",
-            div(
+            tags$details(
               class = "custom-panel",
-              h5("Build from the full UNITE catalog"),
+              tags$summary("Advanced: test an unpaired rDNA combination"),
               div(
                 class = "callout tiny mb-2",
-                strong("121 individual oligos are available: "),
-                "45 forward and 76 reverse. The pair checklist above contains only source-supported curated combinations."
+                strong("This is exploratory. "),
+                "Choose individual oligos only when the exact combination is not already documented. The result is labelled as a session combination, never as a published pair."
               ),
               selectizeInput(
                 "its_catalog_forward", "Forward oligo",
@@ -1191,8 +1302,8 @@ ui <- page_navbar(
             selectInput(
               "custom_marker", "Marker for this pair",
               choices = setNames(
-                marker_registry$marker_id[marker_registry$status %in% c("active", "pilot")],
-                marker_registry$display_name[marker_registry$status %in% c("active", "pilot")]
+                marker_registry$marker_id[marker_registry$marker_id %in% c("COI", "ITS_FUNGAL")],
+                marker_registry$display_name[marker_registry$marker_id %in% c("COI", "ITS_FUNGAL")]
               ), selected = "COI"
             ),
             textInput("custom_pair_name", "Pair name", value = "My primer pair"),
@@ -1236,6 +1347,7 @@ ui <- page_navbar(
         card(
           full_screen = TRUE,
           card_header(uiOutput("map_card_title", inline = TRUE)),
+          uiOutput("combination_browser_ui"),
           uiOutput("overview_metrics"),
           div(
             class = "map-legend",
@@ -1835,6 +1947,62 @@ server <- function(input, output, session) {
       )
     )
   }
+  default_map_pairs <- function(marker_id) {
+    switch(
+      marker_id,
+      COI = c(
+        "MCO", "LERAY_XT", "ZBJ_ART", "FWH2", "BF2_BR2",
+        "ANML", "BEEPRIME", "NOSPID", "NOSPI2_LAURELIN"
+      ),
+      `18S` = c(
+        "PR2_18S_008", "PR2_18S_017",
+        "PR2_18S_027", "PR2_18S_040"
+      ),
+      pair_meta$pair_id[pair_meta$marker_id == marker_id]
+    )
+  }
+  pair_choices_for_marker <- function(marker_id) {
+    rows <- pair_meta |>
+      filter(marker_id == !!marker_id) |>
+      arrange(pair_start, pair_label)
+    setNames(rows$pair_id, rows$pair_label)
+  }
+  update_pair_selector <- function(marker_id, choices, selected) {
+    if (identical(marker_id, "18S")) {
+      updateSelectizeInput(
+        session, "pair_select", choices = choices,
+        selected = selected, server = TRUE
+      )
+    } else {
+      updateCheckboxGroupInput(
+        session, "pair_select", choices = choices, selected = selected
+      )
+    }
+  }
+  output$pair_selector_ui <- renderUI({
+    marker_id <- input$map_marker
+    choices <- pair_choices_for_marker(marker_id)
+    selected <- intersect(isolate(input$pair_select), unname(choices))
+    if (!length(selected)) {
+      selected <- intersect(default_map_pairs(marker_id), unname(choices))
+    }
+    if (identical(marker_id, "18S")) {
+      selectizeInput(
+        "pair_select", "Documented 18S combinations on map",
+        choices = choices, selected = selected, multiple = TRUE,
+        options = list(
+          placeholder = "Search primer names or add a combination",
+          maxItems = 25,
+          plugins = list("remove_button")
+        )
+      )
+    } else {
+      checkboxGroupInput(
+        "pair_select", "Documented primer combinations",
+        choices = choices, selected = selected
+      )
+    }
+  })
   output$data_status <- renderUI({
     if (!is.null(coi_release_state) && isTRUE(coi_release_state$stale)) {
       div(class = "callout tiny m-2", strong("Stale-data notice: "), "R2 was unavailable, so the repository-pinned successful release is active.")
@@ -1869,13 +2037,15 @@ server <- function(input, output, session) {
     )
   }, ignoreInit = FALSE)
   observeEvent(input$select_all, {
-    updateCheckboxGroupInput(
-      session, "pair_select",
-      selected = pair_meta$pair_id[pair_meta$marker_id == input$map_marker]
-    )
+    choices <- pair_choices_for_marker(input$map_marker)
+    update_pair_selector(input$map_marker, choices, unname(choices))
   })
   observeEvent(input$clear_all, {
-    updateCheckboxGroupInput(session, "pair_select", selected = character())
+    update_pair_selector(
+      input$map_marker,
+      pair_choices_for_marker(input$map_marker),
+      character()
+    )
   })
 
   custom_location <- reactiveVal(NULL)
@@ -1886,12 +2056,8 @@ server <- function(input, output, session) {
   observeEvent(input$map_marker, {
     marker_pairs <- pair_meta |> filter(marker_id == input$map_marker)
     choices <- setNames(marker_pairs$pair_id, marker_pairs$pair_label)
-    selected <- if (identical(input$map_marker, "COI")) {
-      intersect(c("MCO", "LERAY_XT", "ZBJ_ART", "FWH2", "BF2_BR2", "ANML", "BEEPRIME", "NOSPID", "NOSPI2_LAURELIN"), marker_pairs$pair_id)
-    } else {
-      marker_pairs$pair_id
-    }
-    updateCheckboxGroupInput(session, "pair_select", choices = choices, selected = selected)
+    selected <- intersect(default_map_pairs(input$map_marker), marker_pairs$pair_id)
+    update_pair_selector(input$map_marker, choices, selected)
     if (nrow(marker_pairs)) {
       range <- range(marker_pairs$aligned_amplicon_bp, na.rm = TRUE)
       updateSliderInput(
@@ -1901,10 +2067,17 @@ server <- function(input, output, session) {
         value = c(max(20, floor(range[1] / 10) * 10), ceiling(range[2] / 10) * 10)
       )
     }
-    updateSelectInput(session, "custom_marker", selected = input$map_marker)
+    if (input$map_marker %in% c("COI", "ITS_FUNGAL")) {
+      updateSelectInput(session, "custom_marker", selected = input$map_marker)
+    }
+    if (identical(input$map_marker, "18S")) {
+      updateSelectInput(session, "application_filter", selected = character())
+      updateSelectInput(session, "environment_filter", selected = character())
+      updateSelectInput(session, "intent_filter", selected = character())
+    }
     if (input$map_marker != "COI") updateSelectInput(session, "map_sort", selected = "binding_site")
     session$onFlushed(function() {
-      updateCheckboxGroupInput(session, "pair_select", choices = choices, selected = selected)
+      update_pair_selector(input$map_marker, choices, selected)
     }, once = TRUE)
   }, ignoreInit = FALSE)
 
@@ -1912,8 +2085,165 @@ server <- function(input, output, session) {
     marker <- marker_registry |> filter(marker_id == input$map_marker) |> slice(1)
     paste0("Interactive ", marker$display_name, " binding-site overview")
   })
+
+  combination_list_data <- reactive({
+    marker_id <- input$map_marker
+    if (identical(marker_id, "18S")) {
+      mapped_ids <- pr2_map_sets$primer_set_id
+      return(pr2_18s_sets |>
+        mutate(
+          pair_id = sprintf("PR2_18S_%03d", primer_set_id),
+          Pair = paste(forward_primer, reverse_primer, sep = " + "),
+          Region = coalesce(gene_region, "not reported"),
+          Purpose = coalesce(used_for, "not reported"),
+          Target = coalesce(specificity, "broad / not specified"),
+          `Amplicon (bp)` = ifelse(
+            is.na(amplicon_size), "not reported", as.character(amplicon_size)
+          ),
+          `Original reference` = coalesce(reference, "not reported"),
+          Source = ifelse(
+            !is.na(doi) & nzchar(doi),
+            paste0(
+              "<a href=\"https://doi.org/", doi,
+              "\" target=\"_blank\" rel=\"noopener\">DOI ↗</a>"
+            ),
+            "<a href=\"https://app.pr2-primers.org/pr2-primers/\" target=\"_blank\" rel=\"noopener\">PR2 record ↗</a>"
+          ),
+          `Map status` = ifelse(
+            primer_set_id %in% mapped_ids,
+            "mapped to FU970071", "listed; coordinates unavailable"
+          ),
+          Show = ifelse(
+            primer_set_id %in% mapped_ids,
+            paste0(
+              "<button type=\"button\" class=\"pair-list-show\" data-pair=\"",
+              pair_id, "\">Show on map</button>"
+            ),
+            "—"
+          )
+        ) |>
+        select(
+          Show, Pair, Region, Purpose, Target, `Amplicon (bp)`,
+          `Original reference`, Source, `Map status`
+        ))
+    }
+
+    pairs <- pair_meta |>
+      filter(marker_id == !!marker_id)
+    pair_oligos <- primers |>
+      filter(pair_id %in% pairs$pair_id) |>
+      group_by(pair_id) |>
+      summarise(
+        `Forward primer` = first(primer_name[direction == "forward"], default = NA_character_),
+        `Forward sequence` = first(sequence[direction == "forward"], default = NA_character_),
+        `Reverse primer` = first(primer_name[direction == "reverse"], default = NA_character_),
+        `Reverse sequence` = first(sequence[direction == "reverse"], default = NA_character_),
+        forward_source = first(source_key[direction == "forward"], default = NA_character_),
+        reverse_source = first(source_key[direction == "reverse"], default = NA_character_),
+        .groups = "drop"
+      )
+    pairs |>
+      left_join(pair_oligos, by = "pair_id") |>
+      rowwise() |>
+      mutate(
+        Show = paste0(
+          "<button type=\"button\" class=\"pair-list-show\" data-pair=\"",
+          pair_id, "\">Show on map</button>"
+        ),
+        Pair = pair_label,
+        Target = target,
+        `Amplicon + primers` = paste0(aligned_amplicon_bp, " bp"),
+        Citations = paste(
+          unique(na.omit(c(
+            citations$short_citation[match(forward_source, citations$key)],
+            citations$short_citation[match(reverse_source, citations$key)]
+          ))),
+          collapse = " + "
+        )
+      ) |>
+      ungroup() |>
+      select(
+        Show, Pair, `Forward primer`, `Forward sequence`,
+        `Reverse primer`, `Reverse sequence`, Target,
+        `Amplicon + primers`, Citations
+      )
+  })
+
+  output$combination_browser_ui <- renderUI({
+    marker_id <- input$map_marker
+    count <- if (identical(marker_id, "18S")) {
+      nrow(pr2_18s_sets)
+    } else {
+      sum(pair_meta$marker_id == marker_id)
+    }
+    tags$details(
+      class = "combination-browser",
+      open = if (marker_id %in% c("ITS_FUNGAL", "18S")) "open" else NULL,
+      tags$summary(
+        if (identical(marker_id, "18S")) {
+          paste0("Documented 18S combinations (", count, ")")
+        } else {
+          paste0("Documented primer combinations (", count, ")")
+        }
+      ),
+      div(
+        class = "combination-browser-body",
+        div(
+          class = "callout tiny mb-3",
+          if (identical(marker_id, "18S")) {
+            tagList(
+              strong("This is the combination list. "),
+              "It contains all documented 18S sets in PR2-primer 2.1.1. Use Show on map for sets with source-mapped coordinates; unmapped sets remain visible instead of being silently discarded."
+            )
+          } else if (identical(marker_id, "ITS_FUNGAL")) {
+            tagList(
+              strong("These are the documented ITS combinations. "),
+              "Individual SSU, ITS, and LSU oligos are kept in the regional browser below and are not presented as published pairs unless a pairing source exists."
+            )
+          } else {
+            "Search the source-supported combinations, inspect both oligos, and add any row to the map."
+          }
+        ),
+        DTOutput("marker_combination_list")
+      )
+    )
+  })
+
+  output$marker_combination_list <- renderDT({
+    datatable(
+      combination_list_data(), escape = FALSE, filter = "top",
+      rownames = FALSE, class = "compact stripe",
+      options = list(pageLength = 10, lengthMenu = c(10, 25, 50, 100), scrollX = TRUE)
+    )
+  }, server = TRUE)
+
+  observeEvent(input$pair_list_show, {
+    pair_id <- input$pair_list_show$pair
+    valid <- pair_meta |>
+      filter(marker_id == input$map_marker, pair_id == !!pair_id)
+    if (!nrow(valid)) return()
+    selected <- unique(c(isolate(input$pair_select), pair_id))
+    if (identical(input$map_marker, "18S") && length(selected) > 25L) {
+      selected <- tail(selected, 25L)
+    }
+    update_pair_selector(
+      input$map_marker,
+      pair_choices_for_marker(input$map_marker),
+      selected
+    )
+    showNotification(paste(valid$pair_label[1], "added to the map."), type = "message")
+  }, ignoreInit = TRUE)
+
   output$marker_coordinate_note <- renderUI({
     marker <- marker_registry |> filter(marker_id == input$map_marker) |> slice(1)
+    if (identical(input$map_marker, "18S")) {
+      return(div(
+        class = "tiny",
+        "18S coordinates are the PR2-primer 2.1.1 mappings to ",
+        strong("Saccharomyces cerevisiae FU970071"),
+        ". Sets without usable forward–reverse geometry remain in the combination table but are not drawn."
+      ))
+    }
     div(
       class = "tiny",
       "Coordinates are sequence-aligned on ", strong(marker$coordinate_reference),
@@ -2317,12 +2647,7 @@ server <- function(input, output, session) {
     if (is.null(current)) return()
     pair_choice_label_signature(signature)
     freezeReactiveValue(input, "pair_select")
-    updateCheckboxGroupInput(
-      session,
-      "pair_select",
-      choices = choices,
-      selected = current
-    )
+    update_pair_selector(input$map_marker, choices, current)
   })
 
   displayed_primers <- reactive({
@@ -2610,7 +2935,11 @@ server <- function(input, output, session) {
       ,div(
         class = "metric",
         tags$b(sum(x$placement_status != "sequence_aligned", na.rm = TRUE)),
-        span("reference-specific placement warnings")
+        span(if (identical(input$map_marker, "18S")) {
+          "PR2 source-mapped rows shown"
+        } else {
+          "reference-specific placement warnings"
+        })
       )
     )
     if (identical(input$map_marker, "ITS_FUNGAL")) {
@@ -2620,6 +2949,16 @@ server <- function(input, output, session) {
           class = "metric",
           tags$b(nrow(unite_catalog)),
           span("individual ITS oligos available")
+        ))
+      )
+    }
+    if (identical(input$map_marker, "18S")) {
+      metrics <- append(
+        metrics,
+        list(div(
+          class = "metric",
+          tags$b(nrow(pr2_18s_sets)),
+          span("documented 18S combinations")
         ))
       )
     }
@@ -2764,7 +3103,12 @@ server <- function(input, output, session) {
         "\nAmplicon − primers (informative): ", row$targeted_region_bp, " bp",
         if (input$map_marker == "COI") paste0("\nInformative bp inside Folmer: ", row$folmer_overlap_bp) else "",
         "\nCoordinates derived from ", marker$coordinate_reference,
-        if (!is.na(row$placement_status) && row$placement_status != "sequence_aligned") paste0("\nPlacement warning: ", row$placement_status) else ""
+        if (!is.na(row$placement_status) && row$placement_status != "sequence_aligned") {
+          paste0(
+            if (input$map_marker == "18S") "\nPlacement provenance: " else "\nPlacement warning: ",
+            row$placement_status
+          )
+        } else ""
       )
       number_tooltip <- paste0(
         "Map row ", i, "\nPair: ", row$pair_label,
@@ -2921,24 +3265,82 @@ server <- function(input, output, session) {
   })
 
   output$its_map_catalog_ui <- renderUI({
-    if (!identical(input$map_marker, "ITS_FUNGAL")) return(NULL)
+    req(input$map_marker)
+    if (!input$map_marker %in% c("ITS_FUNGAL", "18S")) return(NULL)
+    if (identical(input$map_marker, "18S")) {
+      return(card(
+        class = "mt-3",
+        card_header("Individual 18S primers"),
+        div(
+          class = "callout tiny mb-3",
+          strong(nrow(pr2_18s_primers), " individual 18S primers are available. "),
+          sum(!is.na(pr2_18s_primers$start_yeast)),
+          " have positions mapped to the 1,799 bp Saccharomyces cerevisiae FU970071 reference. The combination list above is the correct place to choose documented pairs."
+        ),
+        DTOutput("its_map_catalog")
+      ))
+    }
     card(
       class = "mt-3",
-      card_header("Full ITS oligo catalog"),
+      card_header("UNITE fungal rDNA oligos by region"),
       div(
         class = "callout tiny mb-3",
-        strong(nrow(unite_catalog), " individual oligos: "),
-        sum(unite_catalog$direction == "forward"), " forward and ",
-        sum(unite_catalog$direction == "reverse"), " reverse. ",
-        "Search and filter this table, then use the two selectors beside the map to test a combination. Original publications remain the primer citations; UNITE is compilation provenance."
+        strong("This is not an ITS-only list. "),
+        "The imported fungal rDNA resource contains 50 ITS, 30 SSU/18S-associated, 32 LSU/28S-associated, and 9 other-marker oligos. Choose a region first; original publications remain the citations and UNITE remains compilation provenance."
+      ),
+      selectInput(
+        "unite_region_filter", "rDNA region",
+        choices = c(
+          "All imported records" = "ALL",
+          "SSU / 18S" = "SSU",
+          "ITS / 5.8S" = "ITS",
+          "LSU / 28S" = "LSU",
+          "Other loci in the source table" = "OTHER"
+        ),
+        selected = "ALL"
       ),
       DTOutput("its_map_catalog")
     )
   })
 
   output$its_map_catalog <- renderDT({
+    req(input$map_marker)
+    if (identical(input$map_marker, "18S")) {
+      x <- pr2_18s_primers |>
+        transmute(
+          Primer = primer_name,
+          Direction = direction,
+          `Sequence (5′→3′)` = sequence,
+          `Start on FU970071` = start_yeast,
+          `End on FU970071` = end_yeast,
+          Specificity = coalesce(specificity, "broad / not specified"),
+          `Original reference` = coalesce(reference, "not reported"),
+          `Open reference` = ifelse(
+            !is.na(doi) & nzchar(doi),
+            paste0(
+              "<a href=\"https://doi.org/", doi,
+              "\" target=\"_blank\" rel=\"noopener\">DOI ↗</a>"
+            ),
+            "<a href=\"https://app.pr2-primers.org/pr2-primers/\" target=\"_blank\" rel=\"noopener\">PR2 record ↗</a>"
+          ),
+          Remarks = remarks
+        )
+    } else {
+      region <- if (is.null(input$unite_region_filter)) "ALL" else input$unite_region_filter
+      source_rows <- unite_catalog |>
+        mutate(region_group = case_when(
+          gene_locus %in% c("SSU", "SSU/ITS") ~ "SSU",
+          gene_locus == "ITS" ~ "ITS",
+          gene_locus %in% c("LSU", "ITS/LSU") ~ "LSU",
+          TRUE ~ "OTHER"
+        ))
+      if (!identical(region, "ALL")) {
+        source_rows <- source_rows |> filter(region_group == region)
+      }
+      x <- unite_catalog_table(source_rows)
+    }
     datatable(
-      unite_catalog_table(),
+      x,
       escape = FALSE,
       filter = "top",
       rownames = FALSE,
@@ -4976,17 +5378,29 @@ server <- function(input, output, session) {
   })
 
   observeEvent(input$lineage_marker, {
-    available <- catalog_pairs |> filter(marker_id == input$lineage_marker)
+    available <- if (identical(input$lineage_marker, "18S")) {
+      pr2_map_sets |>
+        transmute(pair_id, pair_label)
+    } else {
+      catalog_pairs |> filter(marker_id == input$lineage_marker)
+    }
     updateSelectizeInput(
       session, "lineage_pair",
       choices = setNames(available$pair_id, available$pair_label),
       selected = available$pair_id[1], server = TRUE
     )
-    targets <- if (input$lineage_marker == "COI") sort(unique(claimed_primer_orders$order)) else "Fungi"
+    targets <- if (input$lineage_marker == "COI") {
+      sort(unique(claimed_primer_orders$order))
+    } else if (input$lineage_marker == "18S") {
+      sort(unique(na.omit(pr2_18s_sets$specificity)))
+    } else {
+      "Fungi"
+    }
     updateSelectizeInput(session, "lineage_target", choices = c("All", targets), selected = "All", server = TRUE)
   }, ignoreInit = FALSE)
 
   lineage_geography <- reactive({
+    req(input$lineage_marker)
     if (input$lineage_marker != "COI") return(tibble())
     release_table("geography", "data/derived/reference_geography.csv") |>
       mutate(
@@ -5022,7 +5436,11 @@ server <- function(input, output, session) {
   })
 
   output$lineage_denominator <- renderUI({
-    if (input$lineage_marker != "COI") return(div(class = "callout tiny", "Fungal ITS geography and lineage partitions are scheduled for the expanded reference release."))
+    if (input$lineage_marker != "COI") return(div(
+      class = "callout tiny",
+      marker_registry$display_name[match(input$lineage_marker, marker_registry$marker_id)],
+      " geography and lineage partitions are scheduled for an expanded reference release. Primer combinations and mapped positions are already available in Primer map."
+    ))
     if (!is.null(input$lineage_pair) && input$lineage_pair != "BEEPRIME") {
       return(div(
         class = "callout tiny",

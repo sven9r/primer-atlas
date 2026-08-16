@@ -12,6 +12,7 @@ jobs:
       - name: Run regression tests
         run: |
           for test in \
+            tests/test_18s_catalog_ui.R \
             tests/test_bundle_size.R \
             tests/test_catalog_and_geography.R \
             tests/test_claimed_primer_reference.R \

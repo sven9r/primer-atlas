@@ -2,7 +2,7 @@
 "COI","Animal COI","mitochondrial","NC_001322.1","NC_001322.1",1536,"sequence","active","coi_order_alignments","coi_gurten2026","NCBI / PrimerMiner","https://www.ncbi.nlm.nih.gov/nuccore/NC_001322.1","order|family|subfamily|genus|sequence","country|locality|lat_lon"
 "12S_MT","Vertebrate mitochondrial 12S","mitochondrial","NCBI vertebrate panel release-specific","planned",,"sequence_alignment","planned","","","NCBI","https://www.ncbi.nlm.nih.gov/","planned","planned"
 "ITS_FUNGAL","Fungal ITS","nuclear rDNA","FN812768.2","FN812768.2",739,"sequence_with_landmarks","pilot","its_fn812768_screen","its_unite_future","UNITE / NCBI","https://unite.ut.ee/primers.php","primer_catalog","planned"
-"18S","Eukaryotic 18S","nuclear rDNA","PR2/SILVA release-specific","planned",,"landmark_alignment","planned","","","PR2 / SILVA","https://pr2-database.org/","planned","planned"
+"18S","Eukaryotic 18S (SSU)","nuclear rDNA","Saccharomyces cerevisiae FU970071 coordinate mapping","PR2-primer 2.1.1 / FU970071",1799,"source_mapped_landmarks","pilot","pr2_18s_primers_2_1_1","pr2_18s_pairs_2_1_1","PR2-primer","https://app.pr2-primers.org/pr2-primers/","domain|supergroup|division|class|order|family|genus","planned"
 "16S_PROK","Bacterial / archaeal 16S","prokaryotic rDNA","SILVA release-specific","planned",,"landmark_alignment","planned","","","SILVA","https://www.arb-silva.de/","planned","planned"
 "16S_MT","Animal mitochondrial 16S","mitochondrial","NCBI taxon-panel release-specific","planned",,"sequence_alignment","planned","","","NCBI","https://www.ncbi.nlm.nih.gov/","planned","planned"
 "28S","Eukaryotic 28S","nuclear rDNA","SILVA LSU release-specific","planned",,"landmark_alignment","planned","","","SILVA","https://www.arb-silva.de/","planned","planned"

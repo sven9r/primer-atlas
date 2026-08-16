@@ -15,6 +15,7 @@ artifact_specs <- list(
     pair_geometry = "data/derived/marker_pair_geometry.csv",
     pair_templates = "data/derived/pair_template_scores.csv",
     primer_positions = "data/derived/primer_position_scores.csv",
+    reference_growth_qa = "data/provenance/coi_reference_growth_qa.csv",
     taxonomy = "data/derived/gurten2026_centroid_taxonomy.csv",
     geography = "data/derived/reference_geography.csv",
     families = "data/derived/claimed_primer_family_summary.csv",
@@ -33,9 +34,11 @@ write_marker <- function(marker_id) {
   artifacts <- list()
   specs <- artifact_specs[[marker_id]]
   if (marker_id == "COI") {
-    exact <- list.files("data/derived", pattern = "^claimed_.*_centroid_scores[.]csv[.]gz$", full.names = TRUE)
-    names(exact) <- paste0("exact_", sub("^claimed_(.*)_centroid_scores[.]csv[.]gz$", "\\1", basename(exact)))
-    specs <- c(specs, exact)
+    beeprime <- "data/derived/claimed_beeprime_centroid_scores.csv.gz"
+    if (file.exists(beeprime)) specs <- c(specs, exact_beeprime = beeprime)
+    full <- list.files("data/derived", pattern = "^full_order_.*_sequence_scores[.]csv[.]gz$", full.names = TRUE)
+    names(full) <- sub("_sequence_scores[.]csv[.]gz$", "", basename(full))
+    specs <- c(specs, full)
   }
   for (name in names(specs)) {
     source <- specs[[name]]

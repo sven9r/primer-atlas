@@ -36,12 +36,17 @@ jobs:
           Rscript scripts/install_primerminer.R
       - name: Build marker independently
         run: |
+          if [ "$MARKER_ID" = COI ] && [ -n "$R2_BUCKET" ]; then
+            mkdir -p data/provenance
+            aws s3 cp "s3://${R2_BUCKET}/state/COI/coi_reference_accession_ledger.csv" data/provenance/coi_reference_accession_ledger.csv --endpoint-url "https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com" || true
+          fi
           python scripts/import_unite_primers.py
           Rscript scripts/build_catalog.R
           Rscript scripts/download_marker_references.R
           Rscript scripts/build_marker_geometry.R
           if [ "$MARKER_ID" = COI ]; then
-            Rscript scripts/build_22_group_alignments.R
+            Rscript scripts/update_order_reference_panels.R
+            EVALUATION_MODE=full GB_SUBSET=1000 Rscript scripts/build_22_group_alignments.R
             Rscript scripts/build_primer_positions.R
             Rscript scripts/build_order_scores.R
             Rscript scripts/download_gurten2026_reference.R

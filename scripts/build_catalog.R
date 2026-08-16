@@ -244,6 +244,16 @@ rownames(facets) <- NULL
 unite_path <- file.path(catalog_dir, "unite_primers.csv")
 if (file.exists(unite_path)) {
   unite <- read.csv(unite_path, stringsAsFactors = FALSE, check.names = FALSE)
+  if (!"primary_reference_key" %in% names(unite)) {
+    ref_slug <- function(x) paste0("its_primary_", gsub("(^_|_$)", "", gsub("[^a-z0-9]+", "_", tolower(ifelse(nzchar(x), x, "not_reported")))))
+    unite$primary_reference_key <- ref_slug(unite$reference)
+    unite$primary_reference_url <- ifelse(
+      !nzchar(unite$reference) | grepl("unpublished", unite$reference, ignore.case = TRUE),
+      "https://unite.ut.ee/primers.php",
+      paste0("https://search.crossref.org/?q=", utils::URLencode(unite$reference, reserved = TRUE))
+    )
+    unite$primary_reference_status <- ifelse(!nzchar(unite$reference), "not_reported", ifelse(grepl("unpublished", unite$reference, ignore.case = TRUE), "unpublished", "publication_cited"))
+  }
   its_pair_specs <- data.frame(
     pair_id = c(
       "ITS1_ITS4", "ITS1F_ITS4", "ITS1F_ITS4B", "ITS3_ITS4",
@@ -274,7 +284,8 @@ if (file.exists(unite_path)) {
     data.frame(
       oligo_id = paste0("ITS_", toupper(gsub("[^A-Za-z0-9]+", "_", name))),
       marker_id = "ITS_FUNGAL", primer_name = name, sequence = hit$sequence,
-      source_key = "unite_primers", source_note = paste(hit$remarks, hit$reference, sep = " · "),
+      source_key = hit$primary_reference_key,
+      source_note = paste(hit$remarks, "Original citation:", ifelse(nzchar(hit$reference), hit$reference, "not reported"), "UNITE compilation snapshot", sep = " · "),
       stringsAsFactors = FALSE
     )
   }))
@@ -333,7 +344,7 @@ if (exists("its_pair_specs")) {
       target_taxa = "Fungi", contrast_taxa = "",
       pair_validation_status = "source_catalog_import",
       expanded_reference_role = "screening_only",
-      source_keys = "unite_primers",
+      source_keys = paste(unique(c(selected$primary_reference_key, "unite_primers")), collapse = "|"),
       claim_note = paste(wording, references, sep = " · "),
       marker_id = "ITS_FUNGAL", claim_id = paste0("ITS_CLAIM_", i),
       evidence_type = "attributed_database_snapshot",
@@ -350,6 +361,24 @@ write_catalog(pairs, "primer_pairs.csv")
 write_catalog(unique(facets), "primer_pair_facets.csv")
 write_catalog(claims, "claims.csv")
 sources <- read.csv(file.path(project_root, "data", "citations.csv"), stringsAsFactors = FALSE)
+if (exists("unite")) {
+  primary_sources <- unique(unite[, c(
+    "primary_reference_key", "reference", "primary_reference_url",
+    "primary_reference_status"
+  )])
+  primary_sources <- data.frame(
+    key = primary_sources$primary_reference_key,
+    category = "original primer reference",
+    short_citation = ifelse(nzchar(primary_sources$reference), primary_sources$reference, "Original reference not reported"),
+    title = ifelse(nzchar(primary_sources$reference), paste("Primer source:", primary_sources$reference), "Original primer reference not reported by compilation"),
+    year = suppressWarnings(as.integer(sub(".*?([12][0-9]{3}).*", "\\1", primary_sources$reference))),
+    doi = "", url = primary_sources$primary_reference_url,
+    note = paste("Primary-reference status:", primary_sources$primary_reference_status, "· primer metadata compiled by UNITE."),
+    stringsAsFactors = FALSE
+  )
+  primary_sources$year[is.na(primary_sources$year) | primary_sources$year < 1900L | primary_sources$year > 2100L] <- NA_integer_
+  sources <- rbind(sources[!sources$key %in% primary_sources$key, , drop = FALSE], primary_sources)
+}
 if (!"unite_primers" %in% sources$key) {
   sources <- rbind(sources, data.frame(
     key = "unite_primers", category = "primer catalog",

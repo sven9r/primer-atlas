@@ -15,9 +15,15 @@ bindings <- read.csv(
   stringsAsFactors = FALSE,
   check.names = FALSE
 )
+full_alignment_dir <- file.path(project_root, "data", "primerminer", "full_aligned_reference")
+alignment_dir <- if (dir.exists(full_alignment_dir) && length(list.files(full_alignment_dir, pattern = "_COX1_full_reference_aligned\\.fasta$"))) {
+  full_alignment_dir
+} else {
+  file.path(project_root, "data", "primerminer", "aligned_reference")
+}
 alignment_files <- list.files(
-  file.path(project_root, "data", "primerminer", "aligned_reference"),
-  pattern = "_COX1_reference_aligned\\.fasta$",
+  alignment_dir,
+  pattern = "_COX1(_full)?_reference_aligned\\.fasta$",
   full.names = TRUE
 )
 if (!length(alignment_files)) {
@@ -28,7 +34,7 @@ output_dir <- file.path(project_root, "data", "derived")
 dir.create(output_dir, recursive = TRUE, showWarnings = FALSE)
 
 order_from_path <- function(path) {
-  sub("_COX1_reference_aligned\\.fasta$", "", basename(path))
+  sub("_COX1(_full)?_reference_aligned\\.fasta$", "", basename(path))
 }
 
 quantile_safe <- function(x, probability) {
@@ -219,6 +225,10 @@ pair_template_scores$perfect_match_pair <-
   pair_template_scores$pair_scorable &
   pair_template_scores$forward_mismatch_count == 0L &
   pair_template_scores$reverse_mismatch_count == 0L
+pair_template_scores$accession <- sub(
+  "[|].*$", "",
+  sub(" .*", "", sub("^_R_", "", pair_template_scores$template))
+)
 
 groups <- split(
   pair_template_scores,
@@ -311,6 +321,16 @@ write.csv(
   row.names = FALSE,
   na = ""
 )
+for (pair_id in unique(pair_template_scores$pair_id)) {
+  pair_rows <- pair_template_scores[pair_template_scores$pair_id == pair_id, , drop = FALSE]
+  path <- file.path(
+    output_dir,
+    paste0("full_order_", tolower(pair_id), "_sequence_scores.csv.gz")
+  )
+  connection <- gzfile(path, open = "wt")
+  write.csv(pair_rows, connection, row.names = FALSE, na = "")
+  close(connection)
+}
 write.csv(
   order_pair_summary,
   file.path(output_dir, "order_pair_summary.csv"),

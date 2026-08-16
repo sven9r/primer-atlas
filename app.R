@@ -25,6 +25,11 @@ release_table <- function(name, fallback, col_types = NULL) {
 
 primers <- read_csv("data/primers.csv", show_col_types = FALSE)
 citations <- read_csv("data/citations.csv", show_col_types = FALSE)
+catalog_sources <- read_csv("data/catalog/sources.csv", show_col_types = FALSE)
+citations <- bind_rows(
+  citations,
+  catalog_sources |> filter(!key %in% citations$key)
+)
 marker_registry <- read_csv("data/catalog/markers.csv", show_col_types = FALSE)
 organism_groups <- read_csv("data/catalog/organism_groups.csv", show_col_types = FALSE)
 marker_organism_groups <- read_csv("data/catalog/marker_organism_groups.csv", show_col_types = FALSE)
@@ -34,6 +39,7 @@ catalog_oligos <- read_csv("data/catalog/oligos.csv", show_col_types = FALSE)
 catalog_links <- read_csv("data/catalog/pair_oligos.csv", show_col_types = FALSE)
 primer_facets <- read_csv("data/catalog/primer_pair_facets.csv", show_col_types = FALSE)
 catalog_claims <- read_csv("data/catalog/claims.csv", show_col_types = FALSE)
+unite_catalog <- read_csv("data/catalog/unite_primers.csv", show_col_types = FALSE)
 
 organism_group_choices <- c(
   "All organism groups" = "ALL",
@@ -119,13 +125,15 @@ its_reference <- clean_sequence(
   parse_fasta("data/reference/its_fungal_reference_FN812768.2.fasta")[[1]]
 )
 
+full_alignment_dir <- "data/primerminer/full_aligned_reference"
+alignment_dir <- if (dir.exists(full_alignment_dir) && length(list.files(full_alignment_dir, pattern = "_COX1_full_reference_aligned\\.fasta$"))) full_alignment_dir else "data/primerminer/aligned_reference"
 alignment_files <- list.files(
-  "data/primerminer/aligned_reference",
-  pattern = "_COX1_reference_aligned\\.fasta$",
+  alignment_dir,
+  pattern = "_COX1(_full)?_reference_aligned\\.fasta$",
   full.names = TRUE
 )
 alignment_orders <- sub(
-  "_COX1_reference_aligned\\.fasta$",
+  "_COX1(_full)?_reference_aligned\\.fasta$",
   "",
   basename(alignment_files)
 )
@@ -235,6 +243,45 @@ claimed_primer_phylogeny_groups <- read_csv(
   "data/derived/claimed_primer_phylogeny_group_summary.csv",
   show_col_types = FALSE
 )
+region_geography_catalog <- release_table(
+  "geography", "data/derived/reference_geography.csv"
+) |>
+  mutate(
+    accession = as.character(accession),
+    country_or_territory = na_if(as.character(country_or_territory), ""),
+    locality = na_if(as.character(locality), "")
+  )
+region_country_counts <- region_geography_catalog |>
+  filter(!is.na(country_or_territory)) |>
+  count(country_or_territory, sort = TRUE)
+region_country_choices <- setNames(
+  region_country_counts$country_or_territory,
+  paste0(region_country_counts$country_or_territory, " · ", format(region_country_counts$n, big.mark = ","))
+)
+region_default_a <- if ("USA" %in% region_country_counts$country_or_territory) "USA" else region_country_counts$country_or_territory[1]
+region_default_b <- if ("Canada" %in% region_country_counts$country_or_territory) "Canada" else setdiff(region_country_counts$country_or_territory, region_default_a)[1]
+
+pair_sequence_evidence_spec <- function(pair_id) {
+  if (identical(pair_id, "BEEPRIME")) {
+    return(list(
+      path = "data/derived/claimed_beeprime_centroid_scores.csv.gz",
+      artifact = "exact_beeprime", evidence_class = "study_specific_gurten_centroids"
+    ))
+  }
+  list(
+    path = file.path("data", "derived", paste0("full_order_", tolower(pair_id), "_sequence_scores.csv.gz")),
+    artifact = paste0("full_order_", tolower(pair_id)),
+    evidence_class = "full_order_reference_alignment"
+  )
+}
+
+read_pair_sequence_evidence <- function(pair_id) {
+  spec <- pair_sequence_evidence_spec(pair_id)
+  if (file.exists(spec$path)) return(read_csv(spec$path, show_col_types = FALSE))
+  artifact <- if (!is.null(coi_release_state)) coi_release_state$manifest$artifacts[[spec$artifact]] else NULL
+  if (is.null(artifact)) return(tibble())
+  tryCatch(as_tibble(atlas_read_artifact(artifact)), error = function(e) tibble())
+}
 targeted_zbj_manifest <- read_csv(
   "data/external/targeted_zbj/targeted_complete_cox1_manifest.csv",
   show_col_types = FALSE
@@ -551,6 +598,22 @@ body.detail-switching .deep-detail-card {
 .status-chip.active { background:#dcebe3; color:#16664b; }
 .status-chip.pilot { background:#fbefd0; color:#8a5a00; }
 .region-position-diff { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; }
+.region-globe-card { display:grid; grid-template-columns:minmax(360px,1.25fr) minmax(240px,.75fr);
+  gap:18px; align-items:center; margin:0 0 18px; padding:16px;
+  border:1px solid var(--line); border-radius:18px; background:#fffdf8; }
+.region-globe-stage { min-height:390px; display:flex; align-items:center; justify-content:center;
+  overflow:hidden; border-radius:16px; background:radial-gradient(circle at 48% 42%,#edf7f2 0,#dcebe3 46%,#c9ddd3 70%,#b9d2c6 100%); }
+#region_globe_canvas { width:100%; max-width:620px; height:390px; cursor:grab; touch-action:none; }
+#region_globe_canvas:active { cursor:grabbing; }
+.region-globe-copy h4 { margin-bottom:7px; }
+.region-globe-legend { display:grid; gap:9px; margin:14px 0; }
+.region-globe-key { display:flex; align-items:center; gap:9px; font-weight:800; }
+.region-globe-dot { width:13px; height:13px; border-radius:50%; display:inline-block; }
+.region-globe-dot.a { background:#2563eb; box-shadow:0 0 0 4px rgba(37,99,235,.18); }
+.region-globe-dot.b { background:#de6b4f; box-shadow:0 0 0 4px rgba(222,107,79,.18); }
+.reference-policy-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:12px; margin:14px 0; }
+.reference-policy-card { padding:13px 15px; border:1px solid var(--line); border-radius:14px; background:#fffdf8; }
+.reference-policy-card b { display:block; margin-bottom:4px; }
 @media(max-width:900px){
   .institution-banner { align-items:flex-start; padding:8px 14px; gap:10px; }
   .banner-support { gap:8px; flex-wrap:wrap; }
@@ -561,6 +624,7 @@ body.detail-switching .deep-detail-card {
   .heatmap-reading-guide { grid-template-columns:1fr; }
   .heatmap-legend-grid { grid-template-columns:repeat(2,minmax(115px,1fr)); }
   .order-inspector-controls { grid-template-columns:1fr; }
+  .region-globe-card { grid-template-columns:1fr; }
 }
 @media(max-width:700px){
   .institution-banner { display:block; }
@@ -758,6 +822,73 @@ app_js <- "
     });
   }
 
+  var regionGlobeState = {points:[], labels:{a:'A',b:'B'}, lon0:0, lat0:12, drag:null};
+
+  function globeProject(lat, lon, width, height, state) {
+    var phi = lat * Math.PI / 180, lambda = lon * Math.PI / 180;
+    var phi0 = state.lat0 * Math.PI / 180, lambda0 = state.lon0 * Math.PI / 180;
+    var dl = lambda - lambda0;
+    var visible = Math.sin(phi0)*Math.sin(phi) + Math.cos(phi0)*Math.cos(phi)*Math.cos(dl);
+    var radius = Math.min(width, height) * .43;
+    return {
+      x: width/2 + radius*Math.cos(phi)*Math.sin(dl),
+      y: height/2 - radius*(Math.cos(phi0)*Math.sin(phi)-Math.sin(phi0)*Math.cos(phi)*Math.cos(dl)),
+      visible: visible > 0, radius: radius
+    };
+  }
+
+  function drawRegionGlobe() {
+    var canvas = document.getElementById('region_globe_canvas');
+    if (!canvas) return;
+    var rect = canvas.getBoundingClientRect();
+    var ratio = window.devicePixelRatio || 1;
+    canvas.width = Math.max(1, Math.round(rect.width * ratio));
+    canvas.height = Math.max(1, Math.round(rect.height * ratio));
+    var ctx = canvas.getContext('2d');
+    ctx.scale(ratio, ratio);
+    var w = rect.width, h = rect.height;
+    var center = globeProject(regionGlobeState.lat0, regionGlobeState.lon0, w, h, regionGlobeState);
+    ctx.clearRect(0,0,w,h);
+    ctx.save();
+    ctx.beginPath(); ctx.arc(w/2,h/2,center.radius,0,Math.PI*2); ctx.clip();
+    ctx.fillStyle='#edf5f1'; ctx.fillRect(0,0,w,h);
+    ctx.strokeStyle='rgba(23,36,29,.14)'; ctx.lineWidth=1;
+    [-60,-30,0,30,60].forEach(function(lat){
+      ctx.beginPath(); var started=false;
+      for(var lon=-180;lon<=180;lon+=3){var p=globeProject(lat,lon,w,h,regionGlobeState); if(p.visible){if(!started){ctx.moveTo(p.x,p.y);started=true;}else ctx.lineTo(p.x,p.y);}else started=false;} ctx.stroke();
+    });
+    for(var lon=-150;lon<=180;lon+=30){
+      ctx.beginPath(); var started=false;
+      for(var lat=-89;lat<=89;lat+=3){var p=globeProject(lat,lon,w,h,regionGlobeState); if(p.visible){if(!started){ctx.moveTo(p.x,p.y);started=true;}else ctx.lineTo(p.x,p.y);}else started=false;} ctx.stroke();
+    }
+    regionGlobeState.points.forEach(function(point){
+      var p=globeProject(Number(point.latitude),Number(point.longitude),w,h,regionGlobeState);
+      if(!p.visible) return;
+      var group=Array.isArray(point.group) ? point.group[0] : point.group;
+      var color=group==='A' ? '#2563eb' : '#de6b4f';
+      var r=Math.max(6,Math.min(18,5+Math.log10(Math.max(1,Number(point.n)))*4));
+      ctx.beginPath(); ctx.arc(p.x,p.y,r+5,0,Math.PI*2); ctx.fillStyle=color+'33'; ctx.fill();
+      ctx.beginPath(); ctx.arc(p.x,p.y,r,0,Math.PI*2); ctx.fillStyle=color; ctx.fill();
+      ctx.strokeStyle='#fffdf8'; ctx.lineWidth=2; ctx.stroke();
+      ctx.fillStyle='#17241d'; ctx.font='700 12px Manrope, sans-serif';
+      ctx.fillText(point.label+' · '+point.n, p.x+r+7, p.y+4);
+    });
+    ctx.restore();
+    ctx.beginPath(); ctx.arc(w/2,h/2,center.radius,0,Math.PI*2); ctx.strokeStyle='rgba(23,36,29,.35)'; ctx.lineWidth=1.5; ctx.stroke();
+  }
+
+  function wireRegionGlobe() {
+    var canvas=document.getElementById('region_globe_canvas');
+    if(!canvas || canvas.dataset.wired==='true') { drawRegionGlobe(); return; }
+    canvas.dataset.wired='true';
+    canvas.addEventListener('pointerdown',function(e){canvas.setPointerCapture(e.pointerId);regionGlobeState.drag={x:e.clientX,y:e.clientY,lon:regionGlobeState.lon0,lat:regionGlobeState.lat0};});
+    canvas.addEventListener('pointermove',function(e){if(!regionGlobeState.drag)return;regionGlobeState.lon0=regionGlobeState.drag.lon-(e.clientX-regionGlobeState.drag.x)*.45;regionGlobeState.lat0=Math.max(-70,Math.min(70,regionGlobeState.drag.lat+(e.clientY-regionGlobeState.drag.y)*.35));drawRegionGlobe();});
+    canvas.addEventListener('pointerup',function(){regionGlobeState.drag=null;});
+    canvas.addEventListener('pointercancel',function(){regionGlobeState.drag=null;});
+    window.addEventListener('resize',drawRegionGlobe);
+    drawRegionGlobe();
+  }
+
   document.addEventListener('click', function(event) {
     var cell = event.target.closest('.heat-cell[data-order][data-pair]');
     if (!cell || !window.Shiny) return;
@@ -802,9 +933,17 @@ app_js <- "
   });
   new MutationObserver(function() {
     window.requestAnimationFrame(wireHeatmapScrollers);
+    window.requestAnimationFrame(wireRegionGlobe);
   }).observe(document.documentElement, {childList:true, subtree:true});
 
   if (window.Shiny) {
+    Shiny.addCustomMessageHandler('region_globe', function(message) {
+      regionGlobeState.points = message.points || [];
+      regionGlobeState.labels = message.labels || regionGlobeState.labels;
+      if (message.center && Number.isFinite(Number(message.center.longitude))) regionGlobeState.lon0 = Number(message.center.longitude);
+      if (message.center && Number.isFinite(Number(message.center.latitude))) regionGlobeState.lat0 = Number(message.center.latitude);
+      window.requestAnimationFrame(wireRegionGlobe);
+    });
     Shiny.addCustomMessageHandler('scroll_order_detail', function(message) {
       window.setTimeout(function() {
         var detail = document.querySelector('.order-detail-layout');
@@ -813,6 +952,13 @@ app_js <- "
     });
   } else {
     document.addEventListener('shiny:connected', function() {
+      Shiny.addCustomMessageHandler('region_globe', function(message) {
+        regionGlobeState.points = message.points || [];
+        regionGlobeState.labels = message.labels || regionGlobeState.labels;
+        if (message.center && Number.isFinite(Number(message.center.longitude))) regionGlobeState.lon0 = Number(message.center.longitude);
+        if (message.center && Number.isFinite(Number(message.center.latitude))) regionGlobeState.lat0 = Number(message.center.latitude);
+        window.requestAnimationFrame(wireRegionGlobe);
+      });
       Shiny.addCustomMessageHandler('scroll_order_detail', function(message) {
         window.setTimeout(function() {
           var detail = document.querySelector('.order-detail-layout');
@@ -1448,10 +1594,16 @@ ui <- page_navbar(
             choices = setNames(
               pair_meta$pair_id[pair_meta$marker_id == "COI"],
               pair_meta$pair_label[pair_meta$marker_id == "COI"]
-            ), selected = "MCO"
+            ), selected = "BEEPRIME"
           ),
-          selectizeInput("region_a", "Reference region A", choices = NULL),
-          selectizeInput("region_b", "Reference region B", choices = NULL),
+          selectizeInput(
+            "region_a", "Reference region A",
+            choices = region_country_choices, selected = region_default_a
+          ),
+          selectizeInput(
+            "region_b", "Reference region B",
+            choices = region_country_choices, selected = region_default_b
+          ),
           selectizeInput("region_order", "Taxonomic stratum", choices = "All", selected = "All"),
           uiOutput("region_denominator_note"),
           div(
@@ -1463,6 +1615,23 @@ ui <- page_navbar(
           id = "region_tabs",
           nav_panel(
             "Overview",
+            div(
+              class = "region-globe-card",
+              div(
+                class = "region-globe-stage",
+                tags$canvas(
+                  id = "region_globe_canvas", width = 620, height = 390,
+                  `aria-label` = "Interactive globe showing the two selected reference-geography subsets"
+                )
+              ),
+              div(
+                class = "region-globe-copy",
+                h4("Reference geography on the globe"),
+                p("Dots summarize accessions with reported coordinates. Drag the globe to rotate it; dot size reflects the located reference count, not primer performance."),
+                uiOutput("region_globe_legend"),
+                div(class = "tiny", "Countries without usable latitude/longitude remain in denominators and tables but cannot be drawn as points.")
+              )
+            ),
             uiOutput("region_metrics"),
             uiOutput("region_interpretation"),
             DTOutput("region_order_comparison")
@@ -1536,12 +1705,16 @@ ui <- page_navbar(
           card_header("What each source supports"),
           h4("Reference alignments"),
           p(
-            "The current build contains ", length(alignment_files),
-            " reproducible COX1 reference groups: 20 explicitly listed arthropod ",
-            "orders, the Acari and Collembola composite groups, and Bivalvia for ",
-            "mollusk-focused primer validation. PrimerMiner retrieval, 97% VSEARCH ",
-            "clustering, and MAFFT alignment all use versioned reference NC_001322.1. ",
-            "Raw, clustered, aligned, and manifest files are retained."
+            "The repository currently bundles ", length(alignment_files),
+            " compact COX1 preview alignments. They remain useful for placement and UI regression tests, but they are not the production scoring denominator. "
+            , "Production releases retain and score full NC_001322.1-coordinate alignments for the 20 listed arthropod orders plus the Acari and Collembola composite target groups."
+          ),
+          div(
+            class = "reference-policy-grid",
+            div(class = "reference-policy-card", tags$b("Initial order baseline"), "At least 1,000 retained, quality-filtered sequences per arthropod target group; all available records are reported when the database cannot supply 1,000."),
+            div(class = "reference-policy-card", tags$b("Monthly growth"), "Append unseen accessions only. The next target is ceiling(previous retained count × 1.01); existing accessions are never replaced by a fresh random sample."),
+            div(class = "reference-policy-card", tags$b("Scoring denominator"), "General primers use every retained sequence in the full order alignment. A clustered preview may never be reported as the production denominator."),
+            div(class = "reference-policy-card", tags$b("BeePrime exception"), "The Gurten et al. 99.5% centroids remain a named, study-specific evidence layer for BeePrime and are not reused as universal evidence for unrelated primers.")
           ),
           p(
             "The BeePrime taxonomic drill-down instead uses Gurten et al. (2026) ",
@@ -1557,6 +1730,16 @@ ui <- page_navbar(
           p("The current estimator is deliberately transparent and fast. A production release should add a full nearest-neighbor engine with Mg²⁺, primer concentration, and chemistry-specific corrections."),
           div(class = "callout", "Open-source principle: every number should reveal its data source, assumptions, and uncertainty.")
         )
+      ),
+      br(),
+      card(
+        card_header("UNITE fungal rDNA primer catalog · original citations retained"),
+        div(
+          class = "callout tiny mb-3",
+          strong(format(nrow(unite_catalog), big.mark = ","), " sequence-valid primer records are available in the pilot catalog. "),
+          "UNITE is recorded as the compilation provenance. The Reference column names the original paper or explicitly says unpublished/not reported; it is never replaced by a generic UNITE citation. Curated primer pairs remain a smaller, source-supported subset because the atlas does not invent pairings from individual oligos."
+        ),
+        DTOutput("unite_primer_catalog")
       )
     )
   )
@@ -3575,6 +3758,9 @@ server <- function(input, output, session) {
     if (isTRUE(custom_detail_active())) {
       return(custom_detail_record()$expanded_overall)
     }
+    if (!input$detail_pair %in% c("BEEPRIME", "ZBJ_ART", "ZBJ_ART_DEG")) {
+      return(claimed_primer_overall[0, , drop = FALSE])
+    }
     claimed_primer_overall |>
       filter(pair_id == input$detail_pair) |>
       slice(1)
@@ -3629,6 +3815,7 @@ server <- function(input, output, session) {
           )
       )
     }
+    if (input$detail_pair != "BEEPRIME") return(data.frame())
     if (input$detail_order %in% c("Acari", "Collembola")) {
       return(
         claimed_primer_phylogeny_groups |>
@@ -3729,6 +3916,7 @@ server <- function(input, output, session) {
         selected |> arrange(desc(pair_median_penalty), taxon)
       ))
     }
+    if (input$detail_pair != "BEEPRIME") return(data.frame())
     selected_orders <- switch(
       input$detail_order,
       Acari = c(
@@ -3862,12 +4050,9 @@ server <- function(input, output, session) {
           filter(pair_id == input$detail_pair)
       )
     }
-    path <- file.path(
-      "data", "derived",
-      paste0("claimed_", tolower(input$detail_pair), "_centroid_scores.csv.gz")
-    )
-    validate(need(file.exists(path), paste("Raw sequence evidence is missing:", path)))
-    read_csv(path, show_col_types = FALSE)
+    x <- read_pair_sequence_evidence(input$detail_pair)
+    validate(need(nrow(x), paste("Full order-alignment sequence evidence is not yet published for", input$detail_pair)))
+    x
   }) |>
     bindCache(input$detail_pair)
 
@@ -4607,6 +4792,13 @@ server <- function(input, output, session) {
 
   output$lineage_denominator <- renderUI({
     if (input$lineage_marker != "COI") return(div(class = "callout tiny", "Fungal ITS geography and lineage partitions are scheduled for the expanded reference release."))
+    if (!is.null(input$lineage_pair) && input$lineage_pair != "BEEPRIME") {
+      return(div(
+        class = "callout tiny",
+        strong("Full order-alignment evidence. "),
+        "The Gurten centroid geography is not reused for this primer. Country and lineage denominators appear after its append-only full-panel artifact has been published."
+      ))
+    }
     all_rows <- lineage_scope()$geography
     selected <- lineage_scope()$taxonomy
     located <- sum(!is.na(all_rows$country_or_territory))
@@ -4619,6 +4811,7 @@ server <- function(input, output, session) {
 
   lineage_summary_table <- function(source, rank) {
     if (input$lineage_marker != "COI" || is.null(input$lineage_pair)) return(tibble())
+    if (input$lineage_pair != "BEEPRIME") return(tibble())
     x <- source |> filter(pair_id == input$lineage_pair)
     if (!is.null(input$lineage_target) && input$lineage_target != "All") x <- x |> filter(order == input$lineage_target)
     selected_accessions <- lineage_scope()$taxonomy$accession
@@ -4645,13 +4838,23 @@ server <- function(input, output, session) {
     tagList(
       h3("Reference fit by target group"),
       p("Penalty is calculated only when both binding sites are scorable. Site availability and mismatch fit remain separate."),
+      if (input$lineage_pair == "BEEPRIME") {
+        div(class = "callout tiny", strong("Study-specific exception: "), "BeePrime uses the Gurten et al. author centroids for its deep publication-linked view.")
+      } else {
+        div(class = "callout tiny", strong("General reference policy: "), "This primer is evaluated on full order-specific alignments. Gurten centroids are deliberately not substituted when its full artifact is unavailable.")
+      },
       DTOutput("lineage_overview_table"),
       uiOutput("lineage_geography_interpretation"),
       DTOutput("lineage_geography_stratified")
     )
   })
   output$lineage_overview_table <- renderDT({
-    summary <- claimed_primer_orders |> filter(pair_id == input$lineage_pair)
+    summary <- if (input$lineage_pair == "BEEPRIME") {
+      claimed_primer_orders |> filter(pair_id == input$lineage_pair)
+    } else {
+      order_scores |> filter(pair_id == input$lineage_pair) |>
+        mutate(evidence_source = ifelse(alignment_dir == full_alignment_dir, "full order alignment", "legacy centroid preview · awaiting 1,000-sequence release"))
+    }
     if (!is.null(input$lineage_target) && input$lineage_target != "All") summary <- summary |> filter(order == input$lineage_target)
     datatable(summary, options = list(pageLength = 12, scrollX = TRUE), filter = "top", rownames = FALSE)
   }, server = TRUE)
@@ -4677,15 +4880,7 @@ server <- function(input, output, session) {
 
   lineage_raw_scores <- reactive({
     req(input$lineage_marker == "COI", input$lineage_pair)
-    path <- file.path("data", "derived", paste0("claimed_", tolower(input$lineage_pair), "_centroid_scores.csv.gz"))
-    artifact_name <- paste0("exact_", tolower(input$lineage_pair))
-    artifact <- if (!is.null(coi_release_state)) coi_release_state$manifest$artifacts[[artifact_name]] else NULL
-    if (!is.null(artifact)) {
-      value <- tryCatch(as_tibble(atlas_read_artifact(artifact)), error = function(e) NULL)
-      if (!is.null(value)) return(value)
-    }
-    if (!file.exists(path)) return(tibble())
-    read_csv(path, show_col_types = FALSE)
+    read_pair_sequence_evidence(input$lineage_pair)
   }) |> bindCache(input$lineage_pair)
 
   output$lineage_geography_interpretation <- renderUI({
@@ -4742,6 +4937,9 @@ server <- function(input, output, session) {
   })
   output$lineage_sequence_note <- renderUI({
     if (input$lineage_marker != "COI") return(div(class = "callout", "Exact fungal sequence evidence will appear only after the expanded-reference artifact is released."))
+    if (input$lineage_pair != "BEEPRIME" && !nrow(lineage_raw_scores())) {
+      return(div(class = "callout", strong("Full sequence partition pending. "), "The previous shared Gurten-centroid score is intentionally withheld for this primer."))
+    }
     family <- lineage_selected_family()
     div(class = "tiny", if (is.null(family)) "Select a family row to restrict exact sequence evidence." else paste("Showing exact evidence for", family), " Sequence artifacts load only when this tab is opened.")
   })
@@ -4757,54 +4955,22 @@ server <- function(input, output, session) {
       h4("Coordinate and reference source"), tags$a(href = marker$source_url, target = "_blank", marker$source_name),
       h4("Publication claims"),
       if (!nrow(claims)) p("No target-specific publication claim is registered; primer citations remain attached to the oligos.") else tags$ul(lapply(seq_len(nrow(claims)), function(i) tags$li(claims$claim_label[i], ": ", claims$claim_note[i]))),
+      div(
+        class = "callout tiny",
+        strong("Scoring reference: "),
+        if (input$lineage_marker == "COI" && input$lineage_pair == "BEEPRIME") "Gurten et al. study-specific 99.5% centroids." else if (input$lineage_marker == "COI") "Append-only full order reference alignment; no cross-primer reuse of Gurten centroids." else "Marker-specific pilot screening reference."
+      ),
       div(class = "callout tiny", "Original third-party licensing and attribution apply. Annual software and redistributable-data snapshots are prepared for Zenodo DOI deposition.")
     )
   })
 
   region_geography <- reactive({
-    release_table("geography", "data/derived/reference_geography.csv") |>
-      mutate(
-        accession = as.character(accession),
-        country_or_territory = na_if(country_or_territory, ""),
-        locality = na_if(locality, "")
-      )
+    region_geography_catalog
   }) |> bindCache(input$region_marker)
-
-  observe({
-    geo <- region_geography() |>
-      filter(!is.na(country_or_territory)) |>
-      count(country_or_territory, sort = TRUE)
-    countries <- geo$country_or_territory
-    if (!length(countries)) return()
-    region_a <- if ("USA" %in% countries) "USA" else countries[1]
-    alternatives <- setdiff(countries, region_a)
-    region_b <- if ("Canada" %in% alternatives) "Canada" else alternatives[1]
-    updateSelectizeInput(
-      session, "region_a", choices = countries, selected = region_a,
-      server = TRUE
-    )
-    updateSelectizeInput(
-      session, "region_b", choices = countries,
-      selected = if (length(region_b)) region_b else region_a,
-      server = TRUE
-    )
-  })
 
   region_pair_scores <- reactive({
     req(input$region_pair)
-    path <- file.path(
-      "data", "derived",
-      paste0("claimed_", tolower(input$region_pair), "_centroid_scores.csv.gz")
-    )
-    if (file.exists(path)) return(read_csv(path, show_col_types = FALSE))
-    artifact_name <- paste0("exact_", tolower(input$region_pair))
-    artifact <- if (!is.null(coi_release_state)) {
-      coi_release_state$manifest$artifacts[[artifact_name]]
-    } else {
-      NULL
-    }
-    if (is.null(artifact)) return(tibble())
-    tryCatch(as_tibble(atlas_read_artifact(artifact)), error = function(e) tibble())
+    read_pair_sequence_evidence(input$region_pair)
   }) |> bindCache(input$region_pair)
 
   observe({
@@ -4842,6 +5008,48 @@ server <- function(input, output, session) {
       x <- x |> filter(order == input$region_order)
     }
     x
+  })
+
+  region_globe_points <- reactive({
+    req(input$region_a, input$region_b)
+    region_geography() |>
+      filter(
+        country_or_territory %in% c(input$region_a, input$region_b),
+        is.finite(latitude), is.finite(longitude)
+      ) |>
+      mutate(group = ifelse(country_or_territory == input$region_a, "A", "B")) |>
+      group_by(country_or_territory, group) |>
+      summarise(
+        latitude = median(latitude, na.rm = TRUE),
+        longitude = median(longitude, na.rm = TRUE),
+        n = n(), .groups = "drop"
+      ) |>
+      transmute(
+        label = country_or_territory, group, latitude, longitude, n
+      )
+  })
+
+  observe({
+    points <- region_globe_points()
+    center <- if (nrow(points)) list(
+      latitude = mean(points$latitude, na.rm = TRUE),
+      longitude = mean(points$longitude, na.rm = TRUE)
+    ) else list(latitude = 12, longitude = 0)
+    session$sendCustomMessage("region_globe", list(
+      points = unname(split(points, seq_len(nrow(points)))),
+      labels = list(a = input$region_a, b = input$region_b),
+      center = center
+    ))
+  })
+
+  output$region_globe_legend <- renderUI({
+    points <- region_globe_points()
+    plotted <- function(group) sum(points$n[points$group == group], na.rm = TRUE)
+    div(
+      class = "region-globe-legend",
+      div(class = "region-globe-key", span(class = "region-globe-dot a"), input$region_a, " · ", format(plotted("A"), big.mark = ","), " geocoded"),
+      div(class = "region-globe-key", span(class = "region-globe-dot b"), input$region_b, " · ", format(plotted("B"), big.mark = ","), " geocoded")
+    )
   })
 
   output$region_denominator_note <- renderUI({
@@ -5025,6 +5233,32 @@ server <- function(input, output, session) {
       )
     }))
   })
+
+  output$unite_primer_catalog <- renderDT({
+    x <- unite_catalog |>
+      transmute(
+        Primer = primer_name,
+        Direction = direction,
+        `Sequence (5′→3′)` = sequence,
+        Locus = gene_locus,
+        Target = target,
+        `Reported position` = reported_position,
+        `Known use / limitation` = remarks,
+        `Original reference` = ifelse(nzchar(reference), reference, "Not reported by compilation"),
+        `Reference status` = coalesce(primary_reference_status, "not_reported"),
+        `Open reference` = paste0(
+          "<a href=\"", primary_reference_url,
+          "\" target=\"_blank\" rel=\"noopener\">",
+          ifelse(primary_reference_status == "publication_cited", "Find original publication ↗", "UNITE provenance ↗"),
+          "</a>"
+        )
+      )
+    datatable(
+      x, escape = FALSE, filter = "top", rownames = FALSE,
+      class = "compact stripe",
+      options = list(pageLength = 20, lengthMenu = c(10, 20, 50, 100), scrollX = TRUE)
+    )
+  }, server = TRUE)
 
   output$download_bib <- downloadHandler(
     filename = "coi-primer-atlas-references.bib",

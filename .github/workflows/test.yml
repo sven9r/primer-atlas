@@ -20,6 +20,7 @@ jobs:
             tests/test_order_lens_interaction.R \
             tests/test_primer_map_domain.R \
             tests/test_region_comparison.R \
+            tests/test_reference_panel_policy.R \
             tests/test_release_layer.R \
             tests/test_runtime_custom_order_scoring.R \
             tests/test_sequence_drilldown.R \

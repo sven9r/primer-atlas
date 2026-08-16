@@ -34,12 +34,34 @@ The fungal ITS pilot imports an attributed snapshot of the
 [UNITE primer resource](https://unite.ut.ee/primers.php) offline. Its map uses
 the 18S–ITS1–5.8S–ITS2–28S landmark architecture on FN812768.2. It does not
 scrape UNITE during user sessions, and its current single-reference placements
-are explicitly distinguished from expanded fungal lineage evidence.
+are explicitly distinguished from expanded fungal lineage evidence. All 121
+sequence-valid imported primer records are searchable in the app. Each primer
+uses the publication named by UNITE as its citation; UNITE is stored separately
+as compilation provenance. Unpublished and unreported references stay visibly
+labelled instead of being converted into a generic UNITE paper citation.
 
 The Region Comparison tab joins exact primer-binding sequences to accession-level
 reference geography. It compares two countries or territories at each primer
 position, retains exact sequences, and reports within-order summaries so a
-taxonomic sampling difference is not mislabelled a regional PCR effect.
+taxonomic sampling difference is not mislabelled a regional PCR effect. Its
+interactive globe shows the two activated subsets and distinguishes plotted
+coordinates from the larger located/all denominator.
+
+## COI reference-panel policy
+
+General COI primer pairs are scored against full NC_001322.1-coordinate order
+alignments, not the Gurten centroid panel. The initial production target is at
+least 1,000 retained sequences for each listed arthropod order or composite
+target group when NCBI can supply them. Every monthly release is append-only:
+the target becomes `ceiling(previous retained × 1.01)`, and only unseen
+accessions are added. Existing accessions are not replaced by a fresh sample.
+
+BeePrime is a named exception: its Gurten et al. (2026) 99.5% author centroids
+remain available as study-specific, publication-linked evidence. They are not
+silently reused for other primers. Compact 97% alignments bundled in Git remain
+UI/regression previews and are not the production scoring denominator. The
+machine-readable contract is in
+[`data/catalog/reference_panel_policy.csv`](data/catalog/reference_panel_policy.csv).
 
 ## Releases
 
@@ -137,10 +159,14 @@ focused on Central European bees.
 
 ## Target claims, reference suitability, and ZBJ
 
-The taxonomic drill-down is also available for Spidprey, NoSpi2 + Laurelin,
-ZBJ-Art, the degenerate ZBJ comparison, ANML, VERT, and NoPlant. A published
-target claim is stored as a hypothesis in `data/primer_target_claims.csv`;
-hybrid pairs do not inherit validation from their component-primer papers.
+The taxonomic drill-down uses a primer-appropriate evidence layer. ZBJ-Art and
+its degenerate comparison retain their separate site-complete COX1 panel;
+BeePrime retains the Gurten study panel. Other primer pairs do not inherit a
+Gurten family/genus score: those views stay unavailable until the append-only
+full-order artifacts and their taxonomy partitions have been published. A
+published target claim is stored as a hypothesis in
+`data/primer_target_claims.csv`; hybrid pairs do not inherit validation from
+their component-primer papers.
 
 Before any penalty is interpreted, the app audits whether both binding sites
 are actually present. The 67,352-centroid Gurten alignment is suitable for the

@@ -28,7 +28,11 @@ stopifnot(
   grepl("reference sequences—not regional amplification probability", app_source, fixed = TRUE),
   grepl("summarize_region_orders", app_source, fixed = TRUE),
   grepl("reference_binding_profile", app_source, fixed = TRUE),
-  grepl('DTOutput("region_sequences")', app_source, fixed = TRUE)
+  grepl('DTOutput("region_sequences")', app_source, fixed = TRUE),
+  grepl('id = "region_globe_canvas"', app_source, fixed = TRUE),
+  grepl('sendCustomMessage("region_globe"', app_source, fixed = TRUE),
+  grepl('choices = region_country_choices, selected = region_default_a', app_source, fixed = TRUE),
+  !grepl('selectizeInput("region_a", "Reference region A", choices = NULL)', app_source, fixed = TRUE)
 )
 
 message("Region comparison sequence-profile and interpretation checks passed.")

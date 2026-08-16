@@ -1,0 +1,3 @@
+marker_id,target_group,taxonomic_scope,baseline_sequences,monthly_growth_fraction,update_mode,scoring_input,exception_pair_id,exception_reference,policy_note
+COI,ALL_ARTHROPOD_GROUPS,listed arthropod orders and composite target groups,1000,0.01,append_unseen_accessions,full_reference_coordinate_alignment,,,General COI primers are scored against every retained quality-filtered sequence; clustering may be used only for UI previews and never as the scoring denominator.
+COI,Hymenoptera,bee-focused publication panel,,,study_specific_centroids,author_supplied_99.5_percent_centroids,BEEPRIME,Gurten et al. 2026 Supplement 5,BeePrime retains its publication-specific Gurten evidence alongside—not in place of—the general full-order panel.

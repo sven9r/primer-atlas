@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Sequence-panel and monthly growth policy for the Primer Atlas.">
+  <title>Reference policy · Primer Atlas</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar"><a class="brand" href="index.html">Primer Atlas</a><nav><a href="index.html">Home</a><a href="marker-targets.html">Organism targets</a><a href="https://github.com/sven9r/primer-atlas">Source</a></nav></header>
+  <main>
+    <section class="statement"><p>Reference-panel contract</p><h2>Full order alignments are the general evidence. Study centroids are named exceptions.</h2><p>The atlas never silently reuses a convenient reference panel for every primer. Each result identifies the sequences actually scored.</p></section>
+    <section class="grid">
+      <article><p class="num">1,000</p><h2>Initial arthropod baseline</h2><p>Each listed arthropod order or composite target group begins with at least 1,000 retained, quality-filtered COI sequences when NCBI can supply them. Shortfalls remain explicit.</p></article>
+      <article><p class="num">+1%</p><h2>Append-only monthly growth</h2><p>The next target is <code>ceiling(previous retained × 1.01)</code>. Only unseen accessions are appended; established panels are not replaced by new random samples.</p></article>
+      <article><p class="num">ALL</p><h2>Scoring denominator</h2><p>General primers are evaluated against every retained sequence in the full reference-coordinate alignment. Centroid clustering may support previews, never the production denominator.</p></article>
+    </section>
+    <section class="statement"><p>Named exception</p><h2>BeePrime keeps the Gurten et al. author centroids as study-specific evidence.</h2><p>That panel supports the publication-linked bee drill-down. It does not become a universal reference for Spidprey, NoPlant, ANML, or unrelated primer pairs.</p></section>
+    <section class="contribute"><div><p class="eyebrow">Fungal ITS pilot</p><h2>UNITE compiles; original publications receive the primer citation.</h2><p>The pilot exposes every sequence-valid imported primer record, target, limitation, and original reference. UNITE remains compilation provenance. Unpublished or missing references are labelled rather than converted into a generic publication.</p></div><a class="primary" href="https://unite.ut.ee/primers.php">Open UNITE primer resource</a></section>
+  </main>
+  <footer><span>EvoLab · UC Berkeley</span><span>Evidence-specific reference panels</span></footer>
+</body>
+</html>

@@ -23,8 +23,12 @@ if (nzchar(requested_raw)) {
   orders <- orders[match(requested, orders$order), , drop = FALSE]
 }
 
-subset_size <- as.integer(Sys.getenv("GB_SUBSET", "50"))
+subset_size <- as.integer(Sys.getenv("GB_SUBSET", "1000"))
 if (is.na(subset_size) || subset_size < 1) stop("GB_SUBSET must be a positive integer.")
+evaluation_mode <- tolower(Sys.getenv("EVALUATION_MODE", "full"))
+if (!evaluation_mode %in% c("full", "centroid_preview")) {
+  stop("EVALUATION_MODE must be 'full' or 'centroid_preview'.")
+}
 force <- identical(tolower(Sys.getenv("FORCE", "false")), "true")
 set.seed(20260728)
 
@@ -37,11 +41,13 @@ reference_dir <- file.path(project_root, "data", "reference")
 raw_root <- file.path(project_root, "data", "primerminer", "raw")
 cluster_root <- file.path(project_root, "data", "primerminer", "clustered")
 alignment_root <- file.path(project_root, "data", "primerminer", "aligned_reference")
+full_alignment_root <- file.path(project_root, "data", "primerminer", "full_aligned_reference")
 provenance_dir <- file.path(project_root, "data", "provenance")
 dir.create(reference_dir, recursive = TRUE, showWarnings = FALSE)
 dir.create(raw_root, recursive = TRUE, showWarnings = FALSE)
 dir.create(cluster_root, recursive = TRUE, showWarnings = FALSE)
 dir.create(alignment_root, recursive = TRUE, showWarnings = FALSE)
+dir.create(full_alignment_root, recursive = TRUE, showWarnings = FALSE)
 dir.create(provenance_dir, recursive = TRUE, showWarnings = FALSE)
 
 reference_accession <- "NC_001322.1"
@@ -166,8 +172,12 @@ for (i in seq_len(nrow(orders))) {
   cluster_path <- file.path(
     cluster_dir, paste0(order_name, "_GB_cons_cluster_Majority.fasta")
   )
-  aligned_path <- file.path(alignment_root, paste0(order_name, "_COX1_reference_aligned.fasta"))
-  mafft_log <- file.path(alignment_root, paste0(order_name, "_mafft.log"))
+  aligned_path <- if (evaluation_mode == "full") {
+    file.path(full_alignment_root, paste0(order_name, "_COX1_full_reference_aligned.fasta"))
+  } else {
+    file.path(alignment_root, paste0(order_name, "_COX1_reference_aligned.fasta"))
+  }
+  mafft_log <- file.path(dirname(aligned_path), paste0(order_name, "_mafft.log"))
 
   status <- "complete"
   note <- ""
@@ -190,7 +200,7 @@ for (i in seq_len(nrow(orders))) {
       stop("No GenBank sequences were downloaded.")
     }
 
-    if (!file.exists(cluster_path) || force) {
+    if (evaluation_mode == "centroid_preview" && (!file.exists(cluster_path) || force)) {
       unlink(file.path(cluster_dir, "Vsearch"), recursive = TRUE)
       unlink(file.path(cluster_dir, "log.txt"))
       run_primerminer_clustering(raw_path, cluster_dir)
@@ -202,12 +212,13 @@ for (i in seq_len(nrow(orders))) {
         file.rename(generated, cluster_path)
       }
     }
-    if (!file.exists(cluster_path) || count_fasta(cluster_path) < 1L) {
+    if (evaluation_mode == "centroid_preview" && (!file.exists(cluster_path) || count_fasta(cluster_path) < 1L)) {
       stop("PrimerMiner clustering did not produce consensus sequences.")
     }
 
     if (!file.exists(aligned_path) || count_fasta(aligned_path) < 1L || force) {
-      run_mafft(reference_path, cluster_path, aligned_path, mafft_log)
+      alignment_input <- if (evaluation_mode == "full") raw_path else cluster_path
+      run_mafft(reference_path, alignment_input, aligned_path, mafft_log)
     }
   }, error = function(e) {
     status <<- "failed"
@@ -227,6 +238,8 @@ for (i in seq_len(nrow(orders))) {
     reference_feature_coordinates = paste0(reference_start, "-", reference_stop),
     reference_length_bp = 1536L,
     clustering_identity = 0.97,
+    evaluation_mode = evaluation_mode,
+    scoring_sequences = if (evaluation_mode == "full") count_fasta(raw_path) else count_fasta(cluster_path),
     status = status,
     note = note,
     raw_fasta = sub(paste0("^", project_root, "/"), "", raw_path),
@@ -242,6 +255,11 @@ new_manifest <- do.call(rbind, manifest_rows)
 if (file.exists(manifest_path) && nzchar(requested_raw)) {
   old_manifest <- read.csv(manifest_path, stringsAsFactors = FALSE, check.names = FALSE)
   old_manifest <- old_manifest[!old_manifest$order %in% new_manifest$order, , drop = FALSE]
+  all_columns <- union(names(old_manifest), names(new_manifest))
+  for (column in setdiff(all_columns, names(old_manifest))) old_manifest[[column]] <- NA
+  for (column in setdiff(all_columns, names(new_manifest))) new_manifest[[column]] <- NA
+  old_manifest <- old_manifest[, all_columns, drop = FALSE]
+  new_manifest <- new_manifest[, all_columns, drop = FALSE]
   new_manifest <- rbind(old_manifest, new_manifest)
 }
 new_manifest <- new_manifest[order(new_manifest$order), , drop = FALSE]

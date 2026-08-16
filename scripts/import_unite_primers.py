@@ -4,14 +4,29 @@
 from __future__ import annotations
 
 import argparse
+import re
 from datetime import datetime, timezone
 from pathlib import Path
+from urllib.parse import quote_plus
 
 import pandas as pd
 
 
 DEFAULT_URL = "https://unite.ut.ee/primers.php"
 IUPAC = set("ACGTRYSWKMBDHVNI")
+
+
+def reference_key(value: object) -> str:
+    text = "" if pd.isna(value) else str(value).strip()
+    slug = re.sub(r"[^a-z0-9]+", "_", text.lower()).strip("_")
+    return f"its_primary_{slug or 'not_reported'}"
+
+
+def reference_url(value: object) -> str:
+    text = "" if pd.isna(value) else str(value).strip()
+    if not text or "unpublished" in text.lower():
+        return DEFAULT_URL
+    return "https://search.crossref.org/?q=" + quote_plus(text)
 
 
 def clean_sequence(value: object) -> str:
@@ -49,6 +64,13 @@ def main() -> None:
     table["target"] = table["Target"].fillna("").astype(str).str.strip()
     table["remarks"] = table["Remarks"].fillna("").astype(str).str.strip()
     table["reference"] = table["Reference"].fillna("").astype(str).str.strip()
+    table["primary_reference_key"] = table["reference"].map(reference_key)
+    table["primary_reference_url"] = table["reference"].map(reference_url)
+    table["primary_reference_status"] = table["reference"].map(
+        lambda value: "not_reported" if not value else (
+            "unpublished" if "unpublished" in value.lower() else "publication_cited"
+        )
+    )
     table["marker_id"] = "ITS_FUNGAL"
     table["source_url"] = DEFAULT_URL
     table["source_snapshot_utc"] = datetime.now(timezone.utc).replace(
@@ -63,6 +85,7 @@ def main() -> None:
     columns = [
         "marker_id", "primer_name", "sequence", "direction",
         "reported_position", "gene_locus", "target", "remarks", "reference",
+        "primary_reference_key", "primary_reference_url", "primary_reference_status",
         "source_url", "source_snapshot_utc", "source_license_note",
     ]
     table[columns].drop_duplicates(

@@ -76,4 +76,13 @@ if (!is.null(manifest$artifacts$taxonomy)) {
   stopifnot(!anyDuplicated(taxonomy$accession))
 }
 if (marker_id == "COI") stopifnot(nrow(active_pairs) == 25L)
+if (marker_id == "COI" && file.exists("data/provenance/coi_reference_growth_qa.csv")) {
+  growth_qa <- read.csv("data/provenance/coi_reference_growth_qa.csv", stringsAsFactors = FALSE)
+  stopifnot(
+    nrow(growth_qa) >= 22L,
+    all(growth_qa$target_retained >= 1000L),
+    all(growth_qa$target_met),
+    all(growth_qa$target_retained >= ceiling(growth_qa$previous_retained * 1.01))
+  )
+}
 message("Release gates passed for ", marker_id, " ", manifest$release_version)

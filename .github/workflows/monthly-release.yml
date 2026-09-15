@@ -23,6 +23,21 @@ jobs:
       ATLAS_DATA_BASE_URL: ${{ vars.ATLAS_DATA_BASE_URL }}
       ATLAS_MANIFEST_BASE_URL: ${{ vars.ATLAS_DATA_BASE_URL }}/releases
     steps:
+      - name: Preflight release configuration
+        shell: bash
+        run: |
+          missing=()
+          [ -n "${R2_ACCOUNT_ID:-}" ] || missing+=(R2_ACCOUNT_ID)
+          [ -n "${R2_BUCKET:-}" ] || missing+=(R2_BUCKET)
+          [ -n "${AWS_ACCESS_KEY_ID:-}" ] || missing+=(R2_ACCESS_KEY_ID)
+          [ -n "${AWS_SECRET_ACCESS_KEY:-}" ] || missing+=(R2_SECRET_ACCESS_KEY)
+          [ -n "${ATLAS_DATA_BASE_URL:-}" ] || missing+=(ATLAS_DATA_BASE_URL)
+          if [ "${#missing[@]}" -gt 0 ]; then
+            joined=$(IFS=,; echo "${missing[*]}")
+            echo "::error::Missing GitHub Actions release configuration: ${joined}"
+            echo "See DEPLOYMENT.md for the required repository secrets and variable."
+            exit 1
+          fi
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with: {python-version: "3.12"}

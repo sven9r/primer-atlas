@@ -1,0 +1,95 @@
+{
+  "schema_version": 1,
+  "project": "primer-atlas",
+  "entry_order": "newest_first",
+  "entries": [
+    {
+      "id": "2026-09-01-monthly-release-recovery",
+      "date": "2026-09-01",
+      "category": "operations",
+      "status": "partially_resolved",
+      "summary": "Diagnosed the first scheduled monthly release failure and prepared repository-side recovery changes.",
+      "incident": {
+        "workflow": "Monthly marker release",
+        "run_id": 33502385055,
+        "run_url": "https://github.com/sven9r/primer-atlas/actions/runs/33502385055",
+        "first_scheduled_run": true,
+        "release_promoted": false,
+        "markers": [
+          {
+            "marker": "COI",
+            "result": "failure",
+            "failed_step": "Build marker independently",
+            "cause": "readxl was required by the build scripts but absent from renv.lock",
+            "failure_issue": 2
+          },
+          {
+            "marker": "ITS_FUNGAL",
+            "result": "failure",
+            "build_completed": true,
+            "release_gates_passed": true,
+            "failed_step": "Stage and atomically promote in R2",
+            "cause": "Required GitHub Actions R2 secrets and ATLAS_DATA_BASE_URL were not configured",
+            "failure_issue": 1
+          }
+        ]
+      },
+      "repository_changes": [
+        {
+          "kind": "dependency_lock",
+          "path": "renv.lock",
+          "change": "Recorded readxl 1.5.0"
+        },
+        {
+          "kind": "workflow_preflight",
+          "path": ".github/workflows/monthly-release.yml",
+          "change": "Fail early with the names of missing release configuration"
+        },
+        {
+          "kind": "documentation",
+          "paths": [
+            "PATCHNOTES.md",
+            "patchnotes.json",
+            "PROJECT_STATUS.md",
+            "DEPLOYMENT.md",
+            "README.md"
+          ],
+          "change": "Added incident history, project status, deployment checks, and navigation"
+        }
+      ],
+      "external_actions": [
+        {
+          "action": "Configure R2_ACCOUNT_ID, R2_BUCKET, R2_ACCESS_KEY_ID, and R2_SECRET_ACCESS_KEY as GitHub Actions secrets",
+          "status": "required"
+        },
+        {
+          "action": "Configure ATLAS_DATA_BASE_URL as a GitHub repository variable",
+          "status": "required"
+        },
+        {
+          "action": "Commit and push the recovery changes",
+          "status": "required"
+        },
+        {
+          "action": "Run monthly-release.yml manually and verify both public latest.json pointers and application loading",
+          "status": "required"
+        },
+        {
+          "action": "Close GitHub issues 1 and 2 after end-to-end verification",
+          "status": "required"
+        }
+      ],
+      "verification": {
+        "repository_checks_completed": [
+          "Both expanded-reference scripts declare readxl",
+          "renv.lock contains readxl 1.5.0",
+          "patchnotes.json parsed successfully",
+          "monthly-release.yml parsed successfully",
+          "All 15 test scripts in the GitHub Actions regression loop passed in the current working tree",
+          "git diff --check passed"
+        ],
+        "end_to_end_release_verified": false
+      }
+    }
+  ]
+}

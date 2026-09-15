@@ -4,6 +4,57 @@
   "entry_order": "newest_first",
   "entries": [
     {
+      "id": "2026-09-14-collaboration-foundation",
+      "date": "2026-09-14",
+      "category": "community",
+      "status": "prepared_for_review",
+      "summary": "Added the repository files needed for predictable, evidence-aware outside contributions.",
+      "repository_changes": [
+        {
+          "kind": "contributor_guide",
+          "path": "CONTRIBUTING.md",
+          "change": "Documented setup, branch and pull-request workflow, tests, evidence requirements, and review expectations"
+        },
+        {
+          "kind": "community_policy",
+          "path": "CODE_OF_CONDUCT.md",
+          "change": "Defined expected behavior, reporting, and enforcement"
+        },
+        {
+          "kind": "review_ownership",
+          "path": ".github/CODEOWNERS",
+          "change": "Assigned default and high-risk review ownership"
+        },
+        {
+          "kind": "pull_request_template",
+          "path": ".github/PULL_REQUEST_TEMPLATE.md",
+          "change": "Added purpose, provenance, verification, and limitation prompts"
+        },
+        {
+          "kind": "issue_forms",
+          "paths": [
+            ".github/ISSUE_TEMPLATE/bug-report.yml",
+            ".github/ISSUE_TEMPLATE/reference-panel.yml",
+            ".github/ISSUE_TEMPLATE/config.yml"
+          ],
+          "change": "Added reproducible bug and reference-panel forms and routed early ideas to Discussions"
+        },
+        {
+          "kind": "documentation",
+          "paths": ["README.md", "PROJECT_STATUS.md"],
+          "change": "Added contributor entry points and corrected stale integrated-work status"
+        }
+      ],
+      "remaining_actions": [
+        "Merge the collaboration-readiness pull request",
+        "Enable GitHub Discussions",
+        "Add the repository description, homepage, and scientific topics",
+        "Create labels referenced by issue forms",
+        "Protect main with pull requests, review, conversation resolution, and the test status check",
+        "Invite collaborators after their GitHub usernames are supplied"
+      ]
+    },
+    {
       "id": "2026-09-14-recovery-branch-verified",
       "date": "2026-09-14",
       "category": "release_engineering",

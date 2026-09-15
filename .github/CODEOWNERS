@@ -1,0 +1,9 @@
+# Default review owner until additional maintainers are appointed.
+* @sven9r
+
+# High-risk scientific, release, and deployment surfaces.
+/data/catalog/ @sven9r
+/data/provenance/ @sven9r
+/scripts/ @sven9r
+/.github/workflows/ @sven9r
+/renv.lock @sven9r

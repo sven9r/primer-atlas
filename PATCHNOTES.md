@@ -5,6 +5,29 @@ same `id` as their counterparts in `patchnotes.json`. A patchnote distinguishes
 repository changes from external deployment actions so that prepared code is
 not mistaken for a completed release.
 
+## 2026-09-14 — Collaboration foundation
+
+**ID:** `2026-09-14-collaboration-foundation`
+
+**Status:** Prepared for review; repository settings and public onboarding will
+be verified after merge.
+
+- Expanded `CONTRIBUTING.md` with local setup, contribution workflow, complete
+  test commands, scientific evidence requirements, and review expectations.
+- Added a code of conduct, default review ownership, and a pull-request evidence
+  checklist.
+- Added structured bug and reference-panel proposal forms alongside the existing
+  primer-proposal form.
+- Added an issue-form router directing early scientific ideas to GitHub
+  Discussions.
+- Added contributor entry points to the README and corrected stale project-status
+  language now that the ITS navigator is on `main`.
+
+Repository settings still to be applied after this change merges are: enable
+Discussions, add a public description and scientific topics, create matching
+labels, and protect `main` with pull requests, review, and the `test` status
+check.
+
 ## 2026-09-14 — Recovery branch separated, pushed, and verified
 
 **ID:** `2026-09-14-recovery-branch-verified`

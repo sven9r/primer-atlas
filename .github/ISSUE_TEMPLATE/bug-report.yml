@@ -1,0 +1,54 @@
+name: Report a reproducible bug
+description: Report an application, data, build, or release problem with enough evidence to reproduce it
+title: "Bug: "
+labels: [bug, needs-triage]
+body:
+  - type: dropdown
+    id: surface
+    attributes:
+      label: Affected surface
+      options:
+        - Shiny application
+        - Primer or citation catalog
+        - Reference data or scoring
+        - Build or regression test
+        - Release or deployment
+        - Documentation
+    validations: {required: true}
+  - type: input
+    id: location
+    attributes:
+      label: Page, marker, script, or workflow
+      description: Name the narrowest affected component.
+    validations: {required: true}
+  - type: textarea
+    id: observed
+    attributes:
+      label: What happened?
+      description: Include the exact error or incorrect result and any relevant counts.
+    validations: {required: true}
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect?
+    validations: {required: true}
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Reproduction steps
+      description: Give the smallest sequence of inputs, commands, or clicks that reproduces the problem.
+    validations: {required: true}
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment and evidence
+      description: Include browser or OS, commit or release ID, logs, screenshots, and source accessions where relevant. Remove credentials and private data.
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Submission checks
+      options:
+        - label: I searched existing issues for the same problem.
+          required: true
+        - label: I removed credentials and private or unpublished data.
+          required: true

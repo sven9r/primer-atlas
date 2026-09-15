@@ -83,17 +83,26 @@ The project separates four operational responsibilities:
   release directories, atomic `latest.json` promotion, QA-artifact upload, and
   automatic failure issues.
 
+### Collaboration foundation
+
+- Published an MIT software license and `CITATION.cff` citation record.
+- Added structured primer, reference-panel, and bug-report forms.
+- Documented local setup, evidence standards, tests, pull-request review, and
+  community conduct for outside contributors.
+- Assigned review ownership for scientific catalogs, provenance, scripts,
+  workflows, and the pinned R environment.
+
 ## Current operational status
 
-- The repository-side application, build scripts, validation gates, and tests
-  exist on `main`; additional ITS navigator changes are currently present as
-  uncommitted working-tree work and are not yet a published release.
+- The repository-side application, build scripts, validation gates, tests, and
+  primer-first ITS navigator exist on `main`; they are not yet backed by a
+  completed production marker release.
 - The first scheduled monthly workflow ran on 2026-09-01. COI exposed a missing
   locked `readxl` dependency. ITS_FUNGAL built and validated but could not
   publish because the R2 repository configuration was absent.
-- The dependency lock and early configuration preflight are now prepared in the
-  working tree. Cloudflare R2 credentials, the public data URL, a successful
-  manual rerun, and public manifest checks remain outstanding.
+- The dependency lock and early configuration preflight are integrated on
+  `main`. Cloudflare R2 credentials, the public data URL, a successful manual
+  rerun, and public manifest checks remain outstanding.
 - All 15 scripts in the GitHub Actions regression loop pass in the current
   working tree, including release-layer, marker-runtime, reference-policy,
   geography, map, and sequence-drill-down checks.
@@ -136,7 +145,7 @@ The project separates four operational responsibilities:
 
 ### P2 — Finish active pilots
 
-- [ ] Merge and verify the ITS primer-first navigator in a clean browser session.
+- [x] Merge and verify the ITS primer-first navigator in a clean browser session.
 - [ ] Add 18S to the release matrix only after its artifact contract and hard
       release gates are defined.
 - [ ] Expand fungal ITS beyond the single pilot reference while continuing to

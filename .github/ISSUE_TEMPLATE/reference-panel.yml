@@ -1,0 +1,50 @@
+name: Propose a reference panel
+description: Propose new or revised sequence evidence for one marker and biological scope
+title: "Reference panel proposal: "
+labels: [reference-panel, needs-curation]
+body:
+  - type: dropdown
+    id: marker
+    attributes:
+      label: Marker
+      options: [Animal COI, Vertebrate mitochondrial 12S, Fungal ITS, Eukaryotic 18S, Bacterial / archaeal 16S, Animal mitochondrial 16S, Eukaryotic 28S]
+    validations: {required: true}
+  - type: textarea
+    id: scope
+    attributes:
+      label: Biological and geographic scope
+      description: State taxa, regions, environments, and important exclusions.
+    validations: {required: true}
+  - type: textarea
+    id: source
+    attributes:
+      label: Sequence source and version
+      description: Give database, query or study, accessions, retrieval date, licenses, and primary citations.
+    validations: {required: true}
+  - type: textarea
+    id: coordinate
+    attributes:
+      label: Coordinate reference and processing
+      description: State the reference accession, feature, orientation, alignment, filtering, and clustering policy.
+    validations: {required: true}
+  - type: textarea
+    id: denominators
+    attributes:
+      label: Expected denominators and completeness
+      description: Report or estimate sequences, taxa, site-complete records, taxonomy resolution, and geography resolution.
+    validations: {required: true}
+  - type: textarea
+    id: value
+    attributes:
+      label: What question will this panel answer?
+      description: Explain why an existing Atlas panel is insufficient and which primer claims this panel should or should not support.
+    validations: {required: true}
+  - type: checkboxes
+    id: agreement
+    attributes:
+      label: Evidence agreement
+      options:
+        - label: I understand that a study-specific panel will not automatically become general evidence for other primers or taxa.
+          required: true
+        - label: I can provide provenance and licensing information without committing restricted data to Git.
+          required: true

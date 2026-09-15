@@ -7,10 +7,13 @@
       "id": "2026-09-14-recovery-branch-verified",
       "date": "2026-09-14",
       "category": "release_engineering",
-      "status": "repository_verified",
-      "summary": "Separated, pushed, and remotely verified the ITS navigator and monthly-release recovery changes.",
+      "status": "integrated_awaiting_external_configuration",
+      "summary": "Separated, remotely verified, and integrated the ITS navigator and monthly-release recovery changes into main.",
       "repository": {
         "branch": "codex/release-recovery",
+        "pull_request": 3,
+        "pull_request_url": "https://github.com/sven9r/primer-atlas/pull/3",
+        "merge_commit": "764f83d4294a1672d0b4fd738c9a392d66f59db4",
         "commits": [
           {
             "sha": "c77b648",
@@ -23,15 +26,28 @@
         ]
       },
       "verification": {
-        "workflow": "Test atlas",
-        "run_id": 34912008403,
-        "run_url": "https://github.com/sven9r/primer-atlas/actions/runs/34912008403",
-        "conclusion": "success",
-        "duration_seconds": 298,
+        "runs": [
+          {
+            "scope": "recovery_branch",
+            "workflow": "Test atlas",
+            "run_id": 34912008403,
+            "run_url": "https://github.com/sven9r/primer-atlas/actions/runs/34912008403",
+            "conclusion": "success",
+            "duration_seconds": 298
+          },
+          {
+            "scope": "main_post_merge",
+            "workflow": "Test atlas",
+            "run_id": 34912852240,
+            "run_url": "https://github.com/sven9r/primer-atlas/actions/runs/34912852240",
+            "conclusion": "success",
+            "duration_seconds": 285
+          }
+        ],
         "checks": [
-          "Clean Ubuntu environment restored from renv.lock",
-          "Full regression suite passed",
-          "Deployable bundle-size gate passed"
+          "Clean Ubuntu environments restored from renv.lock",
+          "Full regression suites passed on the recovery branch and main",
+          "Deployable bundle-size gates passed"
         ]
       },
       "release": {
@@ -40,7 +56,6 @@
         "blocker": "R2_ACCOUNT_ID, R2_BUCKET, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, and ATLAS_DATA_BASE_URL are not configured in GitHub"
       },
       "remaining_actions": [
-        "Integrate codex/release-recovery into main",
         "Configure the four R2 Actions secrets and ATLAS_DATA_BASE_URL repository variable",
         "Dispatch and monitor the monthly marker release",
         "Verify both public latest.json pointers and application manifest loading",

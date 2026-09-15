@@ -9,8 +9,8 @@ not mistaken for a completed release.
 
 **ID:** `2026-09-14-recovery-branch-verified`
 
-**Status:** Repository verified; integration and external R2 configuration
-remain outstanding.
+**Status:** Integrated and verified on `main`; external R2 configuration and a
+successful marker release remain outstanding.
 
 The previous working-tree changes were separated into two reviewable commits on
 `codex/release-recovery`:
@@ -25,6 +25,12 @@ restored the project environment on a clean Ubuntu runner and passed the full
 regression suite and deployable-bundle-size gate in 4 minutes 58 seconds. This
 provides remote confirmation that the updated `renv.lock`, including `readxl`
 1.5.0, is usable by CI.
+
+[Pull request 3](https://github.com/sven9r/primer-atlas/pull/3) was then merged
+into `main` as `764f83d`. The post-merge
+[Test atlas run 34912852240](https://github.com/sven9r/primer-atlas/actions/runs/34912852240)
+again restored the clean environment and passed the full regression and bundle
+checks in 4 minutes 45 seconds.
 
 No monthly marker release was dispatched because GitHub still has none of the
 four required R2 secrets or the `ATLAS_DATA_BASE_URL` variable. Running it in

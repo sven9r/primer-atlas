@@ -19,7 +19,7 @@ shiny::testServer(env$server, {
     map_marker = "18S",
     map_sort = "binding_site",
     amplicon_range = c(100, 1800),
-    pair_select = c(
+    pair_select_18s = c(
       "PR2_18S_008", "PR2_18S_017",
       "PR2_18S_027", "PR2_18S_040"
     ),

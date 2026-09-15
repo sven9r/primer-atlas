@@ -52,6 +52,12 @@ jobs:
       - name: Build marker independently
         run: |
           if [ "$MARKER_ID" = COI ] && [ -n "$R2_BUCKET" ]; then
+            # Browser-copied repository secrets can retain a trailing newline.
+            # Normalise all S3 inputs before retrieving persistent COI state.
+            R2_ACCOUNT_ID="$(printf '%s' "$R2_ACCOUNT_ID" | tr -d '\r\n')"
+            R2_BUCKET="$(printf '%s' "$R2_BUCKET" | tr -d '\r\n')"
+            export AWS_ACCESS_KEY_ID="$(printf '%s' "$AWS_ACCESS_KEY_ID" | tr -d '\r\n')"
+            export AWS_SECRET_ACCESS_KEY="$(printf '%s' "$AWS_SECRET_ACCESS_KEY" | tr -d '\r\n')"
             mkdir -p data/provenance
             aws s3 cp "s3://${R2_BUCKET}/state/COI/coi_reference_accession_ledger.csv" data/provenance/coi_reference_accession_ledger.csv --endpoint-url "https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com" || true
           fi

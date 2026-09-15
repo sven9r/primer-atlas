@@ -4,6 +4,49 @@
   "entry_order": "newest_first",
   "entries": [
     {
+      "id": "2026-09-15-coi-xml2-retry",
+      "date": "2026-09-15",
+      "category": "release_engineering",
+      "status": "retry_pending",
+      "summary": "ITS_FUNGAL was promoted successfully; COI completed its reference build but stopped before validation because xml2 was absent from the clean marker-build runtime.",
+      "deployment": {
+        "workflow_run_id": 35005218773,
+        "workflow_run_url": "https://github.com/sven9r/primer-atlas/actions/runs/35005218773",
+        "its_fungal": {
+          "build": "passed",
+          "hard_release_gates": "passed",
+          "publication": "promoted_and_public"
+        },
+        "coi": {
+          "build": "failed_before_release_validation",
+          "failed_script": "scripts/fetch_gurten2026_bee_taxonomy.R",
+          "pointer_promoted": false
+        }
+      },
+      "repository_changes": [
+        {
+          "kind": "marker_build_dependency",
+          "path": "scripts/install_primerminer.R",
+          "change": "Install xml2 explicitly for COI taxonomy and reference import scripts"
+        },
+        {
+          "kind": "credential_input_normalization",
+          "path": ".github/workflows/monthly-release.yml",
+          "change": "Strip CR/LF before the early COI R2 state read as well as before publication"
+        }
+      ],
+      "verification": {
+        "affected_taxonomy_script": "passed_locally_with_cached_inputs",
+        "pointer_promoted_for_coi": false
+      },
+      "remaining_actions": [
+        "Merge the xml2 dependency repair after CI passes",
+        "Rerun the monthly release",
+        "Verify the COI public latest.json pointer and immutable artifacts",
+        "Close release-failure issues only after end-to-end success"
+      ]
+    },
+    {
       "id": "2026-09-15-r2-credential-normalization",
       "date": "2026-09-15",
       "category": "release_engineering",

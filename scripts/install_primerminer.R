@@ -10,7 +10,9 @@ options(
   Ncpus = max(1, parallel::detectCores() - 1)
 )
 
-required <- c("XML", "rentrez", "seqinr")
+# Several COI enrichment scripts parse taxonomy and reference XML.  These are
+# installed explicitly because they run after renv setup in the release CI.
+required <- c("XML", "rentrez", "seqinr", "xml2")
 missing <- required[!vapply(required, requireNamespace, logical(1), quietly = TRUE)]
 if (length(missing)) {
   install.packages(

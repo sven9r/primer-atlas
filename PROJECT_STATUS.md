@@ -105,12 +105,12 @@ The project separates four operational responsibilities:
 - The first scheduled monthly workflow ran on 2026-09-01. COI exposed a missing
   locked `readxl` dependency. ITS_FUNGAL built and validated but could not
   publish because the R2 repository configuration was absent.
-- The dependency lock and early configuration preflight are integrated on
-  `main`. The Cloudflare R2 bucket, four credential names, and public data URL
-  are configured. The first live manual rerun reached R2 publication after ITS
-  passed its gates, but a copied S3 key line ending caused an invalid
-  Authorization header; a line-ending-safe publisher fix is awaiting review
-  and retry.
+- The Cloudflare R2 bucket, four credential names, and public data URL are
+  configured. In live run 35005218773, ITS_FUNGAL built, passed its hard gates,
+  and was promoted publicly. COI completed its expanded reference build but
+  stopped before validation because `xml2` was absent from the clean
+  marker-build runtime. The dependency repair and early R2 state-read input
+  normalization await CI and a controlled COI retry.
 - All 15 scripts in the GitHub Actions regression loop pass in the current
   working tree, including release-layer, marker-runtime, reference-policy,
   geography, map, and sequence-drill-down checks.
@@ -134,7 +134,9 @@ The project separates four operational responsibilities:
       push `codex/release-recovery`.
 - [x] Pass the full GitHub Test atlas workflow on the recovery branch.
 - [x] Integrate the verified recovery branch into `main` through pull request 3.
-- [ ] Manually rerun the monthly workflow and require both matrix jobs to pass.
+- [ ] Merge the `xml2` marker-build dependency repair, then manually rerun the
+      monthly workflow and require the COI job to pass (ITS_FUNGAL is already
+      promoted).
 - [ ] Verify the COI and ITS_FUNGAL public `latest.json` pointers, checksums,
       immutable artifact URLs, and application loading.
 - [ ] Close failure issues 1 and 2 with links to the successful evidence.

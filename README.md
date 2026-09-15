@@ -17,6 +17,11 @@ Compact pinned summaries keep the app usable during an R2 outage. Raw
 sequences and large generated score tables are intentionally excluded from Git.
 See [DEPLOYMENT.md](DEPLOYMENT.md) for the remaining account configuration.
 
+For a concise statement of scope, completed work, operational status, and next
+milestones, see [PROJECT_STATUS.md](PROJECT_STATUS.md). Human-readable changes
+are recorded in [PATCHNOTES.md](PATCHNOTES.md); the synchronized machine-readable
+record is [patchnotes.json](patchnotes.json).
+
 ## Marker-aware behavior
 
 Markers and biological targets are separate many-to-many dimensions: fish can

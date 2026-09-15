@@ -17,6 +17,7 @@ jobs:
             tests/test_catalog_and_geography.R \
             tests/test_claimed_primer_reference.R \
             tests/test_custom_primer_gate.R \
+            tests/test_its_primer_navigator.R \
             tests/test_marker_runtime.R \
             tests/test_order_lens_interaction.R \
             tests/test_primer_map_domain.R \

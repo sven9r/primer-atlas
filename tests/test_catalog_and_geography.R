@@ -62,7 +62,8 @@ stopifnot(
   ,grepl('"PR2_18S_027"', app_source, fixed = TRUE)
   ,grepl('"PR2_18S_040"', app_source, fixed = TRUE)
   ,grepl("Documented 18S combinations", app_source, fixed = TRUE)
-  ,grepl("UNITE fungal rDNA oligos by region", app_source, fixed = TRUE)
+  ,grepl("Browse individual fungal-marker primers", app_source, fixed = TRUE)
+  ,grepl("Deselect primers to reduce documented combinations", app_source, fixed = TRUE)
 )
 
 geo <- normalize_geo_loc_name(c("USA:Hawaii", "Morocco: Atlas Mountains", NA))

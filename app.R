@@ -258,6 +258,24 @@ pr2_pair_geometry <- pr2_map_sets |>
   )
 pair_meta <- bind_rows(pair_meta, pr2_pair_geometry) |>
   arrange(marker_id, folmer_overlap_rank, pair_start)
+its_documented_pair_ids <- pair_meta$pair_id[pair_meta$marker_id == "ITS_FUNGAL"]
+its_documented_pair_index <- primers |>
+  filter(pair_id %in% its_documented_pair_ids) |>
+  group_by(pair_id) |>
+  summarise(
+    forward_primer = first(primer_name[direction == "forward"], default = NA_character_),
+    reverse_primer = first(primer_name[direction == "reverse"], default = NA_character_),
+    .groups = "drop"
+  )
+its_documented_members <- primers |>
+  filter(pair_id %in% its_documented_pair_ids) |>
+  distinct(primer_name, direction, sequence) |>
+  left_join(
+    unite_catalog |>
+      select(primer_name, direction, sequence, gene_locus, target, remarks, reference),
+    by = c("primer_name", "direction", "sequence")
+  ) |>
+  arrange(direction, gene_locus, primer_name)
 folmer_region <- read_csv("data/derived/folmer_region.csv", show_col_types = FALSE)
 coi_reference <- clean_sequence(
   parse_fasta("data/reference/coi_reference_NC_001322.1.fasta")[[1]]
@@ -1968,10 +1986,12 @@ server <- function(input, output, session) {
     setNames(rows$pair_id, rows$pair_label)
   }
   update_pair_selector <- function(marker_id, choices, selected) {
-    if (identical(marker_id, "18S")) {
+    if (identical(marker_id, "ITS_FUNGAL")) {
+      return(invisible(NULL))
+    } else if (identical(marker_id, "18S")) {
       updateSelectizeInput(
-        session, "pair_select", choices = choices,
-        selected = selected, server = TRUE
+        session, "pair_select_18s", choices = choices,
+        selected = selected, server = FALSE
       )
     } else {
       updateCheckboxGroupInput(
@@ -1981,14 +2001,26 @@ server <- function(input, output, session) {
   }
   output$pair_selector_ui <- renderUI({
     marker_id <- input$map_marker
+    if (identical(marker_id, "ITS_FUNGAL")) {
+      return(div(
+        class = "callout tiny",
+        strong("ITS pairs are controlled by the primer checkboxes above the map. "),
+        "Use Select all or Clear here as shortcuts."
+      ))
+    }
     choices <- pair_choices_for_marker(marker_id)
-    selected <- intersect(isolate(input$pair_select), unname(choices))
+    current <- if (identical(marker_id, "18S")) {
+      isolate(input$pair_select_18s)
+    } else {
+      isolate(input$pair_select)
+    }
+    selected <- intersect(current, unname(choices))
     if (!length(selected)) {
       selected <- intersect(default_map_pairs(marker_id), unname(choices))
     }
     if (identical(marker_id, "18S")) {
       selectizeInput(
-        "pair_select", "Documented 18S combinations on map",
+        "pair_select_18s", "Documented 18S combinations on map",
         choices = choices, selected = selected, multiple = TRUE,
         options = list(
           placeholder = "Search primer names or add a combination",
@@ -2001,6 +2033,15 @@ server <- function(input, output, session) {
         "pair_select", "Documented primer combinations",
         choices = choices, selected = selected
       )
+    }
+  })
+  selected_map_pairs <- reactive({
+    if (identical(input$map_marker, "ITS_FUNGAL")) {
+      its_filtered_pair_ids()
+    } else if (identical(input$map_marker, "18S")) {
+      input$pair_select_18s
+    } else {
+      input$pair_select
     }
   })
   output$data_status <- renderUI({
@@ -2037,10 +2078,20 @@ server <- function(input, output, session) {
     )
   }, ignoreInit = FALSE)
   observeEvent(input$select_all, {
+    if (identical(input$map_marker, "ITS_FUNGAL")) {
+      updateCheckboxGroupInput(session, "its_combo_forward", selected = its_all_forward)
+      updateCheckboxGroupInput(session, "its_combo_reverse", selected = its_all_reverse)
+      return()
+    }
     choices <- pair_choices_for_marker(input$map_marker)
     update_pair_selector(input$map_marker, choices, unname(choices))
   })
   observeEvent(input$clear_all, {
+    if (identical(input$map_marker, "ITS_FUNGAL")) {
+      updateCheckboxGroupInput(session, "its_combo_forward", selected = character())
+      updateCheckboxGroupInput(session, "its_combo_reverse", selected = character())
+      return()
+    }
     update_pair_selector(
       input$map_marker,
       pair_choices_for_marker(input$map_marker),
@@ -2054,10 +2105,11 @@ server <- function(input, output, session) {
   selected_custom_id <- reactiveVal(NULL)
   its_catalog_pending <- reactiveVal(NULL)
   observeEvent(input$map_marker, {
-    marker_pairs <- pair_meta |> filter(marker_id == input$map_marker)
+    marker_id <- input$map_marker
+    marker_pairs <- pair_meta |> filter(marker_id == !!marker_id)
     choices <- setNames(marker_pairs$pair_id, marker_pairs$pair_label)
-    selected <- intersect(default_map_pairs(input$map_marker), marker_pairs$pair_id)
-    update_pair_selector(input$map_marker, choices, selected)
+    selected <- intersect(default_map_pairs(marker_id), marker_pairs$pair_id)
+    update_pair_selector(marker_id, choices, selected)
     if (nrow(marker_pairs)) {
       range <- range(marker_pairs$aligned_amplicon_bp, na.rm = TRUE)
       updateSliderInput(
@@ -2067,23 +2119,47 @@ server <- function(input, output, session) {
         value = c(max(20, floor(range[1] / 10) * 10), ceiling(range[2] / 10) * 10)
       )
     }
-    if (input$map_marker %in% c("COI", "ITS_FUNGAL")) {
-      updateSelectInput(session, "custom_marker", selected = input$map_marker)
+    if (marker_id %in% c("COI", "ITS_FUNGAL")) {
+      updateSelectInput(session, "custom_marker", selected = marker_id)
     }
-    if (identical(input$map_marker, "18S")) {
+    if (identical(marker_id, "18S")) {
       updateSelectInput(session, "application_filter", selected = character())
       updateSelectInput(session, "environment_filter", selected = character())
       updateSelectInput(session, "intent_filter", selected = character())
     }
-    if (input$map_marker != "COI") updateSelectInput(session, "map_sort", selected = "binding_site")
+    if (marker_id != "COI") updateSelectInput(session, "map_sort", selected = "binding_site")
     session$onFlushed(function() {
-      update_pair_selector(input$map_marker, choices, selected)
+      update_pair_selector(marker_id, choices, selected)
     }, once = TRUE)
   }, ignoreInit = FALSE)
 
   output$map_card_title <- renderUI({
     marker <- marker_registry |> filter(marker_id == input$map_marker) |> slice(1)
     paste0("Interactive ", marker$display_name, " binding-site overview")
+  })
+
+  its_member_choices <- function(direction) {
+    rows <- its_documented_members |>
+      filter(direction == !!direction) |>
+      mutate(label = paste0(
+        primer_name, " · ", coalesce(gene_locus, "region not reported"),
+        " · ", coalesce(target, "target not reported")
+      ))
+    setNames(rows$primer_name, rows$label)
+  }
+  its_all_forward <- unname(its_member_choices("forward"))
+  its_all_reverse <- unname(its_member_choices("reverse"))
+  its_filtered_pair_ids <- reactive({
+    selected_forward <- input$its_combo_forward
+    selected_reverse <- input$its_combo_reverse
+    if (is.null(selected_forward)) selected_forward <- its_all_forward
+    if (is.null(selected_reverse)) selected_reverse <- its_all_reverse
+    its_documented_pair_index |>
+      filter(
+        forward_primer %in% selected_forward,
+        reverse_primer %in% selected_reverse
+      ) |>
+      pull(pair_id)
   })
 
   combination_list_data <- reactive({
@@ -2130,6 +2206,9 @@ server <- function(input, output, session) {
 
     pairs <- pair_meta |>
       filter(marker_id == !!marker_id)
+    if (identical(marker_id, "ITS_FUNGAL")) {
+      pairs <- pairs |> filter(pair_id %in% its_filtered_pair_ids())
+    }
     pair_oligos <- primers |>
       filter(pair_id %in% pairs$pair_id) |>
       group_by(pair_id) |>
@@ -2146,10 +2225,14 @@ server <- function(input, output, session) {
       left_join(pair_oligos, by = "pair_id") |>
       rowwise() |>
       mutate(
-        Show = paste0(
-          "<button type=\"button\" class=\"pair-list-show\" data-pair=\"",
-          pair_id, "\">Show on map</button>"
-        ),
+        Show = if (identical(marker_id, "ITS_FUNGAL")) {
+          "On map"
+        } else {
+          paste0(
+            "<button type=\"button\" class=\"pair-list-show\" data-pair=\"",
+            pair_id, "\">Show on map</button>"
+          )
+        },
         Pair = pair_label,
         Target = target,
         `Amplicon + primers` = paste0(aligned_amplicon_bp, " bp"),
@@ -2197,15 +2280,91 @@ server <- function(input, output, session) {
             )
           } else if (identical(marker_id, "ITS_FUNGAL")) {
             tagList(
-              strong("These are the documented ITS combinations. "),
-              "Individual SSU, ITS, and LSU oligos are kept in the regional browser below and are not presented as published pairs unless a pairing source exists."
+              strong("Choose the primers first. "),
+              "The default tab shows the nine oligos used by documented combinations. Deselecting one immediately removes every affected combination from the list and map. The separate All 121 primers tab contains the complete searchable source catalog."
             )
           } else {
             "Search the source-supported combinations, inspect both oligos, and add any row to the map."
           }
         ),
-        DTOutput("marker_combination_list")
+        if (identical(marker_id, "ITS_FUNGAL")) {
+          navset_card_tab(
+            id = "its_primer_tabs",
+            nav_panel(
+              "Build combinations",
+              h5("1 · Deselect primers to reduce documented combinations"),
+              div(
+                class = "callout tiny mb-2",
+                "All nine pair-forming primers start selected. Uncheck any primer to remove every documented pair that uses it. This filters source-supported combinations only; it does not invent unsupported forward–reverse pairings."
+              ),
+              layout_columns(
+                col_widths = c(6, 6),
+                checkboxGroupInput(
+                  "its_combo_forward", "Forward primers",
+                  choices = its_member_choices("forward"),
+                  selected = its_all_forward
+                ),
+                checkboxGroupInput(
+                  "its_combo_reverse", "Reverse primers",
+                  choices = its_member_choices("reverse"),
+                  selected = its_all_reverse
+                )
+              ),
+              actionButton(
+                "its_restore_combo_primers", "Restore all pair-forming primers",
+                class = "btn-outline-secondary btn-sm"
+              ),
+              uiOutput("its_combo_filter_status"),
+              h5(class = "mt-3", "2 · Remaining documented combinations"),
+              DTOutput("marker_combination_list")
+            ),
+            nav_panel(
+              "All 121 primers",
+              h5("Browse individual fungal-marker primers"),
+              div(
+                class = "callout tiny mb-2",
+                strong("The source is broader than ITS alone. "),
+                "It includes SSU/18S-, ITS/5.8S-, and LSU/28S-associated primers plus a few other loci. Filter by gene region or search the target, use/limitation, and original-reference columns."
+              ),
+              selectInput(
+                "unite_region_filter", "Gene region",
+                choices = c(
+                  "All 121 imported primers" = "ALL",
+                  "SSU / 18S" = "SSU",
+                  "ITS / 5.8S" = "ITS",
+                  "LSU / 28S" = "LSU",
+                  "Other loci in the source table" = "OTHER"
+                ),
+                selected = "ALL"
+              ),
+              DTOutput("its_map_catalog")
+            )
+          )
+        } else {
+          DTOutput("marker_combination_list")
+        }
       )
+    )
+  })
+
+  output$its_combo_filter_status <- renderUI({
+    req(identical(input$map_marker, "ITS_FUNGAL"))
+    remaining <- length(its_filtered_pair_ids())
+    div(
+      class = "tiny mt-2",
+      strong(remaining, " of ", length(its_documented_pair_ids), " documented combinations remain. "),
+      "The ITS map is synchronized with this primer selection."
+    )
+  })
+
+  observeEvent(input$its_restore_combo_primers, {
+    updateCheckboxGroupInput(
+      session, "its_combo_forward",
+      choices = its_member_choices("forward"), selected = its_all_forward
+    )
+    updateCheckboxGroupInput(
+      session, "its_combo_reverse",
+      choices = its_member_choices("reverse"), selected = its_all_reverse
     )
   })
 
@@ -2215,14 +2374,14 @@ server <- function(input, output, session) {
       rownames = FALSE, class = "compact stripe",
       options = list(pageLength = 10, lengthMenu = c(10, 25, 50, 100), scrollX = TRUE)
     )
-  }, server = TRUE)
+  }, server = FALSE)
 
   observeEvent(input$pair_list_show, {
     pair_id <- input$pair_list_show$pair
     valid <- pair_meta |>
       filter(marker_id == input$map_marker, pair_id == !!pair_id)
     if (!nrow(valid)) return()
-    selected <- unique(c(isolate(input$pair_select), pair_id))
+    selected <- unique(c(isolate(selected_map_pairs()), pair_id))
     if (identical(input$map_marker, "18S") && length(selected) > 25L) {
       selected <- tail(selected, 25L)
     }
@@ -2278,8 +2437,14 @@ server <- function(input, output, session) {
       slice(1)
 
     if (nrow(exact_pair)) {
-      selected <- unique(c(isolate(input$pair_select), exact_pair$pair_id))
-      updateCheckboxGroupInput(session, "pair_select", selected = selected)
+      updateCheckboxGroupInput(
+        session, "its_combo_forward",
+        selected = unique(c(isolate(input$its_combo_forward), forward$primer_name))
+      )
+      updateCheckboxGroupInput(
+        session, "its_combo_reverse",
+        selected = unique(c(isolate(input$its_combo_reverse), reverse$primer_name))
+      )
       its_catalog_pending(NULL)
       showNotification(
         "This exact combination is already a source-supported pair. It is now selected on the map.",
@@ -2601,10 +2766,11 @@ server <- function(input, output, session) {
     x <- facet_match(x, "application", input$application_filter)
     x <- facet_match(x, "environment", input$environment_filter)
     x <- facet_match(x, "design_intent", input$intent_filter)
-    if (is.null(input$pair_select) || !length(input$pair_select)) {
+    selected <- selected_map_pairs()
+    if (is.null(selected) || !length(selected)) {
       x <- x[0, ]
     } else {
-      x <- x |> filter(pair_id %in% input$pair_select)
+      x <- x |> filter(pair_id %in% selected)
     }
     custom <- custom_pair_collection()
     if (length(custom) && isTRUE(input$show_custom)) {
@@ -2637,17 +2803,20 @@ server <- function(input, output, session) {
 
   pair_choice_label_signature <- reactiveVal(NULL)
   observe({
+    if (identical(input$map_marker, "ITS_FUNGAL")) return()
     choices <- number_primer_choice_labels(
       sorted_pair_choices(),
       sorted_filtered_pairs()
     )
     signature <- paste(names(choices), choices, sep = "=", collapse = "|")
     if (identical(signature, pair_choice_label_signature())) return()
-    current <- isolate(input$pair_select)
+    marker_id <- input$map_marker
+    input_id <- if (identical(marker_id, "18S")) "pair_select_18s" else "pair_select"
+    current <- isolate(selected_map_pairs())
     if (is.null(current)) return()
     pair_choice_label_signature(signature)
-    freezeReactiveValue(input, "pair_select")
-    update_pair_selector(input$map_marker, choices, current)
+    freezeReactiveValue(input, input_id)
+    update_pair_selector(marker_id, choices, current)
   })
 
   displayed_primers <- reactive({
@@ -3280,27 +3449,7 @@ server <- function(input, output, session) {
         DTOutput("its_map_catalog")
       ))
     }
-    card(
-      class = "mt-3",
-      card_header("UNITE fungal rDNA oligos by region"),
-      div(
-        class = "callout tiny mb-3",
-        strong("This is not an ITS-only list. "),
-        "The imported fungal rDNA resource contains 50 ITS, 30 SSU/18S-associated, 32 LSU/28S-associated, and 9 other-marker oligos. Choose a region first; original publications remain the citations and UNITE remains compilation provenance."
-      ),
-      selectInput(
-        "unite_region_filter", "rDNA region",
-        choices = c(
-          "All imported records" = "ALL",
-          "SSU / 18S" = "SSU",
-          "ITS / 5.8S" = "ITS",
-          "LSU / 28S" = "LSU",
-          "Other loci in the source table" = "OTHER"
-        ),
-        selected = "ALL"
-      ),
-      DTOutput("its_map_catalog")
-    )
+    NULL
   })
 
   output$its_map_catalog <- renderDT({
@@ -3351,7 +3500,7 @@ server <- function(input, output, session) {
         scrollX = TRUE
       )
     )
-  }, server = TRUE)
+  }, server = FALSE)
 
   output$custom_location_detail <- renderUI({
     custom <- selected_custom_result()

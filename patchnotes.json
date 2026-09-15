@@ -7,8 +7,13 @@
       "id": "2026-09-14-collaboration-foundation",
       "date": "2026-09-14",
       "category": "community",
-      "status": "prepared_for_review",
-      "summary": "Added the repository files needed for predictable, evidence-aware outside contributions.",
+      "status": "integrated_and_active",
+      "summary": "Added and activated the repository files and settings needed for predictable, evidence-aware outside contributions.",
+      "integration": {
+        "pull_request": 4,
+        "pull_request_url": "https://github.com/sven9r/primer-atlas/pull/4",
+        "merge_commit": "21f8f4e12759e221e2a7fbc410a6eda4453551be"
+      },
       "repository_changes": [
         {
           "kind": "contributor_guide",
@@ -43,15 +48,34 @@
           "kind": "documentation",
           "paths": ["README.md", "PROJECT_STATUS.md"],
           "change": "Added contributor entry points and corrected stale integrated-work status"
+        },
+        {
+          "kind": "ci_efficiency",
+          "path": ".github/workflows/test.yml",
+          "change": "Run branch changes through pull_request and direct main changes through push to avoid duplicate full-suite runs"
         }
       ],
+      "repository_settings": {
+        "discussions_enabled": true,
+        "homepage": "https://sven9r.github.io/primer-atlas/",
+        "scientific_topic_count": 8,
+        "workflow_label_count_added": 9,
+        "main_protection": {
+          "pull_request_required": true,
+          "approving_reviews_required": 1,
+          "code_owner_review_required": true,
+          "conversation_resolution_required": true,
+          "required_status_check": "test",
+          "strict_status_check": true,
+          "force_push_allowed": false,
+          "deletion_allowed": false,
+          "administrator_enforcement": false,
+          "administrator_enforcement_reason": "Avoid owner lockout until a second trusted maintainer exists"
+        }
+      },
       "remaining_actions": [
-        "Merge the collaboration-readiness pull request",
-        "Enable GitHub Discussions",
-        "Add the repository description, homepage, and scientific topics",
-        "Create labels referenced by issue forms",
-        "Protect main with pull requests, review, conversation resolution, and the test status check",
-        "Invite collaborators after their GitHub usernames are supplied"
+        "Invite collaborators after their GitHub usernames are supplied",
+        "Appoint a second trusted maintainer before enforcing branch rules for administrators"
       ]
     },
     {

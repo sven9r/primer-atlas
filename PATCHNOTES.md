@@ -9,8 +9,8 @@ not mistaken for a completed release.
 
 **ID:** `2026-09-14-collaboration-foundation`
 
-**Status:** Prepared for review; repository settings and public onboarding will
-be verified after merge.
+**Status:** Integrated and active; collaborator invitations await GitHub
+usernames.
 
 - Expanded `CONTRIBUTING.md` with local setup, contribution workflow, complete
   test commands, scientific evidence requirements, and review expectations.
@@ -23,10 +23,17 @@ be verified after merge.
 - Added contributor entry points to the README and corrected stale project-status
   language now that the ITS navigator is on `main`.
 
-Repository settings still to be applied after this change merges are: enable
-Discussions, add a public description and scientific topics, create matching
-labels, and protect `main` with pull requests, review, and the `test` status
-check.
+The files were merged through
+[pull request 4](https://github.com/sven9r/primer-atlas/pull/4). GitHub
+Discussions, a public description, the Pages homepage, eight scientific topics,
+and nine workflow labels are active. `main` now requires an up-to-date green
+`test` check, a pull request, one approval, code-owner review, and resolved
+conversations; force-push and deletion are disabled. Administrator enforcement
+remains off until a second trusted maintainer exists, avoiding an owner lockout.
+
+The test workflow now runs branch work through the pull-request event and direct
+`main` updates through the push event. This removes the duplicate full-suite
+runs previously triggered by every branch push plus its pull request.
 
 ## 2026-09-14 — Recovery branch separated, pushed, and verified
 

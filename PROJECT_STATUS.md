@@ -91,6 +91,11 @@ The project separates four operational responsibilities:
   community conduct for outside contributors.
 - Assigned review ownership for scientific catalogs, provenance, scripts,
   workflows, and the pinned R environment.
+- Enabled GitHub Discussions and added the public Pages homepage, repository
+  description, scientific topics, and workflow labels.
+- Protected `main` with pull requests, code-owner review, one approval, resolved
+  conversations, and the required `test` check; force-push and deletion are
+  disabled.
 
 ## Current operational status
 
@@ -168,8 +173,10 @@ The project separates four operational responsibilities:
 - [ ] Verify the Posit Connect deployment against promoted R2 manifests.
 - [ ] Confirm the GitHub Pages launch URL and citation instructions.
 - [ ] Add versioned release notes for every promoted marker release.
-- [ ] Establish contribution, review, and data-provenance expectations for new
+- [x] Establish contribution, review, and data-provenance expectations for new
       primers and reference panels.
+- [ ] Invite the first outside collaborators and appoint a second trusted
+      maintainer before enforcing branch rules for administrators.
 
 ## Definition of the next milestone
 

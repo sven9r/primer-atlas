@@ -5,6 +5,31 @@ same `id` as their counterparts in `patchnotes.json`. A patchnote distinguishes
 repository changes from external deployment actions so that prepared code is
 not mistaken for a completed release.
 
+## 2026-09-15 — First live R2 release attempt
+
+**ID:** `2026-09-15-r2-credential-normalization`
+
+**Status:** Live configuration reached the R2 publisher; promotion is still
+pending a retry with line-ending-safe credential handling.
+
+- Created the public `primer-atlas` Cloudflare R2 bucket and configured its
+  public base URL as the GitHub `ATLAS_DATA_BASE_URL` variable.
+- Configured the four required GitHub Actions secret names and dispatched
+  [monthly release run 35003502393](https://github.com/sven9r/primer-atlas/actions/runs/35003502393).
+- Both matrix jobs passed the release-configuration preflight. ITS_FUNGAL also
+  built and passed its hard release gates, proving that the repository and R2
+  configuration are connected.
+- R2 publication failed before any pointer promotion because a browser-copied
+  S3 access key included a line ending, making AWS Signature V4 generate an
+  invalid HTTP Authorization header.
+- `scripts/publish_r2.sh` now strips CR/LF characters from the R2 account,
+  bucket, access-key, and secret-key inputs before invoking the S3 client. This
+  makes GitHub-secret copy/paste line endings harmless on the next controlled
+  retry.
+
+No marker release is claimed as promoted until the retried jobs pass and both
+public `latest.json` pointers resolve.
+
 ## 2026-09-14 — Collaboration foundation
 
 **ID:** `2026-09-14-collaboration-foundation`

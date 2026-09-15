@@ -1,6 +1,6 @@
 # Primer Atlas project status
 
-**Status date:** 2026-09-14
+**Status date:** 2026-09-15
 
 **Current phase:** Scientific and interface foundation implemented; first
 production release automation is being brought online.
@@ -106,8 +106,11 @@ The project separates four operational responsibilities:
   locked `readxl` dependency. ITS_FUNGAL built and validated but could not
   publish because the R2 repository configuration was absent.
 - The dependency lock and early configuration preflight are integrated on
-  `main`. Cloudflare R2 credentials, the public data URL, a successful manual
-  rerun, and public manifest checks remain outstanding.
+  `main`. The Cloudflare R2 bucket, four credential names, and public data URL
+  are configured. The first live manual rerun reached R2 publication after ITS
+  passed its gates, but a copied S3 key line ending caused an invalid
+  Authorization header; a line-ending-safe publisher fix is awaiting review
+  and retry.
 - All 15 scripts in the GitHub Actions regression loop pass in the current
   working tree, including release-layer, marker-runtime, reference-policy,
   geography, map, and sequence-drill-down checks.
@@ -125,8 +128,8 @@ The project separates four operational responsibilities:
 - [x] Diagnose both failures from workflow run 33502385055.
 - [x] Record `readxl` in `renv.lock`.
 - [x] Add a fail-fast release-configuration preflight.
-- [ ] Configure the four R2 GitHub Actions secrets.
-- [ ] Configure the `ATLAS_DATA_BASE_URL` repository variable.
+- [x] Configure the four R2 GitHub Actions secrets.
+- [x] Configure the `ATLAS_DATA_BASE_URL` repository variable.
 - [x] Separate the ITS navigator and release recovery into scoped commits and
       push `codex/release-recovery`.
 - [x] Pass the full GitHub Test atlas workflow on the recovery branch.

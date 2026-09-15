@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Scientific questions and early ideas
+    url: https://github.com/sven9r/primer-atlas/discussions
+    about: Start a discussion before opening an issue when the scope or evidence contract is not yet clear.

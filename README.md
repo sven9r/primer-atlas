@@ -504,6 +504,19 @@ primer concentration, template mixture, and annealing protocol.
 - `data/legacy_prototype/` and `scripts/legacy/` — preserved first-prototype
   inputs/outputs; the app never reads these files
 
+## Contributing
+
+Primer Atlas welcomes contributions to code, documentation, primer catalogs,
+reference panels, tests, and scientific interpretation. Start with the
+[contribution guide](CONTRIBUTING.md), use a structured issue form, and make
+changes through a reviewed pull request. Early ideas and interpretation
+questions belong in [GitHub Discussions](https://github.com/sven9r/primer-atlas/discussions).
+
+Please read the [code of conduct](CODE_OF_CONDUCT.md). Primer and reference
+contributions must retain primary sources, exact denominators, reference scope,
+and unresolved ambiguity; an in-silico mismatch score is not an amplification
+probability.
+
 ## License
 
 Code is released under the MIT License. Third-party data retain their stated

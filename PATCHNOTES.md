@@ -5,6 +5,32 @@ same `id` as their counterparts in `patchnotes.json`. A patchnote distinguishes
 repository changes from external deployment actions so that prepared code is
 not mistaken for a completed release.
 
+## 2026-09-14 — Recovery branch separated, pushed, and verified
+
+**ID:** `2026-09-14-recovery-branch-verified`
+
+**Status:** Repository verified; integration and external R2 configuration
+remain outstanding.
+
+The previous working-tree changes were separated into two reviewable commits on
+`codex/release-recovery`:
+
+- `c77b648` — primer-first ITS navigator and its regression coverage.
+- `6901b36` — monthly-release recovery, dependency lock, deployment guidance,
+  project status, and patchnotes.
+
+The branch was pushed to GitHub. The resulting
+[Test atlas run 34912008403](https://github.com/sven9r/primer-atlas/actions/runs/34912008403)
+restored the project environment on a clean Ubuntu runner and passed the full
+regression suite and deployable-bundle-size gate in 4 minutes 58 seconds. This
+provides remote confirmation that the updated `renv.lock`, including `readxl`
+1.5.0, is usable by CI.
+
+No monthly marker release was dispatched because GitHub still has none of the
+four required R2 secrets or the `ATLAS_DATA_BASE_URL` variable. Running it in
+that state would intentionally fail the new preflight and open more failure
+issues without testing publication.
+
 ## 2026-09-01 — First monthly-release incident and recovery preparation
 
 **ID:** `2026-09-01-monthly-release-recovery`

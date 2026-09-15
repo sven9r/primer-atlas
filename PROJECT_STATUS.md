@@ -1,6 +1,6 @@
 # Primer Atlas project status
 
-**Status date:** 2026-09-01
+**Status date:** 2026-09-14
 
 **Current phase:** Scientific and interface foundation implemented; first
 production release automation is being brought online.
@@ -97,6 +97,9 @@ The project separates four operational responsibilities:
 - All 15 scripts in the GitHub Actions regression loop pass in the current
   working tree, including release-layer, marker-runtime, reference-policy,
   geography, map, and sequence-drill-down checks.
+- The ITS navigator and release recovery were separated into two commits on
+  `codex/release-recovery` and pushed. GitHub Test atlas run 34912008403 passed
+  the clean environment restore, full regression suite, and bundle-size gate.
 - Therefore, **the production monthly release path is not yet operational**.
   Repository readiness must not be reported as a completed R2 deployment.
 
@@ -109,8 +112,10 @@ The project separates four operational responsibilities:
 - [x] Add a fail-fast release-configuration preflight.
 - [ ] Configure the four R2 GitHub Actions secrets.
 - [ ] Configure the `ATLAS_DATA_BASE_URL` repository variable.
-- [ ] Commit and push the recovery changes without absorbing unrelated local
-      work unintentionally.
+- [x] Separate the ITS navigator and release recovery into scoped commits and
+      push `codex/release-recovery`.
+- [x] Pass the full GitHub Test atlas workflow on the recovery branch.
+- [ ] Integrate the verified recovery branch into `main`.
 - [ ] Manually rerun the monthly workflow and require both matrix jobs to pass.
 - [ ] Verify the COI and ITS_FUNGAL public `latest.json` pointers, checksums,
       immutable artifact URLs, and application loading.

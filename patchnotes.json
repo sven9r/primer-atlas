@@ -4,6 +4,50 @@
   "entry_order": "newest_first",
   "entries": [
     {
+      "id": "2026-09-14-recovery-branch-verified",
+      "date": "2026-09-14",
+      "category": "release_engineering",
+      "status": "repository_verified",
+      "summary": "Separated, pushed, and remotely verified the ITS navigator and monthly-release recovery changes.",
+      "repository": {
+        "branch": "codex/release-recovery",
+        "commits": [
+          {
+            "sha": "c77b648",
+            "scope": "primer-first ITS navigator and regression coverage"
+          },
+          {
+            "sha": "6901b36",
+            "scope": "monthly-release recovery, dependency lock, deployment guidance, project status, and patchnotes"
+          }
+        ]
+      },
+      "verification": {
+        "workflow": "Test atlas",
+        "run_id": 34912008403,
+        "run_url": "https://github.com/sven9r/primer-atlas/actions/runs/34912008403",
+        "conclusion": "success",
+        "duration_seconds": 298,
+        "checks": [
+          "Clean Ubuntu environment restored from renv.lock",
+          "Full regression suite passed",
+          "Deployable bundle-size gate passed"
+        ]
+      },
+      "release": {
+        "monthly_release_dispatched": false,
+        "release_promoted": false,
+        "blocker": "R2_ACCOUNT_ID, R2_BUCKET, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, and ATLAS_DATA_BASE_URL are not configured in GitHub"
+      },
+      "remaining_actions": [
+        "Integrate codex/release-recovery into main",
+        "Configure the four R2 Actions secrets and ATLAS_DATA_BASE_URL repository variable",
+        "Dispatch and monitor the monthly marker release",
+        "Verify both public latest.json pointers and application manifest loading",
+        "Close GitHub issues 1 and 2 with successful release evidence"
+      ]
+    },
+    {
       "id": "2026-09-01-monthly-release-recovery",
       "date": "2026-09-01",
       "category": "operations",

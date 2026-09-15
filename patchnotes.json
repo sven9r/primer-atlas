@@ -4,6 +4,48 @@
   "entry_order": "newest_first",
   "entries": [
     {
+      "id": "2026-09-15-r2-credential-normalization",
+      "date": "2026-09-15",
+      "category": "release_engineering",
+      "status": "retry_pending",
+      "summary": "The first live R2 release reached marker publication, exposed a browser-copy line-ending defect in S3 credentials, and added safe normalization before the controlled retry.",
+      "deployment": {
+        "r2_bucket": "primer-atlas",
+        "public_base_url": "https://pub-f0382349aff94e77a952e7d562ded123.r2.dev",
+        "workflow_run_id": 35003502393,
+        "workflow_run_url": "https://github.com/sven9r/primer-atlas/actions/runs/35003502393",
+        "configuration_preflight": "passed_for_both_markers",
+        "its_fungal": {
+          "build": "passed",
+          "hard_release_gates": "passed",
+          "publication": "failed_before_pointer_promotion"
+        }
+      },
+      "repository_changes": [
+        {
+          "kind": "credential_input_normalization",
+          "path": "scripts/publish_r2.sh",
+          "change": "Strip CR/LF from R2 account, bucket, access-key, and secret-key inputs before S3 publication"
+        },
+        {
+          "kind": "status_documentation",
+          "paths": ["PATCHNOTES.md", "PROJECT_STATUS.md"],
+          "change": "Record the first live R2 attempt and distinguish successful validation from unpromoted publication"
+        }
+      ],
+      "failure": {
+        "step": "Stage and atomically promote in R2",
+        "cause": "A copied S3 access key retained a line ending, producing an invalid AWS Signature V4 Authorization header",
+        "pointer_promoted": false
+      },
+      "remaining_actions": [
+        "Merge the credential-normalization fix after CI passes",
+        "Rerun the monthly release",
+        "Verify both public latest.json pointers and application manifest loading",
+        "Close the release-failure issues only after end-to-end success"
+      ]
+    },
+    {
       "id": "2026-09-14-collaboration-foundation",
       "date": "2026-09-14",
       "category": "community",

@@ -8,6 +8,15 @@ set -euo pipefail
 : "${MARKER_ID:?MARKER_ID is required}"
 : "${RELEASE_ID:?RELEASE_ID is required}"
 
+# Browser copy controls can put a trailing line ending in a GitHub Actions
+# secret. AWS Signature V4 treats that line ending as part of the credential,
+# which produces an invalid Authorization header. R2 identifiers and S3 keys
+# cannot contain line endings, so remove them before constructing the client.
+R2_ACCOUNT_ID="$(printf '%s' "$R2_ACCOUNT_ID" | tr -d '\r\n')"
+R2_BUCKET="$(printf '%s' "$R2_BUCKET" | tr -d '\r\n')"
+AWS_ACCESS_KEY_ID="$(printf '%s' "$AWS_ACCESS_KEY_ID" | tr -d '\r\n')"
+AWS_SECRET_ACCESS_KEY="$(printf '%s' "$AWS_SECRET_ACCESS_KEY" | tr -d '\r\n')"
+
 endpoint="https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com"
 source_dir="data/releases/${MARKER_ID}/${RELEASE_ID}"
 staging="s3://${R2_BUCKET}/staging/${MARKER_ID}/${RELEASE_ID}"

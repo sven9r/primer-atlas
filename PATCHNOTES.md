@@ -5,6 +5,30 @@ same `id` as their counterparts in `patchnotes.json`. A patchnote distinguishes
 repository changes from external deployment actions so that prepared code is
 not mistaken for a completed release.
 
+## 2026-09-15 — COI retry dependency repair
+
+**ID:** `2026-09-15-coi-xml2-retry`
+
+**Status:** ITS_FUNGAL is promoted and public. COI completed its reference
+build, then stopped before release validation because its final taxonomy import
+requires `xml2`, which was not installed on the clean GitHub runner.
+
+- [Run 35005218773](https://github.com/sven9r/primer-atlas/actions/runs/35005218773)
+  proved the R2 configuration and publication path: ITS_FUNGAL built, passed
+  its hard gates, and atomically promoted its public `latest.json` pointer.
+- COI completed the expanded reference, alignment, geography, and scoring
+  stages, then failed only at `scripts/fetch_gurten2026_bee_taxonomy.R` with
+  `there is no package called 'xml2'`.
+- `scripts/install_primerminer.R` now installs `xml2` explicitly with the
+  other marker-build dependencies. The affected taxonomy script was executed
+  locally against its cached inputs successfully.
+- The workflow now also removes CR/LF characters before its early COI R2 state
+  read, so the append-only ledger can be recovered correctly on the retry.
+
+COI has not been promoted; its previous public pointer remains unchanged. The
+next controlled retry must pass COI validation and public-artifact checks before
+the first production release is declared complete.
+
 ## 2026-09-15 — First live R2 release attempt
 
 **ID:** `2026-09-15-r2-credential-normalization`

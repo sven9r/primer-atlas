@@ -123,6 +123,8 @@ The project separates four operational responsibilities:
   without authentication at
   https://01a0cdbb-4448-22b4-500c-b5329e3b1904.share.connect.posit.cloud/;
   the COI map populated and the URL returned the `Primer Atlas` page title.
+  Interactive scoring of a new custom COI pair still depends on `PrimerMiner`
+  and is unavailable in the cloud runtime.
 - All 15 scripts in the GitHub Actions regression loop pass in the current
   working tree, including release-layer, marker-runtime, reference-policy,
   geography, map, and sequence-drill-down checks.

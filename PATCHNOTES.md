@@ -22,6 +22,9 @@ https://01a0cdbb-4448-22b4-500c-b5329e3b1904.share.connect.posit.cloud/.
 - After merge `42165ea`, the public Shiny app loaded without signing in. The
   COI map populated with documented primer combinations, and the public URL
   returned the `Primer Atlas` page title.
+- Interactive scoring of a new custom COI pair still requires `PrimerMiner`
+  and is unavailable in this cloud deployment; the documented primer map and
+  precomputed evidence load.
 
 ## 2026-09-23 — Connect Cloud runtime dependency separation
 

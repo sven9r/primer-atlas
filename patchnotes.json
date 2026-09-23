@@ -33,6 +33,9 @@
         "merged_commit": "42165ea",
         "public_access_verified": true
       },
+      "known_limitations": [
+        "Interactive scoring of new custom COI pairs requires PrimerMiner and is unavailable in the cloud runtime"
+      ],
       "remaining_actions": []
     },
     {

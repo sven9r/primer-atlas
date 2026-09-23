@@ -9,8 +9,8 @@ not mistaken for a completed release.
 
 **ID:** `2026-09-23-connect-readxl-runtime-repair`
 
-**Status:** Ready to republish from Posit Connect Cloud; public deployment is
-not claimed until the hosted URL responds successfully.
+**Status:** Published and verified at
+https://01a0cdbb-4448-22b4-500c-b5329e3b1904.share.connect.posit.cloud/.
 
 - The next Connect Cloud build reached `readxl` but could not install it because
   its `cellranger` dependency was absent from the app manifest.
@@ -19,13 +19,16 @@ not claimed until the hosted URL responds successfully.
   continues to use the project lockfile.
 - The bundle regression check now requires the app's runtime packages and
   rejects build-only `readxl` and `PrimerMiner` dependencies.
+- After merge `42165ea`, the public Shiny app loaded without signing in. The
+  COI map populated with documented primer combinations, and the public URL
+  returned the `Primer Atlas` page title.
 
 ## 2026-09-23 — Connect Cloud runtime dependency separation
 
 **ID:** `2026-09-23-connect-runtime-dependency-separation`
 
-**Status:** Ready to republish from Posit Connect Cloud; public deployment is
-not claimed until the hosted URL responds successfully.
+**Status:** Superseded by the `readxl` runtime repair above. This intermediate
+manifest still failed to publish.
 
 - The source-coordinate repair did not resolve Connect Cloud's refusal to
   install `PrimerMiner` from GitHub.
@@ -41,8 +44,8 @@ not claimed until the hosted URL responds successfully.
 
 **ID:** `2026-09-23-connect-manifest-primerminer`
 
-**Status:** Ready to republish from Posit Connect Cloud; public deployment is
-not claimed until the hosted URL responds successfully.
+**Status:** Superseded by the runtime dependency repairs above. This
+intermediate manifest did not publish.
 
 - Diagnosed the Connect Cloud dependency failure: its generated `manifest.json`
   named the vendored `PrimerMiner` package but omitted the GitHub repository

@@ -100,17 +100,16 @@ The project separates four operational responsibilities:
 ## Current operational status
 
 - The repository-side application, build scripts, validation gates, tests, and
-  primer-first ITS navigator exist on `main`; they are not yet backed by a
-  completed production marker release.
+  primer-first ITS navigator exist on `main`. ITS_FUNGAL has a public release;
+  COI remains blocked by a release gate.
 - The first scheduled monthly workflow ran on 2026-09-01. COI exposed a missing
   locked `readxl` dependency. ITS_FUNGAL built and validated but could not
   publish because the R2 repository configuration was absent.
 - The Cloudflare R2 bucket, four credential names, and public data URL are
   configured. In live run 35005218773, ITS_FUNGAL built, passed its hard gates,
-  and was promoted publicly. COI completed its expanded reference build but
-  stopped before validation because `xml2` was absent from the clean
-  marker-build runtime. The dependency repair and early R2 state-read input
-  normalization await CI and a controlled COI retry.
+  and was promoted publicly. The subsequent run 35009155171 built COI and
+  passed its initial validation, but the COI hard gate failed on a
+  Lepidoptera study-group label assertion. Its public pointer was not promoted.
 - The public Posit Connect Cloud deployment was initiated on 2026-09-23. Its
   first build stopped because the generated manifest omitted source coordinates
   for the vendored `PrimerMiner` package; Connect Cloud still refused the
@@ -120,7 +119,10 @@ The project separates four operational responsibilities:
 - A subsequent Connect Cloud publish reached `readxl` and failed because its
   `cellranger` dependency was missing from the app manifest. `readxl` is used
   by monthly data-build scripts, so the cloud manifest now excludes it while
-  the release lockfile retains it. Public deployment remains unverified.
+  the release lockfile retains it. After merge `42165ea`, the public app loaded
+  without authentication at
+  https://01a0cdbb-4448-22b4-500c-b5329e3b1904.share.connect.posit.cloud/;
+  the COI map populated and the URL returned the `Primer Atlas` page title.
 - All 15 scripts in the GitHub Actions regression loop pass in the current
   working tree, including release-layer, marker-runtime, reference-policy,
   geography, map, and sequence-drill-down checks.

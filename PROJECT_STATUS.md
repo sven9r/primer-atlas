@@ -3,7 +3,7 @@
 **Status date:** 2026-09-15
 
 **Current phase:** Scientific and interface foundation implemented; first
-production release automation is being brought online.
+production release automation and public Shiny hosting are being brought online.
 
 ## Project goal
 
@@ -111,6 +111,10 @@ The project separates four operational responsibilities:
   stopped before validation because `xml2` was absent from the clean
   marker-build runtime. The dependency repair and early R2 state-read input
   normalization await CI and a controlled COI retry.
+- The public Posit Connect Cloud deployment was initiated on 2026-09-23. Its
+  first build stopped because the generated manifest omitted source coordinates
+  for the vendored `PrimerMiner` package; the repaired manifest is ready to
+  republish after CI passes.
 - All 15 scripts in the GitHub Actions regression loop pass in the current
   working tree, including release-layer, marker-runtime, reference-policy,
   geography, map, and sequence-drill-down checks.

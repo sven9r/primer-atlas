@@ -37,6 +37,14 @@ missing <- app_files[!file.exists(app_files)]
 if (length(missing)) stop("Missing Connect file(s): ", paste(missing, collapse = ", "))
 writeManifest(appDir = ".", appFiles = app_files, python = NULL, quarto = FALSE)
 manifest <- jsonlite::read_json("manifest.json", simplifyVector = FALSE)
+
+# rsconnect includes packages from the project-wide renv.lock. readxl is used
+# only by monthly data-build scripts, which are not part of this Shiny bundle.
+# Connect Cloud installs packages from manifest.json, so keep build-only
+# dependencies out of the app runtime while retaining them in renv.lock for CI.
+manifest$packages$readxl <- NULL
+jsonlite::write_json(manifest, "manifest.json", pretty = TRUE, auto_unbox = TRUE, null = "null")
+
 paths <- names(manifest$files)
 bytes <- sum(file.info(paths)$size, na.rm = TRUE)
 if (bytes >= 100 * 1024^2) stop("Connect bundle is too large: ", round(bytes / 1024^2, 1), " MB")

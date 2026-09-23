@@ -17,9 +17,8 @@ not claimed until the hosted URL responds successfully.
 - `PrimerMiner` is not needed to start or browse the Atlas: its published
   evidence is precomputed. It is now excluded from the cloud runtime manifest,
   along with its build-only source folder.
-- GitHub test and monthly build workflows install the vendored package
-  explicitly before operations that require custom-primer scoring or new data
-  generation.
+- The monthly build workflow installs the vendored package explicitly before
+  operations that require custom-primer scoring or new data generation.
 - The regenerated Connect manifest has 88 standard dependencies, 111 files,
   and a 11.5 MB bundle; it no longer contains `PrimerMiner`.
 

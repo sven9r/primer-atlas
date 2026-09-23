@@ -116,7 +116,7 @@ The project separates four operational responsibilities:
   for the vendored `PrimerMiner` package; Connect Cloud still refused the
   package download. The live app does not need `PrimerMiner` to start or browse
   its precomputed evidence, so the package is now excluded from the cloud
-  runtime and installed explicitly only by CI and marker-build workflows.
+  runtime and installed explicitly only by the marker-build workflow.
 - All 15 scripts in the GitHub Actions regression loop pass in the current
   working tree, including release-layer, marker-runtime, reference-policy,
   geography, map, and sequence-drill-down checks.

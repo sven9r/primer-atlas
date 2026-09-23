@@ -34,20 +34,36 @@ status <- system2(
 )
 if (status != 0) stop("PrimerMiner installation failed.")
 
+tool_version <- function(command, args = "--version") {
+  executable <- Sys.which(command)
+  if (!nzchar(executable)) return("not installed")
+
+  output <- tryCatch(
+    system2(executable, args, stdout = TRUE, stderr = TRUE),
+    error = function(error) character()
+  )
+  if (length(output)) output[1] else "version unavailable"
+}
+
+tool_path <- function(command) {
+  executable <- Sys.which(command)
+  if (nzchar(executable)) executable else "not installed"
+}
+
 dir.create("data/provenance", recursive = TRUE, showWarnings = FALSE)
 manifest <- data.frame(
   component = c("PrimerMiner", "PrimerMiner_source_commit", "vsearch", "mafft"),
   version = c(
     as.character(packageVersion("PrimerMiner")),
     commit,
-    system2("vsearch", "--version", stdout = TRUE, stderr = TRUE)[1],
-    system2("mafft", "--version", stdout = TRUE, stderr = TRUE)[1]
+    tool_version("vsearch"),
+    tool_version("mafft")
   ),
   installation = c(
     "project-local .Rlib; pinned vendored source; BOLDconnectR removed for NCBI-only compatibility",
     "https://github.com/VascoElbrecht/PrimerMiner",
-    Sys.which("vsearch"),
-    Sys.which("mafft")
+    tool_path("vsearch"),
+    tool_path("mafft")
   ),
   stringsAsFactors = FALSE
 )

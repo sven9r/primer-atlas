@@ -5,6 +5,23 @@ same `id` as their counterparts in `patchnotes.json`. A patchnote distinguishes
 repository changes from external deployment actions so that prepared code is
 not mistaken for a completed release.
 
+## 2026-09-23 — Connect Cloud runtime dependency separation
+
+**ID:** `2026-09-23-connect-runtime-dependency-separation`
+
+**Status:** Ready to republish from Posit Connect Cloud; public deployment is
+not claimed until the hosted URL responds successfully.
+
+- The source-coordinate repair did not resolve Connect Cloud's refusal to
+  install `PrimerMiner` from GitHub.
+- `PrimerMiner` is not needed to start or browse the Atlas: its published
+  evidence is precomputed. It is now excluded from the cloud runtime manifest,
+  along with its build-only source folder.
+- The monthly build workflow installs the vendored package explicitly before
+  operations that require custom-primer scoring or new data generation.
+- The regenerated Connect manifest has 88 standard dependencies, 111 files,
+  and a 11.5 MB bundle; it no longer contains `PrimerMiner`.
+
 ## 2026-09-23 — Connect Cloud deployment manifest repair
 
 **ID:** `2026-09-23-connect-manifest-primerminer`

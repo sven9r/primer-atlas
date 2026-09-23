@@ -5,6 +5,21 @@ same `id` as their counterparts in `patchnotes.json`. A patchnote distinguishes
 repository changes from external deployment actions so that prepared code is
 not mistaken for a completed release.
 
+## 2026-09-23 — Connect Cloud readxl dependency repair
+
+**ID:** `2026-09-23-connect-readxl-runtime-repair`
+
+**Status:** Ready to republish from Posit Connect Cloud; public deployment is
+not claimed until the hosted URL responds successfully.
+
+- The next Connect Cloud build reached `readxl` but could not install it because
+  its `cellranger` dependency was absent from the app manifest.
+- `readxl` is used only by monthly data-build scripts. The Connect manifest
+  generator now removes it from the Shiny runtime while the release workflow
+  continues to use the project lockfile.
+- The bundle regression check now requires the app's runtime packages and
+  rejects build-only `readxl` and `PrimerMiner` dependencies.
+
 ## 2026-09-23 — Connect Cloud runtime dependency separation
 
 **ID:** `2026-09-23-connect-runtime-dependency-separation`

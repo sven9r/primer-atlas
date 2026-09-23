@@ -117,6 +117,10 @@ The project separates four operational responsibilities:
   package download. The live app does not need `PrimerMiner` to start or browse
   its precomputed evidence, so the package is now excluded from the cloud
   runtime and installed explicitly only by the marker-build workflow.
+- A subsequent Connect Cloud publish reached `readxl` and failed because its
+  `cellranger` dependency was missing from the app manifest. `readxl` is used
+  by monthly data-build scripts, so the cloud manifest now excludes it while
+  the release lockfile retains it. Public deployment remains unverified.
 - All 15 scripts in the GitHub Actions regression loop pass in the current
   working tree, including release-layer, marker-runtime, reference-policy,
   geography, map, and sequence-drill-down checks.

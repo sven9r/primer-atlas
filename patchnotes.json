@@ -4,6 +4,35 @@
   "entry_order": "newest_first",
   "entries": [
     {
+      "id": "2026-09-23-connect-readxl-runtime-repair",
+      "date": "2026-09-23",
+      "category": "deployment",
+      "status": "ready_to_republish",
+      "summary": "Connect Cloud could not install readxl because cellranger was absent; readxl is needed only by monthly data builds, so it was removed from the app runtime manifest.",
+      "repository_changes": [
+        {
+          "kind": "runtime_dependency_boundary",
+          "paths": ["scripts/write_connect_manifest.R", "manifest.json"],
+          "change": "Exclude build-only readxl from the Connect Cloud manifest while retaining it in renv.lock for monthly release builds"
+        },
+        {
+          "kind": "deployment_regression_check",
+          "path": "tests/test_bundle_size.R",
+          "change": "Require the app's runtime packages and reject readxl and PrimerMiner in the Connect manifest"
+        }
+      ],
+      "verification": [
+        "Regenerated Connect manifest has 87 packages and no readxl or PrimerMiner entry",
+        "Manifest is structurally identical to the previous one except for removing readxl",
+        "Application startup and deployable-bundle check passed locally"
+      ],
+      "remaining_actions": [
+        "Merge the readxl runtime repair",
+        "Republish the app from Posit Connect Cloud",
+        "Verify the hosted public URL"
+      ]
+    },
+    {
       "id": "2026-09-23-connect-runtime-dependency-separation",
       "date": "2026-09-23",
       "category": "deployment",

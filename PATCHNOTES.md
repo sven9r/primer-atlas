@@ -5,6 +5,20 @@ same `id` as their counterparts in `patchnotes.json`. A patchnote distinguishes
 repository changes from external deployment actions so that prepared code is
 not mistaken for a completed release.
 
+## 2026-09-23 — Connect Cloud deployment manifest repair
+
+**ID:** `2026-09-23-connect-manifest-primerminer`
+
+**Status:** Ready to republish from Posit Connect Cloud; public deployment is
+not claimed until the hosted URL responds successfully.
+
+- Diagnosed the Connect Cloud dependency failure: its generated `manifest.json`
+  named the vendored `PrimerMiner` package but omitted the GitHub repository
+  URL, commit, and `vendor/PrimerMiner` subdirectory required to download it.
+- Updated the manifest generator to preserve those source coordinates, then
+  regenerated `manifest.json` (165 deployable files; 13 MB).
+- Confirmed the app starts locally after the manifest repair.
+
 ## 2026-09-15 — COI retry dependency repair
 
 **ID:** `2026-09-15-coi-xml2-retry`

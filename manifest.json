@@ -86,7 +86,11 @@
         "License": "GPL-3",
         "Depends": "XML, rentrez, seqinr",
         "VignetteBuilder": "knitr",
-        "Built": "R 4.6.1; ; 2026-07-28 20:19:51 UTC; unix"
+        "Built": "R 4.6.1; ; 2026-07-28 20:19:51 UTC; unix",
+        "RemoteUrl": "https://github.com/sven9r/primer-atlas",
+        "RemoteRef": "f609e5b3365bfb26c69b4d8ec3f5619ac92b8226",
+        "RemoteSha": "f609e5b3365bfb26c69b4d8ec3f5619ac92b8226",
+        "RemoteSubdir": "vendor/PrimerMiner"
       }
     },
     "R6": {
@@ -1885,6 +1889,39 @@
         "Archs": "readr.so.dSYM"
       }
     },
+    "readxl": {
+      "Source": "CRAN",
+      "Repository": "https://cloud.r-project.org",
+      "description": {
+        "Package": "readxl",
+        "Title": "Read Excel Files",
+        "Version": "1.5.0",
+        "Authors@R": "c(\n    person(\"Hadley\", \"Wickham\", , \"hadley@posit.co\", role = \"aut\",\n           comment = c(ORCID = \"0000-0003-4757-117X\")),\n    person(\"Jennifer\", \"Bryan\", , \"jenny@posit.co\", role = c(\"aut\", \"cre\"),\n           comment = c(ORCID = \"0000-0002-6983-2759\")),\n    person(\"Posit, PBC\", role = c(\"cph\", \"fnd\"),\n           comment = \"Copyright holder of all R code and all C/C++ code without explicit copyright attribution\"),\n    person(\"Marcin\", \"Kalicinski\", role = c(\"ctb\", \"cph\"),\n           comment = \"Author of included RapidXML code\"),\n    person(\"Komarov Valery\", role = c(\"ctb\", \"cph\"),\n           comment = \"Author of included libxls code\"),\n    person(\"Christophe Leitienne\", role = c(\"ctb\", \"cph\"),\n           comment = \"Author of included libxls code\"),\n    person(\"Bob Colbert\", role = c(\"ctb\", \"cph\"),\n           comment = \"Author of included libxls code\"),\n    person(\"David Hoerl\", role = c(\"ctb\", \"cph\"),\n           comment = \"Author of included libxls code\"),\n    person(\"Evan Miller\", role = c(\"ctb\", \"cph\"),\n           comment = \"Author of included libxls code\")\n  )",
+        "Description": "Import excel files into R. Supports '.xls' via the embedded\n    'libxls' C library <https://github.com/libxls/libxls> and '.xlsx' via\n    the embedded 'RapidXML' C++ library\n    <https://rapidxml.sourceforge.net/>.  Works on Windows, Mac and Linux\n    without external dependencies.",
+        "License": "MIT + file LICENSE",
+        "URL": "https://readxl.tidyverse.org, https://github.com/tidyverse/readxl",
+        "BugReports": "https://github.com/tidyverse/readxl/issues",
+        "Depends": "R (>= 4.1)",
+        "Imports": "cellranger, tibble (>= 2.0.1), utils",
+        "Suggests": "covr, knitr, rmarkdown, testthat (>= 3.1.6), withr",
+        "LinkingTo": "cpp11 (>= 0.5.5), progress",
+        "VignetteBuilder": "knitr",
+        "Config/build/compilation-database": "true",
+        "Config/Needs/website": "tidyverse/tidytemplate, tidyverse",
+        "Config/roxygen2/version": "8.0.0",
+        "Config/testthat/edition": "3",
+        "Encoding": "UTF-8",
+        "Note": "libxls v1.6.3 c199d13",
+        "NeedsCompilation": "yes",
+        "Packaged": "2026-05-16 14:11:44 UTC; jenny",
+        "Author": "Hadley Wickham [aut] (ORCID: <https://orcid.org/0000-0003-4757-117X>),\n  Jennifer Bryan [aut, cre] (ORCID:\n    <https://orcid.org/0000-0002-6983-2759>),\n  Posit, PBC [cph, fnd] (Copyright holder of all R code and all C/C++\n    code without explicit copyright attribution),\n  Marcin Kalicinski [ctb, cph] (Author of included RapidXML code),\n  Komarov Valery [ctb, cph] (Author of included libxls code),\n  Christophe Leitienne [ctb, cph] (Author of included libxls code),\n  Bob Colbert [ctb, cph] (Author of included libxls code),\n  David Hoerl [ctb, cph] (Author of included libxls code),\n  Evan Miller [ctb, cph] (Author of included libxls code)",
+        "Maintainer": "Jennifer Bryan <jenny@posit.co>",
+        "Repository": "CRAN",
+        "Date/Publication": "2026-05-16 21:50:23 UTC",
+        "Built": "R 4.6.0; aarch64-apple-darwin23; 2026-05-17 02:16:09 UTC; unix",
+        "Archs": "readxl.so.dSYM"
+      }
+    },
     "rentrez": {
       "Source": "CRAN",
       "Repository": "https://cloud.r-project.org",
@@ -2743,10 +2780,10 @@
   },
   "files": {
     "app.R": {
-      "checksum": "6ad814bc68be7035a8cb5ae9190d2d4d"
+      "checksum": "cdde4295f31e40207156166e605d171a"
     },
     "data/catalog/claims.csv": {
-      "checksum": "a3b2633e368e87aa5d8dec680d04f1e6"
+      "checksum": "7e287c602b958d2d647bbee4089c0b39"
     },
     "data/catalog/marker_landmarks.csv": {
       "checksum": "9e40e8406910f76a63515abed46dd6c9"
@@ -2755,10 +2792,10 @@
       "checksum": "f66a41cea7dac33452ca60210dc8a71a"
     },
     "data/catalog/markers.csv": {
-      "checksum": "b36d64417ffa49ee39f19fdfc1df560b"
+      "checksum": "f0830bdd26d4562add84f5782eda6e46"
     },
     "data/catalog/oligos.csv": {
-      "checksum": "84b0de16db5b88e1251f6d72165d212b"
+      "checksum": "9884c8343a5965fa046e49bdf0687ccc"
     },
     "data/catalog/organism_groups.csv": {
       "checksum": "e07c371e14f2f10b95d472f91eb5aa19"
@@ -2766,20 +2803,29 @@
     "data/catalog/pair_oligos.csv": {
       "checksum": "a6fd947d8ec3f648eeab0113b4dea20a"
     },
+    "data/catalog/pr2_18s_primer_sets.csv": {
+      "checksum": "b6a9df56854e29d7fd7fd82ea6689362"
+    },
+    "data/catalog/pr2_18s_primers.csv": {
+      "checksum": "501c3b7675e42ad120f6231edd968954"
+    },
     "data/catalog/primer_pair_facets.csv": {
       "checksum": "c809434a7e8a9c08fd0fa10975327f7d"
     },
     "data/catalog/primer_pairs.csv": {
       "checksum": "8b105c8bcee9d2fa989c15f2311cf614"
     },
+    "data/catalog/reference_panel_policy.csv": {
+      "checksum": "b2be3d8c36429de6b285166ee1b84284"
+    },
     "data/catalog/regression_ozyptila_nospid.csv": {
       "checksum": "ab38b117f2d31531febe43e47cc4df84"
     },
     "data/catalog/sources.csv": {
-      "checksum": "ce0209d959d56d2a61a7603f2df38d4d"
+      "checksum": "5e43711f6558f0240f1a47eef0534d2f"
     },
     "data/catalog/unite_primers.csv": {
-      "checksum": "e3fdc84fc3b7f2c88cdf94436cf82429"
+      "checksum": "e1262bc293bbdee6bfaa3ab596705641"
     },
     "data/citations.csv": {
       "checksum": "5f43e2ed36416637f7e3e91e49c268b8"
@@ -3052,7 +3098,7 @@
       "checksum": "0b8135548921fa241dbc1c06a26c5c6f"
     },
     "renv.lock": {
-      "checksum": "9b45e00aa4ab64ab1d7d44606c1000ae"
+      "checksum": "7d0730efaa2df9155c910a97918f21ff"
     },
     "vendor/PrimerMiner/.Rhistory": {
       "checksum": "2dc2ec1dae4fe79eda52e269a9b33138"

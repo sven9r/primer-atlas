@@ -39,20 +39,39 @@ write_marker <- function(marker_id) {
     full <- list.files("data/derived", pattern = "^full_order_.*_sequence_scores[.]csv[.]gz$", full.names = TRUE)
     names(full) <- sub("_sequence_scores[.]csv[.]gz$", "", basename(full))
     specs <- c(specs, full)
+    expanded_specs <- c(
+      beeprime_expanded_scores = "data/derived/beeprime_expanded_scores.csv.gz",
+      beeprime_expanded_geography = "data/derived/beeprime_expanded_geography.csv",
+      beeprime_expanded_taxonomy_audit = "data/provenance/beeprime_expanded_taxonomy_audit.csv",
+      beeprime_expanded_growth_qa = "data/provenance/beeprime_expanded_growth_qa.csv",
+      beeprime_expanded_alignment = "data/derived/beeprime_expanded_alignment.fasta",
+      beeprime_expanded_added_sequences = "data/derived/beeprime_expanded_added_sequences.fasta"
+    )
+    expanded_specs <- expanded_specs[file.exists(expanded_specs)]
+    specs <- c(specs, expanded_specs)
   }
   for (name in names(specs)) {
     source <- specs[[name]]
     if (!file.exists(source)) next
-    x <- read.csv(source, stringsAsFactors = FALSE, check.names = FALSE)
-    if (name == "pair_geometry") x <- x[x$marker_id == marker_id, , drop = FALSE]
-    destination <- file.path(release_dir, paste0(name, ".parquet"))
-    nanoparquet::write_parquet(x, destination, compression = "gzip")
+    if (grepl("[.]fasta$", source, ignore.case = TRUE)) {
+      destination <- file.path(release_dir, paste0(name, ".fasta"))
+      if (!file.copy(source, destination, overwrite = TRUE)) {
+        stop("Could not stage reference FASTA artifact: ", source)
+      }
+      artifact_rows <- sum(startsWith(readLines(destination, warn = FALSE), ">"))
+    } else {
+      x <- read.csv(source, stringsAsFactors = FALSE, check.names = FALSE)
+      if (name == "pair_geometry") x <- x[x$marker_id == marker_id, , drop = FALSE]
+      destination <- file.path(release_dir, paste0(name, ".parquet"))
+      nanoparquet::write_parquet(x, destination, compression = "gzip")
+      artifact_rows <- nrow(x)
+    }
     relative <- file.path("releases", marker_id, release_id, basename(destination))
     artifacts[[name]] <- list(
       url = paste(data_base, relative, sep = "/"),
       local_path = destination,
       bytes = unname(file.info(destination)$size),
-      rows = nrow(x),
+      rows = artifact_rows,
       sha256 = digest::digest(file = destination, algo = "sha256", serialize = FALSE)
     )
   }
@@ -60,6 +79,29 @@ write_marker <- function(marker_id) {
   previous_pointer <- file.path("data", "releases", marker_id, "latest.json")
   previous_state <- tryCatch(atlas_read_manifest(marker_id, root), error = function(e) NULL)
   previous <- if (!is.null(previous_state)) previous_state$manifest$release_version else NULL
+  reference_panels <- list()
+  if (marker_id == "COI" && all(c(
+    "beeprime_expanded_scores", "beeprime_expanded_geography",
+    "beeprime_expanded_taxonomy_audit", "beeprime_expanded_growth_qa",
+    "beeprime_expanded_alignment", "beeprime_expanded_added_sequences"
+  ) %in% names(artifacts))) {
+    expanded_scores <- read.csv("data/derived/beeprime_expanded_scores.csv.gz",
+                                stringsAsFactors = FALSE, check.names = FALSE)
+    reference_panels$beeprime_expanded <- list(
+      pair_id = "BEEPRIME",
+      reference_mode = "expanded",
+      taxonomic_scope = "bees",
+      publication_baseline = "gurten2026_suppl5",
+      version = paste0(release_id, "-BeePrime"),
+      added_sequences = sum(expanded_scores$reference_origin == "added"),
+      sequence_scores = artifacts$beeprime_expanded_scores,
+      geography = artifacts$beeprime_expanded_geography,
+      alignment = artifacts$beeprime_expanded_alignment,
+      added_sequences_fasta = artifacts$beeprime_expanded_added_sequences,
+      taxonomy_audit = artifacts$beeprime_expanded_taxonomy_audit,
+      growth_qa = artifacts$beeprime_expanded_growth_qa
+    )
+  }
   manifest <- list(
     schema_version = "1.0.0", release_version = release_id,
     marker_id = marker_id, released_at = format(Sys.time(), tz = "UTC", usetz = TRUE),
@@ -71,7 +113,8 @@ write_marker <- function(marker_id) {
       geography_resolved_fraction = if (marker_id == "COI") mean(nzchar(read.csv("data/derived/reference_geography.csv")$country_or_territory), na.rm = TRUE) else NA
     ),
     previous_successful_release = previous,
-    artifacts = artifacts
+    artifacts = artifacts,
+    reference_panels = reference_panels
   )
   versioned_manifest <- file.path(release_dir, "manifest.json")
   write_json(manifest, versioned_manifest, auto_unbox = TRUE, pretty = TRUE, na = "null")

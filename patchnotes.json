@@ -4,11 +4,82 @@
   "entry_order": "newest_first",
   "entries": [
     {
+      "id": "2026-10-02-beeprime-alignment-choice",
+      "date": "2026-10-02",
+      "category": "reference_and_interface",
+      "status": "local_verified_not_published",
+      "summary": "Add a BeePrime-only choice between the original publication alignment and a growing bee alignment with new sequences.",
+      "repository_changes": [
+        {
+          "kind": "beeprime_reference_selector_and_release_artifacts",
+          "paths": [
+            "app.R",
+            "R/reference_panels.R",
+            "scripts/build_expanded_beeprime_reference.R",
+            "scripts/build_release.R",
+            "scripts/validate_release.R",
+            ".github/workflows/monthly-release.yml",
+            "tests/test_reference_alignment_choice.R",
+            "tests/test_release_layer.R"
+          ],
+          "change": "Retain the exact 590 publication bee accessions, add only records with an NCBI Anthophila lineage, and make checksummed scores, alignment, added sequences, geography, and taxonomy audit available through the release manifest."
+        }
+      ],
+      "verification": [
+        "Local build identified 30 bees among 299 Hymenoptera records and scored a 620-record panel on the unchanged 801-column coordinate system",
+        "The generated COI release passed scripts/validate_release.R and the app loader read all 620 scores from the manifest artifacts",
+        "Publication/expanded selector routing, checksum rejection, no-fallback behavior, and general-primer isolation test passed"
+      ],
+      "known_limitations": [
+        "This implementation is local and has not been pushed, merged, or published on Posit",
+        "Broad-panel clean-runner sequence restoration, taxonomy/family coverage for every order, aquatic routing, and full regional family comparisons remain incomplete"
+      ],
+      "remaining_actions": [
+        "Run the full regression suite and confirm reviewable release artifacts before publishing",
+        "Verify BeePrime publication/expanded selection on the public app after deployment",
+        "Complete the broader cross-order and aquatic reference milestones in docs/growing-reference-contract.md"
+      ]
+    },
+    {
+      "id": "2026-10-02-growing-family-reference-contract",
+      "date": "2026-10-02",
+      "category": "requirements_and_status",
+      "status": "local_requirements_recorded_partial_implementation",
+      "summary": "Require separate BeePrime-only bee, broad arthropod, and aquatic arthropod reference routing, monthly growth and family-level ecological evaluation.",
+      "repository_changes": [
+        {
+          "kind": "requirements_and_backlog",
+          "paths": [
+            "docs/growing-reference-contract.md",
+            "PROJECT_STATUS.md",
+            "README.md",
+            "docs/2026-10-02-release.md"
+          ],
+          "change": "Record corrected user scope: retained bee references are exclusive to BeePrime; general primers use broad arthropod references; add a separate aquatic arthropod option with matching ecological reference membership; retain monthly growth and every-order family evaluation gates."
+        }
+      ],
+      "verification": [
+        "Inspected acquisition, alignment, release publication, geography, and app family-view code",
+        "Read October COI public manifest, growth QA, and full-order BeePrime score artifact: 11,116 scored rows with accession IDs but no family/genus/taxid fields; prior retained counts are zero in all 22 group QA rows"
+      ],
+      "known_limitations": [
+        "The BeePrime publication/expanded choice has a separate local implementation entry; the cross-order monthly pipeline and app functionality remain incomplete and unpublished",
+        "Current full-order scores lack family taxonomy and current family views remain study-restricted"
+      ],
+      "remaining_actions": [
+        "Restore complete retained sequence state and invalidate stale alignments",
+        "Build growing broad-panel taxonomy, coverage gaps, family summaries and accession geography for every supported order",
+        "Deploy and verify the BeePrime-only reference choice and its monthly sequence retention",
+        "Add aquatic arthropod selection with freshwater/marine refinement, source-backed ecological membership, and correct reference routing",
+        "Expose matching family and regional filters and pass consecutive-clean-runner completion gates"
+      ]
+    },
+    {
       "id": "2026-10-02-primer-atlas-version",
       "date": "2026-10-02",
       "category": "release",
-      "status": "publication_pending",
-      "summary": "Prepared version 2026.10.02 with marker-switch and empty-filter recovery, source-backed organism/diet metadata, grouped publications, and a growing mapped-pair CSV.",
+      "status": "published_verified",
+      "summary": "Published version 2026.10.02 with marker-switch and empty-filter recovery, source-backed organism/diet metadata, grouped publications, and a growing mapped-pair CSV.",
       "repository_changes": [
         {
           "kind": "interface_catalog_and_tests",
@@ -34,7 +105,9 @@
       "verification": [
         "Local browser verified 20 Arthropods after ITS and fungal 18S; empty-filter reset restores eligible pairs",
         "Downloaded metadata CSV validated: 126 unique mapped pairs and 46 columns",
-        "Public marker pointers resolve to monthly run 36864394345; one artifact SHA-256 per marker passed"
+        "Public marker pointers resolve to monthly run 36864394345; one artifact SHA-256 per marker passed",
+        "PR CI 37000809512 and merged-main CI 37001535107 passed all 16 tests and the bundle gate",
+        "Posit deployment from 648dd55 and unauthenticated public switch/filter/download checks verified on 2026-10-02"
       ],
       "known_limitations": [
         "Organism and dietary tags describe source-backed scope rather than uniform PCR recovery",
@@ -42,9 +115,8 @@
         "Custom COI scoring requires PrimerMiner, which is not in the Connect runtime"
       ],
       "remaining_actions": [
-        "Complete final tests and GitHub CI",
-        "Push and publish existing Posit app",
-        "Verify public version and download"
+        "Implement the growing order/family reference milestone in docs/growing-reference-contract.md",
+        "Continue source-backed catalog and scientific pilot work in PROJECT_STATUS.md"
       ]
     },
     {

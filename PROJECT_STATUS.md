@@ -3,9 +3,15 @@
 **Status date:** 2026-10-02
 
 **Current phase:** Public Shiny hosting and both monthly marker releases are operational.
-The 2026.10.02 interface/catalog update is undergoing final publication checks.
+The 2026.10.02 interface/catalog update is published and verified at commit
+`648dd55`. The next required scientific milestone is a growing sequence
+reference with order and family scores across every supported order, including
+continued BeePrime-specific bee acquisition, a separate aquatic arthropod
+option, and family-level regional comparisons.
 Current release evidence and the remaining backlog are in
 [`docs/2026-10-02-release.md`](docs/2026-10-02-release.md).
+The clarified scope, implementation gaps, and completion gates are in
+[`docs/growing-reference-contract.md`](docs/growing-reference-contract.md).
 
 ## Project goal
 
@@ -15,6 +21,14 @@ vulnerable to mismatch or missing-reference bias. It is intended to connect
 primer sequences, published claims, coordinate geometry, reference-panel
 composition, mismatch evidence, and exact source records without turning any
 single evidence layer into an unsupported amplification-probability claim.
+
+Its core sequence reference must grow with monthly releases. Every supported
+order needs general primer scoring and family-level evaluation. Ecological
+questions refine those same accession-level scores by taxon and region. The
+bee study alignment is retained for BeePrime only, with continued bee
+acquisition and preserved study provenance. General arthropod primers use a
+broad arthropod reference; aquatic arthropods require their own ecological
+selection and matching reference subset.
 
 The project separates four operational responsibilities:
 
@@ -32,6 +46,8 @@ The project separates four operational responsibilities:
 - Distinguish binding-site representation, mismatch penalty, reference
   coverage, empirical amplification, and geographic sampling.
 - Show exact denominators and retain accession- or sequence-level drill-down.
+- Treat monthly retained-sequence growth, family evaluation for every order,
+  and taxonomically controlled regional comparisons as core requirements.
 - Use marker-appropriate reference panels; do not silently transfer evidence
   from one primer, lineage, or study panel to another.
 - Make generated releases immutable, validated, attributable, and recoverable.
@@ -67,6 +83,11 @@ The project separates four operational responsibilities:
 
 - Established full-reference and study-specific panel policies so Gurten bee
   centroids are not silently reused as general COI evidence.
+- Added a local BeePrime reference-alignment choice for the unchanged
+  publication panel or a Bee-only expanded panel. The monthly builder verifies
+  bee lineage with NCBI taxonomy, preserves the exact 590 publication
+  accessions, and publishes score, sequence, alignment, and geography
+  artifacts. This change is tested locally but not yet published.
 - Added explicit site-completeness checks that withhold mismatch penalties when
   a reference does not span both primer sites.
 - Preserved the reported BeePrime wet-lab denominator discrepancy and labelled
@@ -112,7 +133,9 @@ The project separates four operational responsibilities:
   closure review.
 - The 2026.10.02 update fixes marker-switch selection, adds organism and dietary
   study tags, groups sources, and downloads the current mapped-pair metadata.
-  Publication and exact-commit verification are recorded in the release note.
+  PR #20 merged at `648dd55`; both PR and merged-main CI passed all 16 tests.
+  Posit publication, public switch/filter checks, and the 126-row/46-column
+  metadata download were verified. Details are recorded in the release note.
 - Cloud runtime excludes build-only PrimerMiner and readxl. A new custom pair
   can be mapped, but its interactive COI reference scoring needs PrimerMiner
   and remains unavailable on Connect Cloud.
@@ -122,14 +145,40 @@ The project separates four operational responsibilities:
 
 ## What still needs to be done
 
-### P0 — Finish release documentation and incident cleanup
+### P0 — Growing references and family evaluation across all orders
+
+- [ ] Persist and restore complete retained sequence files with their ledger
+      in immutable releases. Verify two successive builds on clean runners;
+      the current workflow restores only the ledger.
+- [ ] Rebuild or extend alignments when retained sequence input changes.
+- [ ] Attach accession-level order/family taxonomy to the growing panels and
+      publish coverage gaps plus primer summaries for every supported order
+      and its families, retaining unresolved assignments and denominators.
+- [ ] Publish and verify the new BeePrime publication/expanded alignment
+      choice. The local build added 30 NCBI-classified bees to the 590-accession
+      publication baseline; monthly clean-runner retention and the public app
+      still need verification. Preserve the publication panel and never route
+      the new bee records to general primers.
+- [ ] Route general arthropod primers to their broad arthropod reference,
+      covering all supported orders and families, with explicit panel identity.
+- [ ] Add a separate aquatic arthropod option with freshwater/marine
+      refinement, matching primer uses, and an ecology-supported reference
+      subset at family/finer-taxon resolution. Mixed-habitat orders cannot
+      establish aquatic membership for every sequence.
+- [ ] Expose family evaluation for every curated pair/order in the app. Current
+      full-order score artifacts have no family taxonomy, while current
+      lineage family views are restricted to BeePrime study evidence.
+- [ ] Extend accession geography to the growing panels and recalculate
+      ecological comparisons within order/family and source-resolved regions.
+- [ ] Pass the complete gates in `docs/growing-reference-contract.md` before
+      claiming that monthly growth or ecological family evaluation is done.
+
+### P1 — Release documentation and operational reliability
 
 - [x] Configure R2 and pass both marker builds, hard gates, and promotions.
 - [x] Verify public COI and ITS_FUNGAL pointers and one artifact checksum each.
-- [ ] Confirm the newly published application and metadata download.
+- [x] Confirm the newly published application and metadata download.
 - [ ] Review and close historic release-failure issues with successful evidence.
-
-### P1 — Stabilize release operations
 
 - [ ] Add a low-cost scheduled or dispatchable smoke test for configuration and
       public manifest reachability.
@@ -138,8 +187,8 @@ The project separates four operational responsibilities:
 - [ ] Test the pinned-summary fallback during an intentional R2 outage.
 - [ ] Document release ownership, credential rotation, rollback, and recovery
       from a partially uploaded staging directory.
-- [ ] Confirm that the monthly append-only accession ledger persists correctly
-      across two consecutive successful COI releases.
+- [ ] Verify release recovery retains both accession identities and sequences;
+      ledger persistence alone does not demonstrate sequence-panel growth.
 
 ### P2 — Finish active pilots
 
@@ -158,8 +207,8 @@ The project separates four operational responsibilities:
 
 ### P3 — Expand scientific coverage without weakening evidence standards
 
-- [ ] Complete append-only full-order COI production panels and taxonomy
-      partitions for general primer pairs.
+- [ ] Expand taxonomic depth beyond the required family level where supported
+      (subfamilies, genera and species), using the same growing panels.
 - [ ] Prioritize the next marker release among 12S, prokaryotic 16S, animal
       mitochondrial 16S, and 28S based on reference availability and user need.
 - [ ] Define marker-specific coordinate references, catalog schemas, reference
@@ -179,7 +228,12 @@ The project separates four operational responsibilities:
 
 ## Definition of the next milestone
 
-The next scientific milestone requires annotated binding sites, reviewed taxa,
-explicit reference-panel and scorable denominators, and traceable sources.
+The next scientific milestone is monthly retained-reference growth with
+general primer scores for every supported order, family scores and coverage
+gaps within every order, continued BeePrime-specific bee acquisition, a
+separate aquatic arthropod option, and regional comparisons computed within
+order/family from the appropriate reference. It requires
+annotated binding sites, reviewed taxa, explicit reference-panel and scorable
+denominators, traceable sources, and two consecutive clean-runner releases.
 Regional locality and a documented dietary use must remain distinct from
 species range, endemicity, and PCR performance.

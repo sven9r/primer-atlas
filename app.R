@@ -38,6 +38,8 @@ catalog_pairs <- read_csv("data/catalog/primer_pairs.csv", show_col_types = FALS
 catalog_oligos <- read_csv("data/catalog/oligos.csv", show_col_types = FALSE)
 catalog_links <- read_csv("data/catalog/pair_oligos.csv", show_col_types = FALSE)
 primer_facets <- read_csv("data/catalog/primer_pair_facets.csv", show_col_types = FALSE)
+pair_organisms <- read_csv("data/catalog/primer_pair_organisms.csv", show_col_types = FALSE)
+diet_uses <- read_csv("data/catalog/primer_pair_diet_uses.csv", show_col_types = FALSE)
 catalog_claims <- read_csv("data/catalog/claims.csv", show_col_types = FALSE)
 unite_catalog <- read_csv("data/catalog/unite_primers.csv", show_col_types = FALSE)
 pr2_18s_primers <- read_csv(
@@ -258,6 +260,69 @@ pr2_pair_geometry <- pr2_map_sets |>
   )
 pair_meta <- bind_rows(pair_meta, pr2_pair_geometry) |>
   arrange(marker_id, folmer_overlap_rank, pair_start)
+public_citations <- citations |> filter(key != "primer_sheet")
+catalog_download_rows <- function() {
+  collapse_values <- function(values) paste(unique(values[!is.na(values) & nzchar(values)]), collapse = " | ")
+  bind_rows(lapply(seq_len(nrow(pair_meta)), function(i) {
+    pair <- pair_meta[i, ]
+    oligos <- primers |> filter(pair_id == pair$pair_id)
+    forward <- oligos |> filter(direction == "forward") |> slice(1)
+    reverse <- oligos |> filter(direction == "reverse") |> slice(1)
+    source_keys <- unique(oligos$source_key)
+    source_rows <- citations |> filter(key %in% source_keys)
+    facets <- primer_facets |> filter(pair_id == pair$pair_id)
+    group_rows <- pair_organisms |> filter(pair_id == pair$pair_id)
+    diet <- diet_uses |> filter(pair_id == pair$pair_id)
+    group_source_keys <- unique(unlist(strsplit(group_rows$source_keys, "|", fixed = TRUE)))
+    diet_source_keys <- unique(unlist(strsplit(diet$source_key, "|", fixed = TRUE)))
+    claim <- catalog_claims |> filter(pair_id == pair$pair_id) |> slice(1)
+    catalog <- catalog_pairs |> filter(pair_id == pair$pair_id) |> slice(1)
+    get_one <- function(rows, column) if (nrow(rows)) as.character(rows[[column]][1]) else NA_character_
+    tibble(
+      pair_id = pair$pair_id, pair_label = pair$pair_label,
+      marker = pair$marker_id,
+      catalog_status = if (pair$marker_id == "18S") "documented_PR2_set" else get_one(catalog, "catalog_status"),
+      original_use_case = pair$use_case, intended_target = pair$target,
+      organism_groups = collapse_values(group_rows$group_id),
+      community_scope = collapse_values(group_rows$community_scope),
+      community_evidence_status = collapse_values(group_rows$evidence_status),
+      community_note = collapse_values(group_rows$note),
+      community_source_keys = collapse_values(group_source_keys),
+      community_source_urls = collapse_values(citations$url[match(group_source_keys, citations$key)]),
+      applications = collapse_values(facets$facet_value[facets$facet_type == "application"]),
+      environments = collapse_values(facets$facet_value[facets$facet_type == "environment"]),
+      design_intents = collapse_values(facets$facet_value[facets$facet_type == "design_intent"]),
+      forward_primer = get_one(forward, "primer_name"),
+      forward_sequence_5to3 = get_one(forward, "sequence"),
+      reverse_primer = get_one(reverse, "primer_name"),
+      reverse_sequence_5to3 = get_one(reverse, "sequence"),
+      reported_amplicon_bp = if (nrow(catalog)) catalog$reported_amplicon_bp[1] else suppressWarnings(as.numeric(get_one(forward, "reported_amplicon_bp"))),
+      reported_annealing_c = if (nrow(catalog)) catalog$reported_ta_c[1] else NA_real_,
+      map_start = pair$pair_start, map_end = pair$pair_end,
+      forward_map_start = pair$forward_start, forward_map_end = pair$forward_end,
+      reverse_map_start = pair$reverse_start, reverse_map_end = pair$reverse_end,
+      mapped_amplicon_bp = pair$aligned_amplicon_bp,
+      informative_bp = pair$targeted_region_bp,
+      coordinate_reference = pair$reference_accession,
+      placement_status = pair$placement_status,
+      dietary_predator = collapse_values(diet$predator),
+      dietary_sample = collapse_values(diet$sample_material),
+      dietary_target_role = collapse_values(diet$amplified_role),
+      dietary_study_use = collapse_values(diet$study_use),
+      dietary_evidence_status = collapse_values(diet$evidence_status),
+      dietary_source_key = collapse_values(diet$source_key),
+      dietary_source_urls = collapse_values(citations$url[match(diet_source_keys, citations$key)]),
+      dietary_note = collapse_values(diet$note),
+      dietary_study_records = if (nrow(diet)) as.character(jsonlite::toJSON(diet, dataframe = "rows", auto_unbox = TRUE)) else "[]",
+      source_keys = collapse_values(source_keys),
+      source_citations = collapse_values(source_rows$short_citation),
+      source_titles = collapse_values(source_rows$title),
+      source_dois = collapse_values(source_rows$doi),
+      source_urls = collapse_values(source_rows$url),
+      claim_note = get_one(claim, "claim_note")
+    )
+  }))
+}
 its_documented_pair_ids <- pair_meta$pair_id[pair_meta$marker_id == "ITS_FUNGAL"]
 its_documented_pair_index <- primers |>
   filter(pair_id %in% its_documented_pair_ids) |>
@@ -499,6 +564,30 @@ body { letter-spacing:-.01em; }
 .navbar > .container-fluid { flex-wrap:nowrap; }
 .navbar-nav { flex-wrap:nowrap; overflow-x:auto; }
 .navbar-brand { font-family:'DM Serif Display',serif; font-size:1.08rem; white-space:nowrap; }
+.start-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(225px,1fr)); gap:14px; margin:12px 0 20px; }
+.start-card { background:#fffdf8; border:1px solid var(--line); border-radius:16px; padding:17px; }
+.start-card h3 { font-size:1.18rem; margin:0 0 8px; }
+.start-card p { min-height:4.5em; color:#536159; font-size:.9rem; }
+.readiness-list { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px; margin-top:12px; }
+.readiness-list > div { border-left:4px solid var(--green); background:#fffdf8; padding:10px 13px; }
+.readiness-list strong { display:block; }
+.readiness-list span { display:block; color:#536159; font-size:.88rem; }
+.map-scroll-hint { display:none; }
+@media (max-width: 850px) {
+  .primer-map-page > .bslib-sidebar-layout { grid-template-columns:minmax(0,1fr)!important; }
+  .primer-map-page > .bslib-sidebar-layout > .sidebar {
+    grid-column:1!important; grid-row:1!important; width:auto!important;
+    border-right:0!important; border-bottom:1px solid var(--line)!important;
+  }
+  .primer-map-page > .bslib-sidebar-layout > .main {
+    grid-column:1!important; grid-row:2!important; min-width:0;
+  }
+  .primer-map-page .collapse-toggle,
+  .primer-map-page .bslib-sidebar-resize-handle { display:none!important; }
+  .primer-map-page #pair_select { max-height:300px; overflow-y:auto; }
+  .primer-map-page .metric-row { grid-template-columns:repeat(2,minmax(0,1fr))!important; }
+  .primer-map-page .map-scroll-hint { display:block; }
+}
 .institution-banner { display:flex; align-items:center; justify-content:space-between;
   gap:24px; padding:9px 24px; background:#fffdf8; border-bottom:1px solid var(--line); }
 .banner-home { display:flex; align-items:center; gap:14px; min-width:250px; }
@@ -1212,14 +1301,50 @@ ui <- page_navbar(
     uiOutput("data_status")
   ),
   nav_panel(
-    "Primer map",
+    "Start here", value = "start",
     div(
       class = "container-fluid",
+      hero,
+      p("Choose what you want to investigate. Each view keeps its own filters and shows the evidence behind its results."),
+      div(
+        class = "start-grid",
+        div(class = "start-card", h3("Find primers"),
+            p("Choose an organism group and marker, then browse documented primer pairs and where they bind."),
+            actionButton("go_find", "Find primers", class = "btn-primary btn-sm")),
+        div(class = "start-card", h3("Check COI reference fit"),
+            p("Compare COI reference fit and binding-site availability across animal groups. Open a group to inspect its sequences when available."),
+            actionButton("go_fit", "Check COI reference fit", class = "btn-primary btn-sm")),
+        div(class = "start-card", h3("Compare regions"),
+            p("Compare COI reference sequences from two reported source geographies, with sample sizes and missing locations visible."),
+            actionButton("go_regions", "Compare reference regions", class = "btn-primary btn-sm")),
+        div(class = "start-card", h3("Inspect evidence"),
+            p("Filter taxa and accessions, review original sources, and download the records behind a result."),
+            actionButton("go_taxa", "Inspect taxa and sequences", class = "btn-primary btn-sm"),
+            actionButton("go_sources", "Read sources and methods", class = "btn-outline-secondary btn-sm mt-2"))
+      ),
+      card(
+        card_header("What is ready to explore?"),
+        div(class = "readiness-list",
+            div(strong("Animal COI · active"), span("Primer map, reference fit, taxon detail, and reference-region comparison. Results depend on the selected reference panel.")),
+            div(strong("Fungal ITS · pilot"), span("121 catalog primers and eight documented pairs. The app map uses one coordinate reference; a separate 48-sequence scoring pilot is documented in the repository and is not shown here.")),
+            div(strong("Eukaryotic 18S · pilot"), span("321 catalog primers and 123 documented sets. Ninety-three sets have drawable geometry; this is not broad taxonomic performance evidence.")),
+            div(strong("12S, 16S, 28S · planned"), span("Marker targets are documented, but these markers have no interactive evidence view yet."))
+        ),
+        p(class = "tiny mt-3 mb-0", "Reference fit and sampling describe available sequences. They do not predict PCR success or establish a species' geographic range. The Hawaiʻi–Madagascar audit is separate research documented in the repository and is not loaded into this app."),
+        p(class = "tiny mt-3 mb-0", "App version 2026.10.02 · Organism and dietary-use metadata")
+      )
+    )
+  ),
+  nav_panel(
+    "Find primers", value = "find",
+    div(
+      class = "container-fluid primer-map-page",
       hero,
       layout_sidebar(
         sidebar = sidebar(
           width = 340,
           h4("Build the view"),
+          tags$a(href = "#primer-map-card", class = "btn btn-outline-success btn-sm mb-3", "Jump to primer map"),
           div(
             class = "organism-picker",
             radioButtons(
@@ -1240,9 +1365,15 @@ ui <- page_navbar(
           ),
           selectInput(
             "application_filter", "Applications",
-            choices = c("barcoding", "bulk_community", "edna", "diet"),
+            choices = c(
+              "DNA barcoding" = "barcoding",
+              "Bulk community" = "bulk_community",
+              "Environmental DNA" = "edna",
+              "Dietary metabarcoding" = "diet"
+            ),
             multiple = TRUE
           ),
+          div(class = "tiny mb-2", "Dietary use is linked to a study, predator, sample material, and amplified target. See the map details or download the catalog."),
           selectInput(
             "environment_filter", "Environments",
             choices = c("freshwater", "marine", "terrestrial", "host_associated"),
@@ -1315,7 +1446,6 @@ ui <- page_navbar(
           ),
           tags$details(
             class = "custom-panel",
-            open = "open",
             tags$summary("Add a custom primer pair"),
             selectInput(
               "custom_marker", "Marker for this pair",
@@ -1363,6 +1493,7 @@ ui <- page_navbar(
           uiOutput("marker_coordinate_note")
         ),
         card(
+          id = "primer-map-card",
           full_screen = TRUE,
           card_header(uiOutput("map_card_title", inline = TRUE)),
           uiOutput("combination_browser_ui"),
@@ -1377,6 +1508,7 @@ ui <- page_navbar(
             span(span(class = "legend-line legend-informative"), "Amplicon − primers (informative)"),
             span(span(class = "legend-line legend-reverse"), "Reverse primer")
           ),
+          p(class = "map-scroll-hint tiny", "Swipe horizontally across the map to see later positions and source columns."),
           uiOutput("primer_map"),
           uiOutput("its_map_catalog_ui"),
           uiOutput("custom_diagnostic_selector"),
@@ -1386,7 +1518,7 @@ ui <- page_navbar(
     )
   ),
   nav_panel(
-    "Order lens",
+    "Check taxonomic fit · COI", value = "fit",
     div(
       class = "container-fluid",
       hero,
@@ -1534,7 +1666,7 @@ ui <- page_navbar(
               class = "btn-sm"
             ),
             actionButton(
-              "open_lineage", "Open in Lineage Explorer",
+              "open_lineage", "Inspect taxa and sequences",
               class = "btn-sm btn-outline-success"
             ),
             p(
@@ -1727,7 +1859,7 @@ ui <- page_navbar(
     )
   ),
   nav_panel(
-    "Lineage Explorer",
+    "Inspect taxa & sequences", value = "taxa",
     div(
       class = "container-fluid",
       hero,
@@ -1740,7 +1872,7 @@ ui <- page_navbar(
       layout_sidebar(
         sidebar = sidebar(
           width = 330,
-          h4("Persistent evidence scope"),
+          h4("Filter evidence"),
           div(
             class = "organism-picker",
             radioButtons(
@@ -1781,7 +1913,7 @@ ui <- page_navbar(
     )
   ),
   nav_panel(
-    "Region comparison",
+    "Compare regions · COI", value = "regions",
     div(
       class = "container-fluid",
       hero,
@@ -1875,7 +2007,7 @@ ui <- page_navbar(
     )
   ),
   nav_panel(
-    "Thermal window",
+    "Check temperatures", value = "thermal",
     div(
       class = "container-fluid",
       hero,
@@ -1900,15 +2032,17 @@ ui <- page_navbar(
     )
   ),
   nav_panel(
-    "Evidence & citations",
+    "Sources & methods", value = "sources",
     div(
       class = "container-fluid",
       hero,
       layout_columns(
         col_widths = c(7, 5),
         card(
-          card_header("Evidence registry"),
+          card_header("Published evidence and reference data"),
           downloadButton("download_bib", "Download BibTeX", class = "btn-primary btn-sm"),
+          downloadButton("download_catalog", "Download primer atlas metadata (CSV)", class = "btn-outline-success btn-sm"),
+          p(class = "tiny mt-2", "The CSV contains one row per mapped primer pair, with oligo sequences, target and application tags, study uses, map coordinates, limitations, and source links. It grows with the curated atlas."),
           uiOutput("citation_list")
         ),
         card(
@@ -1956,6 +2090,16 @@ ui <- page_navbar(
 )
 
 server <- function(input, output, session) {
+  navigate_from <- function(button, destination) {
+    observeEvent(input[[button]], {
+      updateNavbarPage(session, "main_nav", selected = destination)
+    })
+  }
+  navigate_from("go_find", "find")
+  navigate_from("go_fit", "fit")
+  navigate_from("go_regions", "regions")
+  navigate_from("go_taxa", "taxa")
+  navigate_from("go_sources", "sources")
   marker_choice_labels <- function(rows) {
     setNames(
       rows$marker_id,
@@ -1979,10 +2123,54 @@ server <- function(input, output, session) {
       pair_meta$pair_id[pair_meta$marker_id == marker_id]
     )
   }
-  pair_choices_for_marker <- function(marker_id) {
+  arthropod_off_target_ids <- catalog_claims |>
+    filter(
+      expanded_reference_role == "off_target_only",
+      grepl("Arthropod", contrast_taxa, ignore.case = TRUE)
+    ) |>
+    pull(pair_id) |>
+    unique()
+  label_pair_usage <- function(rows) {
+    off_target <- rows$pair_id %in% arthropod_off_target_ids
+    rows$pair_label[off_target] <- paste0(
+      rows$pair_label[off_target], " · ", rows$target[off_target],
+      " target; arthropod off-target check only"
+    )
+    rows
+  }
+  pair_choices_for_marker <- function(marker_id, group_id = input$map_organism,
+                                      apply_filters = TRUE) {
     rows <- pair_meta |>
       filter(marker_id == !!marker_id) |>
-      arrange(pair_start, pair_label)
+      arrange(pair_start, pair_label) |>
+      label_pair_usage()
+    group_filter_active <- !is.null(group_id) && (
+      (identical(marker_id, "COI") && group_id %in% c("ARTHROPODS", "FISH", "METAZOA")) ||
+        (identical(marker_id, "18S") && group_id == "FUNGI")
+    )
+    if (group_filter_active) {
+      group_rows <- pair_organisms |> filter(group_id == !!group_id)
+      rows <- rows |> filter(pair_id %in% group_rows$pair_id)
+      scope_index <- match(rows$pair_id, group_rows$pair_id)
+      scope <- group_rows$community_scope[scope_index]
+      scope <- paste0(
+        scope,
+        ifelse(group_rows$evidence_status[scope_index] == "published use", "",
+               paste0("; ", group_rows$evidence_status[scope_index]))
+      )
+      rows$pair_label <- paste0(rows$pair_label, " · ", scope)
+    }
+    if (apply_filters) {
+      eligible <- filter_pair_facets(
+        rows$pair_id, primer_facets,
+        list(
+          application = input$application_filter,
+          environment = input$environment_filter,
+          design_intent = input$intent_filter
+        )
+      )
+      rows <- rows |> filter(pair_id %in% eligible)
+    }
     setNames(rows$pair_id, rows$pair_label)
   }
   update_pair_selector <- function(marker_id, choices, selected) {
@@ -2000,40 +2188,35 @@ server <- function(input, output, session) {
     }
   }
   output$pair_selector_ui <- renderUI({
-    marker_id <- input$map_marker
-    if (identical(marker_id, "ITS_FUNGAL")) {
-      return(div(
-        class = "callout tiny",
-        strong("ITS pairs are controlled by the primer checkboxes above the map. "),
-        "Use Select all or Clear here as shortcuts."
-      ))
-    }
-    choices <- pair_choices_for_marker(marker_id)
-    current <- if (identical(marker_id, "18S")) {
-      isolate(input$pair_select_18s)
-    } else {
-      isolate(input$pair_select)
-    }
-    selected <- intersect(current, unname(choices))
-    if (!length(selected)) {
-      selected <- intersect(default_map_pairs(marker_id), unname(choices))
-    }
-    if (identical(marker_id, "18S")) {
-      selectizeInput(
+    tagList(
+      conditionalPanel(
+        condition = "input.map_marker == 'COI'",
+        checkboxGroupInput(
+          "pair_select", "Documented primer combinations",
+          choices = pair_choices_for_marker("COI", "ALL", apply_filters = FALSE),
+          selected = default_map_pairs("COI")
+        )
+      ),
+      conditionalPanel(
+        condition = "input.map_marker == '18S'",
+        selectizeInput(
         "pair_select_18s", "Documented 18S combinations on map",
-        choices = choices, selected = selected, multiple = TRUE,
+        choices = pair_choices_for_marker("18S", "ALL", apply_filters = FALSE),
+        selected = default_map_pairs("18S"), multiple = TRUE,
         options = list(
           placeholder = "Search primer names or add a combination",
           maxItems = 25,
           plugins = list("remove_button")
         )
+        )
+      ),
+      conditionalPanel(
+        condition = "input.map_marker == 'ITS_FUNGAL'",
+        div(class = "callout tiny",
+            strong("ITS pairs are controlled by the primer checkboxes above the map. "),
+            "Use Select all or Clear here as shortcuts.")
       )
-    } else {
-      checkboxGroupInput(
-        "pair_select", "Documented primer combinations",
-        choices = choices, selected = selected
-      )
-    }
+    )
   })
   selected_map_pairs <- reactive({
     if (identical(input$map_marker, "ITS_FUNGAL")) {
@@ -2063,6 +2246,10 @@ server <- function(input, output, session) {
       session, "map_marker",
       choices = marker_choice_labels(rows), selected = selected
     )
+    if (selected %in% c("COI", "18S")) {
+      choices <- pair_choices_for_marker(selected, input$map_organism)
+      update_pair_selector(selected, choices, unname(choices))
+    }
   }, ignoreInit = FALSE)
   observeEvent(input$lineage_organism, {
     rows <- marker_rows_for_organism(input$lineage_organism, released_only = TRUE)
@@ -2098,6 +2285,11 @@ server <- function(input, output, session) {
       character()
     )
   })
+  observeEvent(input$reset_map_facets, {
+    updateSelectInput(session, "application_filter", selected = character())
+    updateSelectInput(session, "environment_filter", selected = character())
+    updateSelectInput(session, "intent_filter", selected = character())
+  })
 
   custom_location <- reactiveVal(NULL)
   custom_pair_collection <- reactiveVal(list())
@@ -2107,9 +2299,16 @@ server <- function(input, output, session) {
   observeEvent(input$map_marker, {
     marker_id <- input$map_marker
     marker_pairs <- pair_meta |> filter(marker_id == !!marker_id)
-    choices <- setNames(marker_pairs$pair_id, marker_pairs$pair_label)
-    selected <- intersect(default_map_pairs(marker_id), marker_pairs$pair_id)
-    update_pair_selector(marker_id, choices, selected)
+    choices <- pair_choices_for_marker(marker_id)
+    selected <- if (marker_id %in% c("COI", "18S") &&
+                    !is.null(input$map_organism) && input$map_organism != "ALL") {
+      unname(choices)
+    } else {
+      intersect(default_map_pairs(marker_id), unname(choices))
+    }
+    if (!identical(marker_id, "ITS_FUNGAL")) {
+      update_pair_selector(marker_id, choices, selected)
+    }
     if (nrow(marker_pairs)) {
       range <- range(marker_pairs$aligned_amplicon_bp, na.rm = TRUE)
       updateSliderInput(
@@ -2128,9 +2327,6 @@ server <- function(input, output, session) {
       updateSelectInput(session, "intent_filter", selected = character())
     }
     if (marker_id != "COI") updateSelectInput(session, "map_sort", selected = "binding_site")
-    session$onFlushed(function() {
-      update_pair_selector(marker_id, choices, selected)
-    }, once = TRUE)
   }, ignoreInit = FALSE)
 
   output$map_card_title <- renderUI({
@@ -2766,6 +2962,15 @@ server <- function(input, output, session) {
     x <- facet_match(x, "application", input$application_filter)
     x <- facet_match(x, "environment", input$environment_filter)
     x <- facet_match(x, "design_intent", input$intent_filter)
+    group_filter_active <- !is.null(input$map_organism) && (
+      (identical(input$map_marker, "COI") &&
+         input$map_organism %in% c("ARTHROPODS", "FISH", "METAZOA")) ||
+        (identical(input$map_marker, "18S") && input$map_organism == "FUNGI")
+    )
+    if (group_filter_active) {
+      eligible <- pair_organisms$pair_id[pair_organisms$group_id == input$map_organism]
+      x <- x |> filter(pair_id %in% eligible)
+    }
     selected <- selected_map_pairs()
     if (is.null(selected) || !length(selected)) {
       x <- x[0, ]
@@ -2798,10 +3003,40 @@ server <- function(input, output, session) {
     } else {
       input$map_sort
     }
-    sort_primer_map_rows(pair_meta |> filter(marker_id == input$map_marker), sort_mode)
+    rows <- sort_primer_map_rows(
+      pair_meta |> filter(marker_id == input$map_marker), sort_mode
+    ) |> label_pair_usage()
+    group_filter_active <- !is.null(input$map_organism) && (
+      (identical(input$map_marker, "COI") &&
+         input$map_organism %in% c("ARTHROPODS", "FISH", "METAZOA")) ||
+        (identical(input$map_marker, "18S") && input$map_organism == "FUNGI")
+    )
+    if (group_filter_active) {
+      group_rows <- pair_organisms |> filter(group_id == input$map_organism)
+      rows <- rows |> filter(pair_id %in% group_rows$pair_id)
+      scope_index <- match(rows$pair_id, group_rows$pair_id)
+      rows$pair_label <- paste0(
+        rows$pair_label, " · ",
+        group_rows$community_scope[scope_index],
+        ifelse(group_rows$evidence_status[scope_index] == "published use", "",
+               paste0("; ", group_rows$evidence_status[scope_index]))
+      )
+    }
+    eligible <- filter_pair_facets(
+      rows$pair_id, primer_facets,
+      list(
+        application = input$application_filter,
+        environment = input$environment_filter,
+        design_intent = input$intent_filter
+      )
+    )
+    rows <- rows |> filter(pair_id %in% eligible)
+    rows
   })
 
   pair_choice_label_signature <- reactiveVal(NULL)
+  pair_choice_group <- reactiveVal(NULL)
+  pair_choice_available <- reactiveVal(character())
   observe({
     if (identical(input$map_marker, "ITS_FUNGAL")) return()
     choices <- number_primer_choice_labels(
@@ -2813,10 +3048,23 @@ server <- function(input, output, session) {
     marker_id <- input$map_marker
     input_id <- if (identical(marker_id, "18S")) "pair_select_18s" else "pair_select"
     current <- isolate(selected_map_pairs())
-    if (is.null(current)) return()
+    if (is.null(current)) current <- character()
+    group_key <- paste(marker_id, input$map_organism, sep = "|")
+    group_changed <- !identical(group_key, pair_choice_group())
+    previous_available <- isolate(pair_choice_available())
+    selected <- if (group_changed && marker_id %in% c("COI", "18S") &&
+                    !is.null(input$map_organism) && input$map_organism != "ALL") {
+      unname(choices)
+    } else if (group_changed) {
+      intersect(default_map_pairs(marker_id), unname(choices))
+    } else {
+      union(intersect(current, unname(choices)), setdiff(unname(choices), previous_available))
+    }
     pair_choice_label_signature(signature)
+    pair_choice_group(group_key)
+    pair_choice_available(unname(choices))
     freezeReactiveValue(input, input_id)
-    update_pair_selector(marker_id, choices, current)
+    update_pair_selector(marker_id, choices, selected)
   })
 
   displayed_primers <- reactive({
@@ -3136,8 +3384,24 @@ server <- function(input, output, session) {
 
   output$primer_map <- renderUI({
     x <- sorted_filtered_pairs()
-    if (!nrow(x)) return(div(class = "callout", "No primer pairs match the current filters."))
+    if (!nrow(x)) return(div(
+      class = "callout",
+      "No primer pairs match the current filters. ",
+      if (length(input$application_filter) || length(input$environment_filter) ||
+          length(input$intent_filter)) {
+        tagList(
+          "The application, environment, or design filter may not apply to this marker. ",
+          actionButton("reset_map_facets", "Clear these filters", class = "btn-outline-secondary btn-sm")
+        )
+      }
+    ))
     map_primers <- displayed_primers()
+    sodium_mM <- if (is.null(input$sodium)) 50 else input$sodium
+    ta_offset_c <- if (is.null(input$ta_offset)) 4 else input$ta_offset
+    thermal_rows <- pair_thermal_summary(
+      map_primers |> filter(pair_id %in% x$pair_id),
+      sodium_mM, ta_offset_c
+    )
     marker <- marker_registry |> filter(marker_id == input$map_marker) |> slice(1)
     landmarks <- marker_landmarks |> filter(marker_id == input$map_marker) |> arrange(display_order)
     reference_length <- marker$reference_length
@@ -3262,11 +3526,64 @@ server <- function(input, output, session) {
       r2 <- scale_x(row$reverse_end)
       forward_source <- citations |> filter(key == f$source_key[1]) |> slice(1)
       reverse_source <- citations |> filter(key == r$source_key[1]) |> slice(1)
-      use_tags <- primer_use_tags(row$use_case, row$target)
+      application_values <- primer_facets$facet_value[
+        primer_facets$pair_id == row$pair_id &
+          primer_facets$facet_type == "application"
+      ]
+      application_labels <- c(
+        barcoding = "DNA barcoding", bulk_community = "bulk community",
+        edna = "environmental DNA", diet = "dietary metabarcoding"
+      )
+      use_tags <- if (length(application_values)) {
+        unname(application_labels[application_values])
+      } else {
+        primer_use_tags(row$use_case, row$target)
+      }
+      diet <- diet_uses |> filter(pair_id == row$pair_id)
+      diet_detail <- if (nrow(diet)) paste(paste0(
+        "\nDocumented study use: ", diet$study_use,
+        "; predator: ", diet$predator,
+        "; sample: ", diet$sample_material,
+        "; amplified target: ", diet$amplified_role,
+        "\nDiet evidence status: ", diet$evidence_status,
+        "; source: ", diet$source_key,
+        "\nUse note: ", diet$note
+      ), collapse = "\n") else ""
+      pair_temperatures <- thermal_rows |>
+        filter(pair_id == row$pair_id) |>
+        arrange(match(direction, c("forward", "reverse")))
+      tm_detail <- if (nrow(pair_temperatures)) {
+        paste0(
+          "\nEstimated primer Tm (", sodium_mM, " mM salt): ",
+          paste(sprintf(
+            "%s %.1f–%.1f °C",
+            pair_temperatures$primer_name,
+            pair_temperatures$tm_min,
+            pair_temperatures$tm_max
+          ), collapse = "; "),
+          "\nSuggested pair Ta (starting estimate): ",
+          sprintf("%.1f–%.1f °C", pair_temperatures$ta_low[1], pair_temperatures$ta_high[1]),
+          "\nReported Ta: ",
+          if (all(is.na(pair_temperatures$reported_ta_c))) {
+            "not reported"
+          } else {
+            paste0(
+              paste(unique(na.omit(pair_temperatures$reported_ta_c)), collapse = ", "),
+              " °C"
+            )
+          }
+        )
+      } else "\nTemperatures: unavailable for this pair"
       tooltip <- paste0(
         "Map row ", i, ": ", row$pair_label,
         "\nTags: ", paste(use_tags, collapse = " · "),
+        "\nIntended target: ", row$target,
+        diet_detail,
+        if (row$pair_id %in% arthropod_off_target_ids) {
+          "\nArthropod reference: off-target binding check only; target coverage not established here"
+        } else "",
         "\nPrimers: ", f$primer_name, " + ", r$primer_name,
+        tm_detail,
         "\nGene coordinates: ", row$pair_start, "–", row$pair_end,
         "\nAmplicon + primers: ", row$aligned_amplicon_bp, " bp",
         "\nAmplicon − primers (informative): ", row$targeted_region_bp, " bp",
@@ -3288,12 +3605,20 @@ server <- function(input, output, session) {
         tags$circle(
           cx = number_x, cy = y, r = 13,
           fill = "#17241d",
+          class = "primer-tooltip-target",
+          `data-tooltip` = tooltip,
+          `aria-label` = paste0("Show map-row details for ", row$pair_label),
+          tabindex = "0",
           tags$title(number_tooltip)
         ),
         tags$text(
           x = number_x, y = y + 4,
           `text-anchor` = "middle",
           fill = "#fffdf8", `font-size` = 11, `font-weight` = 800,
+          class = "primer-tooltip-target",
+          `data-tooltip` = tooltip,
+          `aria-label` = paste0("Show map-row details for ", row$pair_label),
+          tabindex = "0",
           i,
           tags$title(number_tooltip)
         ),
@@ -5523,7 +5848,7 @@ server <- function(input, output, session) {
     updateSelectInput(session, "lineage_marker", selected = "COI")
     updateSelectizeInput(session, "lineage_pair", selected = input$detail_pair)
     updateSelectizeInput(session, "lineage_target", selected = input$detail_order)
-    updateNavbarPage(session, "main_nav", selected = "Lineage Explorer")
+    updateNavbarPage(session, "main_nav", selected = "taxa")
   })
 
   observeEvent(input$lineage_marker, {
@@ -5771,15 +6096,16 @@ server <- function(input, output, session) {
     read_pair_sequence_evidence(input$region_pair)
   }) |> bindCache(input$region_pair)
 
-  observe({
+  observeEvent(input$region_pair, {
     scores <- region_pair_scores()
     orders <- if (nrow(scores) && "order" %in% names(scores)) {
       sort(unique(na.omit(scores$order[nzchar(scores$order)])))
     } else {
       character()
     }
-    current <- if (!is.null(input$region_order) && input$region_order %in% c("All", orders)) {
-      input$region_order
+    current_order <- isolate(input$region_order)
+    current <- if (!is.null(current_order) && current_order %in% c("All", orders)) {
+      current_order
     } else {
       "All"
     }
@@ -6015,8 +6341,7 @@ server <- function(input, output, session) {
   })
 
   output$citation_list <- renderUI({
-    tagList(lapply(seq_len(nrow(citations)), function(i) {
-      row <- citations[i, ]
+    citation_card <- function(row) {
       div(
         class = "cite-card",
         span(class = paste("pill", if (row$category == "primer") "coral"), row$category),
@@ -6028,6 +6353,22 @@ server <- function(input, output, session) {
           row$note
         ),
         citation_link(row, "Open source ↗")
+      )
+    }
+    sections <- list(
+      "Primer and dietary studies" = public_citations |> filter(category == "primer", !grepl("^pr2_18s_set_", key)),
+      "Validation studies" = public_citations |> filter(category == "validation"),
+      "Original fungal primer references" = public_citations |> filter(category == "original primer reference"),
+      "PR2 documented 18S sets" = public_citations |> filter(grepl("^pr2_18s_set_", key)),
+      "Reference data and compilations" = public_citations |> filter(category %in% c("data", "primer catalog", "taxonomy")),
+      "Methods and software" = public_citations |> filter(category %in% c("method", "software"))
+    )
+    tagList(lapply(seq_along(sections), function(i) {
+      rows <- sections[[i]]
+      tags$details(
+        open = if (i == 1L) "open" else NULL,
+        tags$summary(paste0(names(sections)[i], " (", nrow(rows), ")")),
+        lapply(seq_len(nrow(rows)), function(j) citation_card(rows[j, ]))
       )
     }))
   })
@@ -6043,8 +6384,8 @@ server <- function(input, output, session) {
   output$download_bib <- downloadHandler(
     filename = "coi-primer-atlas-references.bib",
     content = function(file) {
-      entries <- vapply(seq_len(nrow(citations)), function(i) {
-        row <- citations[i, ]
+      entries <- vapply(seq_len(nrow(public_citations)), function(i) {
+        row <- public_citations[i, ]
         key <- row$key
         doi_line <- if (!is.na(row$doi) && nzchar(row$doi)) paste0("  doi = {", row$doi, "},\n") else ""
         paste0(
@@ -6058,6 +6399,11 @@ server <- function(input, output, session) {
       }, character(1))
       writeLines(entries, file)
     }
+  )
+
+  output$download_catalog <- downloadHandler(
+    filename = function() paste0("primer-atlas-metadata-", Sys.Date(), ".csv"),
+    content = function(file) readr::write_csv(catalog_download_rows(), file, na = "")
   )
 }
 

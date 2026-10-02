@@ -5,6 +5,62 @@ same `id` as their counterparts in `patchnotes.json`. A patchnote distinguishes
 repository changes from external deployment actions so that prepared code is
 not mistaken for a completed release.
 
+## 2026-10-02 — Primer Atlas version 2026.10.02
+
+**ID:** `2026-10-02-primer-atlas-version`
+
+**Status:** Final verification underway; publication pending.
+
+- Prepare the persistent marker selectors, source-backed organism/diet records,
+  grouped publications, and metadata download from the September local work.
+- Fix empty-filter recovery and preserve manual deselections when sorting.
+- Retain PR2 reported amplicon lengths and all study-specific dietary records
+  in the 126-pair, 46-column CSV.
+- Add the map-details test to CI and verify new catalog file checksums in the
+  Connect bundle. Research pilot outputs are excluded from that bundle.
+- Update the remaining scientific backlog and correct the old COI-blocked
+  status: October monthly run 36864394345 passed both marker promotions.
+
+Current verification and publication details:
+[`docs/2026-10-02-release.md`](docs/2026-10-02-release.md).
+
+## 2026-09-24 — Primer map selection and evidence metadata
+
+**ID:** `2026-09-24-primer-map-use-tags`
+
+**Status:** Local work completed and uncommitted; no deployment.
+
+- Kept primer controls mounted across marker switches and checked the
+  Fungi-to-Arthropods return in the local app.
+- Added source-backed organism and dietary-use records. The Arthropods view
+  selects 20 scoped COI pairs; Dietary metabarcoding narrows it to four
+  published-use pairs.
+- Added a growing mapped-pair metadata CSV download, grouped public evidence
+  sources, and removed the laboratory intake sheet from the public source list.
+- Corrected the Jusino et al. 2019 DOI and distinguished published dietary use
+  from a tested variant, an exploratory hybrid, and blood-meal barcoding.
+
+## 2026-09-23 — Local range, sequence, and navigation work
+
+**ID:** `2026-09-23-local-research-navigation`
+
+**Status:** Local work completed and uncommitted; no release or deployment.
+
+- Added 11 study regions, four source records, an evidence schema, and range
+  decision rules. The taxon-region evidence table has zero reviewed rows.
+- Recorded a bounded BOLD Crambidae feasibility snapshot: 805 unique records
+  (283 Hawaiʻi, 522 Madagascar), with 220 and 517 preliminary sequence-QC
+  passes. The regional COI scheduled automation is paused and did not run;
+  local audit files exist independently of that job.
+- Completed a local 48-accession fungal ITS scoring pilot across eight phyla.
+  ITS3 is scorable in 48 records; ITS4 and four documented ITS2 pairs in four
+  records each. Accession-level outputs are Git ignored.
+- Added a local Start here navigation prototype and verified its routes and
+  existing COI/ITS views. Review of reference-fit wording is still needed.
+
+The exact files, counts, scientific limits, overlap, and next actions are in
+[`docs/2026-09-23-day-end-status.md`](docs/2026-09-23-day-end-status.md).
+
 ## 2026-09-23 — Connect Cloud readxl dependency repair
 
 **ID:** `2026-09-23-connect-readxl-runtime-repair`

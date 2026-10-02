@@ -43,6 +43,9 @@ data/derived/**
 !data/derived/targeted_zbj_subfamily_summary.csv
 !data/derived/targeted_zbj_study_group_summary.csv
 !data/derived/targeted_zbj_sequence_scores.csv.gz
+!data/derived/regional_coi_audit/
+!data/derived/regional_coi_audit/bold_summary_counts.csv
+!data/derived/regional_coi_audit/bold_crambidae_record_audit.csv
 
 data/releases/**
 !data/releases/COI/

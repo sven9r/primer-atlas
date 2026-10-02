@@ -1,0 +1,12 @@
+region_id,region_name,region_level,parent_region_id,scope_note
+HI_ARCH,Hawaiian Archipelago,archipelago,,Hawaiian Islands from Kure to Hawaiʻi; Bishop Museum checklist scope; excludes other Pacific islands
+HI_HAWAII,Hawaiʻi Island,island,HI_ARCH,Island of Hawaiʻi only
+HI_MAUI,Maui,island,HI_ARCH,Island of Maui only
+HI_KAHOOLAWE,Kahoʻolawe,island,HI_ARCH,Island of Kahoʻolawe only
+HI_LANAI,Lānaʻi,island,HI_ARCH,Island of Lānaʻi only
+HI_MOLOKAI,Molokaʻi,island,HI_ARCH,Island of Molokaʻi only
+HI_OAHU,Oʻahu,island,HI_ARCH,Island of Oʻahu only
+HI_KAUAI,Kauaʻi,island,HI_ARCH,Island of Kauaʻi only
+HI_NIIHAU,Niʻihau,island,HI_ARCH,Island of Niʻihau only
+HI_NWHI,Northwestern Hawaiian Islands,island_group,HI_ARCH,Kure through Nihoa; use named atoll/island in source note when available
+MG_COUNTRY,Madagascar,country,,Republic of Madagascar including offshore islands within the country; country-level evidence is not main-island-only evidence

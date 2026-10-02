@@ -1,9 +1,11 @@
 # Primer Atlas project status
 
-**Status date:** 2026-09-15
+**Status date:** 2026-10-02
 
-**Current phase:** Scientific and interface foundation implemented; first
-production release automation and public Shiny hosting are being brought online.
+**Current phase:** Public Shiny hosting and both monthly marker releases are operational.
+The 2026.10.02 interface/catalog update is undergoing final publication checks.
+Current release evidence and the remaining backlog are in
+[`docs/2026-10-02-release.md`](docs/2026-10-02-release.md).
 
 ## Project goal
 
@@ -99,61 +101,33 @@ The project separates four operational responsibilities:
 
 ## Current operational status
 
-- The repository-side application, build scripts, validation gates, tests, and
-  primer-first ITS navigator exist on `main`. ITS_FUNGAL has a public release;
-  COI remains blocked by a release gate.
-- The first scheduled monthly workflow ran on 2026-09-01. COI exposed a missing
-  locked `readxl` dependency. ITS_FUNGAL built and validated but could not
-  publish because the R2 repository configuration was absent.
-- The Cloudflare R2 bucket, four credential names, and public data URL are
-  configured. In live run 35005218773, ITS_FUNGAL built, passed its hard gates,
-  and was promoted publicly. The subsequent run 35009155171 built COI and
-  passed its initial validation, but the COI hard gate failed on a
-  Lepidoptera study-group label assertion. Its public pointer was not promoted.
-- The public Posit Connect Cloud deployment was initiated on 2026-09-23. Its
-  first build stopped because the generated manifest omitted source coordinates
-  for the vendored `PrimerMiner` package; Connect Cloud still refused the
-  package download. The live app does not need `PrimerMiner` to start or browse
-  its precomputed evidence, so the package is now excluded from the cloud
-  runtime and installed explicitly only by the marker-build workflow.
-- A subsequent Connect Cloud publish reached `readxl` and failed because its
-  `cellranger` dependency was missing from the app manifest. `readxl` is used
-  by monthly data-build scripts, so the cloud manifest now excludes it while
-  the release lockfile retains it. After merge `42165ea`, the public app loaded
-  without authentication at
-  https://01a0cdbb-4448-22b4-500c-b5329e3b1904.share.connect.posit.cloud/;
-  the COI map populated and the URL returned the `Primer Atlas` page title.
-  Interactive scoring of a new custom COI pair still depends on `PrimerMiner`
-  and is unavailable in the cloud runtime.
-- All 15 scripts in the GitHub Actions regression loop pass in the current
-  working tree, including release-layer, marker-runtime, reference-policy,
-  geography, map, and sequence-drill-down checks.
-- The ITS navigator and release recovery were separated into scoped commits,
-  verified on `codex/release-recovery`, and merged through pull request 3 as
-  `764f83d`. Post-merge GitHub Test atlas run 34912852240 passed the clean
-  environment restore, full regression suite, and bundle-size gate on `main`.
-- Therefore, **the production monthly release path is not yet operational**.
-  Repository readiness must not be reported as a completed R2 deployment.
+- Public app: https://01a0cdbb-4448-22b4-500c-b5329e3b1904.share.connect.posit.cloud/.
+- [Monthly run 36864394345](https://github.com/sven9r/primer-atlas/actions/runs/36864394345)
+  completed successfully on 2026-10-01 for both COI and ITS_FUNGAL, including
+  hard gates and atomic R2 promotion. The public pointers currently name
+  `36864394345-COI` and `36864394345-ITS_FUNGAL`.
+- On 2026-10-02 both public manifests were fetched, and a published artifact
+  from each marker passed its SHA-256 check. This supersedes the older
+  COI-blocked status; the old incident issues still need an evidence-linked
+  closure review.
+- The 2026.10.02 update fixes marker-switch selection, adds organism and dietary
+  study tags, groups sources, and downloads the current mapped-pair metadata.
+  Publication and exact-commit verification are recorded in the release note.
+- Cloud runtime excludes build-only PrimerMiner and readxl. A new custom pair
+  can be mapped, but its interactive COI reference scoring needs PrimerMiner
+  and remains unavailable on Connect Cloud.
+- Research foundations are versioned independently of public evidence. The
+  regional COI audit and 48-accession ITS scoring outputs are not loaded into
+  the app or promoted as broad performance results.
 
 ## What still needs to be done
 
-### P0 — Complete the first production release
+### P0 — Finish release documentation and incident cleanup
 
-- [x] Diagnose both failures from workflow run 33502385055.
-- [x] Record `readxl` in `renv.lock`.
-- [x] Add a fail-fast release-configuration preflight.
-- [x] Configure the four R2 GitHub Actions secrets.
-- [x] Configure the `ATLAS_DATA_BASE_URL` repository variable.
-- [x] Separate the ITS navigator and release recovery into scoped commits and
-      push `codex/release-recovery`.
-- [x] Pass the full GitHub Test atlas workflow on the recovery branch.
-- [x] Integrate the verified recovery branch into `main` through pull request 3.
-- [ ] Merge the `xml2` marker-build dependency repair, then manually rerun the
-      monthly workflow and require the COI job to pass (ITS_FUNGAL is already
-      promoted).
-- [ ] Verify the COI and ITS_FUNGAL public `latest.json` pointers, checksums,
-      immutable artifact URLs, and application loading.
-- [ ] Close failure issues 1 and 2 with links to the successful evidence.
+- [x] Configure R2 and pass both marker builds, hard gates, and promotions.
+- [x] Verify public COI and ITS_FUNGAL pointers and one artifact checksum each.
+- [ ] Confirm the newly published application and metadata download.
+- [ ] Review and close historic release-failure issues with successful evidence.
 
 ### P1 — Stabilize release operations
 
@@ -174,7 +148,13 @@ The project separates four operational responsibilities:
       release gates are defined.
 - [ ] Expand fungal ITS beyond the single pilot reference while continuing to
       label reference scope and missing lineage evidence explicitly.
-- [ ] Publish a clear per-marker readiness table in the public documentation.
+- [x] Show per-marker readiness and limitations on the app landing page.
+- [ ] Complete source-backed organism/application tags for further catalog entries.
+- [ ] Reconcile Crambidae taxa and coordinates, then score both binding sites
+      with panel and scorable denominators.
+- [ ] Populate reviewed taxon-region range assertions; zero reviewed rows exist.
+- [ ] Independently annotate fungal ITS boundaries and terminal binding sites
+      before expanding performance comparisons.
 
 ### P3 — Expand scientific coverage without weakening evidence standards
 
@@ -199,8 +179,7 @@ The project separates four operational responsibilities:
 
 ## Definition of the next milestone
 
-The recovery milestone is complete only when a pushed revision produces green
-COI and ITS_FUNGAL jobs, both public manifests and their checksums resolve, the
-deployed application loads those releases, and the two incident issues contain
-links to that evidence. Until then, the release is **prepared**, not
-**completed**.
+The next scientific milestone requires annotated binding sites, reviewed taxa,
+explicit reference-panel and scorable denominators, and traceable sources.
+Regional locality and a documented dietary use must remain distinct from
+species range, endemicity, and PCR performance.

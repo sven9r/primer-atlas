@@ -1,0 +1,35 @@
+pair_id,group_id,community_scope,evidence_status,note,source_keys
+ANML,ARTHROPODS,broad animal and arthropod prey,published use,Bat-guano arthropod diet comparison; recovery varies among lineages.,jusino2019
+ARF,ARTHROPODS,bulk arthropods,published use,Bulk arthropod assessment.,gibson2014|yu2012
+BEEPRIME,ARTHROPODS,bee-focused,published use,Bee-focused communities; not broad arthropod coverage.,beeprime2026
+BF1_BR1,ARTHROPODS,freshwater macroinvertebrates,published use,Freshwater invertebrate communities include arthropods.,elbrecht2017b
+BF1_BR2,ARTHROPODS,freshwater macroinvertebrates,published use,Freshwater invertebrate communities include arthropods.,elbrecht2017b
+BF2_BR1,ARTHROPODS,freshwater macroinvertebrates,published use,Freshwater invertebrate communities include arthropods.,elbrecht2017b
+BF2_BR2,ARTHROPODS,freshwater macroinvertebrates,published use,Freshwater invertebrate communities include arthropods.,elbrecht2017b
+BF3_BR2,ARTHROPODS,terrestrial arthropods,published use,Terrestrial arthropod community comparison.,elbrecht2019
+BR5_ARR5,ARTHROPODS,freshwater benthic macroinvertebrates,published use,Freshwater benthic invertebrate communities include arthropods.,hajibabaei2019
+F230R,ARTHROPODS,freshwater macroinvertebrates,published use,Freshwater invertebrate communities include arthropods.,hajibabaei2019
+FWH1,ARTHROPODS,arthropod prey,published use,Bat-diet benchmark; predator DNA can co-amplify.,tournayre2020
+FWH2,ARTHROPODS,freshwater macroinvertebrates,published use,Freshwater invertebrate communities include arthropods.,vamos2017
+FWH2_EPTDR2N,ARTHROPODS,benthic macroinvertebrates,published use,Water eDNA assay for benthic invertebrates.,leese2021
+HEXCOI,ARTHROPODS,insect-focused,published use,Insect-focused assay; not broad arthropod coverage.,marquina2019
+LERAY_XT,ARTHROPODS,broad metazoans,broad-target inference,Broad metazoan assay; specific arthropod lineage recovery requires checking.,wangensteen2018
+MCO,ARTHROPODS,broad metazoans and arthropods,published use,Metazoan community assay with documented arthropod use.,leray2013|yu2012
+NOPLANT,ARTHROPODS,plant-associated arthropods,published use,Plant-material eDNA assay for arthropod associations.,krehenwinkel2022
+NOSPID,ARTHROPODS,arthropod prey,published use,Whole-spider prey assay with host suppression; host recovery varies among families.,melcher2024
+ZBJ_ART,ARTHROPODS,arthropod prey,published use,Bat-faeces prey assay with known lineage bias.,zeale2011
+ZBJ_ART_DEG,ARTHROPODS,arthropod comparison variant,validation only,Degenerate variant was tested in arthropod comparison; lower efficiency was reported.,elbrecht2019
+FISH_F2_R1,FISH,fish barcode,published use,Fish barcoding assay; arthropod reference is an off-target check.,ward2005
+ANML,METAZOA,broad animals,published use,Animal community and diet assay.,jusino2019
+LERAY_XT,METAZOA,broad metazoans,published use,Broad metazoan community assay.,wangensteen2018
+MCO,METAZOA,broad metazoans,published use,Broad metazoan community assay.,leray2013|yu2012
+ITS1_ITS4,FUNGI,fungal ITS,catalog entry,Documented fungal combination in the UNITE compilation.,unite_primers
+ITS1F_ITS4,FUNGI,fungal ITS,catalog entry,Documented fungal combination in the UNITE compilation.,unite_primers
+ITS1F_ITS4B,FUNGI,fungal ITS,catalog entry,Documented fungal combination in the UNITE compilation.,unite_primers
+ITS3_ITS4,FUNGI,fungal ITS,catalog entry,Documented fungal combination in the UNITE compilation.,unite_primers
+FITS7_ITS4,FUNGI,fungal ITS,catalog entry,Documented fungal combination in the UNITE compilation.,unite_primers
+GITS7_ITS4,FUNGI,fungal ITS,catalog entry,Documented fungal combination in the UNITE compilation.,unite_primers
+ITS86F_ITS4,FUNGI,fungal ITS,catalog entry,Documented fungal combination in the UNITE compilation.,unite_primers
+ITS1F_LR21,FUNGI,fungal ITS,catalog entry,Documented fungal combination in the UNITE compilation.,unite_primers
+PR2_18S_092,FUNGI,fungal 18S,source-mapped set,PR2-primer reports fungal specificity; taxonomic breadth has not been evaluated here.,pr2_18s_set_92
+PR2_18S_149,FUNGI,mycorrhizal fungal 18S,source-mapped set,PR2-primer reports mycorrhizal fungal specificity; taxonomic breadth has not been evaluated here.,pr2_18s_set_149

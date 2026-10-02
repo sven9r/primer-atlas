@@ -73,6 +73,7 @@ jobs:
             Rscript scripts/download_gurten2026_reference.R
             Rscript scripts/fetch_gurten2026_bee_taxonomy.R
             Rscript scripts/build_gurten2026_beeprime_scores.R
+            Rscript scripts/build_expanded_beeprime_reference.R
             Rscript scripts/download_targeted_complete_cox1.R
             Rscript scripts/build_targeted_zbj_reference_scores.R
             Rscript scripts/build_claimed_primer_scores.R

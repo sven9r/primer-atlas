@@ -69,6 +69,17 @@ sequence and locality coverage for a first Crambidae comparison.
 
 ## COI reference-panel policy
 
+**Required next milestone:** the sequence reference must grow each month,
+with a bee reference retained and extended for BeePrime only, broad
+arthropod references for general primers, and a separate aquatic arthropod
+option. Every supported order needs primer evaluation at least by family,
+with ecological comparisons using the matching reference and habitat scope.
+The bee publication alignment retains its study provenance. Current
+full-order scores do not yet contain family taxonomy;
+the app's study-specific family views do not complete this requirement. See
+[the growing-reference contract](docs/growing-reference-contract.md) for the
+implementation gaps and completion gates.
+
 General COI primer pairs are scored against full NC_001322.1-coordinate order
 alignments, not the Gurten centroid panel. The initial production target is at
 least 1,000 retained sequences for each listed arthropod order or composite
@@ -159,6 +170,16 @@ reference panels:
   centroids clustered by the authors at 99.5% from 316,254 NCBI sequences.
   Taxonomy from the authors' supplements and accession-level NCBI lineage
   records makes family, subfamily, and genus results traceable.
+
+BeePrime detail, lineage, and regional views share a **Reference alignment**
+choice. **Original publication alignment** reproduces the 590 mapped bee
+centroids. **Expanded alignment with new sequences** keeps those exact
+publication accessions and adds independently scored bee accessions identified
+through NCBI's Anthophila lineage. It is available only when the monthly
+release contains a checksum-verified alignment and score artifact. The selected
+version and reference size appear with results and are included in downloads.
+This choice affects BeePrime only; general primers continue to use their broad
+arthropod reference.
 
 The expanded reference contains 590 mapped bee centroids representing 1,305
 source records and all six listed bee families. Thirty of the 42 bee genera in
@@ -359,6 +380,9 @@ NCBI_EMAIL=you@example.org Rscript scripts/fetch_gurten2026_bee_taxonomy.R
 
 # Gurten et al. 99.5% centroid alignment -> BeePrime lineage summaries
 Rscript scripts/build_gurten2026_beeprime_scores.R
+
+# BeePrime-only expansion; preserves the 590 publication bee accessions
+Rscript scripts/build_expanded_beeprime_reference.R
 
 # audited target-claim summaries on the Gurten alignment
 Rscript scripts/build_claimed_primer_scores.R

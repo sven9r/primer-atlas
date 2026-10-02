@@ -5,11 +5,52 @@ same `id` as their counterparts in `patchnotes.json`. A patchnote distinguishes
 repository changes from external deployment actions so that prepared code is
 not mistaken for a completed release.
 
+## 2026-10-02 — BeePrime publication or expanded alignment
+
+**ID:** `2026-10-02-beeprime-alignment-choice`
+
+**Status:** Implemented and tested locally; not yet published.
+
+- Add a shared BeePrime selector for the original publication alignment or a
+  growing bee-only alignment. The choice changes scores, denominators,
+  lineage/region summaries, and sequence downloads.
+- Retain the exact 590 publication accessions. New rows enter the expanded
+  panel only when their NCBI lineage is within Anthophila; general primers
+  continue to use their own broad reference.
+- Publish checksummed scores, alignment, added-sequence FASTA, geography, and
+  taxonomy-audit artifacts in the release manifest. Preserve the previous
+  expanded panel between releases and stop on missing or corrupt state.
+- Local build used 299 Hymenoptera records, identified 30 bees, and produced a
+  620-record/801-column panel. Release validation and the choice-routing test
+  passed. Public deployment and cross-month clean-runner retention remain
+  outstanding.
+
+## 2026-10-02 — Growing references and family evaluation clarified
+
+**ID:** `2026-10-02-growing-family-reference-contract`
+
+**Status:** Required scope recorded locally; pipeline and app implementation
+remain incomplete. No new app publication is claimed by this entry.
+
+- Make monthly retained-sequence growth and family evaluation across every
+  supported order the next required scientific milestone.
+- Retain and extend the bee panel for BeePrime only; general arthropod
+  primers use their broad arthropod reference.
+- Require a separate aquatic arthropod option with matching primer use,
+  ecology-supported reference membership and freshwater/marine refinement.
+- Require regional comparisons from the same accession-level scores within
+  order/family, with missing taxonomy/geography and scorable denominators.
+- Record the audited gaps: missing retained FASTA restoration, stale alignment
+  reuse, missing full-panel family taxonomy, study-restricted family views,
+  and geography acquisition tied to the fixed study panel.
+- Add `docs/growing-reference-contract.md` with explicit completion gates and
+  move this work from optional expansion into P0 in PROJECT_STATUS.md.
+
 ## 2026-10-02 — Primer Atlas version 2026.10.02
 
 **ID:** `2026-10-02-primer-atlas-version`
 
-**Status:** Final verification underway; publication pending.
+**Status:** Published and verified on Posit from main commit `648dd55`.
 
 - Prepare the persistent marker selectors, source-backed organism/diet records,
   grouped publications, and metadata download from the September local work.
@@ -20,6 +61,9 @@ not mistaken for a completed release.
   Connect bundle. Research pilot outputs are excluded from that bundle.
 - Update the remaining scientific backlog and correct the old COI-blocked
   status: October monthly run 36864394345 passed both marker promotions.
+- PR #20 and merged-main CI passed all 16 tests and the bundle gate. Public
+  marker returns, dietary filters, empty-filter recovery, and the actual
+  126-row/46-column download were verified after Posit publication.
 
 Current verification and publication details:
 [`docs/2026-10-02-release.md`](docs/2026-10-02-release.md).

@@ -44,7 +44,57 @@ for (artifact in manifest$artifacts) {
   stopifnot(identical(
     digest(file = path, algo = "sha256", serialize = FALSE), artifact$sha256
   ))
-  stopifnot(nrow(nanoparquet::read_parquet(path)) == artifact$rows)
+  if (grepl("[.]fasta$", path, ignore.case = TRUE)) {
+    stopifnot(sum(startsWith(readLines(path, warn = FALSE), ">")) == artifact$rows)
+  } else {
+    stopifnot(nrow(nanoparquet::read_parquet(path)) == artifact$rows)
+  }
+}
+
+beeprime_expanded <- manifest$reference_panels$beeprime_expanded
+if (!is.null(beeprime_expanded)) {
+  stopifnot(
+    identical(beeprime_expanded$pair_id, "BEEPRIME"),
+    identical(beeprime_expanded$reference_mode, "expanded"),
+    identical(beeprime_expanded$taxonomic_scope, "bees"),
+    identical(beeprime_expanded$publication_baseline, "gurten2026_suppl5"),
+    beeprime_expanded$added_sequences > 0L
+  )
+  expanded_scores <- nanoparquet::read_parquet(
+    beeprime_expanded$sequence_scores$local_path
+  )
+  publication_scores <- read.csv(
+    "data/derived/beeprime_hymenoptera_centroid_scores.csv",
+    stringsAsFactors = FALSE
+  )
+  publication_accessions <- publication_scores$accession[
+    publication_scores$is_bee %in% TRUE
+  ]
+  stopifnot(
+    nrow(expanded_scores) == length(publication_accessions) + beeprime_expanded$added_sequences,
+    all(expanded_scores$pair_id == "BEEPRIME"),
+    all(expanded_scores$order == "Hymenoptera"),
+    all(expanded_scores$is_bee %in% TRUE),
+    !anyDuplicated(expanded_scores$accession),
+    setequal(
+      expanded_scores$accession[expanded_scores$reference_origin == "publication"],
+      publication_accessions
+    ),
+    sum(expanded_scores$reference_origin == "added") == beeprime_expanded$added_sequences,
+    nrow(nanoparquet::read_parquet(beeprime_expanded$geography$local_path)) == nrow(expanded_scores)
+  )
+  aligned_headers <- readLines(beeprime_expanded$alignment$local_path, warn = FALSE)
+  aligned_sequences <- parse_fasta(beeprime_expanded$alignment$local_path)
+  aligned_accessions <- sub("^_R_", "", sub(" .*", "", names(aligned_sequences)))
+  publication_alignment_width <- unique(nchar(parse_fasta(
+    "data/external/gurten2026/ClusteredReferences.fasta"
+  )))
+  stopifnot(
+    !anyDuplicated(aligned_accessions),
+    setequal(aligned_accessions, expanded_scores$accession),
+    length(publication_alignment_width) == 1L,
+    all(nchar(aligned_sequences) == publication_alignment_width)
+  )
 }
 
 previous_state <- tryCatch(atlas_read_manifest(marker_id, root), error = function(e) NULL)

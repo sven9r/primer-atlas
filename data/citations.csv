@@ -1,5 +1,4 @@
 key,category,short_citation,title,year,doi,url,note
-primer_sheet,data,S. Weber laboratory Primer List,Primer List metabarcoding tab,2026,,https://docs.google.com/spreadsheets/d/1jIGCutiNClf-SXPmGK0i4-3TvWs7u_jqmjtBnsqxyLs,Source snapshot consulted 2026-07-28
 elbrecht2017,method,Elbrecht & Leese 2017,PrimerMiner: an R package for development and in silico validation of DNA metabarcoding primers,2017,10.1111/2041-210X.12687,https://doi.org/10.1111/2041-210X.12687,PrimerMiner workflow and mismatch scoring
 dryad2017,data,Elbrecht & Leese 2017 data,PrimerMiner COI reference alignments for 15 freshwater groups,2017,10.5061/dryad.4c3g9,https://doi.org/10.5061/dryad.4c3g9,CC0 reference alignments
 stadhouders2010,method,Stadhouders et al. 2010,The effect of primer-template mismatches on the detection and quantification of nucleic acids using the 5-prime nuclease assay,2010,10.2353/jmoldx.2010.090035,https://doi.org/10.2353/jmoldx.2010.090035,Position and mismatch-type evidence; controlled qPCR context
@@ -14,7 +13,7 @@ geller2013,primer,Geller et al. 2013,Redesign of PCR primers for mitochondrial c
 wangensteen2018,primer,Wangensteen et al. 2018,DNA metabarcoding of littoral hard-bottom communities: high diversity and database gaps revealed by two molecular markers,2018,10.7717/peerj.4705,https://doi.org/10.7717/peerj.4705,mICOIintF-XT
 vamos2017,primer,Vamos et al. 2017,Short COI markers for freshwater macroinvertebrate metabarcoding,2017,10.3897/mbmg.1.14625,https://doi.org/10.3897/mbmg.1.14625,fwhF2 and fwhR2n
 elbrecht2017b,primer,Elbrecht & Leese 2017,Validation and development of COI metabarcoding primers for freshwater macroinvertebrate bioassessment,2017,10.3389/fenvs.2017.00011,https://doi.org/10.3389/fenvs.2017.00011,BF and BR primer families
-jusino2019,primer,Jusino et al. 2019,An improved method for utilizing high-throughput amplicon sequencing to determine the diets of insectivorous animals,2019,10.1111/1755-0998.12899,https://doi.org/10.1111/1755-0998.12899,CO1-CFMRa and ANML
+jusino2019,primer,Jusino et al. 2019,An improved method for utilizing high-throughput amplicon sequencing to determine the diets of insectivorous animals,2019,10.1111/1755-0998.12951,https://doi.org/10.1111/1755-0998.12951,CO1-CFMRa and ANML; bat-guano diet comparison with ZBJ
 krehenwinkel2022,primer,Krehenwinkel et al. 2022,The bug in a teacup—monitoring arthropod–plant associations with environmental DNA from dried plant material,2022,10.1098/rsbl.2022.0091,https://doi.org/10.1098/rsbl.2022.0091,NoPlant primer set
 melcher2024,primer,Melcher et al. 2024,To pool or not to pool: Pooled metabarcoding does not affect estimates of prey diversity in spider gut content analysis,2024,10.1111/een.13382,https://doi.org/10.1111/een.13382,Spidprey_F and Spidprey_R
 lafage2020,primer,Lafage et al. 2020,A new primer for metabarcoding of spider gut contents,2020,10.1002/edn3.62,https://doi.org/10.1002/edn3.62,NoSpi2 forward primer

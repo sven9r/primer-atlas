@@ -4,6 +4,162 @@
   "entry_order": "newest_first",
   "entries": [
     {
+      "id": "2026-10-02-primer-atlas-version",
+      "date": "2026-10-02",
+      "category": "release",
+      "status": "publication_pending",
+      "summary": "Prepared version 2026.10.02 with marker-switch and empty-filter recovery, source-backed organism/diet metadata, grouped publications, and a growing mapped-pair CSV.",
+      "repository_changes": [
+        {
+          "kind": "interface_catalog_and_tests",
+          "paths": [
+            "app.R",
+            "data/catalog/primer_pair_organisms.csv",
+            "data/catalog/primer_pair_diet_uses.csv",
+            "manifest.json",
+            "tests/test_primer_map_details.R",
+            ".github/workflows/test.yml"
+          ],
+          "change": "Release persistent selections, recover empty filters, retain PR2 amplicon metadata and multiple dietary study records; verify required manifest files and checksums"
+        },
+        {
+          "kind": "status_and_research_backlog",
+          "paths": [
+            "PROJECT_STATUS.md",
+            "docs/2026-10-02-release.md"
+          ],
+          "change": "Record current marker-release evidence and outstanding scientific work; preserve isolated research foundations"
+        }
+      ],
+      "verification": [
+        "Local browser verified 20 Arthropods after ITS and fungal 18S; empty-filter reset restores eligible pairs",
+        "Downloaded metadata CSV validated: 126 unique mapped pairs and 46 columns",
+        "Public marker pointers resolve to monthly run 36864394345; one artifact SHA-256 per marker passed"
+      ],
+      "known_limitations": [
+        "Organism and dietary tags describe source-backed scope rather than uniform PCR recovery",
+        "ITS terminal sites and regional taxonomy/range evidence still need review",
+        "Custom COI scoring requires PrimerMiner, which is not in the Connect runtime"
+      ],
+      "remaining_actions": [
+        "Complete final tests and GitHub CI",
+        "Push and publish existing Posit app",
+        "Verify public version and download"
+      ]
+    },
+    {
+      "id": "2026-09-24-primer-map-use-tags",
+      "date": "2026-09-24",
+      "category": "catalog_and_interface",
+      "status": "local_completed_uncommitted",
+      "summary": "Kept primer selections available across marker switches, added source-backed organism and dietary-use metadata, and added a mapped-pair CSV download; not deployed.",
+      "repository_changes": [
+        {
+          "kind": "primer_selection_and_facets",
+          "paths": [
+            "app.R",
+            "data/catalog/primer_pair_facets.csv",
+            "data/catalog/primer_pair_organisms.csv",
+            "data/catalog/primer_pair_diet_uses.csv"
+          ],
+          "change": "Arthropod pair filtering and dietary-use status now use explicit catalog records; selector controls persist through marker changes"
+        },
+        {
+          "kind": "public_evidence_and_download",
+          "paths": [
+            "app.R",
+            "data/citations.csv",
+            "data/catalog/sources.csv",
+            "docs/primer-intake-provenance.md",
+            "README.md"
+          ],
+          "change": "Generate downloadable mapped-pair metadata, group public sources, hide the laboratory intake sheet, and correct the Jusino 2019 DOI"
+        }
+      ],
+      "verification": [
+        "Targeted R catalog, map, and ITS/18S checks passed",
+        "Local browser returned 20 Arthropod COI rows after switching from Fungi and four rows with the dietary filter"
+      ],
+      "known_limitations": [
+        "The mapped-pair CSV covers pairs currently shown by the atlas map; it does not replace the full 121-primer UNITE catalog",
+        "A pair's documented use and coordinate placement do not establish uniform PCR performance"
+      ],
+      "remaining_actions": [
+        "Review and commit local changes",
+        "Deploy only after release review"
+      ]
+    },
+    {
+      "id": "2026-09-23-local-research-navigation",
+      "date": "2026-09-23",
+      "category": "research_and_interface",
+      "status": "local_completed_uncommitted",
+      "summary": "Completed local range foundation, bounded BOLD COI feasibility snapshot, fungal ITS sequence pilot, and navigation prototype; none was deployed or published.",
+      "repository_changes": [
+        {
+          "kind": "range_evidence_foundation",
+          "paths": [
+            "data/catalog/range/regions.csv",
+            "data/catalog/range/sources.csv",
+            "data/catalog/range/taxon_region_evidence.csv",
+            "data/catalog/range/taxon_region_evidence.schema.json",
+            "docs/range-evidence-methods.md",
+            "README.md"
+          ],
+          "change": "Defined 11 regions, four source records, an empty reviewed-assertion table, schema, and decision rules"
+        },
+        {
+          "kind": "regional_coi_feasibility",
+          "paths": [
+            "scripts/audit_regional_coi_bold.R",
+            "docs/regional-coi-feasibility.md",
+            "data/derived/regional_coi_audit/bold_summary_counts.csv",
+            "data/derived/regional_coi_audit/bold_crambidae_record_audit.csv",
+            ".gitignore",
+            "README.md"
+          ],
+          "change": "Recorded 12 BOLD summary queries and 805 unique Crambidae metadata rows; scheduled audit automation was paused and did not run"
+        },
+        {
+          "kind": "fungal_its_local_pilot",
+          "paths": [
+            "scripts/build_fungal_its_pilot.py",
+            "scripts/score_fungal_its_pilot.R",
+            "scripts/run_fungal_its_pilot.sh",
+            "docs/fungal-its-sequence-pilot.md"
+          ],
+          "change": "Scored a reproducible 48-accession local UNITE pilot; accession-level outputs under data/derived/its_fungal_pilot/ are Git ignored"
+        },
+        {
+          "kind": "navigation_prototype",
+          "paths": [
+            "app.R",
+            "tests/test_marker_runtime.R",
+            "docs/navigation-prototype.md"
+          ],
+          "change": "Added and locally checked a Start here panel, task routes, and readiness copy"
+        }
+      ],
+      "verification": [
+        "Range CSV and schema checks and existing geography tests passed in the range task",
+        "BOLD CSV recount: 283 Hawaii and 522 Madagascar records; 220 and 517 preliminary QC passes",
+        "Fungal pilot rerun produced identical output hashes; 432 site rows and 384 pair rows",
+        "Navigation R parse, six targeted tests, and local browser walkthrough passed",
+        "Day-end review parsed the BOLD audit script and checked git diff --check"
+      ],
+      "known_limitations": [
+        "No reviewed taxon-region assertions or endemicity results",
+        "No COI primer binding sites or pairs scored for the regional records",
+        "Fungal terminal-site scoreability is sparse; the pilot cannot estimate clade-wide performance",
+        "Navigation wording and uncommitted overlapping edits require review"
+      ],
+      "remaining_actions": [
+        "Review and commit scoped changes with reproducible fungal output handling",
+        "Reconcile Crambidae taxa and coordinates, then score both primer sites with exact denominators",
+        "Annotate ITS boundaries and review navigation wording locally"
+      ]
+    },
+    {
       "id": "2026-09-23-connect-readxl-runtime-repair",
       "date": "2026-09-23",
       "category": "deployment",
@@ -12,7 +168,10 @@
       "repository_changes": [
         {
           "kind": "runtime_dependency_boundary",
-          "paths": ["scripts/write_connect_manifest.R", "manifest.json"],
+          "paths": [
+            "scripts/write_connect_manifest.R",
+            "manifest.json"
+          ],
           "change": "Exclude build-only readxl from the Connect Cloud manifest while retaining it in renv.lock for monthly release builds"
         },
         {
@@ -47,7 +206,11 @@
       "repository_changes": [
         {
           "kind": "runtime_dependency_boundary",
-          "paths": ["renv.lock", "manifest.json", "scripts/write_connect_manifest.R"],
+          "paths": [
+            "renv.lock",
+            "manifest.json",
+            "scripts/write_connect_manifest.R"
+          ],
           "change": "Exclude build-only PrimerMiner and its vendor source from the Connect Cloud bundle"
         }
       ],
@@ -67,7 +230,10 @@
       "repository_changes": [
         {
           "kind": "deployment_manifest",
-          "paths": ["scripts/write_connect_manifest.R", "manifest.json"],
+          "paths": [
+            "scripts/write_connect_manifest.R",
+            "manifest.json"
+          ],
           "change": "Record the public repository URL, immutable source commit, and vendor/PrimerMiner subdirectory for Connect Cloud"
         }
       ],
@@ -147,7 +313,10 @@
         },
         {
           "kind": "status_documentation",
-          "paths": ["PATCHNOTES.md", "PROJECT_STATUS.md"],
+          "paths": [
+            "PATCHNOTES.md",
+            "PROJECT_STATUS.md"
+          ],
           "change": "Record the first live R2 attempt and distinguish successful validation from unpromoted publication"
         }
       ],
@@ -206,7 +375,10 @@
         },
         {
           "kind": "documentation",
-          "paths": ["README.md", "PROJECT_STATUS.md"],
+          "paths": [
+            "README.md",
+            "PROJECT_STATUS.md"
+          ],
           "change": "Added contributor entry points and corrected stale integrated-work status"
         },
         {

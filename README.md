@@ -61,6 +61,12 @@ taxonomic sampling difference is not mislabelled a regional PCR effect. Its
 interactive globe shows the two activated subsets and distinguishes plotted
 coordinates from the larger located/all denominator.
 
+The planned Hawaiʻi–Madagascar insect COI range study has separate
+[study-region definitions and taxon-range evidence methods](docs/range-evidence-methods.md).
+Its reviewed taxon evidence has not yet been joined to the app or sequence panel.
+The [bounded BOLD COI feasibility audit](docs/regional-coi-feasibility.md) reports
+sequence and locality coverage for a first Crambidae comparison.
+
 ## COI reference-panel policy
 
 General COI primer pairs are scored against full NC_001322.1-coordinate order
@@ -491,6 +497,12 @@ primer concentration, template mixture, and annealing protocol.
 - `app.R` — Shiny interface
 - `R/functions.R` — IUPAC and thermal helpers
 - `data/primers.csv` — primer library and source keys
+- `data/catalog/primer_pair_organisms.csv` — reviewed pair-to-organism use tags;
+  scope and evidence status are retained for each tag
+- `data/catalog/primer_pair_diet_uses.csv` — study-specific predator, sample,
+  amplified target, citation, and evidence status for dietary applications
+- `data/catalog/primer_pair_facets.csv` — application, environment, and design
+  filters for mapped primer pairs
 - `data/orders_22.csv` — transparent order/composite-group selection
 - `data/primerminer/` — raw, clustered, and reference-aligned order data
 - `data/external/gurten2026/` — ODbL author supplements, retained unchanged
@@ -503,6 +515,16 @@ primer concentration, template mixture, and annealing protocol.
   launch scripts
 - `data/legacy_prototype/` and `scripts/legacy/` — preserved first-prototype
   inputs/outputs; the app never reads these files
+
+The Sources & methods view downloads a CSV generated from the current mapped
+pair catalog. It includes oligo sequences, mapped coordinates, use tags,
+dietary study context, claim notes, and source links. New curated pairs appear
+in this download when added to the catalog and map; group and dietary tags
+require explicit source-backed entries in the tables above. A use tag describes
+documented context, not uniform taxonomic recovery or PCR performance. The
+laboratory primer intake sheet is documented in
+[`docs/primer-intake-provenance.md`](docs/primer-intake-provenance.md) and omitted from
+the public evidence list and BibTeX export.
 
 ## Contributing
 

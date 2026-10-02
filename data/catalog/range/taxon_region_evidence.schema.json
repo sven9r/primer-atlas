@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Primer Atlas taxon-region evidence row",
+  "description": "One source-backed assertion about one accepted taxon in one defined region. CSV column names match these properties.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["evidence_id", "accepted_taxon_id", "accepted_taxon_name", "taxon_rank", "taxon_authority", "taxon_authority_version", "region_id", "establishment_status", "endemicity_assertion", "evidence_type", "source_id", "source_record_url", "source_taxon_name", "verbatim_assertion", "confidence", "review_state", "reviewed_by", "reviewed_on", "notes"],
+  "properties": {
+    "evidence_id": {"type": "string", "minLength": 1},
+    "accepted_taxon_id": {"type": "string", "minLength": 1, "description": "Namespace-prefixed identifier from an explicitly recorded taxonomic authority, e.g. col:<id>; never an accession or unverified name string."},
+    "accepted_taxon_name": {"type": "string", "minLength": 1},
+    "taxon_rank": {"enum": ["species", "subspecies", "genus", "family", "other"]},
+    "taxon_authority": {"type": "string", "minLength": 1},
+    "taxon_authority_version": {"type": "string", "minLength": 1},
+    "region_id": {"type": "string", "minLength": 1},
+    "establishment_status": {"enum": ["native", "introduced", "uncertain"]},
+    "endemicity_assertion": {"enum": ["endemic", "non_endemic", "unresolved", "not_applicable"]},
+    "evidence_type": {"enum": ["regional_checklist", "taxonomic_revision", "distribution_database", "specimen_record", "expert_review"]},
+    "source_id": {"type": "string", "minLength": 1},
+    "source_record_url": {"type": "string", "minLength": 1, "format": "uri"},
+    "source_taxon_name": {"type": "string", "minLength": 1},
+    "verbatim_assertion": {"type": "string", "minLength": 1},
+    "confidence": {"enum": ["low", "medium", "high"]},
+    "review_state": {"enum": ["candidate", "reviewed", "contested"]},
+    "reviewed_by": {"type": "string"},
+    "reviewed_on": {"type": "string"},
+    "notes": {"type": "string"}
+  }
+}

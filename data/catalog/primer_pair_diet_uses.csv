@@ -1,0 +1,8 @@
+pair_id,predator,sample_material,amplified_role,study_use,evidence_status,source_key,note
+ANML,bats,guano,arthropod prey,bat diet metabarcoding,published use,jusino2019,Compared with ZBJ on bat guano; taxonomic recovery differs by pair.
+FWH1,insectivorous bats,guano,arthropod prey and predator DNA,bat diet metabarcoding,published use,tournayre2020,The benchmark allowed simultaneous predator identification; co-amplification may be undesirable in other designs.
+NOSPID,spiders,whole-spider DNA extracts,arthropod prey,spider prey metabarcoding,published use,melcher2024,Individual spider extracts and pooled extracts were compared; spider host suppression varies among families.
+ZBJ_ART,bats,faeces,arthropod prey,bat diet metabarcoding,published use,zeale2011,Subsequent comparisons report lineage bias.
+ZBJ_ART_DEG,bats,faeces,arthropod prey,variant of bat diet pair,validation only,elbrecht2019,Degenerate ZBJ variant tested in an arthropod comparison; direct bat-diet use is not established here.
+NOSPI2_LAURELIN,spiders,gut contents,arthropod prey,exploratory spider prey combination,component sources only,lafage2020|cuff2021,The exact hybrid combination must not inherit pair-level validation from its component primers.
+VERT,mosquitoes,blood meals,vertebrate blood-meal host,blood-meal barcoding,barcoding only,reeves2018,The source describes blood-meal barcoding; this is not evidence of dietary metabarcoding.

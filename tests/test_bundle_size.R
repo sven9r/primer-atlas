@@ -19,4 +19,13 @@ stopifnot(
   !"readxl" %in% names(manifest$packages),
   !"PrimerMiner" %in% names(manifest$packages)
 )
+required_files <- c(
+  "app.R", "data/catalog/primer_pair_organisms.csv",
+  "data/catalog/primer_pair_diet_uses.csv", "data/catalog/primer_pair_facets.csv"
+)
+stopifnot(all(required_files %in% names(manifest$files)))
+for (path in required_files) {
+  stopifnot(identical(unname(tools::md5sum(path)), manifest$files[[path]]$checksum))
+}
+stopifnot(!any(grepl("its_fungal_pilot|regional_coi_audit", names(manifest$files))))
 message(sprintf("Deployable application data is %.1f MB (<100 MB gate).", bytes / 1024^2))

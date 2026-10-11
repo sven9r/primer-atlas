@@ -40,6 +40,8 @@ The fungal rDNA explorer imports an attributed, offline snapshot of the
 [UNITE primer resource](https://unite.ut.ee/primers.php). It offers 20 starter
 combinations, a forward/reverse pairing matrix, and comparison of up to five
 product-length distributions. The complete candidate list remains searchable.
+The combinations also appear on the frozen multiple-sequence alignment, with
+shared columns, per-template spans, and a zoomable view of bases and primer sites.
 Illumina, PacBio, and Nanopore use distinct colors and editable project ceilings
 of 500 bp (Illumina adjustable from 452), 2,000 bp, and 3,500 bp. Eligibility is
 reported per template, with missing sites and ranges crossing ceilings visible.

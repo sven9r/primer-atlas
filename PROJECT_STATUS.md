@@ -71,7 +71,9 @@ The project separates four operational responsibilities:
   COX1 panels for ZBJ, claimed-primer evaluation, and reference geography.
 - **Fungal rDNA — bounded versioned explorer:** 20 starter combinations,
   full candidate list, pairing matrix, five-pair comparison, platform ceilings,
-  per-template lengths, and class/phylum filters. V1 preserves the original
+  per-template lengths, and class/phylum filters. The selected combinations are
+  linked to a shared frozen alignment map and nucleotide inspection window.
+  V1 preserves the original
   reference; V2 contains 21 accession-versioned templates. Snapshot history
   freezes catalogs, sequences, alignments, taxonomy, and exact-site evidence.
   The October 11 overhaul is implemented and tested; immutable hosted staging

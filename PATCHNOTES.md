@@ -7,6 +7,10 @@ not mistaken for a completed release.
 
 ## 2026-10-11 — Fungal combinations, platforms, and versions
 
+- Follow-up: connect the combination list and comparison selection to the actual
+  frozen fungal alignment, with shared alignment coordinates, per-template
+  product spans, nucleotide inspection, and an export of raw and aligned sites.
+
 **ID:** `2026-10-11-fungal-combinations-versions`
 
 **Status:** Implemented and tested locally. Immutable R2 staging succeeded;

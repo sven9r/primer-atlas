@@ -64,18 +64,41 @@ fungalExplorerUI <- function(id) {
               checkboxInput(ns("show_unresolved"),"Include unresolved documented pairs",TRUE),
               actionButton(ns("reset"),"Reset filters",class="btn-outline-secondary btn-sm"))),
       uiOutput(ns("discovery_status")),
+      selectizeInput(ns("compare_pairs"),"Compare up to five combinations",choices=NULL,multiple=TRUE,
+          options=list(placeholder="Choose combinations to show together on the alignment",maxItems=5,plugins=list("remove_button"))),
+      div(class="fungal-alignment-workspace",
+          h3("Primer combinations on the alignment"),
+          p(class="tiny", "Every track uses the selected version's frozen alignment. Colored spans join exact primer sites on each template; product lengths and platform colors use its ungapped sequence."),
+          div(class="fungal-alignment-controls",
+              selectInput(ns("alignment_reference"),"Template for combination tracks",choices=NULL),
+              radioButtons(ns("alignment_scope"),"Combinations on the alignment",
+                  c("Shown combinations"="shown","Compared combinations"="compared","Selected combination"="active"),"shown",inline=TRUE),
+              div(class="d-flex flex-wrap gap-2",
+                  actionButton(ns("alignment_focus"),"Zoom to selected combination",class="btn-outline-primary btn-sm"),
+                  actionButton(ns("alignment_full"),"Show full alignment",class="btn-outline-secondary btn-sm")),
+              sliderInput(ns("alignment_range"),"Visible alignment columns",min=1,max=20,value=c(1,20),step=1)),
+          uiOutput(ns("alignment_status")),
+          uiOutput(ns("alignment_overview")),
+          tags$details(class="fungal-alignment-detail",open=NA,
+              tags$summary("Inspect aligned nucleotides and primer sites"),
+              div(class="fungal-alignment-base-controls",
+                  numericInput(ns("alignment_start"),"First alignment column",1,min=1,step=1),
+                  sliderInput(ns("alignment_width"),"Columns in nucleotide window",min=40,max=120,value=80,step=10),
+                  div(class="d-flex flex-wrap gap-2",
+                      actionButton(ns("alignment_forward"),"Show forward site",class="btn-outline-primary btn-sm"),
+                      actionButton(ns("alignment_reverse"),"Show reverse site",class="btn-outline-secondary btn-sm"))),
+              uiOutput(ns("alignment_bases")))),
       navset_card_tab(
           nav_panel("Combination list", DTOutput(ns("pairs"))),
           nav_panel("Pairing matrix", uiOutput(ns("matrix"))),
           nav_panel("Version changes", uiOutput(ns("version_changes"))),
           nav_panel("Frozen primer catalog", DTOutput(ns("catalog")))),
-      selectizeInput(ns("compare_pairs"),"Compare up to five combinations",choices=NULL,multiple=TRUE,
-          options=list(placeholder="Choose combinations to compare their product lengths",maxItems=5,plugins=list("remove_button"))),
       uiOutput(ns("comparison")),
       div(class="fungal-evidence", uiOutput(ns("evidence"))),
       div(class="d-flex flex-wrap gap-2 mt-3",
           downloadButton(ns("download_pairs"),"Current combinations (CSV)",class="btn-outline-primary btn-sm"),
           downloadButton(ns("download_sequences"),"Selected reference sequences (FASTA)",class="btn-outline-secondary btn-sm"),
+          downloadButton(ns("download_alignment_sites"),"Primer alignment coordinates (CSV)",class="btn-outline-secondary btn-sm"),
           downloadButton(ns("download_alignment"),"Frozen alignment (FASTA)",class="btn-outline-secondary btn-sm")),
       p(class="tiny mt-3", "Exact IUPAC-compatible sites establish candidate geometry on these templates. Unmatched sites remain unresolved. Length eligibility uses raw template products including primers, excluding adapters; colors describe the observed median and badges give per-template counts. This selected panel does not establish broad fungal amplification performance."))
 }
@@ -179,6 +202,115 @@ fungalExplorerServer <- function(id) {
       current <- selected_pair()
       if (is.null(current) || !current %in% rows$pair_id) current <- rows$pair_id[1]
       rows[match(current,rows$pair_id),,drop=FALSE]
+    })
+    alignment_index <- reactive({
+      data <- snapshot()
+      validate(need(length(data$alignment)>0,"This reference version has no frozen alignment."))
+      fungal_alignment_index(data$alignment,data$sequences)
+    })
+    frozen_alignment_mapping <- reactive({
+      fungal_alignment_pair_rows(pair_sequences=snapshot()$pair_sequences,index=alignment_index())
+    })
+    mapped_alignment <- reactive({
+      rows <- frozen_alignment_mapping()
+      rows[rows$pair_id %in% candidates()$pair_id & rows$accession %in% selected_accessions(),,drop=FALSE]
+    })
+    alignment_pairs <- reactive({
+      rows <- candidates()
+      scope <- input$alignment_scope %||% "shown"
+      if (scope=="compared") rows <- rows[rows$pair_id %in% input$compare_pairs,,drop=FALSE]
+      if (scope=="active") rows <- rows[rows$pair_id %in% active_pair()$pair_id,,drop=FALSE]
+      if (scope=="shown" && nrow(rows)>20L) {
+        priority <- unique(c(active_pair()$pair_id,input$compare_pairs))
+        rows <- rows[unique(c(match(priority,rows$pair_id,nomatch=0L),seq_len(nrow(rows)))),,drop=FALSE]
+      }
+      head(rows,20L)
+    })
+    alignment_reference <- reactive({
+      accessions <- selected_accessions()
+      if (!length(accessions)) return(NULL)
+      current <- input$alignment_reference
+      if (length(current)==1 && current %in% accessions) return(current)
+      rows <- sequence_rows()
+      rows <- rows[rows$pair_id %in% candidates()$pair_id & rows$status=="scorable",,drop=FALSE]
+      counts <- table(factor(rows$accession,levels=accessions))
+      accessions[which.max(counts)]
+    })
+    observeEvent(list(snapshot(),selected_accessions()), {
+      taxonomy <- snapshot()$taxonomy
+      taxonomy <- taxonomy[match(selected_accessions(),taxonomy$accession),,drop=FALSE]
+      labels <- if(nrow(taxonomy)) paste0(taxonomy$accession," · ",taxonomy$organism," · ",taxonomy$class) else character()
+      updateSelectInput(session,"alignment_reference",choices=setNames(taxonomy$accession,labels),selected=alignment_reference())
+    })
+    alignment_domain <- reactive({
+      maximum <- alignment_index()$n_columns
+      value <- input$alignment_range %||% c(1,maximum)
+      value <- sort(pmax(1,pmin(maximum,as.integer(value))))
+      if(length(value)!=2 || anyNA(value) || diff(value)<1) return(c(1,maximum))
+      value
+    })
+    alignment_focus_row <- reactive({
+      rows <- mapped_alignment()
+      rows <- rows[rows$pair_id %in% active_pair()$pair_id,,drop=FALSE]
+      if (!nrow(rows)) return(rows)
+      own <- rows[rows$accession %in% alignment_reference(),,drop=FALSE]
+      head(own,1L)
+    })
+    set_alignment_domain <- function(columns,flank=40L) {
+      maximum <- alignment_index()$n_columns
+      columns <- columns[is.finite(columns)]
+      range <- if(length(columns)) c(max(1,min(columns)-flank),min(maximum,max(columns)+flank)) else c(1,maximum)
+      updateSliderInput(session,"alignment_range",min=1,max=maximum,value=range,step=1)
+    }
+    observeEvent(list(alignment_index(),alignment_reference(),alignment_pairs()), {
+      rows <- mapped_alignment()
+      rows <- rows[rows$accession %in% alignment_reference() & rows$pair_id %in% alignment_pairs()$pair_id,,drop=FALSE]
+      columns <- unlist(rows[,c("forward_start_col","forward_end_col","reverse_start_col","reverse_end_col"),drop=FALSE],use.names=FALSE)
+      set_alignment_domain(columns)
+    })
+    show_alignment_site <- function(side="forward") {
+      row <- alignment_focus_row()
+      columns <- if(nrow(row)) unlist(row[,paste0(side,c("_start_col","_end_col")),drop=FALSE],use.names=FALSE) else numeric()
+      columns <- columns[is.finite(columns)]
+      start <- if(length(columns)) max(1,min(columns)-10L) else 1L
+      updateNumericInput(session,"alignment_start",min=1,max=alignment_index()$n_columns,value=start)
+    }
+    observeEvent(list(alignment_index(),alignment_reference(),active_pair()),show_alignment_site())
+    observeEvent(input$alignment_forward,show_alignment_site("forward"))
+    observeEvent(input$alignment_reverse,show_alignment_site("reverse"))
+    observeEvent(input$alignment_focus,{
+      row <- alignment_focus_row()
+      columns <- if(nrow(row)) unlist(row[,c("forward_start_col","forward_end_col","reverse_start_col","reverse_end_col"),drop=FALSE],use.names=FALSE) else numeric()
+      if(any(is.finite(columns))) set_alignment_domain(columns)
+    })
+    observeEvent(input$alignment_full,set_alignment_domain(c(1,alignment_index()$n_columns),flank=0))
+    alignment_ceilings <- reactive(c(input$illumina_max %||% 500,input$pacbio_max %||% 2000,input$nanopore_max %||% 3500))
+    output$alignment_status <- renderUI({
+      data <- snapshot()
+      pair <- active_pair()
+      reference <- alignment_reference()
+      selected <- if(nrow(pair)) pair$pair_label else "none"
+      own <- alignment_focus_row()
+      div(class="tiny",strong(data$manifest$id)," · ",alignment_index()$n_columns," frozen alignment columns · ",
+          length(selected_accessions())," template rows · selected combination: ",selected,
+          if(nrow(candidates())>20 && identical(input$alignment_scope %||% "shown","shown"))
+            p("Showing 20 combination tracks, including the selected and compared pairs. Filter primers or switch to compared combinations to focus the alignment."),
+          if(length(reference) && nrow(pair) && (!nrow(own) || own$alignment_status[1]!="mapped"))
+            p("The selected combination has no complete exact-site product on ",reference,". Verified individual sites are shown when available; choose another template to inspect a complete product."),
+          if(!length(reference)) p("No templates match these lineage filters."))
+    })
+    output$alignment_overview <- renderUI({
+      if(!length(selected_accessions())) return(div(class="callout","No template rows match these lineage filters."))
+      fungal_alignment_overview(index=alignment_index(),mapped_rows=mapped_alignment(),pairs=alignment_pairs(),
+          taxonomy=snapshot()$taxonomy,reference_accession=alignment_reference(),selected_accessions=selected_accessions(),
+          compare_ids=if(length(input$compare_pairs)) head(input$compare_pairs,5L) else active_pair()$pair_id,active_id=active_pair()$pair_id,
+          domain=alignment_domain(),ceilings=alignment_ceilings(),ns=session$ns)
+    })
+    output$alignment_bases <- renderUI({
+      if(!length(selected_accessions())) return(NULL)
+      fungal_alignment_bases(index=alignment_index(),mapped_rows=mapped_alignment(),pairs=candidates(),
+          taxonomy=snapshot()$taxonomy,accessions=selected_accessions(),start=input$alignment_start %||% 1,
+          width=input$alignment_width %||% 80,active_id=active_pair()$pair_id,ceilings=alignment_ceilings())
     })
     output$snapshot_meta <- renderUI({
       data <- snapshot()
@@ -356,16 +488,22 @@ fungalExplorerServer <- function(id) {
     })
     output$download_pairs <- downloadHandler(filename=function() paste0(snapshot()$manifest$id,"-combinations.csv"),content=function(file) {
       rows <- candidates()
-      rows$snapshot_id <- snapshot()$manifest$id
-      rows$illumina_ceiling <- input$illumina_max %||% 500
-      rows$pacbio_ceiling <- input$pacbio_max %||% 2000
-      rows$nanopore_ceiling <- input$nanopore_max %||% 3500
+      rows$snapshot_id <- rep(snapshot()$manifest$id,nrow(rows))
+      rows$illumina_ceiling <- rep(input$illumina_max %||% 500,nrow(rows))
+      rows$pacbio_ceiling <- rep(input$pacbio_max %||% 2000,nrow(rows))
+      rows$nanopore_ceiling <- rep(input$nanopore_max %||% 3500,nrow(rows))
       write.csv(rows,file,row.names=FALSE,na="")
     })
     write_fasta <- function(sequences,file) writeLines(unlist(lapply(seq_along(sequences),function(i) c(paste0(">",names(sequences)[i]),sequences[i])),use.names=FALSE),file)
     output$download_sequences <- downloadHandler(filename=function() paste0(snapshot()$manifest$id,"-templates.fasta"),content=function(file) write_fasta(snapshot()$sequences[selected_accessions()],file))
     output$download_alignment <- downloadHandler(filename=function() paste0(snapshot()$manifest$id,"-alignment.fasta"),content=function(file) write_fasta(snapshot()$alignment,file))
+    output$download_alignment_sites <- downloadHandler(filename=function() paste0(snapshot()$manifest$id,"-primer-alignment-coordinates.csv"),content=function(file) {
+      rows <- mapped_alignment()
+      rows$snapshot_id <- rep(snapshot()$manifest$id,nrow(rows))
+      write.csv(rows,file,row.names=FALSE,na="")
+    })
     output$download_manifest <- downloadHandler(filename=function() paste0(snapshot()$manifest$id,"-manifest.json"),content=function(file) jsonlite::write_json(snapshot()$manifest,file,pretty=TRUE,auto_unbox=TRUE,null="null",na="null"))
-    list(snapshot=snapshot,candidates=candidates,all_pairs=all_pairs,selected_accessions=selected_accessions,active_pair=active_pair)
+    list(snapshot=snapshot,candidates=candidates,all_pairs=all_pairs,selected_accessions=selected_accessions,active_pair=active_pair,
+         alignment_index=alignment_index,mapped_alignment=mapped_alignment,alignment_pairs=alignment_pairs,alignment_reference=alignment_reference)
   })
 }

@@ -49,6 +49,23 @@ remain directly measurable even when a gene boundary is unresolved.
 
 ## Versions and recovery
 
+The combination explorer also renders the selected snapshot's actual frozen
+multiple-sequence alignment. A shared alignment-column axis shows the current
+combination tracks on a chosen template and the selected templates with their
+gaps and comparison products. Clicking a combination selects its evidence and
+highlights its alignment span; the view can show the shortlist, up to five
+compared combinations, or the selected pair. Lineage and version filters also
+change the alignment rows and available reference templates.
+
+Raw exact-site coordinates are mapped through the non-gap bases of each frozen
+aligned row. Ungapped aligned sequence identity must match its frozen template
+before a span can be shown. Missing, ambiguous, or inconsistent sites remain
+explicitly unresolved. Product lengths and platform colors use raw bp, never
+the number of alignment columns. The zoomable nucleotide window displays actual
+bases and gaps with primer-site shading; a CSV exports both coordinate systems
+and the snapshot identity. Cross-clade spacer alignment remains exploratory
+and does not establish homology or PCR validation.
+
 V1 captures the original catalog, FN812768.2 reference, landmarks, and eight
 legacy geometries. Its frozen exact-site outputs were computed when the
 baseline was captured; unresolved legacy placements do not supply platform
@@ -82,6 +99,7 @@ separately in [growing-reference-contract.md](growing-reference-contract.md).
 python3 scripts/build_fungal_reference_panel.py
 Rscript scripts/build_fungal_snapshots.R
 Rscript tests/test_fungal_explorer.R
+Rscript tests/test_fungal_alignment.R
 Rscript tests/test_fungal_versions.R
 Rscript tests/test_fungal_workspace.R
 python3 -m unittest discover -s tests -p test_fungal_reference_panel.py

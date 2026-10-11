@@ -2725,7 +2725,7 @@
   },
   "files": {
     "app.R": {
-      "checksum": "17a95432a3ca2afcce7e586153b928f6"
+      "checksum": "d6729b914006412ee6e22677d62e11b4"
     },
     "data/catalog/claims.csv": {
       "checksum": "7e287c602b958d2d647bbee4089c0b39"
@@ -3171,11 +3171,17 @@
     "R/functions.R": {
       "checksum": "0b8135548921fa241dbc1c06a26c5c6f"
     },
+    "R/fungal_alignment_ui.R": {
+      "checksum": "43d0b65aeb93f5423a67596cafcc1d46"
+    },
+    "R/fungal_alignment.R": {
+      "checksum": "e96fe74a89bbcc982efcaeb8c0a9e14e"
+    },
     "R/fungal_explorer.R": {
       "checksum": "82db3b79ee091af118b486177645460c"
     },
     "R/fungal_ui.R": {
-      "checksum": "85263ad641fb853119ae3753c4756c9f"
+      "checksum": "07bf8e3d2c9a5bb072b49e5d6233afe0"
     },
     "R/fungal_versions.R": {
       "checksum": "264e321c4ecf0d07f6ec17af7c8a1500"

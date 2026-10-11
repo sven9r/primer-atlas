@@ -26,6 +26,17 @@
             "docs/fungal-explorer.md"
           ],
           "change": "Offer 20 starter combinations, pairing matrix, five-pair comparison, editable length ceilings and lineage filters; freeze catalog, raw sequence, alignment, taxonomy, exact-site results and provenance together in immutable snapshots."
+        },
+        {
+          "kind": "fungal_alignment_integration",
+          "paths": [
+            "R/fungal_alignment.R",
+            "R/fungal_alignment_ui.R",
+            "R/fungal_ui.R",
+            "tests/test_fungal_alignment.R",
+            "tests/test_fungal_workspace.R"
+          ],
+          "change": "Link primer combinations to the frozen multiple-sequence alignment with per-template spans, shared alignment columns, nucleotide inspection, and coordinate exports; raw product lengths remain distinct from gap-expanded alignment spans."
         }
       ],
       "verification": [

@@ -15,6 +15,8 @@ source("R/data_layer.R")
 source("R/reference_panels.R")
 source("R/fungal_explorer.R")
 source("R/fungal_versions.R")
+source("R/fungal_alignment.R")
+source("R/fungal_alignment_ui.R")
 source("R/fungal_ui.R")
 
 coi_release_state <- tryCatch(atlas_read_manifest("COI"), error = function(e) NULL)
@@ -975,6 +977,24 @@ body.detail-switching .deep-detail-card {
 .fungal-map svg + svg { margin-top:8px; border-top:1px solid var(--line); padding-top:8px; }
 .fungal-workspace .dataTables_wrapper { min-width:0; max-width:100%; overflow-x:auto; }
 .fungal-workspace .callout { font-size:.85rem; }
+.fungal-alignment-workspace { min-width:0; padding:18px; background:#fff; border:1px solid var(--line); border-radius:12px; }
+.fungal-alignment-workspace h3 { font-size:1.2rem; margin:0 0 8px; font-weight:800; }
+.fungal-alignment-controls .shiny-input-container { width:100%!important; }
+.fungal-alignment-controls .radio-inline { margin:4px 16px 4px 0; }
+.fungal-alignment-detail { margin-top:18px; border-top:1px solid var(--line); padding-top:14px; }
+.fungal-alignment-detail > summary { font-weight:750; color:var(--accent); cursor:pointer; }
+.fungal-alignment-base-controls { display:grid; grid-template-columns:minmax(150px,1fr) minmax(170px,1fr); align-items:center; gap:12px; margin:14px 0; }
+.fungal-alignment-base-controls > .d-flex { grid-column:1 / -1; }
+.fungal-alignment-base-controls .shiny-input-container { width:100%!important; margin:0; }
+.fungal-alignment-scroll { max-width:100%; max-height:780px; overflow:auto; overscroll-behavior:contain; }
+.fungal-alignment-scroll svg { display:block; width:100%; height:auto; min-width:980px; }
+.fungal-alignment-base-scroll { max-width:100%; max-height:520px; overflow:auto; overscroll-behavior:contain; }
+.fungal-alignment-bases thead th { position:sticky; top:0; background:#f8fafc; z-index:3; }
+.fungal-alignment-bases table { width:max-content; border-collapse:collapse; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:12px; }
+.fungal-alignment-bases td,.fungal-alignment-bases th { padding:3px 0; text-align:center; min-width:15px; }
+.fungal-alignment-bases .fungal-alignment-label { position:sticky; left:0; background:#fff; z-index:2; text-align:left; min-width:210px; max-width:250px; padding-right:12px; font-family:'Manrope',sans-serif; }
+.fungal-alignment-bases .gap { color:#64748b; }
+.fungal-alignment-bases .forward,.fungal-alignment-bases .reverse { font-weight:800; }
 @container(max-width:760px) {
   .fungal-version-bar { grid-template-columns:minmax(260px,1fr) auto; }
   .fungal-version-bar > .shiny-html-output { grid-column:1 / -1; grid-row:2; }
@@ -984,6 +1004,9 @@ body.detail-switching .deep-detail-card {
   .fungal-controls .bslib-grid { grid-template-columns:1fr!important; }
   .fungal-controls > .d-flex { align-items:flex-start; }
   .fungal-map svg { min-width:680px; }
+  .fungal-alignment-base-controls { grid-template-columns:1fr; }
+  .fungal-alignment-workspace { padding:12px; }
+  .fungal-alignment-bases .fungal-alignment-label { min-width:150px; max-width:170px; }
 }
 @container(max-width:480px) {
   .fungal-version-bar { grid-template-columns:minmax(0,1fr); }

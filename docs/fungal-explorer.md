@@ -66,6 +66,21 @@ bases and gaps with primer-site shading; a CSV exports both coordinate systems
 and the snapshot identity. Cross-clade spacer alignment remains exploratory
 and does not establish homology or PCR validation.
 
+**Template bases (bp)** is the default axis for the upper combination chart.
+Its chosen template's product, primer and gene spans use inclusive raw bases,
+so product width corresponds to physical sequence length. **Gapped alignment
+columns** restores the shared-column upper view. Cross-template comparisons
+and nucleotide windows always retain their explicitly labeled alignment axis;
+the alignment slider selects corresponding raw bases for the upper bp chart.
+
+**Where the bp count comes from** shows the selected pair's inclusive raw
+coordinate calculation, binding-site/interior lengths and alignment gap count.
+For example, PZ962702.1 ITS1 + ITS2 is raw bases 1,775–2,109: 2,109 − 1,775 + 1
+= 335 bp, including both primer sites. Its frozen alignment span is columns
+7,995–9,567: 1,573 columns = 335 sequence bases + 1,238 inserted gap columns.
+Gaps do not add bp to the PCR product or its platform length limit. The bp
+chart also exposes each plotted pair's raw and alignment accounting.
+
 **Show genes and regions** adds per-template rRNA gene and ITS spacer tracks
 on the same alignment columns as the primer products. Slate identifies genes;
 amber identifies spacers independently of sequencing-platform colors. The
@@ -123,6 +138,7 @@ Rscript scripts/build_fungal_snapshots.R
 Rscript tests/test_fungal_explorer.R
 Rscript tests/test_fungal_alignment.R
 Rscript tests/test_fungal_alignment_regions.R
+Rscript tests/test_fungal_amplicon_bp_view.R
 Rscript tests/test_fungal_versions.R
 Rscript tests/test_fungal_workspace.R
 python3 -m unittest discover -s tests -p test_fungal_reference_panel.py

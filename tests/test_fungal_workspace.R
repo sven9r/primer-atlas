@@ -27,8 +27,30 @@ shiny::testServer(fungalExplorerServer, args=list(id="test"), {
             grepl("boundary unavailable",output$alignment_regions$html,fixed=TRUE))
   overview <- output$alignment_overview
   bases <- output$alignment_bases
-  stopifnot(grepl("frozen alignment",overview$html,fixed=TRUE),
+  stopifnot(grepl("Shared alignment columns",overview$html,fixed=TRUE),
             grepl("fungal-alignment-base",bases$html,fixed=TRUE))
+  stopifnot(grepl('data-coordinate-system="raw_bases"',overview$html,fixed=TRUE),
+            length(template_base_domain())==2L,
+            grepl("Where the bp count comes from",output$alignment_bp_accounting$html,fixed=TRUE),
+            grepl("gap columns",output$alignment_bp_accounting$html,fixed=TRUE))
+  session$setInputs(product_coordinates="alignment_columns")
+  session$flushReact()
+  stopifnot(!grepl('data-coordinate-system="raw_bases"',output$alignment_overview$html,fixed=TRUE),
+            grepl('data-coordinate-system="alignment_columns"',output$alignment_overview$html,fixed=TRUE))
+  session$setInputs(product_coordinates="template_bases")
+  session$flushReact()
+  # A compared pair remains among the 20 upper bp tracks even when its
+  # ordinary position in the unrestricted candidate list is much later.
+  session$setInputs(examples_only=FALSE)
+  session$flushReact()
+  stopifnot(nrow(candidates())>20L)
+  compared_tail <- tail(candidates()$pair_id,1L)
+  session$setInputs(compare_pairs=compared_tail)
+  session$flushReact()
+  raw_html <- strsplit(output$alignment_overview$html,'<div class="fungal-alignment-overview"',fixed=TRUE)[[1]][1]
+  stopifnot(grepl(paste0('data-pair-id="',compared_tail,'"'),raw_html,fixed=TRUE))
+  session$setInputs(examples_only=TRUE,compare_pairs=character())
+  session$flushReact()
   stopifnot(grepl('class="fungal-alignment-region"',overview$html,fixed=TRUE))
   session$setInputs(show_regions=FALSE)
   session$flushReact()

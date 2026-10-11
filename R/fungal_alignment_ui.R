@@ -243,9 +243,204 @@
   )
 }
 
+.fungal_alignment_ui_bp_regions <- function(rows, accession, domain) {
+  if (is.null(rows) || !nrow(rows)) return(NULL)
+  rows[rows$accession %in% accession & rows$alignment_status == "mapped" &
+       is.finite(rows$start) & is.finite(rows$end) &
+       rows$end >= domain[1] & rows$start <= domain[2], , drop = FALSE]
+}
+
+.fungal_alignment_ui_bp_product_window <- function(row, domain) {
+  mapped <- nrow(row) == 1L && identical(as.character(row$alignment_status), "mapped")
+  visible_bp <- if (mapped) max(0L, min(row$reverse_end, domain[2]) - max(row$forward_start, domain[1]) + 1L) else NA_integer_
+  list(mapped = mapped, visible_bp = visible_bp, clipped = mapped && visible_bp < row$amplicon_bp)
+}
+
+# Raw coordinates always increase along the original template, even when MAFFT
+# reversed that template. Half-base edges give inclusive products/sites their
+# physical length: 1775..2109 has width 335 bases, not 334 or 1573 columns.
+.fungal_alignment_ui_bp_span <- function(row, domain, scale, y, ceilings, pair_label = "") {
+  if (!nrow(row)) return(.fungal_alignment_ui_svg_text(scale(domain[1] - .5) + 8, y + 4,
+    "No pair evidence on this template", size = 11))
+  if (nrow(row) != 1L) return(.fungal_alignment_ui_svg_text(scale(domain[1] - .5) + 8, y + 4,
+    "Ambiguous pair evidence on this template", size = 11))
+  row <- row[1L, , drop = FALSE]
+  window <- .fungal_alignment_ui_bp_product_window(row, domain)
+  mapped <- window$mapped
+  site_mapped <- function(role) {
+    field <- paste0(role, "_alignment_status")
+    field %in% names(row) && identical(as.character(row[[field]][1L]), "mapped")
+  }
+  visible <- function(start, end) is.finite(start) && is.finite(end) &&
+    end >= domain[1] && start <= domain[2]
+  edges <- function(start, end) c(scale(max(domain[1], start) - .5), scale(min(domain[2], end) + .5))
+  tier <- .fungal_alignment_ui_tier(if (mapped) row$amplicon_bp else NA_real_, ceilings)
+  binding <- function(role) {
+    if (!site_mapped(role)) return(NULL)
+    start <- row[[paste0(role, "_start")]]
+    end <- row[[paste0(role, "_end")]]
+    if (!visible(start, end)) return(NULL)
+    points <- edges(start, end)
+    htmltools::tagList(
+      htmltools::tags$rect(class = "fungal-template-bp-primer", `data-primer-role` = role,
+        `data-start-base` = start, `data-end-base` = end, x = points[1L], y = y - 4,
+        width = points[2L] - points[1L], height = 8, fill = "#172033"),
+      # Extension originates at the raw forward 3' end or reverse 3' end.
+      if (if (role == "forward") end <= domain[2] && end >= domain[1]
+          else start >= domain[1] && start <= domain[2]) {
+        direction <- if (role == "forward") 1L else -1L
+        tip <- scale(if (role == "forward") end + .5 else start - .5)
+        htmltools::tags$polygon(class = "fungal-template-bp-arrow", `data-primer-role` = role,
+          `data-direction` = direction,
+          points = paste(paste0(tip + direction * 6, ",", y),
+            paste0(tip - direction * 4, ",", y - 5), paste0(tip - direction * 4, ",", y + 5)), fill = "#172033")
+      }
+    )
+  }
+  product_visible <- mapped && visible(row$forward_start, row$reverse_end)
+  product_edges <- if (product_visible) edges(row$forward_start, row$reverse_end) else NULL
+  htmltools::tags$g(class = "fungal-template-bp-pair", `data-accession` = row$accession,
+    `data-pair-id` = row$pair_id, `data-alignment-status` = row$alignment_status,
+    `data-coordinate-system` = "raw_bases", `data-product-bp` = if (mapped) row$amplicon_bp else NULL,
+    `data-start-base` = if (mapped) row$forward_start else NULL,
+    `data-end-base` = if (mapped) row$reverse_end else NULL,
+    `data-clipped` = if (mapped) tolower(as.character(window$clipped)) else NULL,
+    `data-visible-bp` = if (mapped) window$visible_bp else NULL,
+    `data-product-alignment-span` = if (mapped) row$product_alignment_span else NULL,
+    `data-gap-columns` = if (mapped) row$n_gap_columns_in_product else NULL,
+    htmltools::tags$title(if (mapped) paste0(pair_label, " · ", row$accession,
+      "\nRaw product ", row$forward_start, "–", row$reverse_end, ": ", row$amplicon_bp, " bp including primers",
+      "\nFrozen alignment columns ", row$product_start_col, "–", row$product_end_col,
+      ": ", row$product_alignment_span, " columns including ", row$n_gap_columns_in_product, " gaps")
+      else paste0(pair_label, " · Product unresolved: ", .fungal_alignment_ui_status(row),
+        "\nOnly verified exact individual sites are shown.")),
+    if (product_visible) htmltools::tags$rect(class = "fungal-template-bp-product",
+      `data-clipped` = tolower(as.character(window$clipped)), `data-visible-bp` = window$visible_bp,
+      x = product_edges[1L], y = y - 2.5, width = diff(product_edges), height = 5, fill = tier$color),
+    binding("forward"), binding("reverse"),
+    .fungal_alignment_ui_svg_text(1030, y + 4,
+      if (mapped) paste0(row$amplicon_bp, " bp total") else "Unresolved product", size = if (mapped) 12 else 10, color = tier$color),
+    if (mapped && window$clipped) .fungal_alignment_ui_svg_text(1030, y + 17,
+      if (product_visible) paste0(window$visible_bp, " bp · partly in view") else "Outside window", size = 9, color = tier$color),
+    if (mapped && !product_visible) .fungal_alignment_ui_svg_text(scale(domain[1] - .5) + 8, y + 4,
+      "Outside this raw-base window", size = 11, color = "#64748b")
+  )
+}
+
+fungal_alignment_template_bp_view <- function(index, mapped_rows, pairs, taxonomy, reference_accession,
+                                             active_id, domain, ceilings, ns,
+                                             landmarks = NULL, show_regions = TRUE) {
+  if (!inherits(index, "fungal_alignment_index")) stop("index must be produced by fungal_alignment_index().")
+  tags <- htmltools::tags
+  reference <- index$metadata[index$metadata$accession %in% reference_accession, , drop = FALSE]
+  if (length(reference_accession) != 1L || nrow(reference) != 1L || reference$status != "verified") {
+    return(tags$div(class = "callout fungal-template-bp-unavailable",
+      "A verified raw template is required for the bp chart. Choose a template with matching frozen sequence and alignment evidence."))
+  }
+  n_bases <- reference$n_template_bases
+  if (!n_bases || (!is.null(domain) && !length(domain))) {
+    return(tags$div(class = "callout fungal-template-bp-empty-window", `data-coordinate-system` = "raw_bases",
+      `data-reference-accession` = reference_accession,
+      "This alignment window contains no bases from the chosen template. Choose another window to see amplicons in template bp."))
+  }
+  if (is.null(domain) || length(domain) != 2L || any(!is.finite(domain))) domain <- c(1L, n_bases)
+  domain <- sort(pmax(1L, pmin(n_bases, as.integer(domain))))
+  # The visible window includes every base's complete cell at either edge.
+  scale <- function(base) 290 + (base - (domain[1] - .5)) / (diff(domain) + 1L) * 710
+  priorities <- unique(intersect(as.character(active_id), pairs$pair_id))
+  shown_ids <- head(unique(c(priorities, pairs$pair_id)), 20L)
+  shown <- pairs[match(shown_ids, pairs$pair_id), , drop = FALSE]
+  visible_regions <- if (isTRUE(show_regions)) .fungal_alignment_ui_bp_regions(landmarks, reference_accession, domain) else NULL
+  region_height <- if (isTRUE(show_regions)) 72L else 0L
+  height <- 86L + region_height + nrow(shown) * 34L
+  reference_svg <- tags$svg(viewBox = paste("0 0 1160", height), role = "img",
+    `aria-label` = paste("Raw template bases", paste(domain, collapse = "through"), "on", reference_accession,
+      "with", nrow(shown), "candidate primer combinations; alignment gaps removed"),
+    .fungal_alignment_ui_svg_text(290, 12, "Raw template bases (bp; gaps removed)", size = 10, `font-weight` = 700),
+    .fungal_alignment_ui_axis(domain, scale, height - 10L),
+    if (isTRUE(show_regions)) htmltools::tagList(
+      .fungal_alignment_ui_svg_text(10, 58, "Genes / regions", size = 12, `font-weight` = 700),
+      if (!length(visible_regions) || !nrow(visible_regions)) .fungal_alignment_ui_svg_text(290, 68,
+        "No frozen gene / region boundary in this raw-base window", size = 11),
+      lapply(seq_len(if (length(visible_regions)) nrow(visible_regions) else 0L), function(i) {
+        row <- visible_regions[i, , drop = FALSE]
+        left <- scale(max(domain[1], row$start) - .5)
+        right <- scale(min(domain[2], row$end) + .5)
+        color <- .fungal_alignment_ui_region_color(row)
+        tags$g(class = "fungal-template-bp-region", `data-accession` = row$accession,
+          `data-landmark-id` = row$landmark_id, `data-start-base` = row$start, `data-end-base` = row$end,
+          `data-raw-bp` = row$raw_bp, `data-start-col` = row$left_col, `data-end-col` = row$right_col,
+          `data-evidence` = row$evidence_status, tags$title(.fungal_alignment_ui_region_title(row)),
+          tags$rect(x = left, y = 57, width = right - left, height = 14, rx = 2, fill = color,
+            `fill-opacity` = .16, stroke = color,
+            `stroke-dasharray` = if (row$evidence_status == "curated_reference") "3 2" else NULL),
+          .fungal_alignment_ui_svg_text((left + right) / 2, if (grepl("^ITS[12]$", row$label)) 95 else 47,
+            .fungal_alignment_ui_region_label(row), size = 11, color = color, `text-anchor` = "middle", `font-weight` = 700)
+        )
+      })),
+    .fungal_alignment_ui_svg_text(10, 52 + region_height, reference_accession, size = 14, color = "#172033", `font-weight` = 800),
+    tags$line(x1 = scale(domain[1] - .5), x2 = scale(domain[2] + .5), y1 = 50 + region_height,
+      y2 = 50 + region_height, stroke = "#94a3b8", `stroke-width` = 5),
+    lapply(seq_len(nrow(shown)), function(i) {
+      pair <- shown[i, , drop = FALSE]
+      row <- .fungal_alignment_ui_row(mapped_rows, reference_accession, pair$pair_id)
+      y <- 80L + region_height + (i - 1L) * 34L
+      tags$g(if (pair$pair_id %in% active_id) tags$rect(x = 0, y = y - 17, width = 1150, height = 30, rx = 5, fill = "#eef2ff"),
+        .fungal_alignment_ui_pair_button(pair, 6, y, ns),
+        .fungal_alignment_ui_bp_span(row, domain, scale, y, ceilings, pair$pair_label))
+    }))
+  tags$div(class = "fungal-template-bp-view", `data-coordinate-system` = "raw_bases",
+    `data-reference-accession` = reference_accession, `data-template-bases` = n_bases,
+    `data-start-base` = domain[1], `data-end-base` = domain[2],
+    tags$h4(paste0("Amplicons in template bp · ", reference_accession)),
+    tags$p(class = "tiny", .fungal_alignment_ui_taxon(taxonomy, reference_accession),
+      paste0(" · Raw bases ", format(domain[1], big.mark = ","), "–", format(domain[2], big.mark = ","),
+        " of ", format(n_bases, big.mark = ","), ". Each base occupies one bp; alignment gaps have no width. Product lengths include both primers.")),
+    if (isTRUE(show_regions)) tags$div(class = "fungal-template-bp-window-regions",
+      tags$p(class = "tiny", "Regions in this raw-base window · ", reference_accession),
+      if (length(visible_regions) && nrow(visible_regions)) lapply(seq_len(nrow(visible_regions)), function(i) {
+        row <- visible_regions[i, , drop = FALSE]
+        clipped <- row$start < domain[1] || row$end > domain[2]
+        tags$span(class = "fungal-template-bp-window-region", style = "display:inline-block;margin:0 12px 6px 0;",
+          `data-accession` = row$accession, `data-landmark-id` = row$landmark_id,
+          `data-start-base` = row$start, `data-end-base` = row$end,
+          `data-start-col` = row$left_col, `data-end-col` = row$right_col,
+          `data-clipped` = tolower(as.character(clipped)), title = .fungal_alignment_ui_region_title(row),
+          tags$strong(.fungal_alignment_ui_region_label(row)),
+          tags$span(class = "tiny", paste0(" · bases ", format(row$start, big.mark = ","), "–",
+            format(row$end, big.mark = ","), " (", row$raw_bp, " bp)", if (clipped) " · partly in view" else "")))
+      }) else tags$p(class = "tiny", "No frozen gene or region boundary overlaps this raw-base window.")),
+    tags$p(class = "tiny fungal-alignment-pan-hint", "Scroll sideways to inspect the full raw-base track and product lengths."),
+    tags$div(class = "fungal-alignment-scroll", reference_svg),
+    tags$div(class = "fungal-template-bp-accounting",
+      tags$h5("Product length and alignment gaps"),
+      tags$ul(lapply(seq_len(nrow(shown)), function(i) {
+        pair <- shown[i, , drop = FALSE]
+        row <- .fungal_alignment_ui_row(mapped_rows, reference_accession, pair$pair_id)
+        window <- .fungal_alignment_ui_bp_product_window(row, domain)
+        mapped <- window$mapped
+        tags$li(class = "fungal-template-bp-accounting-row", `data-pair-id` = pair$pair_id,
+          `data-accession` = reference_accession, `data-product-bp` = if (mapped) row$amplicon_bp else NULL,
+          `data-product-alignment-span` = if (mapped) row$product_alignment_span else NULL,
+          `data-gap-columns` = if (mapped) row$n_gap_columns_in_product else NULL,
+          `data-clipped` = if (mapped) tolower(as.character(window$clipped)) else NULL,
+          `data-visible-bp` = if (mapped) window$visible_bp else NULL,
+          tags$strong(pair$pair_label), " · ",
+          if (mapped) paste0(row$amplicon_bp, " bp total · raw bases ", row$forward_start, "–", row$reverse_end,
+            " (F ", row$forward_start, "–", row$forward_end, "; R ", row$reverse_start, "–", row$reverse_end, ") · ",
+            if (window$clipped) paste0(window$visible_bp, " bp in this window (",
+              if (window$visible_bp > 0L) "partly in view" else "outside window", ") · ") else "",
+            format(row$product_alignment_span, big.mark = ","), " alignment columns including ",
+            format(row$n_gap_columns_in_product, big.mark = ","), " gap columns")
+          else paste0("Product unresolved · ", if (nrow(row) > 1L) "Ambiguous pair evidence on this template" else .fungal_alignment_ui_status(row)))
+      }))),
+    tags$p(class = "tiny", "Colors describe raw product length tiers. Forward arrows extend toward increasing raw bases; reverse arrows extend toward decreasing raw bases. Frozen alignment column spans, shown separately, can contain gaps. Exact sites and length eligibility do not establish PCR success.")
+  )
+}
+
 fungal_alignment_overview <- function(index, mapped_rows, pairs, taxonomy, reference_accession,
                                      selected_accessions, compare_ids, active_id, domain, ceilings, ns,
-                                     landmarks = NULL, show_regions = TRUE) {
+                                     landmarks = NULL, show_regions = TRUE, show_candidate_tracks = TRUE) {
   tags <- htmltools::tags
   if (!length(index$alignment) || !is.finite(index$n_columns) || index$n_columns < 1L) {
     return(tags$div(class = "callout", "No frozen alignment is available in this snapshot."))
@@ -264,7 +459,7 @@ fungal_alignment_overview <- function(index, mapped_rows, pairs, taxonomy, refer
     .fungal_alignment_ui_visible_regions(landmarks, reference_accession, domain) else NULL
   region_height <- if (isTRUE(show_regions)) 72L else 0L
   reference_height <- 90 + region_height + nrow(shown) * 32
-  reference_svg <- tags$svg(viewBox = paste("0 0 1160", reference_height), role = "img",
+  reference_svg <- if (isTRUE(show_candidate_tracks)) tags$svg(viewBox = paste("0 0 1160", reference_height), role = "img",
     `aria-label` = paste("Frozen alignment columns", paste(domain, collapse = "through"),
                         "with", nrow(shown), "candidate primer combinations",
                         if (isTRUE(show_regions)) "and template-specific genes and regions", "on", reference_accession),
@@ -280,6 +475,7 @@ fungal_alignment_overview <- function(index, mapped_rows, pairs, taxonomy, refer
           `pointer-events` = "none")
       })
     },
+    .fungal_alignment_ui_svg_text(290, 12, "Alignment columns (including gaps)", size = 10, `font-weight` = 700),
     .fungal_alignment_ui_axis(domain, scale, reference_height - 10),
     if (isTRUE(show_regions)) htmltools::tagList(
       .fungal_alignment_ui_svg_text(10, 58, "Genes / regions", size = 12, `font-weight` = 700),
@@ -298,11 +494,12 @@ fungal_alignment_overview <- function(index, mapped_rows, pairs, taxonomy, refer
         .fungal_alignment_ui_span(row, domain, scale, y, ceilings, pair$pair_label)
       )
     })
-  )
+  ) else NULL
   block_height <- 45 + region_height + max(1L, nrow(comparisons)) * 19
   template_height <- 45 + length(selected_accessions) * block_height
   template_svg <- tags$svg(viewBox = paste("0 0 1160", template_height), role = "img",
     `aria-label` = paste("Frozen alignment non-gap occupancy and selected primer products for", length(selected_accessions), "templates"),
+    .fungal_alignment_ui_svg_text(290, 12, "Alignment columns (including gaps)", size = 10, `font-weight` = 700),
     .fungal_alignment_ui_axis(domain, scale, template_height - 5),
     lapply(seq_along(selected_accessions), function(i) {
       accession <- selected_accessions[i]
@@ -330,11 +527,11 @@ fungal_alignment_overview <- function(index, mapped_rows, pairs, taxonomy, refer
   tags$div(class = "fungal-alignment-overview", `data-coordinate-system` = "alignment_columns",
     `data-alignment-columns` = index$n_columns, `data-template-count` = length(selected_accessions),
     `data-reference-accession` = reference_accession, `data-start-col` = domain[1], `data-end-col` = domain[2],
-    tags$h4("Primers on the frozen alignment"),
+    tags$h4(if (isTRUE(show_candidate_tracks)) "Primers on the frozen alignment" else "Shared alignment columns"),
     tags$p(class = "tiny", paste0("Alignment columns ", format(domain[1], big.mark = ","), "–",
       format(domain[2], big.mark = ","), " of ", format(index$n_columns, big.mark = ","),
       ". Grey marks show non-gap sequence; empty stretches are alignment gaps. Product labels count raw template bases including primers.")),
-    tags$h5(paste0("Candidate combinations on ", reference_accession)),
+    if (isTRUE(show_candidate_tracks)) htmltools::tagList(tags$h5(paste0("Candidate combinations on ", reference_accession)),
     if (isTRUE(show_regions)) tags$div(class = "fungal-alignment-window-regions",
       tags$p(class = "tiny", "Regions in this window · ", reference_accession),
       if (length(visible_regions) && nrow(visible_regions)) lapply(seq_len(nrow(visible_regions)), function(i) {
@@ -349,7 +546,7 @@ fungal_alignment_overview <- function(index, mapped_rows, pairs, taxonomy, refer
             format(row$right_col, big.mark = ","), if (clipped) " · partly in view" else "")))
       }) else tags$p(class = "tiny", "No frozen gene or region boundary overlaps this window.")),
     tags$p(class = "tiny fungal-alignment-pan-hint", "Scroll sideways to inspect the full alignment track and product lengths."),
-    tags$div(class = "fungal-alignment-scroll", reference_svg),
+    tags$div(class = "fungal-alignment-scroll", reference_svg)),
     tags$h5(paste0("Selected templates on the same columns (", length(selected_accessions), ")")),
     if (nrow(comparisons)) tags$p(class = "tiny", paste0("P", seq_len(nrow(comparisons)), " = ", comparisons$pair_label, collapse = " · ")),
     if (length(selected_accessions)) tags$div(class = "fungal-alignment-scroll", template_svg)

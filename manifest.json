@@ -2725,7 +2725,7 @@
   },
   "files": {
     "app.R": {
-      "checksum": "97a252c84a1bb63c506422ab8af43fd7"
+      "checksum": "d375f07c2b8173bb513f6279ab24deac"
     },
     "data/catalog/claims.csv": {
       "checksum": "7e287c602b958d2d647bbee4089c0b39"
@@ -3187,7 +3187,7 @@
       "checksum": "bc7ecb8eb2df4ae29bffde148308fb3c"
     },
     "R/fungal_alignment_ui.R": {
-      "checksum": "3405396b6e7fae9aeb6b37feac6ae5a7"
+      "checksum": "f017484451971d17931551b9b57953bd"
     },
     "R/fungal_alignment.R": {
       "checksum": "e3f423833bd4e1e8bd55a35bf2445d87"
@@ -3196,7 +3196,7 @@
       "checksum": "82db3b79ee091af118b486177645460c"
     },
     "R/fungal_ui.R": {
-      "checksum": "c90378347bb2f9469672c877cf996a36"
+      "checksum": "2753567aaa67cfcd0ae3e0854a5daa15"
     },
     "R/fungal_versions.R": {
       "checksum": "264e321c4ecf0d07f6ec17af7c8a1500"

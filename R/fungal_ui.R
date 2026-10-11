@@ -68,9 +68,12 @@ fungalExplorerUI <- function(id) {
           options=list(placeholder="Choose combinations to show together on the alignment",maxItems=5,plugins=list("remove_button"))),
       div(class="fungal-alignment-workspace",
           h3("Primer combinations on the alignment"),
-          p(class="tiny", "Every track uses the selected version's frozen alignment. Colored spans join exact primer sites on each template; product lengths and platform colors use its ungapped sequence."),
+          p(class="tiny", "Inspect physical product lengths on the chosen template's base axis, or switch to its gapped alignment columns. Cross-template comparisons and nucleotide windows use the selected version's frozen alignment."),
           div(class="fungal-alignment-controls",
               selectInput(ns("alignment_reference"),"Template for combination tracks",choices=NULL),
+              radioButtons(ns("product_coordinates"),"Combination chart axis",
+                  c("Template bases (bp)"="template_bases","Gapped alignment columns"="alignment_columns"),
+                  "template_bases",inline=TRUE),
               checkboxInput(ns("show_regions"),"Show genes and regions",TRUE),
               uiOutput(ns("alignment_regions")),
               radioButtons(ns("alignment_scope"),"Combinations on the alignment",
@@ -78,8 +81,10 @@ fungalExplorerUI <- function(id) {
               div(class="d-flex flex-wrap gap-2",
                   actionButton(ns("alignment_focus"),"Zoom to selected combination",class="btn-outline-primary btn-sm"),
                   actionButton(ns("alignment_full"),"Show full alignment",class="btn-outline-secondary btn-sm")),
-              sliderInput(ns("alignment_range"),"Visible alignment columns",min=1,max=20,value=c(1,20),step=1)),
+              sliderInput(ns("alignment_range"),"Visible alignment columns (gaps included)",min=1,max=20,value=c(1,20),step=1),
+              p(class="tiny","This alignment window also selects the corresponding raw bases for the template-base chart.")),
           uiOutput(ns("alignment_status")),
+          uiOutput(ns("alignment_bp_accounting")),
           uiOutput(ns("alignment_overview")),
           tags$details(class="fungal-alignment-detail",open=NA,
               tags$summary("Inspect aligned nucleotides and primer sites"),
@@ -264,6 +269,14 @@ fungalExplorerServer <- function(id) {
       if(length(value)!=2 || anyNA(value) || diff(value)<1) return(c(1,maximum))
       value
     })
+    template_base_domain <- reactive({
+      reference <- alignment_reference()
+      if(length(reference)!=1L) return(numeric())
+      map <- alignment_index()$maps[[reference]]
+      domain <- alignment_domain()
+      raw <- which(map>=domain[1] & map<=domain[2])
+      if(length(raw)) range(raw) else numeric()
+    })
     alignment_focus_row <- reactive({
       rows <- mapped_alignment()
       rows <- rows[rows$pair_id %in% active_pair()$pair_id,,drop=FALSE]
@@ -347,13 +360,54 @@ fungalExplorerServer <- function(id) {
             p("The selected combination has no complete exact-site product on ",reference,". Verified individual sites are shown when available; choose another template to inspect a complete product."),
           if(!length(reference)) p("No templates match these lineage filters."))
     })
+    output$alignment_bp_accounting <- renderUI({
+      row <- alignment_focus_row()
+      if(!nrow(row) || !identical(row$alignment_status[1],"mapped")) return(NULL)
+      pair <- active_pair()
+      format_count <- function(x) format(as.integer(x),big.mark=",",trim=TRUE)
+      forward_bp <- row$forward_end-row$forward_start+1L
+      reverse_bp <- row$reverse_end-row$reverse_start+1L
+      interior_bp <- row$amplicon_bp-forward_bp-reverse_bp
+      raw_domain <- template_base_domain()
+      clipped <- identical(input$product_coordinates %||% "template_bases","template_bases") &&
+        length(raw_domain)==2L && (row$forward_start<raw_domain[1] || row$reverse_end>raw_domain[2])
+      visible_bp <- if(length(raw_domain)==2L) max(0L,min(row$reverse_end,raw_domain[2])-max(row$forward_start,raw_domain[1])+1L) else 0L
+      div(class="fungal-bp-accounting",`data-product-bp`=row$amplicon_bp,
+        `data-alignment-span`=row$product_alignment_span,`data-gap-columns`=row$n_gap_columns_in_product,
+        h4("Where the bp count comes from"),
+        p(strong(pair$pair_label)," · ",row$accession),
+        p(strong(format_count(row$amplicon_bp)," bp")," · raw template bases ",
+          format_count(row$forward_start),"–",format_count(row$reverse_end)),
+        p(class="mono",format_count(row$reverse_end)," − ",format_count(row$forward_start),
+          " + 1 = ",format_count(row$amplicon_bp)," bp"),
+        if(interior_bp>=0L) p(class="tiny",format_count(forward_bp)," bp forward binding site + ",
+          format_count(interior_bp)," bp between sites + ",format_count(reverse_bp)," bp reverse binding site."),
+        if(clipped) p(class="tiny",format_count(visible_bp)," of ",format_count(row$amplicon_bp),
+          " bp are within the current raw-base window. Zoom to the selected combination to see its complete length."),
+        p(class="tiny", "In the frozen alignment: ",format_count(row$product_alignment_span)," columns = ",
+          format_count(row$amplicon_bp)," sequence bases + ",format_count(row$n_gap_columns_in_product)," gap columns.",
+          " Alignment columns ",format_count(row$product_start_col),"–",format_count(row$product_end_col),
+          " are positions in the shared alignment; gaps do not add bp to the PCR product."),
+        p(class="tiny","Product lengths include both primer binding sites and exclude added adapters. Sequencing-platform limits use these actual sequence lengths."))
+    })
     output$alignment_overview <- renderUI({
       if(!length(selected_accessions())) return(div(class="callout","No template rows match these lineage filters."))
-      fungal_alignment_overview(index=alignment_index(),mapped_rows=mapped_alignment(),pairs=alignment_pairs(),
+      aligned <- function(show_candidate_tracks=TRUE) fungal_alignment_overview(index=alignment_index(),mapped_rows=mapped_alignment(),pairs=alignment_pairs(),
           taxonomy=snapshot()$taxonomy,reference_accession=alignment_reference(),selected_accessions=selected_accessions(),
           compare_ids=if(length(input$compare_pairs)) head(input$compare_pairs,5L) else active_pair()$pair_id,active_id=active_pair()$pair_id,
           domain=alignment_domain(),ceilings=alignment_ceilings(),ns=session$ns,
-          landmarks=mapped_alignment_regions(),show_regions=!identical(input$show_regions,FALSE))
+          landmarks=mapped_alignment_regions(),show_regions=!identical(input$show_regions,FALSE),
+          show_candidate_tracks=show_candidate_tracks)
+      if(identical(input$product_coordinates %||% "template_bases","template_bases")) {
+        bp_pairs <- alignment_pairs()
+        priority_ids <- intersect(unique(c(active_pair()$pair_id,head(input$compare_pairs,5L))),bp_pairs$pair_id)
+        bp_pairs <- bp_pairs[match(unique(c(priority_ids,bp_pairs$pair_id)),bp_pairs$pair_id),,drop=FALSE]
+        tagList(fungal_alignment_template_bp_view(index=alignment_index(),mapped_rows=mapped_alignment(),pairs=bp_pairs,
+          taxonomy=snapshot()$taxonomy,reference_accession=alignment_reference(),active_id=active_pair()$pair_id,
+          domain=template_base_domain(),ceilings=alignment_ceilings(),ns=session$ns,
+          landmarks=mapped_alignment_regions(),show_regions=!identical(input$show_regions,FALSE)),
+          aligned(show_candidate_tracks=FALSE))
+      } else aligned()
     })
     output$alignment_bases <- renderUI({
       if(!length(selected_accessions())) return(NULL)

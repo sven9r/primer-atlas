@@ -37,6 +37,7 @@ jobs:
             tests/test_fungal_explorer.R \
             tests/test_fungal_alignment.R \
             tests/test_fungal_alignment_regions.R \
+            tests/test_fungal_amplicon_bp_view.R \
             tests/test_fungal_versions.R \
             tests/test_fungal_workspace.R \
             tests/test_marker_runtime.R \

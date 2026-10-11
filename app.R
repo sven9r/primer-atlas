@@ -6771,6 +6771,42 @@ server <- function(input, output, session) {
     filename = function() paste0(input$lineage_pair, "_", input$lineage_target, "_genus_summary.csv"),
     content = function(file) write.csv(lineage_summary_table(claimed_primer_genera, "genus"), file, row.names = FALSE, na = "")
   )
+  lineage_growth_qa <- reactive({
+    if (!identical(input$lineage_marker, "COI") || is.null(input$lineage_pair) || input$lineage_pair == "BEEPRIME") return(tibble())
+    reference <- coi_reference_current()
+    if (!identical(reference$alignment_mode, "full") || !nrow(reference$growth_qa)) return(tibble())
+    as_tibble(reference$growth_qa)
+  })
+  lineage_growth_data <- reactive({
+    rows <- lineage_growth_qa()
+    if (nrow(rows) && !is.null(input$lineage_target) && input$lineage_target != "All") {
+      rows <- rows |> filter(target_group == input$lineage_target)
+    }
+    rows
+  })
+  output$lineage_growth_table <- renderDT({
+    rows <- lineage_growth_data()
+    req(nrow(rows))
+    display <- rows |> transmute(
+      `Target group` = target_group,
+      `Previous retained` = previous_retained,
+      Added = added_new,
+      Retained = retained_after,
+      `Verified COI` = verified_marker_records
+    )
+    datatable(display, rownames = FALSE, selection = "none", class = "compact stripe",
+      options = list(dom = "t", pageLength = 22, scrollX = TRUE, scrollY = "360px", scrollCollapse = TRUE, order = list())) |>
+      formatRound(c("Previous retained", "Added", "Retained", "Verified COI"), digits = 0, mark = ",")
+  }, server = TRUE)
+  write_lineage_growth_qa_csv <- function(file) {
+    rows <- lineage_growth_qa()
+    req(nrow(rows))
+    write.csv(rows, file, row.names = FALSE, na = "")
+  }
+  output$download_lineage_growth_qa_csv <- downloadHandler(
+    filename = function() paste0("COI_", gsub("[^A-Za-z0-9._-]+", "_", coi_reference_current()$version), "_growth_QA.csv"),
+    content = write_lineage_growth_qa_csv
+  )
   output$lineage_sources <- renderUI({
     claims <- catalog_claims |> filter(marker_id == input$lineage_marker, pair_id == input$lineage_pair)
     marker <- marker_registry |> filter(marker_id == input$lineage_marker) |> slice(1)
@@ -6783,6 +6819,29 @@ server <- function(input, output, session) {
         strong("Scoring reference: "),
         if (input$lineage_marker == "COI" && input$lineage_pair == "BEEPRIME") paste(beeprime_reference()$label, beeprime_reference()$version) else if (input$lineage_marker == "COI") "Append-only full order reference alignment; no cross-primer reuse of Gurten centroids." else "Marker-specific pilot screening reference."
       ),
+      if (identical(input$lineage_marker, "COI") && !is.null(input$lineage_pair) && input$lineage_pair != "BEEPRIME") {
+        reference <- coi_reference_current()
+        growth <- lineage_growth_qa()
+        tagList(
+          h4("COI reference growth"),
+          p(strong("Current reference: "), reference$version),
+          if (nrow(growth)) {
+            policy <- reference$policy
+            minimum <- if (is.null(policy$minimum_per_group)) 100L else policy$minimum_per_group
+            total <- if (is.null(policy$minimum_total)) 10000L else policy$minimum_total
+            tagList(
+              p("Marker-verified target: at least ", format(minimum, big.mark = ","),
+                " COI records per target group and ", format(total, big.mark = ","), " overall. This cohort has ",
+                format(reference$n_references, big.mark = ","), " retained records and ",
+                format(reference$n_verified_marker, big.mark = ","), " marker-verified COI records."),
+              p(class = "tiny", "Retained counts preserve historical records, including those with unresolved or failed current marker QC. Verified COI records pass the marker-feature checks. Added is the change from the previous frozen panel recorded in this release's QA. Counts describe each entire target group before primer, family or location filters."),
+              DTOutput("lineage_growth_table"),
+              div(class = "d-flex gap-2 flex-wrap my-3", downloadButton("download_lineage_growth_qa_csv", "Complete growth QA CSV")),
+              p(class = "tiny", "The table follows the selected target group; the CSV includes all ", nrow(growth), " groups and every original QA field.")
+            )
+          } else div(class = "callout tiny", "Growth evidence is unavailable for this legacy reference. A complete frozen growing-reference release is required to show retained counts and additions.")
+        )
+      },
       if (input$lineage_marker == "COI" && input$lineage_pair != "BEEPRIME" && identical(coi_reference_current()$alignment_mode, "full")) {
         rows <- lineage_sequence_data()
         tagList(

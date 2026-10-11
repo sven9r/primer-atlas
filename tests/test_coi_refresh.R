@@ -8,6 +8,7 @@ source("R/coi_reference.R")
 source("R/coi_refresh.R")
 suppressPackageStartupMessages(library(shiny))
 suppressPackageStartupMessages(library(dplyr))
+suppressPackageStartupMessages(library(DT))
 
 root <- tempfile("coi-refresh-fixture-")
 dir.create(file.path(root, "data/reference"), recursive = TRUE)
@@ -67,7 +68,7 @@ make_release <- function(version, per_group, previous = 0L) {
   retained$panel_taxonomy <- csv(taxonomy, "taxonomy")
   retained$growth_qa <- csv(data.frame(target_group = groups, previous_retained = previous,
     added_new = per_group - previous, retained_after = per_group, target_met = "True",
-    verified_marker_records = per_group), "growth")
+    verified_marker_records = per_group, minimum_per_group = 1L, release_id = version), "growth")
   overview <- data.frame(order = groups, pair_id = "MCO", n_templates = per_group)
   publication <- scores[1L, ]
   publication$pair_id <- "BEEPRIME"
@@ -165,8 +166,14 @@ names_needed <- c("current_order_scores", "current_pair_template_scores", "read_
   "claimed_taxon_selection_observer", "claimed_selected_taxon", "claimed_raw_scores", "claimed_selected_sequence_data",
   "lineage_geography", "lineage_scope", "lineage_summary_table", "lineage_raw_scores", "lineage_family_selection",
   "lineage_family_selection_observer", "lineage_selected_family", "lineage_selected_family_order", "lineage_sequence_data", "lineage_selected_alignments",
-  "write_lineage_sequence_csv", "write_lineage_alignment_fasta")
+  "write_lineage_sequence_csv", "write_lineage_alignment_fasta", "lineage_growth_qa", "lineage_growth_data", "write_lineage_growth_qa_csv")
 callbacks <- statements[vapply(statements, assignment_name, character(1)) %in% names_needed]
+growth_output <- Filter(function(value) {
+  if (!is.call(value) || !identical(value[[1L]], as.name("<-"))) return(FALSE)
+  left <- value[[2L]]
+  is.call(left) && identical(left[[1L]], as.name("$")) && identical(left[[2L]], as.name("output")) &&
+    identical(left[[3L]], as.name("lineage_growth_table"))
+}, statements)
 runtime <- new.env(parent = globalenv())
 runtime$coi_reference_panel <- first
 for (name in c("pair_sequence_evidence_spec", "read_pair_sequence_evidence", "read_order_position_scores",
@@ -177,6 +184,7 @@ app_fixture <- function(input, output, session) {
   beeprime_reference_mode <- function() "publication"
   claimed_primer_families <- claimed_primer_subfamilies <- claimed_primer_genera <- tibble()
   for (statement in callbacks) eval(statement, environment())
+  for (statement in growth_output) eval(statement, environment())
 }
 environment(app_fixture) <- runtime
 latest <- first_state
@@ -189,13 +197,24 @@ shiny::testServer(app_fixture, {
   selected_accession <- lineage_sequence_data()$accession
   stopifnot(length(selected_accession) == 1L, nrow(full_general_raw_scores()) == 4L,
     sum(current_order_scores()$n_templates) == 4L, all(claimed_selected_sequence_data()$accession == selected_accession))
+  stopifnot(nrow(lineage_growth_data()) == 1L, lineage_growth_data()$target_group == "Araneae",
+    lineage_growth_data()$previous_retained == 0L, lineage_growth_data()$added_new == 2L,
+    lineage_growth_data()$retained_after == 2L, lineage_growth_data()$verified_marker_records == 2L)
+  rendered_growth <- paste(as.character(output$lineage_growth_table), collapse = " ")
+  stopifnot(grepl("Target group", rendered_growth, fixed = TRUE), grepl("Previous retained", rendered_growth, fixed = TRUE),
+    grepl("Verified COI", rendered_growth, fixed = TRUE))
+  growth_csv <- tempfile(fileext = ".csv")
+  write_lineage_growth_qa_csv(growth_csv)
+  first_growth <- read.csv(growth_csv, stringsAsFactors = FALSE)
+  stopifnot(nrow(first_growth) == 2L, setequal(first_growth$target_group, groups),
+    identical(names(first_growth), names(coi_reference_current()$growth_qa)), all(first_growth$release_id == "refresh-v1"))
   session$setInputs(lineage_target = "All", lineage_families_rows_selected = integer())
   all_families <- lineage_summary_table(tibble(), "family")
   stopifnot(sum(all_families$family == "family unresolved") == 2L)
   first_family_index <- which(all_families$order == "Araneae" & all_families$family == "family unresolved")
   session$setInputs(lineage_families_rows_selected = first_family_index)
   stopifnot(lineage_selected_family_order() == "Araneae", nrow(lineage_sequence_data()) == 1L,
-    identical(lineage_sequence_data()$accession, selected_accession))
+    identical(lineage_sequence_data()$accession, selected_accession), nrow(lineage_growth_data()) == 2L)
   custom_pair_collection(list(CUSTOM_1 = list(marker_id = "COI", coi_reference_version = "refresh-v1",
     order_scores = data.frame(pair_id = "CUSTOM_1", order = groups, n_templates = 2L),
     pair_template_scores = tibble(), primer_position_scores = tibble())))
@@ -215,6 +234,13 @@ shiny::testServer(app_fixture, {
     lineage_selected_family_order() == "Araneae",
     identical(claimed_selected_sequence_data()$accession, selected_accession),
     all(lineage_sequence_data()$reference_version == "refresh-v2"))
+  stopifnot(nrow(lineage_growth_data()) == 2L, all(lineage_growth_data()$previous_retained == 2L),
+    all(lineage_growth_data()$added_new == 1L), all(lineage_growth_data()$retained_after == 3L),
+    all(lineage_growth_data()$verified_marker_records == 3L))
+  write_lineage_growth_qa_csv(growth_csv)
+  second_growth <- read.csv(growth_csv, stringsAsFactors = FALSE)
+  stopifnot(all(second_growth$release_id == "refresh-v2"), sum(second_growth$retained_after) == 6L,
+    identical(names(second_growth), names(first_growth)), sum(second_growth$added_new) == 2L)
   stopifnot(!length(custom_pair_collection()), length(archived_coi_custom_pairs()) == 1L,
     is.null(custom_location()), is.null(selected_custom_id()), !"CUSTOM_1" %in% order_lens_scores()$pair_id,
     nrow(order_lens_template_scores()) == 6L)
@@ -228,18 +254,40 @@ shiny::testServer(app_fixture, {
   latest <<- corrupt
   session$setInputs(`coi-check_latest` = 2L)
   stopifnot(coi_reference_current()$version == "refresh-v2", refresh$status()$phase == "retained",
-    identical(lineage_sequence_data()$accession, selected_accession), nrow(read_order_position_scores("MCO")) == 6L)
+    identical(lineage_sequence_data()$accession, selected_accession), nrow(read_order_position_scores("MCO")) == 6L,
+    all(lineage_growth_data()$release_id == "refresh-v2"))
   # A periodic check also detects a new pointer in the same live session.
   latest <<- third_state
   session$elapse(600001L)
   session$flushReact()
   stopifnot(coi_reference_current()$version == "refresh-v3", nrow(full_general_raw_scores()) == 8L,
     identical(lineage_sequence_data()$accession, selected_accession))
+  session$setInputs(lineage_target = "Diptera")
+  stopifnot(nrow(lineage_growth_data()) == 1L, lineage_growth_data()$target_group == "Diptera",
+    lineage_growth_data()$retained_after == 4L, lineage_growth_data()$previous_retained == 3L)
+  write_lineage_growth_qa_csv(growth_csv)
+  third_growth <- read.csv(growth_csv, stringsAsFactors = FALSE)
+  stopifnot(nrow(third_growth) == 2L, all(third_growth$release_id == "refresh-v3"),
+    sum(third_growth$retained_after) == 8L)
+  session$setInputs(lineage_pair = "BEEPRIME")
+  stopifnot(nrow(lineage_growth_data()) == 0L, nrow(lineage_growth_qa()) == 0L)
+  unlink(growth_csv)
 })
 latest <- second_state
 shiny::testServer(coiReferenceRefreshServer, args = list(initial = first, root = root, reader = reader, loader = loader), {
   session$flushReact()
   stopifnot(reference()$version == "refresh-v2", reference()$n_references == 6L)
 })
+legacy_fixture <- function(input, output, session) {
+  legacy <- first
+  legacy$alignment_mode <- "legacy_centroid_preview"
+  coi_reference_current <- function() legacy
+  for (statement in callbacks[vapply(callbacks, assignment_name, character(1)) %in%
+    c("lineage_growth_qa", "lineage_growth_data")]) eval(statement, environment())
+}
+shiny::testServer(legacy_fixture, {
+  session$setInputs(lineage_marker = "COI", lineage_pair = "MCO", lineage_target = "All")
+  stopifnot(nrow(lineage_growth_qa()) == 0L, nrow(lineage_growth_data()) == 0L)
+})
 unlink(root, recursive = TRUE)
-message("COI refresh checks passed: session isolation, atomic verified updates, invalid-release retention, stable taxon identities, refreshed fit/trace/download readers, periodic and new-session checks.")
+message("COI refresh checks passed: session isolation, atomic verified updates, invalid-release retention, stable taxon identities, refreshed fit/trace/download readers, periodic/new-session checks, current-cohort growth tables and complete QA exports.")

@@ -11,10 +11,10 @@ target_total <- as.integer(Sys.getenv("COI_TARGET_TOTAL", "10000"))
 minimum <- as.integer(Sys.getenv("COI_MIN_PER_GROUP", "100"))
 growth <- as.numeric(Sys.getenv("COI_MONTHLY_GROWTH", "0.01"))
 release_id <- Sys.getenv("RELEASE_ID", format(Sys.Date(), "%Y-%m-%d"))
-if (!is.finite(target_total) || target_total < 22L * minimum || !is.finite(minimum) || minimum < 100L) stop("COI target must support at least100 records per arthropod target group")
-if (!is.finite(growth) || growth < 0.01) stop("COI monthly growth must be at least0.01")
+if (!is.finite(target_total) || target_total < 22L * minimum || !is.finite(minimum) || minimum < 100L) stop("COI target must support at least 100 records per arthropod target group")
+if (!is.finite(growth) || growth < 0.01) stop("COI monthly growth must be at least 0.01")
 python <- Sys.getenv("COI_PYTHON", Sys.which("python3"))
-if (!nzchar(python)) stop("Python3 is required for the COI Entrez builder")
+if (!nzchar(python)) stop("Python 3 is required for the COI Entrez builder")
 args <- c("scripts/build_coi_reference_panel.py", "--output-dir", panel_dir,
           "--target-total", target_total, "--minimum-per-group", minimum,
           "--growth", growth, "--release-id", release_id)
@@ -47,13 +47,13 @@ if (!all(required_columns %in% names(manifest))) stop("COI panel manifest lacks 
 accessions <- coi_accession(names(sequences))
 if (anyDuplicated(manifest$accession) || !setequal(accessions, manifest$accession)) stop("COI panel manifest and sequence identities differ")
 manifest <- manifest[match(accessions, manifest$accession), , drop = FALSE]
-actual_hash <- vapply(unname(sequences), digest::digest, character(1), algo = "sha256", serialize = FALSE)
-header_hash <- vapply(names(sequences), digest::digest, character(1), algo = "sha256", serialize = FALSE)
+actual_hash <- vapply(unname(sequences), digest::digest, character(1), algo = "sha256", serialize = FALSE, USE.NAMES = FALSE)
+header_hash <- vapply(names(sequences), digest::digest, character(1), algo = "sha256", serialize = FALSE, USE.NAMES = FALSE)
 if (!identical(tolower(actual_hash), tolower(manifest$sequence_sha256)) ||
     !identical(tolower(header_hash), tolower(manifest$header_sha256))) stop("COI panel bytes differ from acquired provenance")
 orders <- read.csv("data/orders_22.csv", stringsAsFactors = FALSE)
 groups <- orders$order[orders$order != "Bivalvia"]
-if (!setequal(unique(manifest$target_group), groups)) stop("Acquired COI panel does not contain the22 arthropod target groups")
+if (!setequal(unique(manifest$target_group), groups)) stop("Acquired COI panel does not contain the 22 arthropod target groups")
 # Verify all old records before replacing any group file.
 for (group in groups) {
   path <- file.path("data/primerminer/raw", group, paste0(group, "_GB.fasta"))
@@ -80,4 +80,4 @@ dir.create("data/provenance", recursive = TRUE, showWarnings = FALSE)
 if (!file.copy(file.path(panel_dir, "ledger.csv"), "data/provenance/coi_reference_accession_ledger.csv", overwrite = TRUE) ||
     !file.copy(file.path(panel_dir, "growth_qa.csv"), "data/provenance/coi_reference_growth_qa.csv", overwrite = TRUE)) stop("Could not install acquired COI ledger and QA")
 state <- coi_validate_retained_state(root, groups)
-message("Installed ", nrow(state$records), " retained COI records across", length(groups), " arthropod target groups; historicalBivalvia inputs remain archived separately")
+message("Installed ", nrow(state$records), " retained COI records across ", length(groups), " arthropod target groups; historical Bivalvia inputs remain archived separately")

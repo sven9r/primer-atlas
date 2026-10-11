@@ -5,7 +5,8 @@ root <- normalizePath(getwd(), mustWork = TRUE)
 suppressPackageStartupMessages({library(jsonlite); library(nanoparquet); library(digest)})
 source("R/data_layer.R")
 
-release_id <- Sys.getenv("RELEASE_ID", format(Sys.Date(), "%Y-%m-%d"))
+release_id <- Sys.getenv("RELEASE_ID", format(Sys.time(), tz = "UTC", "%Y%m%dT%H%M%SZ"))
+if (!grepl("^[A-Za-z0-9][A-Za-z0-9._-]*$", release_id)) stop("Invalid release identity")
 data_base <- sub("/+$", "", Sys.getenv("ATLAS_DATA_BASE_URL", "https://data.example.invalid/primer-atlas"))
 markers <- read.csv("data/catalog/markers.csv", stringsAsFactors = FALSE)
 
@@ -30,6 +31,9 @@ artifact_specs <- list(
 
 write_marker <- function(marker_id) {
   release_dir <- file.path("data", "releases", marker_id, release_id)
+  if (dir.exists(release_dir) && length(list.files(release_dir, all.files = FALSE))) {
+    stop("Refusing to overwrite an existing immutable release: ", release_id)
+  }
   dir.create(release_dir, recursive = TRUE, showWarnings = FALSE)
   artifacts <- list()
   specs <- artifact_specs[[marker_id]]
@@ -75,6 +79,52 @@ write_marker <- function(marker_id) {
       sha256 = digest::digest(file = destination, algo = "sha256", serialize = FALSE)
     )
   }
+  fungal_snapshots <- list()
+  if (marker_id == "ITS_FUNGAL") {
+    source("R/fungal_versions.R")
+    index <- fungal_read_index(root, remote = FALSE)
+    if (!nrow(index)) stop("Build frozen fungal snapshots before creating an ITS release")
+    snapshot_root <- fungal_version_root(root)
+    add_snapshot_artifact <- function(name, source_path, relative_path, rows = NULL) {
+      target <- file.path(release_dir, relative_path)
+      dir.create(dirname(target), recursive = TRUE, showWarnings = FALSE)
+      if (!file.copy(source_path, target, overwrite = FALSE)) stop("Could not stage fungal snapshot artifact")
+      artifact <- list(
+        url = paste(data_base, "releases", marker_id, release_id, relative_path, sep = "/"),
+        local_path = target, bytes = unname(file.info(target)$size),
+        sha256 = atlas_sha256(target)
+      )
+      if (!is.null(rows)) artifact$rows <- rows
+      artifacts[[name]] <<- artifact
+      artifact
+    }
+    add_snapshot_artifact("fungal_snapshot_index", file.path(snapshot_root, "index.json"), "fungal_versions/index.json")
+    for (i in seq_len(nrow(index))) {
+      id <- index$id[i]
+      source_manifest <- file.path(snapshot_root, index$manifest[i])
+      snapshot <- read_json(source_manifest, simplifyVector = FALSE)
+      snapshot_artifacts <- list()
+      for (name in names(snapshot$artifacts)) {
+        # This verifies the frozen input/output before packaging it.
+        fungal_snapshot_artifact(snapshot, name, dirname(source_manifest))
+        descriptor <- snapshot$artifacts[[name]]
+        relative <- file.path("fungal_versions", id, descriptor$path)
+        snapshot_artifacts[[name]] <- add_snapshot_artifact(
+          paste("fungal", id, name, sep = "_"),
+          file.path(dirname(source_manifest), descriptor$path), relative, descriptor$rows
+        )
+      }
+      manifest_artifact <- add_snapshot_artifact(
+        paste0("fungal_", id, "_manifest"), source_manifest,
+        file.path("fungal_versions", id, "manifest.json")
+      )
+      fungal_snapshots[[id]] <- list(
+        id = id, label = snapshot$label, description = snapshot$description,
+        created_at = snapshot$created_at, input_sha256 = snapshot$input_sha256,
+        manifest = manifest_artifact, artifacts = snapshot_artifacts
+      )
+    }
+  }
   marker <- markers[markers$marker_id == marker_id, , drop = FALSE]
   previous_pointer <- file.path("data", "releases", marker_id, "latest.json")
   previous_state <- tryCatch(atlas_read_manifest(marker_id, root), error = function(e) NULL)
@@ -114,7 +164,11 @@ write_marker <- function(marker_id) {
     ),
     previous_successful_release = previous,
     artifacts = artifacts,
-    reference_panels = reference_panels
+    reference_panels = reference_panels,
+    fungal_snapshots = fungal_snapshots,
+    code_commit = tryCatch(system2("git", c("rev-parse", "HEAD"), stdout = TRUE, stderr = FALSE)[1], error = function(e) "unknown"),
+    builder_sha256 = atlas_sha256("scripts/build_release.R"),
+    snapshot_builder_sha256 = if (marker_id == "ITS_FUNGAL") atlas_sha256("scripts/build_fungal_snapshots.R") else NULL
   )
   versioned_manifest <- file.path(release_dir, "manifest.json")
   write_json(manifest, versioned_manifest, auto_unbox = TRUE, pretty = TRUE, na = "null")

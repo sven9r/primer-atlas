@@ -19,6 +19,9 @@ jobs:
             tests/test_claimed_primer_reference.R \
             tests/test_custom_primer_gate.R \
             tests/test_its_primer_navigator.R \
+            tests/test_fungal_explorer.R \
+            tests/test_fungal_versions.R \
+            tests/test_fungal_workspace.R \
             tests/test_marker_runtime.R \
             tests/test_order_lens_interaction.R \
             tests/test_primer_map_domain.R \
@@ -32,3 +35,5 @@ jobs:
             tests/test_universal_sequence_drilldown.R; do Rscript "$test"; done
       - name: Check deployable bundle size
         run: Rscript tests/test_bundle_size.R
+      - name: Verify fungal acquisition boundary rules
+        run: python3 -m unittest discover -s tests -p test_fungal_reference_panel.py

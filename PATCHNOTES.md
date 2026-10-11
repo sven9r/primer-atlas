@@ -5,6 +5,29 @@ same `id` as their counterparts in `patchnotes.json`. A patchnote distinguishes
 repository changes from external deployment actions so that prepared code is
 not mistaken for a completed release.
 
+## 2026-10-11 — Fungal combinations, platforms, and versions
+
+**ID:** `2026-10-11-fungal-combinations-versions`
+
+**Status:** Implemented and tested locally; hosted release and public deployment
+are tracked separately.
+
+- Replace the eight-pair fungal view with 20 starter examples, a searchable full
+  candidate list, pairing matrix, and comparison of up to five combinations.
+- Use distinct Illumina, PacBio, and Nanopore colors, editable project ceilings,
+  per-template length eligibility, and ranges crossing tiers. Class and phylum
+  filters recalculate the actual reference denominator.
+- Preserve the original V1 and add a 21-template NCBI panel in V2. Freeze the
+  catalog, raw sequences, full alignment, taxonomy, sites, products, source
+  responses, and code provenance together, with SHA-256 checksums.
+- Restore full retained panel and version history on clean workers; publish
+  immutable releases only after anonymous public read-back checks.
+- Refresh the app and project landing page with neutral surfaces, compact
+  workspace titles, clearer controls, and responsive layouts.
+- Withhold fuzzy or repeated gene-feature boundaries. Nine individual landmarks
+  remain trustworthy; all templates have unresolved full gene architecture.
+  Exact primer-site products remain candidate evidence, not PCR validation.
+
 ## 2026-10-02 — BeePrime publication or expanded alignment
 
 **ID:** `2026-10-02-beeprime-alignment-choice`

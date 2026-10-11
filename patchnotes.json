@@ -4,6 +4,47 @@
   "entry_order": "newest_first",
   "entries": [
     {
+      "id": "2026-10-11-fungal-combinations-versions",
+      "date": "2026-10-11",
+      "category": "reference_and_interface",
+      "status": "local_verified_not_published",
+      "summary": "Add a versioned fungal combination explorer with platform eligibility, a bounded NCBI panel, and refreshed application visuals.",
+      "repository_changes": [
+        {
+          "kind": "fungal_explorer_and_recoverable_releases",
+          "paths": [
+            "R/fungal_explorer.R",
+            "R/fungal_ui.R",
+            "R/fungal_versions.R",
+            "scripts/build_fungal_reference_panel.py",
+            "scripts/build_fungal_snapshots.R",
+            "scripts/build_release.R",
+            "scripts/validate_release.R",
+            "scripts/publish_r2.sh",
+            ".github/workflows/monthly-release.yml",
+            "app.R",
+            "docs/fungal-explorer.md"
+          ],
+          "change": "Offer 20 starter combinations, pairing matrix, five-pair comparison, editable length ceilings and lineage filters; freeze catalog, raw sequence, alignment, taxonomy, exact-site results and provenance together in immutable snapshots."
+        }
+      ],
+      "verification": [
+        "Exact-site engine checks and 11 acquisition/boundary tests passed",
+        "The 21-template local panel contains seven resolved classes, with uncertain annotation boundaries withheld",
+        "Module checks cover platform nesting, class denominators, historical selection and empty states"
+      ],
+      "known_limitations": [
+        "The selected reference panel does not establish broad fungal PCR performance; exact sites remain distinct from empirical validation",
+        "All 21 templates lack fully verified five-region gene architecture; nine individual boundaries are retained",
+        "COI growing-reference and family-level milestones remain separate",
+        "Public application deployment and hosted release verification are tracked separately"
+      ],
+      "remaining_actions": [
+        "Complete final regression, browser and anonymous hosted read-back checks",
+        "Merge after the required repository review and verify the public application"
+      ]
+    },
+    {
       "id": "2026-10-02-beeprime-alignment-choice",
       "date": "2026-10-02",
       "category": "reference_and_interface",

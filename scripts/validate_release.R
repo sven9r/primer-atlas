@@ -46,8 +46,31 @@ for (artifact in manifest$artifacts) {
   ))
   if (grepl("[.]fasta$", path, ignore.case = TRUE)) {
     stopifnot(sum(startsWith(readLines(path, warn = FALSE), ">")) == artifact$rows)
-  } else {
+  } else if (grepl("[.]parquet$", path, ignore.case = TRUE)) {
     stopifnot(nrow(nanoparquet::read_parquet(path)) == artifact$rows)
+  } else if (grepl("[.]csv$", path, ignore.case = TRUE)) {
+    stopifnot(nrow(read.csv(path, stringsAsFactors = FALSE)) == artifact$rows)
+  } else if (grepl("[.]json$", path, ignore.case = TRUE)) {
+    jsonlite::read_json(path, simplifyVector = FALSE)
+  }
+}
+
+if (marker_id == "ITS_FUNGAL") {
+  source("R/fungal_versions.R")
+  stopifnot(length(manifest$fungal_snapshots) >= 2L)
+  for (descriptor in manifest$fungal_snapshots) {
+    snapshot <- read_json(descriptor$manifest$local_path, simplifyVector = FALSE)
+    stopifnot(identical(snapshot$id, descriptor$id), snapshot$sequence_count >= 1L)
+    required <- c("catalog", "raw_catalog", "sequences", "alignment", "taxonomy", "geometry", "landmarks", "pairs", "pair_sequences", "sites")
+    stopifnot(all(required %in% names(snapshot$artifacts)))
+    values <- lapply(required, function(name) fungal_snapshot_artifact(snapshot, name, dirname(descriptor$manifest$local_path)))
+    names(values) <- required
+    stopifnot(!anyDuplicated(names(values$sequences)), !anyDuplicated(values$taxonomy$accession))
+    stopifnot(setequal(sub(" .*", "", names(values$sequences)), values$taxonomy$accession))
+    stopifnot(length(unique(nchar(values$alignment))) == 1L)
+    stopifnot(setequal(sub("^_R_", "", sub(" .*", "", names(values$alignment))), names(values$sequences)))
+    stopifnot(snapshot$sequence_count == length(values$sequences))
+    if (snapshot$version_number >= 2L) stopifnot(length(values$sequences) >= 2L, nrow(values$pairs) >= 10L)
   }
 }
 

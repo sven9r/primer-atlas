@@ -1,0 +1,102 @@
+{
+  "schema_version": "1.0.0",
+  "source": "NCBI GenBank and NCBI Taxonomy",
+  "acquired_at": "2026-10-11T11:37:47Z",
+  "acquisition_time_basis": "original raw-response cache file modification time; proxy when no first-download log is available",
+  "built_at": "2026-10-11T11:51:53Z",
+  "sampling_policy": "bounded cached NCBI search per named phylum; not random, exhaustive, or guaranteed newest",
+  "panel_count": 21,
+  "previous_count": 0,
+  "retained_previous_count": 0,
+  "added_count": 21,
+  "searches": [
+    {
+      "clade": "Ascomycota",
+      "query": "Ascomycota[Organism:exp] AND (\"18S ribosomal RNA\"[Title] OR \"small subunit ribosomal RNA\"[Title]) AND \"internal transcribed spacer\"[Title] AND 2500:12000[SLEN]",
+      "count_available": 1344,
+      "selected": [
+        "PZ900404.1",
+        "PZ528244.1",
+        "PZ528241.1",
+        "PZ528240.1"
+      ],
+      "sha256": "8841a6ca2d32e9504319370b6eb2579b520778652190d700cbf58f72ddd08c92",
+      "cache_file": "search_Ascomycota_f12cd3bb456e9a20.json",
+      "acquired_at": "2026-10-11T11:37:41Z"
+    },
+    {
+      "clade": "Basidiomycota",
+      "query": "Basidiomycota[Organism:exp] AND (\"18S ribosomal RNA\"[Title] OR \"small subunit ribosomal RNA\"[Title]) AND \"internal transcribed spacer\"[Title] AND 2500:12000[SLEN]",
+      "count_available": 601,
+      "selected": [
+        "PZ962702.1",
+        "PZ276773.1",
+        "PZ547617.1",
+        "PZ123758.1"
+      ],
+      "sha256": "2e67870b8193dee6a0c09aab389a21418e45ae0ef7544c423e803257d2126582",
+      "cache_file": "search_Basidiomycota_5dd6c4878ef28323.json",
+      "acquired_at": "2026-10-11T11:37:42Z"
+    },
+    {
+      "clade": "Chytridiomycota",
+      "query": "Chytridiomycota[Organism:exp] AND (\"18S ribosomal RNA\"[Title] OR \"small subunit ribosomal RNA\"[Title]) AND \"internal transcribed spacer\"[Title] AND 2500:12000[SLEN]",
+      "count_available": 625,
+      "selected": [
+        "PV921575.1",
+        "PV921574.1",
+        "PV921573.1",
+        "PV921572.1"
+      ],
+      "sha256": "e50094d360231f151730fc2ed4dd028138bd8c9be2be11035a9e2bdcf701c05b",
+      "cache_file": "search_Chytridiomycota_e58fa9f3bbee3838.json",
+      "acquired_at": "2026-10-11T11:37:43Z"
+    },
+    {
+      "clade": "Mucoromycota",
+      "query": "Mucoromycota[Organism:exp] AND (\"18S ribosomal RNA\"[Title] OR \"small subunit ribosomal RNA\"[Title]) AND \"internal transcribed spacer\"[Title] AND 2500:12000[SLEN]",
+      "count_available": 14,
+      "selected": [
+        "MT436029.1",
+        "MT436028.1",
+        "FJ430740.1",
+        "KT736106.1"
+      ],
+      "sha256": "612dd95dd9f2a47a43fd1082dce89c0d261fc2c8bd7c29208edb40050ec26a02",
+      "cache_file": "search_Mucoromycota_1fa56a5ea842ba14.json",
+      "acquired_at": "2026-10-11T11:37:44Z"
+    },
+    {
+      "clade": "Glomeromycota",
+      "query": "Glomeromycota[Organism:exp] AND (\"18S ribosomal RNA\"[Title] OR \"small subunit ribosomal RNA\"[Title]) AND \"internal transcribed spacer\"[Title] AND 2500:12000[SLEN]",
+      "count_available": 911,
+      "selected": [
+        "PX215164.1",
+        "PX215163.1",
+        "PX215162.1",
+        "PX215161.1"
+      ],
+      "sha256": "afedc721566baafdbf3d485b6132d4b93de1485652bac01f0bff6070a0956a3e",
+      "cache_file": "search_Glomeromycota_822b59e354f4d39f.json",
+      "acquired_at": "2026-10-11T11:37:45Z"
+    }
+  ],
+  "previous_run_manifest_sha256": null,
+  "raw_responses": {
+    "records_b7a841bb9d8e7266.xml": "8b958af51ff9830624c233b7cc02011530833165af0f03f004d544bdfa2b57be",
+    "taxonomy_90986e1f46d6f4c9.xml": "7d2a81ff20232cbe71423a69680cee95a720d8bf1a555d08d692cd52e67b6020"
+  },
+  "raw_response_acquired_at": {
+    "records_b7a841bb9d8e7266.xml": "2026-10-11T11:37:46Z",
+    "taxonomy_90986e1f46d6f4c9.xml": "2026-10-11T11:37:47Z"
+  },
+  "taxonomy_snapshot_sha256": "7d2a81ff20232cbe71423a69680cee95a720d8bf1a555d08d692cd52e67b6020",
+  "mafft_version": "v7.526 (2024/Apr/26)",
+  "alignment_policy": "full alignment without keeplength; product lengths use raw ungapped templates; cross-clade variable-region homology not assumed",
+  "artifacts_sha256": {
+    "panel.fasta": "f096600f9441509ee7dfac59d3818052e5c054fb712c372ef415bf9fd4f164f3",
+    "panel_manifest.csv": "463c259bae18520c08a6a462fc66c6e175a00ca3a9c1b4747a39f0e71b65656f",
+    "landmarks.csv": "1844b3e4e9791361dea3c375a1985bf4fad0c22f545868fe0c056dae9c040ca4",
+    "alignment.fasta": "6382a41295e5e3200150d43f47849de5e7ee6e95af6ad8351c5396cc6804c47c"
+  }
+}

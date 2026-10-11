@@ -13,8 +13,9 @@ The public architecture separates four layers:
 - Posit Connect Cloud runs the Shiny application from `main`.
 - Cloudflare R2 stores immutable marker releases and lazy sequence evidence.
 
-Compact pinned summaries keep the app usable during an R2 outage. Raw
-sequences and large generated score tables are intentionally excluded from Git.
+Compact pinned summaries keep the app usable during an R2 outage. The bounded
+fungal snapshots also bundle their exact sequences and alignments for recovery;
+large COI sequence and score artifacts remain outside Git.
 See [DEPLOYMENT.md](DEPLOYMENT.md) for the remaining account configuration.
 
 For a concise statement of scope, completed work, operational status, and next
@@ -35,15 +36,24 @@ intent are separate many-to-many facets. Filters use OR within a facet and AND
 between facets. Original use-case labels and claim wording remain preserved in
 the source catalog.
 
-The fungal ITS pilot imports an attributed snapshot of the
-[UNITE primer resource](https://unite.ut.ee/primers.php) offline. Its map uses
-the 18S–ITS1–5.8S–ITS2–28S landmark architecture on FN812768.2. It does not
-scrape UNITE during user sessions, and its current single-reference placements
-are explicitly distinguished from expanded fungal lineage evidence. All 121
-sequence-valid imported primer records are searchable in the app. Each primer
-uses the publication named by UNITE as its citation; UNITE is stored separately
-as compilation provenance. Unpublished and unreported references stay visibly
-labelled instead of being converted into a generic UNITE paper citation.
+The fungal rDNA explorer imports an attributed, offline snapshot of the
+[UNITE primer resource](https://unite.ut.ee/primers.php). It offers 20 starter
+combinations, a forward/reverse pairing matrix, and comparison of up to five
+product-length distributions. The complete candidate list remains searchable.
+Illumina, PacBio, and Nanopore use distinct colors and editable project ceilings
+of 500 bp (Illumina adjustable from 452), 2,000 bp, and 3,500 bp. Eligibility is
+reported per template, with missing sites and ranges crossing ceilings visible.
+These are project settings, not universal instrument limits or PCR validation.
+
+V1 preserves the original FN812768.2 coordinate reference, catalog, and eight
+recorded geometries. V2 retains it and adds 20 accession-versioned NCBI records
+from five named phyla. A snapshot freezes raw sequences, taxonomy, the full
+alignment, primer catalog, exact-site results, source responses, and code
+provenance together. Changing a snapshot changes all these inputs together;
+class and phylum filters use its own represented denominator. Only unambiguous
+complete gene boundaries are drawn. Cross-clade spacer homology and broad
+fungal amplification performance are not established by this selected panel.
+See [the fungal explorer methods and release contract](docs/fungal-explorer.md).
 
 The 18S pilot imports PR2-primer 2.1.1 as a versioned snapshot: 321 individual
 18S primers and 123 documented primer sets. Ninety-three sets have conventional

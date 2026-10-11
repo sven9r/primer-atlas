@@ -1,6 +1,6 @@
 # Primer Atlas project status
 
-**Status date:** 2026-10-02
+**Status date:** 2026-10-11
 
 **Current phase:** Public Shiny hosting and both monthly marker releases are operational.
 The 2026.10.02 interface/catalog update is published and verified at commit
@@ -69,9 +69,13 @@ The project separates four operational responsibilities:
 - **COI — active implementation:** curated pair geometry, order-level scoring,
   custom-primer gating, BeePrime study-specific evidence, targeted complete
   COX1 panels for ZBJ, claimed-primer evaluation, and reference geography.
-- **Fungal ITS — pilot:** attributed offline UNITE primer snapshot, 121
-  sequence-valid primer records, eight documented pair combinations, and an
-  18S–ITS1–5.8S–ITS2–28S coordinate map.
+- **Fungal rDNA — bounded versioned explorer:** 20 starter combinations,
+  full candidate list, pairing matrix, five-pair comparison, platform ceilings,
+  per-template lengths, and class/phylum filters. V1 preserves the original
+  reference; V2 contains 21 accession-versioned templates. Snapshot history
+  freezes catalogs, sequences, alignments, taxonomy, and exact-site evidence.
+  The October 11 overhaul is prepared locally; public deployment is tracked
+  separately in the patchnotes and pull request.
 - **18S — pilot:** PR2-primer 2.1.1 snapshot with 321 individual primers and 123
   documented sets; 93 sets have drawable conventional geometry.
 - **Planned registry coverage:** vertebrate mitochondrial 12S,

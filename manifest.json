@@ -2725,7 +2725,7 @@
   },
   "files": {
     "app.R": {
-      "checksum": "f7a4bb5b3677ba3a3eeaf9f3cdce2250"
+      "checksum": "9f17f8d515f6afbc4d83575d0ab0da9d"
     },
     "data/catalog/claims.csv": {
       "checksum": "7e287c602b958d2d647bbee4089c0b39"
@@ -2898,6 +2898,117 @@
     "data/pinned/ITS_FUNGAL/2026-08-14/primer_source.parquet": {
       "checksum": "8a340130db5e0ce8d9851b578028dc21"
     },
+    "data/pinned/ITS_FUNGAL/versions/index.json": {
+      "checksum": "3c27253e97702e5e0bb3229c794e6753"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v1-9e958f105c46/alignment.fasta": {
+      "checksum": "72bda6c828668d5b9f4f382f62a571ca"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v1-9e958f105c46/catalog.csv": {
+      "checksum": "91d45a78101409c93166d6b54193c002"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v1-9e958f105c46/geometry.csv": {
+      "checksum": "54316a5f53a13fe8f6a50c770082c643"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v1-9e958f105c46/landmarks.csv": {
+      "checksum": "e0218cc0bd27910da874e25472da1a86"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v1-9e958f105c46/manifest.json": {
+      "checksum": "c06e3f90394192aa112e363b5300e4b9"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v1-9e958f105c46/oligos.csv": {
+      "checksum": "f2985e9f5e76f340a5d214fccd8d6cb4"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v1-9e958f105c46/pair_oligos.csv": {
+      "checksum": "a6fd947d8ec3f648eeab0113b4dea20a"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v1-9e958f105c46/pair_sequences.csv": {
+      "checksum": "1baca14f05a96be92b6b4b2962bd556f"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v1-9e958f105c46/pairs.csv": {
+      "checksum": "a787503cceba60d0491917125343310c"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v1-9e958f105c46/primer_pairs.csv": {
+      "checksum": "16530131e05f08000e1ff25a4f939b30"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v1-9e958f105c46/raw_catalog.csv": {
+      "checksum": "5a8cf3f174cf46271ab7c4668745f6ac"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v1-9e958f105c46/run_manifest.json": {
+      "checksum": "36260a1f85dd44e70f84d1e831ef9fa8"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v1-9e958f105c46/sequences.fasta": {
+      "checksum": "88179efd3c394f9f7c484af27c94aa00"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v1-9e958f105c46/sites.csv": {
+      "checksum": "265839881f77e5bd00c85e777eba71fd"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v1-9e958f105c46/taxonomy.csv": {
+      "checksum": "8a781fe36e6447f696ce4ac84559703c"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v2-2b629f0f2fe8/alignment.fasta": {
+      "checksum": "823fb9f85f5948f64cde1d6bdc7165ef"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v2-2b629f0f2fe8/catalog.csv": {
+      "checksum": "91d45a78101409c93166d6b54193c002"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v2-2b629f0f2fe8/code_acquisition.py": {
+      "checksum": "328ba9b0c246fe28ce9eabc1c50bed8a"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v2-2b629f0f2fe8/code_data_layer.R": {
+      "checksum": "ef3c9e0c4b133e0a79b89f09a90cc063"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v2-2b629f0f2fe8/code_explorer.R": {
+      "checksum": "82db3b79ee091af118b486177645460c"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v2-2b629f0f2fe8/code_functions.R": {
+      "checksum": "0b8135548921fa241dbc1c06a26c5c6f"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v2-2b629f0f2fe8/code_snapshot_builder.R": {
+      "checksum": "96cb35099f6d7eb8435d732034324113"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v2-2b629f0f2fe8/code_version_reader.R": {
+      "checksum": "264e321c4ecf0d07f6ec17af7c8a1500"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v2-2b629f0f2fe8/geometry.csv": {
+      "checksum": "54316a5f53a13fe8f6a50c770082c643"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v2-2b629f0f2fe8/landmarks.csv": {
+      "checksum": "1bd80b5024dbcd7f42617dac371d416d"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v2-2b629f0f2fe8/manifest.json": {
+      "checksum": "1f6cb984ac8f0c1b323fdfd588d10b70"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v2-2b629f0f2fe8/oligos.csv": {
+      "checksum": "f2985e9f5e76f340a5d214fccd8d6cb4"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v2-2b629f0f2fe8/pair_oligos.csv": {
+      "checksum": "a6fd947d8ec3f648eeab0113b4dea20a"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v2-2b629f0f2fe8/pair_sequences.csv": {
+      "checksum": "8d9b9c3633b7b928482cbbfbfd42c0fa"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v2-2b629f0f2fe8/pairs.csv": {
+      "checksum": "0df94cea09337482a74133bf99095f90"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v2-2b629f0f2fe8/primer_pairs.csv": {
+      "checksum": "16530131e05f08000e1ff25a4f939b30"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v2-2b629f0f2fe8/raw_catalog.csv": {
+      "checksum": "5a8cf3f174cf46271ab7c4668745f6ac"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v2-2b629f0f2fe8/run_manifest.json": {
+      "checksum": "ca38ac33a87dc09125b7b9ac6cf17455"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v2-2b629f0f2fe8/sequences.fasta": {
+      "checksum": "c73db0c8d3fce6deba6bb05c0e2c28d5"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v2-2b629f0f2fe8/sites.csv": {
+      "checksum": "2ed069417d82fb39218be00e3770b996"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v2-2b629f0f2fe8/taxonomy.csv": {
+      "checksum": "fe521e844b1acd23b041a4a653071b31"
+    },
     "data/primer_target_claims.csv": {
       "checksum": "f34cebaf5f6a916b20809795330cc19d"
     },
@@ -3055,10 +3166,19 @@
       "checksum": "1890d80605094aa7de14359e173f70be"
     },
     "R/data_layer.R": {
-      "checksum": "cd2d622e7c4959616a5152deb3314056"
+      "checksum": "ef3c9e0c4b133e0a79b89f09a90cc063"
     },
     "R/functions.R": {
       "checksum": "0b8135548921fa241dbc1c06a26c5c6f"
+    },
+    "R/fungal_explorer.R": {
+      "checksum": "82db3b79ee091af118b486177645460c"
+    },
+    "R/fungal_ui.R": {
+      "checksum": "8ea942fa91857c7dd4ea943dda15f709"
+    },
+    "R/fungal_versions.R": {
+      "checksum": "264e321c4ecf0d07f6ec17af7c8a1500"
     },
     "R/reference_panels.R": {
       "checksum": "fc935cd571e18642b94b10d6811ed7fc"

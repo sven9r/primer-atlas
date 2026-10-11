@@ -1,0 +1,9 @@
+"pair_id","pair_label","use_case","target","forward_primer","reverse_primer","forward_start","forward_end","reverse_start","reverse_end","pair_start","pair_end","aligned_amplicon_bp","targeted_region_start","targeted_region_end","targeted_region_bp","folmer_overlap_bp","folmer_coverage_fraction","reference_accession","sources","folmer_overlap_rank","marker_id","placement_status","forward_identity","reverse_identity"
+"ITS1_ITS4","ITS1 + ITS4","barcoding / bulk_community","Fungi","ITS1","ITS4",3,21,720,739,3,739,737,22,719,698,0,,"FN812768.2","unite_primers",,"ITS_FUNGAL","sequence_aligned",1,1
+"ITS1F_ITS4","ITS1F + ITS4","barcoding / bulk_community","Fungi","ITS1F","ITS4",456,477,720,739,456,739,284,478,719,242,0,,"FN812768.2","unite_primers",,"ITS_FUNGAL","reference_specific_low_confidence",0.5,1
+"ITS1F_ITS4B","ITS1F + ITS4B","barcoding / bulk_community","Fungi","ITS1F","ITS4B",456,477,534,556,456,556,101,478,533,56,0,,"FN812768.2","unite_primers",,"ITS_FUNGAL","reference_specific_low_confidence",0.5,0.434782608695652
+"ITS3_ITS4","ITS3 + ITS4","barcoding","Fungi","ITS3","ITS4",349,368,720,739,349,739,391,369,719,351,0,,"FN812768.2","unite_primers",,"ITS_FUNGAL","sequence_aligned",1,1
+"FITS7_ITS4","fITS7 + ITS4","bulk_community / edna","Fungi","fITS7","ITS4",403,421,720,739,403,739,337,422,719,298,0,,"FN812768.2","unite_primers",,"ITS_FUNGAL","sequence_aligned",1,1
+"GITS7_ITS4","gITS7 + ITS4","bulk_community / edna","Fungi","gITS7","ITS4",403,421,720,739,403,739,337,422,719,298,0,,"FN812768.2","unite_primers",,"ITS_FUNGAL","sequence_aligned",1,1
+"ITS86F_ITS4","ITS86F + ITS4","bulk_community / edna","Fungi","ITS86F","ITS4",403,423,720,739,403,739,337,424,719,296,0,,"FN812768.2","unite_primers",,"ITS_FUNGAL","sequence_aligned",1,1
+"ITS1F_LR21","ITS1F + LR21","barcoding","Fungi","ITS1F","LR21",456,477,662,680,456,680,225,478,661,184,0,,"FN812768.2","unite_primers",,"ITS_FUNGAL","reference_specific_low_confidence",0.5,0.526315789473684

@@ -13,6 +13,9 @@ library(DT)
 source("R/functions.R")
 source("R/data_layer.R")
 source("R/reference_panels.R")
+source("R/fungal_explorer.R")
+source("R/fungal_versions.R")
+source("R/fungal_ui.R")
 
 coi_release_state <- tryCatch(atlas_read_manifest("COI"), error = function(e) NULL)
 release_table <- function(name, fallback, col_types = NULL) {
@@ -549,30 +552,61 @@ citation_link <- function(row, label = NULL) {
 
 atlas_theme <- bs_theme(
   version = 5,
-  bg = "#f4f2ec",
-  fg = "#17241d",
-  primary = "#16664b",
-  secondary = "#d8e7df",
+  bg = "#f8fafc",
+  fg = "#172033",
+  primary = "#4338ca",
+  secondary = "#e0e7ff",
   base_font = font_google("Manrope"),
-  heading_font = font_google("DM Serif Display")
+  heading_font = font_google("Manrope")
 )
 
 app_css <- "
-:root { --ink:#17241d; --green:#16664b; --mint:#dcebe3; --paper:#f4f2ec;
-  --coral:#de6b4f; --gold:#d7a62b; --line:#d5d3ca; }
-body { letter-spacing:-.01em; }
-.navbar { border-bottom:1px solid var(--line); background:rgba(244,242,236,.96)!important; }
-.navbar > .container-fluid { flex-wrap:nowrap; }
-.navbar-nav { flex-wrap:nowrap; overflow-x:auto; }
-.navbar-brand { font-family:'DM Serif Display',serif; font-size:1.08rem; white-space:nowrap; }
-.start-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(225px,1fr)); gap:14px; margin:12px 0 20px; }
-.start-card { background:#fffdf8; border:1px solid var(--line); border-radius:16px; padding:17px; }
+:root { --ink:#172033; --green:#4338ca; --mint:#eef2ff; --paper:#f8fafc;
+  --coral:#de6b4f; --gold:#d7a62b; --line:#dbe3ee; }
+body { letter-spacing:-.01em; line-height:1.5; }
+:root { --accent:#4338ca; --surface:#ffffff; --muted:#475569;
+  --illumina:#2563eb; --pacbio:#7c3aed; --nanopore:#0f766e; --unresolved:#64748b; }
+*, *::before, *::after { box-sizing:border-box; }
+.container-fluid { min-width:0; max-width:1760px; }
+.tab-content, .tab-pane, .bslib-grid, .bslib-sidebar-layout, .bslib-card,
+.bslib-card > .card-body, .html-widget-output { min-width:0; max-width:100%; }
+.tab-pane > .container-fluid { padding:16px clamp(16px,2vw,32px) 32px; }
+a { text-underline-offset:3px; }
+a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible,
+textarea:focus-visible, summary:focus-visible, [role=button]:focus-visible {
+  outline:3px solid #4338ca; outline-offset:3px;
+}
+.btn { font-weight:700; border-radius:9px; }
+.btn-outline-secondary {
+  --bs-btn-color:#475569; --bs-btn-border-color:#94a3b8;
+  --bs-btn-hover-color:#172033; --bs-btn-hover-bg:#e2e8f0; --bs-btn-hover-border-color:#64748b;
+  --bs-btn-active-color:#172033; --bs-btn-active-bg:#e2e8f0; --bs-btn-active-border-color:#64748b;
+  color:#475569; border-color:#94a3b8; background:#ffffff;
+}
+.btn-outline-secondary:hover, .btn-outline-secondary:focus-visible {
+  color:#172033; border-color:#64748b; background:#e2e8f0;
+}
+.form-control, .form-select, .selectize-input { border-radius:8px; border-color:var(--line); }
+.btn-outline-success { color:var(--accent); border-color:var(--accent); }
+.btn-outline-success:hover { background:var(--accent); border-color:var(--accent); color:#fff; }
+.shiny-input-container { min-width:0; max-width:100%; }
+.bslib-card .bslib-card { box-shadow:none; border-radius:10px; }
+
+.navbar { border-bottom:1px solid var(--line); background:#ffffff!important; padding:8px 12px; }
+.navbar > .container-fluid { flex-wrap:wrap; gap:6px; min-width:0; }
+.navbar-nav { flex-wrap:nowrap; overflow-x:auto; max-width:100%; gap:3px; }
+.navbar-nav .nav-link { border-radius:8px; font-size:.86rem; font-weight:700; padding:9px 12px; }
+.navbar-nav .nav-link.active { background:var(--mint); color:var(--accent)!important; }
+.navbar-brand { font-weight:850; font-size:1.08rem; letter-spacing:-.03em; white-space:nowrap; }
+.start-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr)); gap:16px; margin:20px 0 28px; }
+.start-card { background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:22px; display:flex; flex-direction:column; align-items:flex-start; gap:4px; }
+.start-card .btn { margin-top:auto; }
 .start-card h3 { font-size:1.18rem; margin:0 0 8px; }
-.start-card p { min-height:4.5em; color:#536159; font-size:.9rem; }
+.start-card p { color:var(--muted); font-size:.94rem; line-height:1.6; margin-bottom:18px; }
 .readiness-list { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px; margin-top:12px; }
-.readiness-list > div { border-left:4px solid var(--green); background:#fffdf8; padding:10px 13px; }
+.readiness-list > div { border-left:4px solid var(--green); background:#ffffff; padding:10px 13px; }
 .readiness-list strong { display:block; }
-.readiness-list span { display:block; color:#536159; font-size:.88rem; }
+.readiness-list span { display:block; color:#475569; font-size:.88rem; }
 .map-scroll-hint { display:none; }
 @media (max-width: 850px) {
   .primer-map-page > .bslib-sidebar-layout { grid-template-columns:minmax(0,1fr)!important; }
@@ -590,60 +624,64 @@ body { letter-spacing:-.01em; }
   .primer-map-page .map-scroll-hint { display:block; }
 }
 .institution-banner { display:flex; align-items:center; justify-content:space-between;
-  gap:24px; padding:9px 24px; background:#fffdf8; border-bottom:1px solid var(--line); }
-.banner-home { display:flex; align-items:center; gap:14px; min-width:250px; }
-.banner-home img { width:108px; height:68px; object-fit:contain; }
-.banner-home strong { display:block; font-family:'DM Serif Display',serif;
-  font-size:1.2rem; line-height:1.05; }
-.banner-home span { display:block; margin-top:3px; color:#65716a; font-size:.72rem; }
+  gap:24px; padding:10px clamp(16px,2vw,32px); background:#ffffff; border-bottom:1px solid var(--line); }
+.banner-home { display:flex; align-items:center; gap:12px; min-width:0; }
+.banner-home img { width:78px; height:48px; object-fit:contain; flex:0 0 auto; }
+.banner-home strong { display:block; font-size:.96rem; font-weight:800; line-height:1.3; }
+.banner-home span { display:block; margin-top:3px; color:#526176; font-size:.72rem; }
 .banner-support { display:flex; align-items:center; justify-content:flex-end;
-  gap:20px; min-width:0; }
-.banner-support-label { color:#65716a; font-size:.68rem; text-transform:uppercase;
+  gap:16px; min-width:0; }
+.banner-support-label { color:#526176; font-size:.68rem; text-transform:uppercase;
   letter-spacing:.1em; white-space:nowrap; }
 .banner-logo { object-fit:contain; display:block; }
-.banner-logo.fulbright { width:112px; height:48px; }
-.banner-logo.walter { width:128px; height:58px; }
-.banner-logo.berkeley { width:66px; height:66px; }
-.hero { padding:.85rem 0 .6rem; }
+.banner-logo.fulbright { width:96px; height:38px; }
+.banner-logo.walter { width:112px; height:42px; }
+.banner-logo.berkeley { width:44px; height:44px; }
+.hero { padding:26px 0 20px; max-width:1100px; }
 .eyebrow { color:var(--green); text-transform:uppercase; letter-spacing:.13em;
   font-weight:800; font-size:.72rem; }
-.hero h1 { font-size:clamp(2rem,3.2vw,3.15rem); line-height:1; max-width:none;
-  white-space:nowrap; margin-bottom:.35rem; }
-.hero p { max-width:820px; font-size:.96rem; color:#536159; margin-bottom:.25rem; }
-.bslib-card { border:1px solid var(--line); box-shadow:none; border-radius:18px; overflow:hidden; }
-.card-header { background:#fbfaf6; border-bottom:1px solid var(--line); font-weight:800; }
-.sidebar { background:#eceae2!important; border-right:1px solid var(--line)!important;
+.hero h1 { font-size:clamp(2rem,3.2vw,3rem); line-height:1.12; font-weight:850;
+  letter-spacing:-.04em; margin:8px 0 12px; overflow-wrap:break-word; }
+.hero p { max-width:820px; font-size:1rem; line-height:1.65; color:var(--muted); margin-bottom:.25rem; }
+.workspace-heading { padding:8px 0 18px; }
+.workspace-heading h1 { margin:0 0 5px; font-size:clamp(1.45rem,2.3vw,1.9rem); letter-spacing:-.03em; font-weight:850; }
+.workspace-heading p { max-width:920px; margin:0; font-size:.92rem; color:var(--muted); }
+.bslib-card { border:1px solid var(--line); box-shadow:none; border-radius:14px; overflow:hidden; }
+.card-header { background:#ffffff; border-bottom:1px solid var(--line); font-weight:800; padding:14px 18px; }
+.bslib-card > .card-body { padding:18px; }
+.sidebar { background:#f1f5f9!important; border-right:1px solid var(--line)!important;
   position:relative; z-index:3; }
 .bslib-sidebar-layout > .main { min-width:0; overflow:hidden; }
 .metric-row { display:grid; grid-template-columns:repeat(auto-fit,minmax(145px,1fr)); gap:12px; margin-bottom:16px; }
-.metric { background:#fffdf8; border:1px solid var(--line); border-radius:16px; padding:14px 16px; }
-.metric b { display:block; font-family:'DM Serif Display'; font-size:2rem; line-height:1; }
-.metric span { font-size:.75rem; text-transform:uppercase; letter-spacing:.08em; color:#68736c; }
-.primer-map-wrap { overflow-x:auto; max-width:100%; padding:8px 2px 16px;
-  position:relative; z-index:1; }
-.primer-map { min-width:1350px; width:100%; }
+.metric { background:#ffffff; border:1px solid var(--line); border-radius:10px; padding:12px 15px; }
+.metric b { display:block; font-weight:800; font-size:1.7rem; line-height:1.2; font-variant-numeric:tabular-nums; }
+.metric span { font-size:.75rem; text-transform:uppercase; letter-spacing:.08em; color:#526176; }
+.primer-map-wrap { overflow-x:auto; width:100%; min-width:0; max-width:100%; padding:8px 2px 16px;
+  position:relative; z-index:1; overscroll-behavior-x:contain; scrollbar-gutter:stable; }
+.primer-map { min-width:0; width:100%; display:block; }
+.primer-map-wrap > .primer-map { width:max(100%,1350px); max-width:none; }
 .primer-tooltip-target { cursor:pointer; }
 .primer-tooltip-target:focus-visible {
-  outline:3px solid rgba(22,102,75,.55); outline-offset:4px;
+  outline:3px solid rgba(67,56,202,.65); outline-offset:4px;
 }
 .primer-hover-tooltip {
   display:none; position:fixed; z-index:10000;
   width:min(440px,calc(100vw - 28px)); max-height:min(420px,calc(100vh - 28px));
   overflow:auto; padding:15px 17px 12px;
-  border:2px solid #6f7b74; border-radius:14px;
-  background:#fffdf8; color:#17241d;
-  box-shadow:0 14px 38px rgba(23,36,29,.24);
+  border:2px solid #64748b; border-radius:14px;
+  background:#ffffff; color:#172033;
+  box-shadow:0 14px 38px rgba(23,32,51,.15);
   font-size:.9rem; line-height:1.48; font-weight:600;
   white-space:pre-line; pointer-events:none;
 }
 .primer-hover-tooltip.visible { display:block; }
 .primer-hover-tooltip.pinned {
-  border-color:var(--green); box-shadow:0 16px 42px rgba(22,102,75,.28);
+  border-color:var(--green); box-shadow:0 16px 42px rgba(67,56,202,.18);
 }
 .primer-hover-tooltip::after {
   content:'Hover preview · click primer name or amplicon to pin';
   display:block; margin-top:10px; padding-top:8px;
-  border-top:1px solid var(--line); color:#65716a;
+  border-top:1px solid var(--line); color:#526176;
   font-size:.7rem; font-weight:700; white-space:normal;
 }
 .primer-hover-tooltip.pinned::after {
@@ -651,7 +689,7 @@ body { letter-spacing:-.01em; }
   color:var(--green);
 }
 .map-legend { display:flex; flex-wrap:wrap; gap:14px; align-items:center;
-  padding:2px 2px 10px; font-size:.75rem; color:#59655e; }
+  padding:2px 2px 10px; font-size:.75rem; color:#475569; }
 .legend-line { display:inline-block; width:28px; height:5px; border-radius:999px;
   margin-right:6px; vertical-align:middle; }
 .legend-forward { background:#2563eb; }
@@ -660,7 +698,7 @@ body { letter-spacing:-.01em; }
 .legend-number {
   display:inline-flex; width:24px; height:24px; border-radius:50%;
   align-items:center; justify-content:center; margin-right:6px;
-  background:#17241d; color:#fffdf8; font-size:.7rem; font-weight:800;
+  background:#172033; color:#ffffff; font-size:.7rem; font-weight:800;
   vertical-align:middle;
 }
 .pair-card { display:grid; grid-template-columns:1.2fr 1fr auto; gap:14px; align-items:center;
@@ -682,33 +720,33 @@ body { letter-spacing:-.01em; }
 .heatmap-scroll-top-inner { height:1px; }
 .heatmap { display:grid; gap:4px; align-items:stretch; min-width:100%; overflow:visible; }
 .heat-cell { min-width:82px; border:0; border-radius:8px; padding:10px 6px; text-align:center;
-  color:#183027; font-weight:800; cursor:pointer; font-family:inherit; }
-.heat-cell:hover { box-shadow:inset 0 0 0 2px rgba(22,102,75,.55); }
-.heat-cell:focus-visible { outline:3px solid rgba(22,102,75,.55); outline-offset:1px; }
+  color:#172033; font-weight:800; cursor:pointer; font-family:inherit; }
+.heat-cell:hover { box-shadow:inset 0 0 0 2px rgba(67,56,202,.65); }
+.heat-cell:focus-visible { outline:3px solid rgba(67,56,202,.65); outline-offset:1px; }
 .heat-cell-static { cursor:default; }
 .heat-head { font-size:.68rem; writing-mode:vertical-rl; transform:rotate(180deg);
   min-height:104px; display:flex; justify-content:flex-start; align-items:center; padding:6px; }
 .order-label { font-weight:800; padding:10px 8px; white-space:nowrap; }
-.risk-na { background:repeating-linear-gradient(135deg,#e5e3dc,#e5e3dc 7px,#d7d4cb 7px,#d7d4cb 14px); }
+.risk-na { background:repeating-linear-gradient(135deg,#e2e8f0,#e2e8f0 7px,#cbd5e1 7px,#cbd5e1 14px); }
 .heatmap-reading-guide { display:grid; grid-template-columns:minmax(0,1.2fr) minmax(300px,.8fr);
   gap:16px; margin:0 0 18px; padding:16px; border:1px solid var(--line);
-  border-radius:14px; background:#fffdf8; }
+  border-radius:14px; background:#ffffff; }
 .heatmap-reading-guide h5 { margin:0 0 8px; }
-.heatmap-reading-guide p { margin:0 0 7px; font-size:.82rem; color:#48554e; }
+.heatmap-reading-guide p { margin:0 0 7px; font-size:.82rem; color:#475569; }
 .heatmap-legend-grid { display:grid; grid-template-columns:repeat(4,minmax(115px,1fr));
   gap:9px; margin-top:10px; }
 .heatmap-legend-item { display:flex; align-items:center; gap:8px; min-width:0;
-  font-size:.75rem; color:#48554e; }
+  font-size:.75rem; color:#475569; }
 .heatmap-swatch { width:34px; height:25px; flex:0 0 34px; border-radius:6px;
   border:1px solid rgba(23,36,29,.12); }
 .heatmap-swatch.low { background:#b9ddc9; }
 .heatmap-swatch.mid { background:#efd787; }
 .heatmap-swatch.high { background:#efaa90; }
 .heatmap-swatch.missing {
-  background:repeating-linear-gradient(135deg,#e5e3dc,#e5e3dc 7px,#d7d4cb 7px,#d7d4cb 14px);
+  background:repeating-linear-gradient(135deg,#e2e8f0,#e2e8f0 7px,#cbd5e1 7px,#cbd5e1 14px);
 }
 .investigation-tip { border-left:4px solid var(--green); padding-left:13px; }
-.investigation-tip ol { margin:7px 0 0; padding-left:20px; color:#48554e; font-size:.8rem; }
+.investigation-tip ol { margin:7px 0 0; padding-left:20px; color:#475569; font-size:.8rem; }
 .investigation-tip li { margin-bottom:5px; }
 .order-heatmap-card { overflow:visible; }
 .order-heatmap-card > .card-header { border-radius:17px 17px 0 0; }
@@ -733,7 +771,7 @@ body { letter-spacing:-.01em; }
 }
 .order-inspector-card .selectize-dropdown {
   z-index:70; min-width:100%!important;
-  box-shadow:0 10px 28px rgba(23,36,29,.18);
+  box-shadow:0 10px 28px rgba(23,32,51,.12);
 }
 .order-inspector-card .selectize-dropdown-content {
   max-height:360px!important; overflow-y:auto!important;
@@ -760,7 +798,7 @@ body.detail-switching .comparison-trace-shell::before {
   content:'Loading selected comparison…';
   position:absolute; z-index:5; top:12px; left:12px;
   border-radius:999px; padding:7px 11px;
-  background:#fffdf8; border:1px solid var(--line);
+  background:#ffffff; border:1px solid var(--line);
   color:var(--green); font-size:.75rem; font-weight:800;
   box-shadow:0 3px 10px rgba(23,36,29,.08);
 }
@@ -779,38 +817,38 @@ body.detail-switching .deep-detail-card {
 .deep-detail-card .dataTables_scroll { width:100%; max-width:100%; }
 .deep-detail-card .dataTables_scrollBody { overflow:auto!important; }
 .sequence-strip { display:flex; flex-wrap:wrap; gap:3px; margin:10px 0 18px; }
-.base { width:28px; height:42px; border-radius:6px; background:#e6e4dc; text-align:center;
+.base { width:28px; height:42px; border-radius:6px; background:#e2e8f0; text-align:center;
   font-family:ui-monospace,monospace; font-weight:800; padding-top:4px; position:relative; }
 .base.mismatch { background:#f1b09b; color:#7c2516; }
-.base.unavailable { background:#d8d6d0; color:#59615c; }
-.base small { display:block; font-size:.55rem; color:#65716a; margin-top:2px; }
+.base.unavailable { background:#e2e8f0; color:#475569; }
+.base small { display:block; font-size:.55rem; color:#526176; margin-top:2px; }
 .table-atlas { width:100%; border-collapse:separate; border-spacing:0; font-size:.84rem; }
-.table-atlas th { position:sticky; top:0; background:#eae8e0; text-align:left; padding:9px; }
+.table-atlas th { position:sticky; top:0; background:#f1f5f9; text-align:left; padding:9px; }
 .table-atlas td { padding:9px; border-top:1px solid var(--line); vertical-align:top; }
 .cite-card { border-top:1px solid var(--line); padding:15px 2px; }
 .cite-card:first-child { border-top:0; }
-.callout { border-left:4px solid var(--gold); background:#fbf4da; padding:12px 15px;
-  border-radius:0 12px 12px 0; }
+.callout { border-left:3px solid var(--gold); background:#fffbeb; padding:12px 15px;
+  border-radius:0 8px 8px 0; }
 .taxon-info { border-left-color:#2563eb; background:#eef5ff; }
 .taxon-alert { border-left-color:#dc2626; background:#fff0ed; }
 .deep-dive-controls { display:grid; grid-template-columns:minmax(220px,1fr) minmax(180px,.7fr);
   gap:12px; align-items:end; margin:4px 0 12px; }
 .evidence-badge { display:inline-block; border-radius:999px; padding:2px 7px;
-  background:#e7e5de; color:#58635c; font-size:.68rem; font-weight:800; white-space:nowrap; }
+  background:#e2e8f0; color:#475569; font-size:.68rem; font-weight:800; white-space:nowrap; }
 .evidence-badge.small-n { background:#fbefd0; color:#8a5a00; }
-.evidence-badge.empirical { background:#dcebe3; color:#16664b; }
+.evidence-badge.empirical { background:#eef2ff; color:#4338ca; }
 .scroll-table { overflow:auto; max-height:620px; border:1px solid var(--line);
   border-radius:12px; }
 .dataTables_wrapper { font-size:.8rem; }
 .dataTables_wrapper .dataTables_filter input,
 .dataTables_wrapper .dataTables_length select,
 .dataTables_wrapper thead input {
-  border:1px solid var(--line); border-radius:7px; background:#fffdf8;
+  border:1px solid var(--line); border-radius:7px; background:#ffffff;
   color:var(--ink); padding:5px 7px;
 }
 .dataTables_wrapper thead input { width:100%!important; min-width:76px; }
 .dataTables_wrapper table.dataTable tbody tr.selected > * {
-  box-shadow:inset 0 0 0 9999px rgba(22,102,75,.13)!important;
+  box-shadow:inset 0 0 0 9999px rgba(67,56,202,.10)!important;
   color:var(--ink)!important;
 }
 .sequence-source-table table.dataTable tbody tr { cursor:pointer; }
@@ -825,43 +863,43 @@ body.detail-switching .deep-detail-card {
   margin:8px 0 12px; }
 .map-clear-btn { color:var(--green)!important; border-color:var(--green)!important;
   background:transparent!important; }
-.map-clear-btn:hover { color:#fffdf8!important; background:var(--green)!important; }
+.map-clear-btn:hover { color:#ffffff!important; background:var(--green)!important; }
 .custom-panel { border-top:1px solid var(--line); border-bottom:1px solid var(--line);
   padding:10px 0; margin:10px 0; }
 .custom-panel summary { cursor:pointer; color:var(--green); font-weight:800; margin-bottom:8px; }
 .custom-panel textarea { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:.78rem; }
-.combination-browser { margin:4px 0 16px; border:1px solid var(--line);
-  border-radius:14px; background:#fffdf8; overflow:visible; }
+.combination-browser { margin:4px 0 18px; border:1px solid var(--line);
+  border-radius:10px; background:#ffffff; overflow:visible; }
 .combination-browser > summary { cursor:pointer; padding:13px 16px;
   color:var(--green); font-weight:850; }
 .combination-browser[open] > summary { border-bottom:1px solid var(--line); }
 .combination-browser-body { padding:14px 16px 16px; }
 .pair-list-show { border:1px solid var(--green); border-radius:999px;
-  padding:4px 9px; color:var(--green); background:#fffdf8; font-weight:800;
+  padding:4px 9px; color:var(--green); background:#ffffff; font-weight:800;
   white-space:nowrap; cursor:pointer; }
-.pair-list-show:hover { color:#fffdf8; background:var(--green); }
-.tiny { font-size:.75rem; color:#65716a; }
+.pair-list-show:hover { color:#ffffff; background:var(--green); }
+.tiny { font-size:.82rem; line-height:1.55; color:#526176; }
 .organism-picker .shiny-options-group { display:flex; flex-wrap:wrap; gap:7px; }
 .organism-picker .radio-inline { margin:0!important; padding:7px 10px 7px 30px;
-  border:1px solid var(--line); border-radius:999px; background:#fffdf8;
+  border:1px solid var(--line); border-radius:999px; background:#ffffff;
   font-size:.75rem; font-weight:750; }
 .organism-picker .radio-inline:has(input:checked) { border-color:var(--green);
   background:var(--mint); color:var(--green); box-shadow:inset 0 0 0 1px var(--green); }
 .marker-guidance { margin:8px 0 12px; padding:10px 12px; border-radius:12px;
-  background:#fffdf8; border:1px solid var(--line); font-size:.75rem; }
+  background:#ffffff; border:1px solid var(--line); font-size:.75rem; }
 .marker-guidance-row { display:flex; justify-content:space-between; gap:8px;
-  padding:4px 0; border-top:1px solid #ebe8df; }
+  padding:4px 0; border-top:1px solid #e2e8f0; }
 .marker-guidance-row:first-child { border-top:0; }
-.status-chip { border-radius:999px; padding:2px 7px; font-size:.64rem;
-  font-weight:800; white-space:nowrap; background:#e7e5de; color:#58635c; }
-.status-chip.active { background:#dcebe3; color:#16664b; }
+.status-chip { border-radius:999px; padding:2px 7px; font-size:.75rem;
+  font-weight:800; white-space:nowrap; background:#e2e8f0; color:#475569; }
+.status-chip.active { background:#eef2ff; color:#4338ca; }
 .status-chip.pilot { background:#fbefd0; color:#8a5a00; }
 .region-position-diff { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; }
 .region-globe-card { display:grid; grid-template-columns:minmax(360px,1.25fr) minmax(240px,.75fr);
   gap:18px; align-items:center; margin:0 0 18px; padding:16px;
-  border:1px solid var(--line); border-radius:18px; background:#fffdf8; }
+  border:1px solid var(--line); border-radius:18px; background:#ffffff; }
 .region-globe-stage { min-height:390px; display:flex; align-items:center; justify-content:center;
-  overflow:hidden; border-radius:16px; background:radial-gradient(circle at 48% 42%,#edf7f2 0,#dcebe3 46%,#c9ddd3 70%,#b9d2c6 100%); }
+  overflow:hidden; border-radius:16px; background:radial-gradient(circle at 48% 42%,#f8fafc 0,#eef2ff 46%,#e0e7ff 70%,#c7d2fe 100%); }
 #region_globe_canvas { width:100%; max-width:620px; height:390px; cursor:grab; touch-action:none; }
 #region_globe_canvas:active { cursor:grabbing; }
 .region-globe-copy h4 { margin-bottom:7px; }
@@ -871,8 +909,103 @@ body.detail-switching .deep-detail-card {
 .region-globe-dot.a { background:#2563eb; box-shadow:0 0 0 4px rgba(37,99,235,.18); }
 .region-globe-dot.b { background:#de6b4f; box-shadow:0 0 0 4px rgba(222,107,79,.18); }
 .reference-policy-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:12px; margin:14px 0; }
-.reference-policy-card { padding:13px 15px; border:1px solid var(--line); border-radius:14px; background:#fffdf8; }
+.reference-policy-card { padding:13px 15px; border:1px solid var(--line); border-radius:14px; background:#ffffff; }
 .reference-policy-card b { display:block; margin-bottom:4px; }
+.fungal-workspace { min-width:0; display:grid; gap:18px; color:var(--ink); container-type:inline-size; }
+.fungal-workspace > * { min-width:0; max-width:100%; }
+.fungal-controls { display:block; padding:18px; border:1px solid var(--line);
+  border-radius:12px; background:#f8fafc; }
+.fungal-controls > * + * { margin-top:16px; }
+.fungal-controls .bslib-grid { grid-template-columns:repeat(3,minmax(0,1fr))!important; gap:14px; }
+.fungal-controls .bslib-grid-item { min-width:0; grid-column:auto!important; }
+.fungal-controls .shiny-input-container { width:100%!important; margin-bottom:0; }
+.fungal-controls label { font-size:.85rem; font-weight:750; color:var(--ink); }
+.fungal-controls > .d-flex { align-items:center; }
+.fungal-controls > .d-flex > .shiny-input-container { width:auto!important; flex:0 1 auto; }
+.fungal-controls .radio-inline { margin:4px 14px 4px 0; }
+.fungal-controls details { border:1px solid var(--line); border-radius:8px; padding:10px 12px; background:#ffffff; }
+.fungal-controls summary { cursor:pointer; color:var(--accent); font-size:.84rem; font-weight:750; }
+.fungal-controls details[open] summary { margin-bottom:16px; }
+.fungal-platform-legend { display:flex; flex-wrap:wrap; gap:8px; }
+.fungal-version-bar { display:grid; grid-template-columns:minmax(280px,320px) minmax(0,1fr) auto; align-items:center;
+  gap:12px 18px; border-bottom:1px solid var(--line); padding:0 0 14px; }
+.fungal-version-bar .shiny-input-container { width:100%!important; min-width:0; margin:0; }
+.fungal-version-bar > .shiny-html-output { min-width:0; width:auto; max-width:100%; overflow-wrap:anywhere; }
+.fungal-version-bar > .btn { white-space:nowrap; justify-self:end; }
+.fungal-version-bar .historical, .fungal-version-bar .version-historical {
+  border:1px solid #c4b5fd; background:#f5f3ff; color:#5b21b6; border-radius:8px; padding:7px 10px; }
+.fungal-pair-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr)); gap:12px; }
+.fungal-pair-card { min-width:0; border:1px solid var(--line); border-radius:12px; background:#ffffff;
+  padding:16px; display:flex; flex-direction:column; gap:8px; box-shadow:0 1px 2px rgba(23,32,51,.03); }
+.fungal-pair-card h4, .fungal-pair-card h5 { font-size:1rem; line-height:1.4; margin:0; font-weight:800; }
+.fungal-pair-card p { color:var(--muted); margin:0; font-size:.88rem; }
+.fungal-pair-card .mono { overflow-wrap:anywhere; }
+.fungal-pair-card:hover { border-color:#a5b4fc; }
+.fungal-pair-card.is-selected, .fungal-pair-card.selected { border:2px solid var(--accent); padding:15px; background:#f8faff; }
+.fungal-pair-card .btn { margin-top:auto; align-self:flex-start; }
+.fungal-pair-choice { display:inline-block; border:0; border-radius:6px; padding:4px 6px;
+  color:var(--accent); background:transparent; font:inherit; font-weight:750; text-align:left;
+  text-decoration:underline; text-underline-offset:3px; cursor:pointer; }
+.fungal-pair-choice:hover { color:#312e81; background:#eef2ff; }
+.fungal-pair-choice:focus-visible { outline:3px solid var(--accent); outline-offset:2px; background:#eef2ff; }
+.fungal-matrix .fungal-pair-choice { white-space:nowrap; }
+.fungal-platform-badge { display:inline-flex; align-items:center; gap:5px; font-size:.78rem;
+  font-weight:800; border-radius:6px; padding:4px 8px; line-height:1.4; border:1px solid transparent; }
+.fungal-platform-badge.illumina, .fungal-platform-badge[data-platform=illumina], .platform-illumina {
+  color:#1d4ed8; background:#eff6ff; border-color:#bfdbfe; }
+.fungal-platform-badge.pacbio, .fungal-platform-badge[data-platform=pacbio], .platform-pacbio {
+  color:#6d28d9; background:#f5f3ff; border-color:#ddd6fe; }
+.fungal-platform-badge.nanopore, .fungal-platform-badge[data-platform=nanopore], .platform-nanopore {
+  color:#0f766e; background:#f0fdfa; border-color:#99f6e4; }
+.fungal-platform-badge.unresolved, .fungal-platform-badge[data-platform=unresolved], .platform-unresolved {
+  color:#475569; background:#f1f5f9; border-color:#cbd5e1; }
+.fungal-matrix { min-width:0; max-width:100%; overflow-x:auto; border:1px solid var(--line); border-radius:10px; }
+.fungal-matrix table { width:100%; border-collapse:collapse; font-size:.85rem; }
+.fungal-matrix th, .fungal-matrix td { padding:10px 12px; border-bottom:1px solid var(--line); text-align:left; }
+.fungal-matrix th { background:#f8fafc; font-weight:800; position:sticky; top:0; }
+.fungal-matrix button { border-radius:7px; }
+.fungal-evidence { min-width:0; padding:18px; background:#f8fafc; border:1px solid var(--line);
+  border-radius:12px; font-size:.88rem; line-height:1.6; }
+.fungal-evidence h4 { font-size:1.05rem; font-weight:800; margin:0 0 10px; }
+.fungal-evidence pre, .fungal-evidence .mono { overflow:auto; overflow-wrap:anywhere; }
+.fungal-map { min-width:0; max-width:100%; overflow-x:auto; background:#ffffff; border:1px solid var(--line);
+  border-radius:12px; padding:12px; overscroll-behavior-x:contain; }
+.fungal-map svg { display:block; width:100%; height:auto; min-width:0; max-width:none; }
+.fungal-map svg + svg { margin-top:8px; border-top:1px solid var(--line); padding-top:8px; }
+.fungal-workspace .dataTables_wrapper { min-width:0; max-width:100%; overflow-x:auto; }
+.fungal-workspace .callout { font-size:.85rem; }
+@container(max-width:760px) {
+  .fungal-version-bar { grid-template-columns:minmax(260px,1fr) auto; }
+  .fungal-version-bar > .shiny-html-output { grid-column:1 / -1; grid-row:2; }
+  .fungal-version-bar > .btn { grid-column:2; grid-row:1; }
+}
+@container(max-width:620px) {
+  .fungal-controls .bslib-grid { grid-template-columns:1fr!important; }
+  .fungal-controls > .d-flex { align-items:flex-start; }
+  .fungal-map svg { min-width:680px; }
+}
+@container(max-width:480px) {
+  .fungal-version-bar { grid-template-columns:minmax(0,1fr); }
+  .fungal-version-bar > .shiny-html-output { grid-column:1; grid-row:2; }
+  .fungal-version-bar > .btn { grid-column:1; grid-row:3; justify-self:start; }
+}
+@media(max-width:1100px) {
+  .navbar > .container-fluid { align-items:flex-start; }
+  .institution-banner { gap:14px; }
+  .banner-support-label { display:none; }
+}
+@media(max-width:700px) {
+  .tab-pane > .container-fluid { padding:12px 12px 24px; }
+  .hero { padding:20px 0 14px; }
+  .hero h1 { font-size:2rem; }
+  .workspace-heading { padding:6px 0 14px; }
+  .bslib-card > .card-body { padding:14px; }
+  .fungal-controls { padding:14px; }
+  .fungal-pair-grid { grid-template-columns:1fr; }
+  .fungal-version-bar { align-items:flex-start; }
+  .banner-home span { font-size:.72rem; }
+}
+
 @media(max-width:900px){
   .institution-banner { align-items:flex-start; padding:8px 14px; gap:10px; }
   .banner-support { gap:8px; flex-wrap:wrap; }
@@ -1291,6 +1424,10 @@ hero <- div(
   )
 )
 
+workspace_heading <- function(title, description) {
+  div(class = "workspace-heading", h1(title), p(description))
+}
+
 ui <- page_navbar(
   id = "main_nav",
   title = "Primer Atlas",
@@ -1327,12 +1464,12 @@ ui <- page_navbar(
         card_header("What is ready to explore?"),
         div(class = "readiness-list",
             div(strong("Animal COI · active"), span("Primer map, reference fit, taxon detail, and reference-region comparison. Results depend on the selected reference panel.")),
-            div(strong("Fungal ITS · pilot"), span("121 catalog primers and eight documented pairs. The app map uses one coordinate reference; a separate 48-sequence scoring pilot is documented in the repository and is not shown here.")),
+            div(strong("Fungal rDNA · versioned explorer"), span("Discover primer combinations by sequencing platform, compare a bounded NCBI reference-panel snapshot, and return to earlier catalog and reference versions. Candidate geometry remains distinct from experimental validation.")),
             div(strong("Eukaryotic 18S · pilot"), span("321 catalog primers and 123 documented sets. Ninety-three sets have drawable geometry; this is not broad taxonomic performance evidence.")),
             div(strong("12S, 16S, 28S · planned"), span("Marker targets are documented, but these markers have no interactive evidence view yet."))
         ),
         p(class = "tiny mt-3 mb-0", "Reference fit and sampling describe available sequences. They do not predict PCR success or establish a species' geographic range. The Hawaiʻi–Madagascar audit is separate research documented in the repository and is not loaded into this app."),
-        p(class = "tiny mt-3 mb-0", "App version 2026.10.02 · Organism and dietary-use metadata")
+        p(class = "tiny mt-3 mb-0", "App version 2026.10.11 · Versioned fungal combination explorer")
       )
     )
   ),
@@ -1340,7 +1477,7 @@ ui <- page_navbar(
     "Find primers", value = "find",
     div(
       class = "container-fluid primer-map-page",
-      hero,
+      workspace_heading("Find and combine primers", "Explore binding sites, compare amplicon lengths, and inspect the evidence for each combination."),
       layout_sidebar(
         sidebar = sidebar(
           width = 340,
@@ -1364,156 +1501,174 @@ ui <- page_navbar(
             ),
             selected = "COI"
           ),
-          selectInput(
-            "application_filter", "Applications",
-            choices = c(
-              "DNA barcoding" = "barcoding",
-              "Bulk community" = "bulk_community",
-              "Environmental DNA" = "edna",
-              "Dietary metabarcoding" = "diet"
-            ),
-            multiple = TRUE
-          ),
-          div(class = "tiny mb-2", "Dietary use is linked to a study, predator, sample material, and amplified target. See the map details or download the catalog."),
-          selectInput(
-            "environment_filter", "Environments",
-            choices = c("freshwater", "marine", "terrestrial", "host_associated"),
-            multiple = TRUE
-          ),
-          selectInput(
-            "intent_filter", "Design intents",
-            choices = c("broad", "target_enriched", "exclusion_blocking"),
-            multiple = TRUE
-          ),
-          selectInput(
-            "map_sort", "Order rows by",
-            choices = c(
-              "Binding site along marker (5′→3′)" = "binding_site",
-              "Primer-pair name (A–Z)" = "alphabetical",
-              "Folmer overlap (most bp first)" = "folmer_overlap",
-              "Amplicon length (shortest first)" = "amplicon_length"
-            ),
-            selected = "folmer_overlap"
-          ),
-          fluidRow(
-            column(
-              6,
-              actionButton(
-                "select_all", "Select all",
-                class = "btn-primary btn-sm w-100"
-              )
-            ),
-            column(
-              6,
-              actionButton(
-                "clear_all", "Clear",
-                class = "map-clear-btn btn-sm w-100"
-              )
-            )
-          ),
-          sliderInput(
-            "amplicon_range", "Amplicon + primers (bp)",
-            min = 100, max = 750, value = c(100, 750), step = 10
-          ),
-          uiOutput("pair_selector_ui"),
           conditionalPanel(
             condition = "input.map_marker == 'ITS_FUNGAL'",
-            tags$details(
-              class = "custom-panel",
-              tags$summary("Advanced: test an unpaired rDNA combination"),
-              div(
-                class = "callout tiny mb-2",
-                strong("This is exploratory. "),
-                "Choose individual oligos only when the exact combination is not already documented. The result is labelled as a session combination, never as a published pair."
-              ),
-              selectizeInput(
-                "its_catalog_forward", "Forward oligo",
-                choices = its_forward_choices,
-                selected = unname(its_forward_choices[grepl("^ITS1F ", names(its_forward_choices))][1]),
-                options = list(placeholder = "Search forward primers, targets, or citations")
-              ),
-              selectizeInput(
-                "its_catalog_reverse", "Reverse oligo",
-                choices = its_reverse_choices,
-                selected = unname(its_reverse_choices[grepl("^ITS4 ", names(its_reverse_choices))][1]),
-                options = list(placeholder = "Search reverse primers, targets, or citations")
-              ),
-              actionButton(
-                "its_add_catalog_pair", "Add selected combination to map",
-                class = "btn-primary btn-sm w-100"
-              ),
-              div(class = "tiny mt-2", "The atlas labels this as a session combination unless the exact pair has its own source-supported catalog entry.")
+            div(
+              class = "marker-guidance",
+              strong("Explore fungal combinations in the workspace. "),
+              "Choose a reference version, sequencing platform, and primer combination there. Length and lineage evidence belong to the selected snapshot."
             )
           ),
-          tags$details(
-            class = "custom-panel",
-            tags$summary("Add a custom primer pair"),
+          conditionalPanel(
+            condition = "input.map_marker != 'ITS_FUNGAL'",
             selectInput(
-              "custom_marker", "Marker for this pair",
-              choices = setNames(
-                marker_registry$marker_id[marker_registry$marker_id %in% c("COI", "ITS_FUNGAL")],
-                marker_registry$display_name[marker_registry$marker_id %in% c("COI", "ITS_FUNGAL")]
-              ), selected = "COI"
+              "application_filter", "Applications",
+              choices = c(
+                "DNA barcoding" = "barcoding",
+                "Bulk community" = "bulk_community",
+                "Environmental DNA" = "edna",
+                "Dietary metabarcoding" = "diet"
+              ),
+              multiple = TRUE
             ),
-            textInput("custom_pair_name", "Pair name", value = "My primer pair"),
-            textAreaInput(
-              "custom_forward", "Forward primer (5′→3′)",
-              value = "", rows = 2,
-              placeholder = "IUPAC sequence, e.g. GCHCCHGAYATRGCHTTYCC"
+            div(class = "tiny mb-2", "Dietary use is linked to a study, predator, sample material, and amplified target. See the map details or download the catalog."),
+            selectInput(
+              "environment_filter", "Environments",
+              choices = c("freshwater", "marine", "terrestrial", "host_associated"),
+              multiple = TRUE
             ),
-            textAreaInput(
-              "custom_reverse", "Reverse primer (5′→3′)",
-              value = "", rows = 2,
-              placeholder = "IUPAC sequence, e.g. TCDGGRTGNCCRAARAAYCA"
+            selectInput(
+              "intent_filter", "Design intents",
+              choices = c("broad", "target_enriched", "exclusion_blocking"),
+              multiple = TRUE
             ),
-            conditionalPanel(
-              condition = "input.custom_marker == 'COI'",
-              selectInput(
-                "custom_target_order",
-                "Expected target group (optional)",
-                choices = c("Not specified" = "__NONE__", alignment_orders),
-                selected = "__NONE__"
+            selectInput(
+              "map_sort", "Order rows by",
+              choices = c(
+                "Binding site along marker (5′→3′)" = "binding_site",
+                "Primer-pair name (A–Z)" = "alphabetical",
+                "Folmer overlap (most bp first)" = "folmer_overlap",
+                "Amplicon length (shortest first)" = "amplicon_length"
+              ),
+              selected = "folmer_overlap"
+            ),
+            fluidRow(
+              column(
+                6,
+                actionButton(
+                  "select_all", "Select all",
+                  class = "btn-primary btn-sm w-100"
+                )
+              ),
+              column(
+                6,
+                actionButton(
+                  "clear_all", "Clear",
+                  class = "map-clear-btn btn-sm w-100"
+                )
               )
             ),
-            textInput(
-              "custom_expected_amplicon", "Expected amplicon + primers (optional)",
-              value = "", placeholder = "e.g. 461"
+            sliderInput(
+              "amplicon_range", "Amplicon + primers (bp)",
+              min = 100, max = 750, value = c(100, 750), step = 10
             ),
-            actionButton(
-              "locate_custom", "Add pair to map",
-              class = "btn-primary btn-sm w-100"
+            uiOutput("pair_selector_ui"),
+            conditionalPanel(
+              condition = "input.map_marker == 'ITS_FUNGAL'",
+              tags$details(
+                class = "custom-panel",
+                tags$summary("Advanced: test an unpaired rDNA combination"),
+                div(
+                  class = "callout tiny mb-2",
+                  strong("This is exploratory. "),
+                  "Choose individual oligos only when the exact combination is not already documented. The result is labelled as a session combination, never as a published pair."
+                ),
+                selectizeInput(
+                  "its_catalog_forward", "Forward oligo",
+                  choices = its_forward_choices,
+                  selected = unname(its_forward_choices[grepl("^ITS1F ", names(its_forward_choices))][1]),
+                  options = list(placeholder = "Search forward primers, targets, or citations")
+                ),
+                selectizeInput(
+                  "its_catalog_reverse", "Reverse oligo",
+                  choices = its_reverse_choices,
+                  selected = unname(its_reverse_choices[grepl("^ITS4 ", names(its_reverse_choices))][1]),
+                  options = list(placeholder = "Search reverse primers, targets, or citations")
+                ),
+                actionButton(
+                  "its_add_catalog_pair", "Add selected combination to map",
+                  class = "btn-primary btn-sm w-100"
+                ),
+                div(class = "tiny mt-2", "The atlas labels this as a session combination unless the exact pair has its own source-supported catalog entry.")
+              )
             ),
-            checkboxInput("show_custom", "Show added custom pairs", value = TRUE),
-            uiOutput("custom_location_status"),
-            uiOutput("custom_pair_queue"),
-            actionButton(
-              "clear_custom", "Clear custom pairs",
-              class = "btn-outline-secondary btn-sm w-100"
-            )
-          ),
-          uiOutput("marker_coordinate_note")
+            tags$details(
+              class = "custom-panel",
+              tags$summary("Add a custom primer pair"),
+              selectInput(
+                "custom_marker", "Marker for this pair",
+                choices = setNames(
+                  marker_registry$marker_id[marker_registry$marker_id %in% c("COI", "ITS_FUNGAL")],
+                  marker_registry$display_name[marker_registry$marker_id %in% c("COI", "ITS_FUNGAL")]
+                ), selected = "COI"
+              ),
+              textInput("custom_pair_name", "Pair name", value = "My primer pair"),
+              textAreaInput(
+                "custom_forward", "Forward primer (5′→3′)",
+                value = "", rows = 2,
+                placeholder = "IUPAC sequence, e.g. GCHCCHGAYATRGCHTTYCC"
+              ),
+              textAreaInput(
+                "custom_reverse", "Reverse primer (5′→3′)",
+                value = "", rows = 2,
+                placeholder = "IUPAC sequence, e.g. TCDGGRTGNCCRAARAAYCA"
+              ),
+              conditionalPanel(
+                condition = "input.custom_marker == 'COI'",
+                selectInput(
+                  "custom_target_order",
+                  "Expected target group (optional)",
+                  choices = c("Not specified" = "__NONE__", alignment_orders),
+                  selected = "__NONE__"
+                )
+              ),
+              textInput(
+                "custom_expected_amplicon", "Expected amplicon + primers (optional)",
+                value = "", placeholder = "e.g. 461"
+              ),
+              actionButton(
+                "locate_custom", "Add pair to map",
+                class = "btn-primary btn-sm w-100"
+              ),
+              checkboxInput("show_custom", "Show added custom pairs", value = TRUE),
+              uiOutput("custom_location_status"),
+              uiOutput("custom_pair_queue"),
+              actionButton(
+                "clear_custom", "Clear custom pairs",
+                class = "btn-outline-secondary btn-sm w-100"
+              )
+            ),
+            uiOutput("marker_coordinate_note")
+          )
         ),
         card(
           id = "primer-map-card",
           full_screen = TRUE,
           card_header(uiOutput("map_card_title", inline = TRUE)),
-          uiOutput("combination_browser_ui"),
-          uiOutput("overview_metrics"),
-          div(
-            class = "map-legend",
-            span(
-              span(class = "legend-number", "1"),
-              "Dynamic row number"
-            ),
-            span(span(class = "legend-line legend-forward"), "Forward primer"),
-            span(span(class = "legend-line legend-informative"), "Amplicon − primers (informative)"),
-            span(span(class = "legend-line legend-reverse"), "Reverse primer")
+          conditionalPanel(
+            condition = "input.map_marker == 'ITS_FUNGAL'",
+            fungalExplorerUI("fungal")
           ),
-          p(class = "map-scroll-hint tiny", "Swipe horizontally across the map to see later positions and source columns."),
-          uiOutput("primer_map"),
-          uiOutput("its_map_catalog_ui"),
-          uiOutput("custom_diagnostic_selector"),
-          uiOutput("custom_location_detail")
+          conditionalPanel(
+            condition = "input.map_marker != 'ITS_FUNGAL'",
+            uiOutput("combination_browser_ui"),
+            uiOutput("overview_metrics"),
+            div(
+              class = "map-legend",
+              span(
+                span(class = "legend-number", "1"),
+                "Dynamic row number"
+              ),
+              span(span(class = "legend-line legend-forward"), "Forward primer"),
+              span(span(class = "legend-line legend-informative"), "Amplicon − primers (informative)"),
+              span(span(class = "legend-line legend-reverse"), "Reverse primer")
+            ),
+            p(class = "map-scroll-hint tiny", "Swipe horizontally across the map to see later positions and source columns."),
+            uiOutput("primer_map"),
+            uiOutput("its_map_catalog_ui"),
+            uiOutput("custom_diagnostic_selector"),
+            uiOutput("custom_location_detail")
+          )
         )
       )
     )
@@ -1522,7 +1677,7 @@ ui <- page_navbar(
     "Check taxonomic fit · COI", value = "fit",
     div(
       class = "container-fluid",
-      hero,
+      workspace_heading("Check taxonomic fit", "Compare COI binding-site availability and mismatch patterns, then inspect the underlying sequences."),
       card(
         fill = FALSE,
         class = "order-heatmap-card",
@@ -1860,7 +2015,7 @@ ui <- page_navbar(
     "Inspect taxa & sequences", value = "taxa",
     div(
       class = "container-fluid",
-      hero,
+      workspace_heading("Inspect taxa and sequences", "Follow a result to its reference records, taxonomy, and source evidence."),
       div(
         class = "callout",
         strong("Reference evidence, not regional amplification probability. "),
@@ -1920,7 +2075,7 @@ ui <- page_navbar(
     "Compare regions · COI", value = "regions",
     div(
       class = "container-fluid",
-      hero,
+      workspace_heading("Compare reference regions", "Explore differences between COI reference subsets with sampling and missing locations in view."),
       div(
         class = "callout",
         strong("Compare reference sequences—not regional amplification probability. "),
@@ -2020,7 +2175,7 @@ ui <- page_navbar(
     "Check temperatures", value = "thermal",
     div(
       class = "container-fluid",
-      hero,
+      workspace_heading("Check primer temperatures", "Inspect thermal intervals and a starting range for gradient PCR."),
       layout_sidebar(
         sidebar = sidebar(
           width = 290,
@@ -2045,7 +2200,7 @@ ui <- page_navbar(
     "Sources & methods", value = "sources",
     div(
       class = "container-fluid",
-      hero,
+      workspace_heading("Sources and methods", "Review the provenance, assumptions, and downloadable records behind the atlas."),
       layout_columns(
         col_widths = c(7, 5),
         card(
@@ -2100,6 +2255,7 @@ ui <- page_navbar(
 )
 
 server <- function(input, output, session) {
+  fungalExplorerServer("fungal")
   navigate_from <- function(button, destination) {
     observeEvent(input[[button]], {
       updateNavbarPage(session, "main_nav", selected = destination)
@@ -2340,6 +2496,9 @@ server <- function(input, output, session) {
   }, ignoreInit = FALSE)
 
   output$map_card_title <- renderUI({
+    if (identical(input$map_marker, "ITS_FUNGAL")) {
+      return("Fungal rDNA combination explorer")
+    }
     marker <- marker_registry |> filter(marker_id == input$map_marker) |> slice(1)
     paste0("Interactive ", marker$display_name, " binding-site overview")
   })

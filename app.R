@@ -911,8 +911,9 @@ body.detail-switching .deep-detail-card {
 .reference-policy-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:12px; margin:14px 0; }
 .reference-policy-card { padding:13px 15px; border:1px solid var(--line); border-radius:14px; background:#ffffff; }
 .reference-policy-card b { display:block; margin-bottom:4px; }
-.fungal-workspace { min-width:0; display:grid; gap:18px; color:var(--ink); container-type:inline-size; }
+.fungal-workspace { min-width:0; display:flex; flex-direction:column; gap:18px; color:var(--ink); container-type:inline-size; }
 .fungal-workspace > * { min-width:0; max-width:100%; }
+.fungal-workspace > .shiny-input-container { width:100%!important; }
 .fungal-controls { display:block; padding:18px; border:1px solid var(--line);
   border-radius:12px; background:#f8fafc; }
 .fungal-controls > * + * { margin-top:16px; }
@@ -1481,6 +1482,8 @@ ui <- page_navbar(
       layout_sidebar(
         sidebar = sidebar(
           width = 340,
+          open = list(desktop = "open", mobile = "always-above"),
+          max_height_mobile = "420px",
           h4("Build the view"),
           tags$a(href = "#primer-map-card", class = "btn btn-outline-success btn-sm mb-3", "Jump to primer map"),
           div(

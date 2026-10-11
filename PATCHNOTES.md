@@ -9,8 +9,8 @@ not mistaken for a completed release.
 
 **ID:** `2026-10-11-fungal-combinations-versions`
 
-**Status:** Implemented and tested locally; hosted release and public deployment
-are tracked separately.
+**Status:** Implemented and tested locally. Immutable R2 staging succeeded;
+public app deployment awaits protected-main review and merge.
 
 - Replace the eight-pair fungal view with 20 starter examples, a searchable full
   candidate list, pairing matrix, and comparison of up to five combinations.
@@ -27,6 +27,14 @@ are tracked separately.
 - Withhold fuzzy or repeated gene-feature boundaries. Nine individual landmarks
   remain trustworthy; all templates have unresolved full gene architecture.
   Exact primer-site products remain candidate evidence, not PCR validation.
+
+Staging run `38138046767` published release `38138046767-1-ITS_FUNGAL`,
+including V1, V2, and fresh-worker V3 (`v3-024e37f16b66`). All 60 artifacts
+passed anonymous public SHA-256 read-back checks. The app loader independently
+read and verified all three hosted snapshots. V3 retains the same 21 sequences
+and 884 pairs while freezing the runner's refreshed source/alignment provenance.
+The existing public latest pointer remains `36864394345-ITS_FUNGAL`.
+[PR #22](https://github.com/sven9r/primer-atlas/pull/22) contains the app changes.
 
 ## 2026-10-02 — BeePrime publication or expanded alignment
 

@@ -74,8 +74,9 @@ The project separates four operational responsibilities:
   per-template lengths, and class/phylum filters. V1 preserves the original
   reference; V2 contains 21 accession-versioned templates. Snapshot history
   freezes catalogs, sequences, alignments, taxonomy, and exact-site evidence.
-  The October 11 overhaul is prepared locally; public deployment is tracked
-  separately in the patchnotes and pull request.
+  The October 11 overhaul is implemented and tested; immutable hosted staging
+  and app-loader read-back succeeded. Public deployment awaits PR #22 review
+  and merge; the active public pointer was retained.
 - **18S — pilot:** PR2-primer 2.1.1 snapshot with 321 individual primers and 123
   documented sets; 93 sets have drawable conventional geometry.
 - **Planned registry coverage:** vertebrate mitochondrial 12S,

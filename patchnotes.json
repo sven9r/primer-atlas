@@ -7,7 +7,7 @@
       "id": "2026-10-11-fungal-combinations-versions",
       "date": "2026-10-11",
       "category": "reference_and_interface",
-      "status": "local_verified_not_published",
+      "status": "staged_hosting_verified_app_pending_review",
       "summary": "Add a versioned fungal combination explorer with platform eligibility, a bounded NCBI panel, and refreshed application visuals.",
       "repository_changes": [
         {
@@ -31,17 +31,21 @@
       "verification": [
         "Exact-site engine checks and 11 acquisition/boundary tests passed",
         "The 21-template local panel contains seven resolved classes, with uncertain annotation boundaries withheld",
-        "Module checks cover platform nesting, class denominators, historical selection and empty states"
+        "Module checks cover platform nesting, class denominators, historical selection and empty states",
+        "All 20 CI-listed R regression scripts and 11 Python tests passed locally",
+        "Staged R2 release 38138046767-1-ITS_FUNGAL passed all 60 anonymous artifact SHA-256 read-back checks",
+        "The actual app loader read V1, V2, and the clean-worker V3 from the staged public artifacts with all snapshot checksums verified",
+        "V1/V2 sequence exports and V2 alignment export match frozen SHA-256 hashes; the 20-row CSV preserves snapshot, lineage denominator and ceilings"
       ],
       "known_limitations": [
         "The selected reference panel does not establish broad fungal PCR performance; exact sites remain distinct from empirical validation",
         "All 21 templates lack fully verified five-region gene architecture; nine individual boundaries are retained",
         "COI growing-reference and family-level milestones remain separate",
-        "Public application deployment and hosted release verification are tracked separately"
+        "The public app remains on its existing release until protected-main review and deployment; latest.json was retained during staging"
       ],
       "remaining_actions": [
-        "Complete final regression, browser and anonymous hosted read-back checks",
-        "Merge after the required repository review and verify the public application"
+        "Pass final GitHub CI after installing the pinned custom-primer scorer",
+        "Complete required main-branch review, merge, and verify public app deployment"
       ]
     },
     {

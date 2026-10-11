@@ -4,8 +4,10 @@ import argparse
 import csv
 import hashlib
 import importlib.util
+import io
 import json
 from pathlib import Path
+import subprocess
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -191,6 +193,126 @@ class AcquisitionTests(unittest.TestCase):
         with patch.object(coi, "request", wrong), self.assertRaisesRegex(RuntimeError, "different accession-version/UID set"):
             coi.run(self.args(output))
         self.assertFalse((output / "panel.fasta").exists())
+
+
+class TransportTests(unittest.TestCase):
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.output = Path(self.temp.name)
+        self.params = dict(db="nuccore", term="Amphipoda", retmode="json")
+        self.logs = io.StringIO()
+        self.patches = [patch.object(coi.time, "sleep"), patch.object(coi, "_RUNTIME_REPORTED", True),
+                        patch.object(coi.sys, "stderr", self.logs)]
+        for item in self.patches:
+            item.start()
+
+    def tearDown(self):
+        for item in reversed(self.patches):
+            item.stop()
+        self.temp.cleanup()
+
+    def reply(self, code, message, returncode=1):
+        return subprocess.CompletedProcess([], returncode,
+            json.dumps(dict(ok=False, error=dict(code=code, message=message))), "")
+
+    def success(self, args, **kwargs):
+        self.assertIs(kwargs["check"], False)
+        config = json.loads(kwargs["input"])
+        Path(config["raw_output_path"]).write_text('{"esearchresult":{"count":"2","idlist":["1","2"]}}')
+        return subprocess.CompletedProcess(args, 0, json.dumps(dict(ok=True)), "")
+
+    def cache(self):
+        key = coi.digest(json.dumps(dict(endpoint="esearch", params=self.params), sort_keys=True))[:24]
+        path = self.output / "raw" / "cache" / f"esearch_{key}.json"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("previous frozen response")
+        return path
+
+    def test_nonzero_http_429_is_parsed_redacted_and_retried(self):
+        failure = self.reply("network_error", "Request failed: 429 Client Error: Too Many Requests for url: "
+            "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?api_key=PRIVATEKEY "
+            "api_key=OTHERSECRET Authorization: Bearer PRIVATEBEARER\n::warning::not-a-log-command")
+        calls = []
+        def transport(args, **kwargs):
+            calls.append(kwargs)
+            return failure if len(calls) == 1 else self.success(args, **kwargs)
+        with patch.dict(coi.os.environ, {"NCBI_API_KEY": "PRIVATEKEY"}), \
+                patch.object(coi.subprocess, "run", transport):
+            path = coi.request("esearch", self.params, self.output)
+        self.assertEqual(len(calls), 2)
+        self.assertEqual(path.stem, coi.file_hash(path))
+        log = self.logs.getvalue()
+        self.assertIn("network_error; HTTP 429", log)
+        self.assertIn("retry in 2s", log)
+        for private in ("PRIVATEKEY", "OTHERSECRET", "PRIVATEBEARER", "https://eutils", "\n::warning::"):
+            self.assertNotIn(private, log)
+
+    def test_permanent_http_error_fails_fast_preserving_prior_cache(self):
+        old = self.cache()
+        failure = self.reply("network_error", "Request failed: 403 Client Error: Forbidden for url: "
+                             "https://example.org/?api_key=PRIVATEKEY")
+        def transport(args, **kwargs):
+            Path(json.loads(kwargs["input"])["raw_output_path"]).write_text("failed response")
+            return failure
+        with patch.object(coi.subprocess, "run", side_effect=transport) as child, \
+                self.assertRaisesRegex(RuntimeError, "after 1 attempt.*HTTP 403") as caught:
+            coi.request("esearch", self.params, self.output, refresh=True)
+        self.assertEqual(child.call_count, 1)
+        self.assertEqual(old.read_text(), "previous frozen response")
+        self.assertFalse(list(old.parent.glob("*.pending")))
+        self.assertNotIn("PRIVATEKEY", str(caught.exception))
+
+    def test_dependency_input_and_tls_failures_are_not_blindly_retried(self):
+        for code, message in (("missing_dependency", "requests is required"),
+                              ("invalid_input", "Unsupported endpoint"),
+                              ("network_error", "SSLError: certificate verify failed (CERTIFICATE_VERIFY_FAILED)")):
+            with self.subTest(code=code), patch.object(coi.subprocess, "run", return_value=self.reply(code, message)) as child, \
+                    self.assertRaisesRegex(RuntimeError, "after 1 attempt"):
+                coi.request("esearch", self.params, self.output)
+            self.assertEqual(child.call_count, 1)
+
+    def test_transient_server_failure_has_bounded_six_attempts_and_safe_error(self):
+        failure = self.reply("network_error", "Request failed: 503 Server Error: Service Unavailable for url: "
+                             "https://example.org/?api_key=PRIVATEKEY")
+        with patch.object(coi.subprocess, "run", return_value=failure) as child, \
+                self.assertRaisesRegex(RuntimeError, "after 6 attempt.*HTTP 503") as caught:
+            coi.request("esearch", self.params, self.output)
+        self.assertEqual(child.call_count, 6)
+        self.assertNotIn("PRIVATEKEY", str(caught.exception))
+        self.assertEqual(coi.time.sleep.call_args_list[-1].args, (32,))
+
+    def test_unstructured_helper_output_is_withheld_and_not_retried(self):
+        response = subprocess.CompletedProcess([], 1, "Traceback secret=PRIVATEVALUE https://example.org/private", "PRIVATESTDERR")
+        with patch.object(coi.subprocess, "run", return_value=response) as child, \
+                self.assertRaisesRegex(RuntimeError, "invalid_helper_reply") as caught:
+            coi.request("esearch", self.params, self.output)
+        self.assertEqual(child.call_count, 1)
+        for secret in ("PRIVATEVALUE", "PRIVATESTDERR", "https://example"):
+            self.assertNotIn(secret, str(caught.exception) + self.logs.getvalue())
+
+    def test_helper_timeout_can_retry_and_then_save_real_response(self):
+        count = 0
+        def transport(args, **kwargs):
+            nonlocal count
+            count += 1
+            if count == 1:
+                raise subprocess.TimeoutExpired(args, 90, output="private output")
+            return self.success(args, **kwargs)
+        with patch.object(coi.subprocess, "run", transport):
+            path = coi.request("esearch", self.params, self.output)
+        self.assertEqual(count, 2)
+        self.assertTrue(path.exists())
+        self.assertIn("helper_timeout", self.logs.getvalue())
+        self.assertNotIn("private output", self.logs.getvalue())
+
+    def test_claimed_success_without_new_raw_response_cannot_reuse_old_cache(self):
+        old = self.cache()
+        response = subprocess.CompletedProcess([], 0, json.dumps(dict(ok=True)), "")
+        with patch.object(coi.subprocess, "run", return_value=response) as child, \
+                self.assertRaisesRegex(RuntimeError, "missing_raw_response"):
+            coi.request("esearch", self.params, self.output, refresh=True)
+        self.assertEqual(child.call_count, 6)
+        self.assertEqual(old.read_text(), "previous frozen response")
 
 
 if __name__ == "__main__":

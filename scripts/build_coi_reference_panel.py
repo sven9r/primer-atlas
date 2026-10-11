@@ -12,8 +12,10 @@ import argparse
 import collections
 import csv
 import hashlib
+import importlib.metadata
 import json
 import math
+import os
 import re
 import shutil
 import subprocess
@@ -34,6 +36,8 @@ FIELDS = ("marker_id", "target_group", "accession", "entrez_uid", "taxid", "orga
           "source_sha256", "source_file", "source_acquired_at_utc", "previous_run_manifest_sha256",
           "baseline_source", "original_raw_bytes_available", "published_release_id",
           "published_artifact_url", "published_artifact_sha256")
+REQUEST_DELAYS = (0.4, 2, 4, 8, 16, 32)
+_RUNTIME_REPORTED = False
 
 
 def digest(value):
@@ -103,6 +107,67 @@ def write_fasta(path, records):
                 handle.write(sequence[start:start + 80] + "\n")
 
 
+def safe_transport_message(message):
+    """Keep helper diagnostics useful without exposing credential-bearing URLs."""
+    if not isinstance(message, str):
+        return "Malformed helper error message"
+    for name in ("NCBI_API_KEY", "NCBI_EUTILS_API_KEY"):
+        secret = os.environ.get(name)
+        if secret:
+            message = message.replace(secret, "[redacted]")
+    message = re.sub(r"https?://[^\s<>]+", "[redacted URL]", message, flags=re.I)
+    message = re.sub(r"\bBearer\s+[A-Za-z0-9._~+/-]+=*", "Bearer [redacted]", message, flags=re.I)
+    message = re.sub(
+        r"((?:api[_-]?key|access[_-]?token|authorization|password|secret)\s*[\"']?\s*[:=]\s*)"
+        r"(?:\"[^\"]*\"|'[^']*'|[^\s,;]+)",
+        r"\1[redacted]", message, flags=re.I)
+    # A helper response is data, so it must not create extra log lines/commands.
+    return re.sub(r"[\x00-\x1f\x7f]+", " ", message)[:500]
+
+
+def helper_failure(response):
+    """Decode nonzero helper exits before deciding whether another call helps."""
+    try:
+        reply = json.loads(response.stdout)
+    except (json.JSONDecodeError, TypeError):
+        return ("invalid_helper_reply", "Helper did not return structured JSON "
+                f"(exit {response.returncode}); raw output withheld", None, False)
+    if not isinstance(reply, dict):
+        return "invalid_helper_reply", "Helper returned a non-object JSON value", None, False
+    error = reply.get("error", {})
+    if not isinstance(error, dict):
+        error = {}
+    code = error.get("code", "helper_exit")
+    if not isinstance(code, str) or not re.fullmatch(r"[A-Za-z0-9_]{1,80}", code):
+        code = "helper_error"
+    raw_message = error.get("message", f"Helper exited with status {response.returncode}")
+    status = error.get("http_status")
+    if not isinstance(status, int) or isinstance(status, bool) or not 400 <= status <= 599:
+        # requests.HTTPError includes this prefix before its (possibly secret) URL.
+        match = re.search(r"\b([45]\d\d)\s+(?:Client|Server)\s+Error\b", str(raw_message), re.I)
+        status = int(match.group(1)) if match else None
+    message = safe_transport_message(raw_message)
+    retry = code in {"network_error", "invalid_response", "missing_raw_response"}
+    if status is not None:
+        retry = status in {408, 429} or status >= 500
+    if re.search(r"CERTIFICATE_VERIFY_FAILED|certificate verify failed", message, re.I):
+        retry = False
+    return code, message, status, retry
+
+
+def report_helper_runtime():
+    global _RUNTIME_REPORTED
+    if _RUNTIME_REPORTED:
+        return
+    try:
+        requests_version = importlib.metadata.version("requests")
+    except importlib.metadata.PackageNotFoundError:
+        requests_version = "unavailable"
+    print(f"NCBI helper runtime: Python {sys.version.split()[0]}; "
+          f"executable {sys.executable}; requests {requests_version}", file=sys.stderr, flush=True)
+    _RUNTIME_REPORTED = True
+
+
 def request(endpoint, params, output, offline=False, refresh=False):
     key = digest(json.dumps(dict(endpoint=endpoint, params=params), sort_keys=True))[:24]
     suffix = "json" if params.get("retmode") == "json" else "xml"
@@ -111,22 +176,48 @@ def request(endpoint, params, output, offline=False, refresh=False):
     if not destination.exists() or refresh:
         if offline:
             raise RuntimeError("Offline acquisition cache missing: " + destination.name)
+        report_helper_runtime()
+        # Failed refreshes must not overwrite the existing cached response or
+        # mistake that old response for a successful newly fetched response.
+        pending = destination.with_name(f".{destination.name}.{os.getpid()}.pending")
         config = dict(endpoint=endpoint, params=params, max_items=4, max_depth=2,
-                      timeout_sec=60, save_raw=True, raw_output_path=str(destination))
+                      timeout_sec=60, save_raw=True, raw_output_path=str(pending))
         last_error = "unknown"
-        for attempt in range(3):
-            time.sleep(0.4 if attempt == 0 else 2 ** attempt)
-            try:
-                response = subprocess.run([sys.executable, str(CLIENT)], input=json.dumps(config),
-                                          capture_output=True, text=True, timeout=90, check=True)
-                reply = json.loads(response.stdout)
-                if reply.get("ok") and destination.exists():
-                    break
-                last_error = reply.get("error", {}).get("code", "missing_response")
-            except (OSError, subprocess.SubprocessError, json.JSONDecodeError) as error:
-                last_error = type(error).__name__
-        else:
-            raise RuntimeError(f"NCBI {endpoint} failed after three attempts: {last_error}")
+        try:
+            for attempt, delay in enumerate(REQUEST_DELAYS, start=1):
+                pending.unlink(missing_ok=True)
+                time.sleep(delay)
+                try:
+                    response = subprocess.run([sys.executable, str(CLIENT)], input=json.dumps(config),
+                                              capture_output=True, text=True, timeout=90, check=False)
+                    try:
+                        reply = json.loads(response.stdout)
+                    except (json.JSONDecodeError, TypeError):
+                        reply = None
+                    if (response.returncode == 0 and isinstance(reply, dict)
+                            and reply.get("ok") is True and pending.exists() and pending.stat().st_size):
+                        pending.replace(destination)
+                        break
+                    if response.returncode == 0 and isinstance(reply, dict) and reply.get("ok") is True:
+                        code, message, status, retry = ("missing_raw_response",
+                            "Helper reported success without saving a nonempty response", None, True)
+                    else:
+                        code, message, status, retry = helper_failure(response)
+                except subprocess.TimeoutExpired:
+                    code, message, status, retry = "helper_timeout", "Helper exceeded its 90-second limit", None, True
+                except (FileNotFoundError, PermissionError) as error:
+                    code, message, status, retry = "helper_launch_error", type(error).__name__, None, False
+                except (OSError, subprocess.SubprocessError) as error:
+                    code, message, status, retry = "helper_process_error", type(error).__name__, None, True
+                last_error = f"{code}" + (f"; HTTP {status}" if status is not None else "") + f"; {message}"
+                again = retry and attempt < len(REQUEST_DELAYS)
+                print(f"NCBI {endpoint} attempt {attempt}/{len(REQUEST_DELAYS)} failed: {last_error}; "
+                      + (f"retry in {REQUEST_DELAYS[attempt]}s" if again else "no further retry"),
+                      file=sys.stderr, flush=True)
+                if not again:
+                    raise RuntimeError(f"NCBI {endpoint} failed after {attempt} attempt(s): {last_error}")
+        finally:
+            pending.unlink(missing_ok=True)
     # Immutable content addresses keep old source hashes valid across refreshes.
     source_hash = file_hash(destination)
     frozen = output / "raw" / "content" / f"{source_hash}.{suffix}"

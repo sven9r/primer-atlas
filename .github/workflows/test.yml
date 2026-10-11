@@ -24,6 +24,7 @@ jobs:
             tests/test_coi_scoring_inputs.R \
             tests/test_coi_retention.R \
             tests/test_coi_reference_runtime.R \
+            tests/test_coi_panel_install.R \
             tests/test_custom_primer_gate.R \
             tests/test_its_primer_navigator.R \
             tests/test_fungal_explorer.R \

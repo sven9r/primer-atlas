@@ -37,7 +37,8 @@ for(i in seq_along(groups)) {
  row <- (i-1L)*2L+1L
  write_fasta(headers[row],sequences[row],file.path(worker,'data/primerminer/raw',groups[i],paste0(groups[i],'_GB.fasta')))
 }
-old_dir <- getwd(); previous <- Sys.getenv(c('COI_USE_EXISTING_PANEL','COI_PANEL_DIR','COI_PREVIOUS_PANEL_DIR'),unset=NA_character_)
+old_dir <- getwd(); previous <- Sys.getenv(c('COI_USE_EXISTING_PANEL','COI_PANEL_DIR','COI_PREVIOUS_PANEL_DIR',
+  'COI_PYTHON','pythonLocation','LD_LIBRARY_PATH'),unset=NA_character_)
 on.exit({setwd(old_dir);for(name in names(previous))if(is.na(previous[[name]]))Sys.unsetenv(name)else do.call(Sys.setenv,setNames(list(previous[[name]]),name))},add=TRUE)
 setwd(worker)
 Sys.setenv(COI_USE_EXISTING_PANEL='true',COI_PANEL_DIR='data/derived/coi_reference_panel',COI_PREVIOUS_PANEL_DIR='data/derived/coi_reference_panel')
@@ -54,8 +55,36 @@ stopifnot(nrow(installed$records)==4L,identical(installed$records$header,headers
           identical(atlas_sha256(file.path(worker,'data/provenance/coi_reference_accession_ledger.csv')),atlas_sha256(file.path(panel,'ledger.csv'))))
 raw_paths <- file.path(worker,'data/primerminer/raw',groups,paste0(groups,'_GB.fasta'))
 before <- vapply(raw_paths,atlas_sha256,character(1))
+# Launch the real Python interpreter through R, with a simulated library path
+# injected by R. The acquisition fixture imports requests and records its
+# environment without making any network request or changing the panel.
+python <- normalizePath(Sys.which('python'),mustWork=TRUE)
+python_prefix <- dirname(dirname(python))
+stopifnot(dir.exists(file.path(python_prefix,'lib')))
+injected_lib <- file.path(worker,'injected-R-lib');dir.create(injected_lib)
+writeLines(c('import json,os,sys,requests',
+  'from pathlib import Path',
+  'Path("python_launch.json").write_text(json.dumps(dict(version=sys.version.split()[0], executable=sys.executable, requests=requests.__version__, library_path=os.environ.get("LD_LIBRARY_PATH", ""))))'),
+  file.path(worker,'scripts/build_coi_reference_panel.py'))
+Sys.setenv(COI_USE_EXISTING_PANEL='false',COI_PYTHON=python,pythonLocation=python_prefix,
+  LD_LIBRARY_PATH=injected_lib)
+stopifnot(run()==0L)
+runtime <- jsonlite::fromJSON(file.path(worker,'python_launch.json'))
+library_paths <- strsplit(runtime$library_path,.Platform$path.sep,fixed=TRUE)[[1]]
+stopifnot(identical(library_paths[1],file.path(python_prefix,'lib')),injected_lib %in% library_paths,
+  identical(normalizePath(runtime$executable),python),nzchar(runtime$requests),
+  identical(before,vapply(raw_paths,atlas_sha256,character(1))))
+# A selected interpreter without requests must stop at preflight, before the
+# acquisition fixture or any retained input is touched.
+no_dependency <- file.path(worker,'scripts/python_without_site_packages')
+writeLines(c('#!/bin/sh',paste('exec',shQuote(python),'-S "$@"')),no_dependency)
+Sys.chmod(no_dependency,'0755');unlink(file.path(worker,'python_launch.json'))
+Sys.setenv(COI_PYTHON=no_dependency)
+stopifnot(run(FALSE)!=0L,!file.exists(file.path(worker,'python_launch.json')),
+  identical(before,vapply(raw_paths,atlas_sha256,character(1))))
+Sys.setenv(COI_USE_EXISTING_PANEL='true')
 # A changed header without updated provenance fails before any group is replaced.
 corrupt_headers <- headers;corrupt_headers[1] <- paste0(corrupt_headers[1],' changed')
 write_fasta(corrupt_headers,sequences,file.path(panel,'panel.fasta'))
 stopifnot(run(FALSE)!=0L,identical(before,vapply(raw_paths,atlas_sha256,character(1))))
-message('COI wrapper installs a valid acquired panel despite automatic hash-vector names and rejects changed header provenance before mutation.')
+message('COI wrapper preserves headers and hashes, launches Python with its own library prefix and requests, and rejects missing dependencies or altered provenance before mutation.')

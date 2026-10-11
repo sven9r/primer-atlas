@@ -35,7 +35,39 @@ if (identical(tolower(Sys.getenv("DRY_RUN", "false")), "true")) {
   quit(status = 0L)
 }
 if (!use_existing) {
-  status <- system2(python, vapply(as.character(args), shQuote, character(1)))
+  # R's Linux launcher prepends its own shared-library directories. A setup-
+  # python executable can then load a different system libpython with the same
+  # minor version, losing the packages installed for that executable. Keep the
+  # chosen interpreter's real library prefix first, without removing R's paths.
+  python_env <- character()
+  if (.Platform$OS.type == "unix") {
+    python_path <- normalizePath(python, mustWork = TRUE)
+    python_prefix <- dirname(dirname(python_path))
+    setup_prefix <- Sys.getenv("pythonLocation", "")
+    if (nzchar(setup_prefix) &&
+        startsWith(python_path, paste0(normalizePath(setup_prefix, mustWork = TRUE), "/bin/"))) {
+      python_prefix <- normalizePath(setup_prefix, mustWork = TRUE)
+    }
+    interpreter_libs <- file.path(python_prefix, c("lib", "lib64"))
+    interpreter_libs <- interpreter_libs[dir.exists(interpreter_libs)]
+    inherited_libs <- strsplit(Sys.getenv("LD_LIBRARY_PATH", ""), .Platform$path.sep, fixed = TRUE)[[1]]
+    library_paths <- unique(c(interpreter_libs, inherited_libs[nzchar(inherited_libs)]))
+    if (length(interpreter_libs)) {
+      python_env <- paste0("LD_LIBRARY_PATH=", shQuote(paste(library_paths, collapse = .Platform$path.sep)))
+    }
+  }
+  probe_code <- paste0("import json,sys,requests; print(json.dumps(dict(version=sys.version.split()[0],",
+                       "executable=sys.executable,requests=requests.__version__)))")
+  probe <- suppressWarnings(system2(python, c("-c", shQuote(probe_code)),
+                                   env = python_env, stdout = TRUE, stderr = TRUE))
+  if (!is.null(attr(probe, "status")) && attr(probe, "status") != 0L) {
+    stop("COI Python preflight could not import requests with the selected interpreter; check COI_PYTHON and its library prefix")
+  }
+  runtime <- tryCatch(jsonlite::fromJSON(paste(probe, collapse = "\n")), error = function(e) NULL)
+  if (is.null(runtime$version) || is.null(runtime$requests)) stop("Invalid COI Python preflight response")
+  message("COI Python preflight: Python ", runtime$version, "; requests ", runtime$requests,
+          "; executable ", runtime$executable)
+  status <- system2(python, vapply(as.character(args), shQuote, character(1)), env = python_env)
   if (status != 0L) stop("Feature-aware COI acquisition failed; existing retained inputs were not replaced")
 }
 required <- c("panel.fasta", "panel_manifest.csv", "ledger.csv", "taxonomy.csv", "growth_qa.csv", "run_manifest.json")

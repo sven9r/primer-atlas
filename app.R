@@ -1038,6 +1038,20 @@ body.detail-switching .deep-detail-card {
 .fungal-alignment-controls .shiny-input-container { width:100%!important; }
 .fungal-alignment-controls .radio-inline { margin:4px 16px 4px 0; }
 .fungal-alignment-detail { margin-top:18px; border-top:1px solid var(--line); padding-top:14px; }
+.fungal-region-guide { margin:12px 0 16px; padding:14px; background:#f8fafc; border:1px solid var(--line); border-radius:10px; }
+.fungal-region-guide h4 { margin:0 0 8px; font-size:1rem; }
+.fungal-region-choices { display:flex; flex-wrap:wrap; gap:8px; margin:10px 0; }
+.fungal-region-choice { border:1px solid #64748b; border-radius:7px; background:#e2e8f0; color:#334155; padding:6px 10px; font-size:13px; font-weight:700; }
+.fungal-region-choice.spacer { border-color:#a16207; background:#fef3c7; color:#854d0e; }
+.fungal-region-choice:disabled { color:#64748b; background:#fff; border:1px dashed #94a3b8; font-weight:500; cursor:default; }
+.fungal-region-choice:hover:not(:disabled),.fungal-region-choice:focus-visible { outline:2px solid #475569; outline-offset:2px; }
+.fungal-alignment-region-row th,.fungal-alignment-region-cell { font:600 11px 'Manrope',sans-serif; color:#475569; border-bottom:1px solid #cbd5e1; white-space:nowrap; }
+.fungal-alignment-window-regions { display:flex; flex-wrap:wrap; gap:6px; margin:10px 0; }
+.fungal-alignment-window-regions > p { flex-basis:100%; margin:0; }
+.fungal-alignment-window-region { display:inline-block; padding:5px 8px; border-radius:6px; color:#334155; background:#e2e8f0; font-size:13px; }
+.fungal-alignment-window-region.spacer { color:#854d0e; background:#fef3c7; }
+.fungal-alignment-pan-hint { display:none; }
+@container(max-width:1020px) { .fungal-alignment-pan-hint { display:block; } }
 .fungal-alignment-detail > summary { font-weight:750; color:var(--accent); cursor:pointer; }
 .fungal-alignment-base-controls { display:grid; grid-template-columns:minmax(150px,1fr) minmax(170px,1fr); align-items:center; gap:12px; margin:14px 0; }
 .fungal-alignment-base-controls > .d-flex { grid-column:1 / -1; }

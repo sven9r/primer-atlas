@@ -20,10 +20,30 @@ shiny::testServer(fungalExplorerServer, args=list(id="test"), {
   stopifnot(alignment_index()$n_columns==nchar(snapshot()$alignment[1]),
             nrow(mapped_alignment())==20L*21L,nrow(alignment_pairs())==20L,
             alignment_reference() %in% selected_accessions())
+  regions <- mapped_alignment_regions()
+  stopifnot(nrow(regions)==9L,all(regions$alignment_status=="mapped"),
+            alignment_reference() %in% regions$accession,
+            grepl("Genes and regions",output$alignment_regions$html,fixed=TRUE),
+            grepl("boundary unavailable",output$alignment_regions$html,fixed=TRUE))
   overview <- output$alignment_overview
   bases <- output$alignment_bases
   stopifnot(grepl("frozen alignment",overview$html,fixed=TRUE),
             grepl("fungal-alignment-base",bases$html,fixed=TRUE))
+  stopifnot(grepl('class="fungal-alignment-region"',overview$html,fixed=TRUE))
+  session$setInputs(show_regions=FALSE)
+  session$flushReact()
+  stopifnot(is.null(output$alignment_regions),
+            !grepl('class="fungal-alignment-region"',output$alignment_overview$html,fixed=TRUE))
+  session$setInputs(show_regions=TRUE)
+  # Gene annotations cannot override a real product when no annotated
+  # template supports the selected pair. Manual template choices still work.
+  session$setInputs(search="ITS5 + 5.8S_Fungi",examples_only=FALSE)
+  session$flushReact()
+  stopifnot(nrow(candidates())==1L,candidates()$n_scorable==8L,
+            alignment_focus_row()$alignment_status=="mapped",
+            !alignment_reference() %in% regions$accession)
+  session$setInputs(search="",examples_only=TRUE)
+  session$flushReact()
   # Platform controls restrict the actual pair-template length evidence.
   session$setInputs(platform="ILLUMINA",examples_only=FALSE,show_unresolved=FALSE)
   session$flushReact()
@@ -77,6 +97,11 @@ shiny::testServer(fungalExplorerServer, args=list(id="test"), {
             all(all_pairs()$n_panel==1L),!any(all_pairs()$length_tier=="Nanopore"))
   stopifnot(length(alignment_index()$alignment)==1L,alignment_reference()=="FN812768.2",
             all(mapped_alignment()$accession=="FN812768.2"))
+  stopifnot(nrow(mapped_alignment_regions())==5L,
+            all(mapped_alignment_regions()$accession=="FN812768.2"),
+            all(mapped_alignment_regions()$evidence_status=="curated_reference"),
+            grepl("18S anchor (partial)",output$alignment_regions$html,fixed=TRUE),
+            grepl("curated pilot boundaries",output$alignment_regions$html,fixed=TRUE))
   # Empty searches remain a useful empty state with no stale selected evidence.
   session$setInputs(search="no_such_primer_or_clade_98765")
   session$flushReact()

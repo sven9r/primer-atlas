@@ -78,6 +78,55 @@ fungal_alignment_index <- function(alignment, sequences = NULL) {
                  metadata = metadata, occupancy = occupancy), class = "fungal_alignment_index")
 }
 
+# Frozen landmark intervals are raw-template coordinates, just like primer
+# sites. An annotation belongs only to its own accession, including legacy
+# unscoped pilot landmarks whose manifest identifies a single reference.
+fungal_alignment_landmark_rows <- function(index, landmarks, reference_accession = NULL) {
+  if (!inherits(index, "fungal_alignment_index")) stop("index must be produced by fungal_alignment_index().")
+  if (is.null(landmarks)) landmarks <- data.frame(landmark_id = character(), label = character(),
+                                                start = integer(), end = integer())
+  required <- c("landmark_id", "label", "start", "end")
+  if (!all(required %in% names(landmarks))) stop("Landmarks are missing raw coordinates or labels.")
+  rows <- as.data.frame(landmarks, stringsAsFactors = FALSE)
+  if (!"accession" %in% names(rows)) {
+    reference <- if (length(reference_accession) == 1L && !is.na(reference_accession)) as.character(reference_accession) else NA_character_
+    rows$accession <- rep(reference, nrow(rows))
+  }
+  if (!"source_note" %in% names(rows)) rows$source_note <- rep("Frozen snapshot landmark", nrow(rows))
+  rows$evidence_status <- ifelse(grepl("curated", rows$source_note, ignore.case = TRUE),
+                                "curated_reference", "annotated_reference")
+  for (column in c("start_col", "end_col", "left_col", "right_col", "direction", "raw_bp")) {
+    rows[[column]] <- rep(NA_integer_, nrow(rows))
+  }
+  rows$alignment_status <- rep("template_not_in_alignment", nrow(rows))
+  for (i in seq_len(nrow(rows))) {
+    accession <- as.character(rows$accession[i])
+    match_row <- match(accession, index$metadata$accession)
+    if (is.na(match_row)) next
+    status <- index$metadata$status[match_row]
+    if (!identical(status, "verified")) {
+      rows$alignment_status[i] <- status
+      next
+    }
+    bounds <- suppressWarnings(as.numeric(c(rows$start[i], rows$end[i])))
+    map <- index$maps[[accession]]
+    if (length(bounds) != 2L || any(!is.finite(bounds)) || any(bounds != floor(bounds)) ||
+        bounds[1] < 1L || bounds[2] < bounds[1] || bounds[2] > length(map)) {
+      rows$alignment_status[i] <- "invalid_raw_coordinates"
+      next
+    }
+    columns <- unname(map[as.integer(bounds)])
+    rows$start_col[i] <- columns[1]
+    rows$end_col[i] <- columns[2]
+    rows$left_col[i] <- min(columns)
+    rows$right_col[i] <- max(columns)
+    rows$direction[i] <- index$metadata$strand[match_row]
+    rows$raw_bp[i] <- as.integer(diff(bounds) + 1L)
+    rows$alignment_status[i] <- "mapped"
+  }
+  rows
+}
+
 fungal_alignment_pair_rows <- function(alignment = NULL, pair_sequences,
                                        pair_ids = NULL, accessions = NULL,
                                        sequences = NULL, index = NULL) {

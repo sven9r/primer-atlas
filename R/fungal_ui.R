@@ -34,7 +34,7 @@ fungalExplorerUI <- function(id) {
   versions <- fungal_read_index()
   choices <- setNames(versions$id, paste0(versions$label, " · ", substr(versions$id, 4, 11)))
   div(class = "fungal-workspace",
-      tags$script(HTML("document.addEventListener('click', function(e) { var b=e.target.closest('.fungal-pair-choice'); if(b && window.Shiny) Shiny.setInputValue(b.dataset.input, {pair:b.dataset.pair, nonce:Date.now()}, {priority:'event'}); });")),
+      tags$script(HTML("document.addEventListener('click', function(e) { var b=e.target.closest('.fungal-pair-choice'); if(b && window.Shiny) Shiny.setInputValue(b.dataset.input, {pair:b.dataset.pair, nonce:Date.now()}, {priority:'event'}); var r=e.target.closest('.fungal-region-choice'); if(r && !r.disabled && window.Shiny) Shiny.setInputValue(r.dataset.input, {accession:r.dataset.accession, landmark:r.dataset.landmark, nonce:Date.now()}, {priority:'event'}); });")),
       div(class = "fungal-version-bar",
           selectInput(ns("version"), "Reference version", choices, selected = tail(versions$id, 1)),
           uiOutput(ns("snapshot_meta")),
@@ -71,6 +71,8 @@ fungalExplorerUI <- function(id) {
           p(class="tiny", "Every track uses the selected version's frozen alignment. Colored spans join exact primer sites on each template; product lengths and platform colors use its ungapped sequence."),
           div(class="fungal-alignment-controls",
               selectInput(ns("alignment_reference"),"Template for combination tracks",choices=NULL),
+              checkboxInput(ns("show_regions"),"Show genes and regions",TRUE),
+              uiOutput(ns("alignment_regions")),
               radioButtons(ns("alignment_scope"),"Combinations on the alignment",
                   c("Shown combinations"="shown","Compared combinations"="compared","Selected combination"="active"),"shown",inline=TRUE),
               div(class="d-flex flex-wrap gap-2",
@@ -99,6 +101,7 @@ fungalExplorerUI <- function(id) {
           downloadButton(ns("download_pairs"),"Current combinations (CSV)",class="btn-outline-primary btn-sm"),
           downloadButton(ns("download_sequences"),"Selected reference sequences (FASTA)",class="btn-outline-secondary btn-sm"),
           downloadButton(ns("download_alignment_sites"),"Primer alignment coordinates (CSV)",class="btn-outline-secondary btn-sm"),
+          downloadButton(ns("download_alignment_regions"),"Gene and region coordinates (CSV)",class="btn-outline-secondary btn-sm"),
           downloadButton(ns("download_alignment"),"Frozen alignment (FASTA)",class="btn-outline-secondary btn-sm")),
       p(class="tiny mt-3", "Exact IUPAC-compatible sites establish candidate geometry on these templates. Unmatched sites remain unresolved. Length eligibility uses raw template products including primers, excluding adapters; colors describe the observed median and badges give per-template counts. This selected panel does not establish broad fungal amplification performance."))
 }
@@ -211,6 +214,9 @@ fungalExplorerServer <- function(id) {
     frozen_alignment_mapping <- reactive({
       fungal_alignment_pair_rows(pair_sequences=snapshot()$pair_sequences,index=alignment_index())
     })
+    mapped_alignment_regions <- reactive({
+      fungal_alignment_landmark_rows(alignment_index(),snapshot()$landmarks,snapshot()$manifest$reference_accession)
+    })
     mapped_alignment <- reactive({
       rows <- frozen_alignment_mapping()
       rows[rows$pair_id %in% candidates()$pair_id & rows$accession %in% selected_accessions(),,drop=FALSE]
@@ -234,12 +240,21 @@ fungalExplorerServer <- function(id) {
       rows <- sequence_rows()
       rows <- rows[rows$pair_id %in% candidates()$pair_id & rows$status=="scorable",,drop=FALSE]
       counts <- table(factor(rows$accession,levels=accessions))
-      accessions[which.max(counts)]
+      regions <- mapped_alignment_regions()
+      annotated <- unique(regions$accession[regions$alignment_status=="mapped"])
+      eligible <- which(accessions %in% annotated & counts>0L)
+      if(!length(eligible) && all(counts==0L)) eligible <- which(accessions %in% annotated)
+      if(length(eligible)) accessions[eligible[which.max(counts[eligible])]] else accessions[which.max(counts)]
     })
     observeEvent(list(snapshot(),selected_accessions()), {
       taxonomy <- snapshot()$taxonomy
       taxonomy <- taxonomy[match(selected_accessions(),taxonomy$accession),,drop=FALSE]
-      labels <- if(nrow(taxonomy)) paste0(taxonomy$accession," · ",taxonomy$organism," · ",taxonomy$class) else character()
+      regions <- mapped_alignment_regions()
+      annotation_counts <- table(regions$accession[regions$alignment_status=="mapped"])
+      counts <- as.integer(annotation_counts[taxonomy$accession])
+      counts[is.na(counts)] <- 0L
+      labels <- if(nrow(taxonomy)) paste0(taxonomy$accession," · ",taxonomy$organism," · ",taxonomy$class,
+          " · ",counts," annotated regions") else character()
       updateSelectInput(session,"alignment_reference",choices=setNames(taxonomy$accession,labels),selected=alignment_reference())
     })
     alignment_domain <- reactive({
@@ -284,7 +299,40 @@ fungalExplorerServer <- function(id) {
       if(any(is.finite(columns))) set_alignment_domain(columns)
     })
     observeEvent(input$alignment_full,set_alignment_domain(c(1,alignment_index()$n_columns),flank=0))
+    observeEvent(input$region_click,{
+      rows <- mapped_alignment_regions()
+      rows <- rows[rows$accession %in% alignment_reference() & rows$accession %in% input$region_click$accession &
+                   rows$landmark_id %in% input$region_click$landmark & rows$alignment_status=="mapped",,drop=FALSE]
+      if(nrow(rows)!=1L) return()
+      set_alignment_domain(c(rows$left_col,rows$right_col))
+      updateNumericInput(session,"alignment_start",min=1,max=alignment_index()$n_columns,
+          value=max(1L,rows$left_col[1]-10L))
+    })
     alignment_ceilings <- reactive(c(input$illumina_max %||% 500,input$pacbio_max %||% 2000,input$nanopore_max %||% 3500))
+    output$alignment_regions <- renderUI({
+      if(identical(input$show_regions,FALSE) || !length(alignment_reference())) return(NULL)
+      rows <- mapped_alignment_regions()
+      rows <- rows[rows$accession %in% alignment_reference() & rows$alignment_status=="mapped",,drop=FALSE]
+      architecture <- c("18S","ITS1","5.8S","ITS2","28S")
+      div(class="fungal-region-guide",
+        h4("Genes and regions"),
+        p(class="tiny",strong(alignment_reference())," · rDNA architecture: 18S → ITS1 → 5.8S → ITS2 → 28S. Choose a labeled region to zoom to its boundaries."),
+        div(class="fungal-region-choices",lapply(architecture,function(label) {
+          at <- rows[rows$label==label,,drop=FALSE]
+          known <- nrow(at)==1L
+          tags$button(type="button",class=paste("fungal-region-choice",if(grepl("^ITS",label)) "spacer" else "gene"),
+            disabled=if(!known) "disabled" else NULL,
+            `data-input`=session$ns("region_click"),`data-accession`=alignment_reference(),
+            `data-landmark`=if(known) at$landmark_id else NULL,
+            title=if(known) .fungal_alignment_ui_region_title(at) else paste(label,"boundary is unavailable on this template"),
+            if(known) .fungal_alignment_ui_region_label(at) else paste0(label," · boundary unavailable"))
+        })),
+        p(class="tiny",if(nrow(rows) && any(rows$evidence_status=="curated_reference"))
+            "This version uses curated pilot boundaries. The 18S and 28S segments are partial anchors."
+          else if(nrow(rows)) "Shown boundaries come from this template's frozen NCBI annotations; incomplete or repeated gene features remain unavailable."
+          else "This template has no complete frozen gene boundaries. Select a template with annotated regions to see its gene track.",
+          " Gene tracks use slate; ITS spacers use amber. Primer colors continue to identify sequencing platforms."))
+    })
     output$alignment_status <- renderUI({
       data <- snapshot()
       pair <- active_pair()
@@ -304,13 +352,15 @@ fungalExplorerServer <- function(id) {
       fungal_alignment_overview(index=alignment_index(),mapped_rows=mapped_alignment(),pairs=alignment_pairs(),
           taxonomy=snapshot()$taxonomy,reference_accession=alignment_reference(),selected_accessions=selected_accessions(),
           compare_ids=if(length(input$compare_pairs)) head(input$compare_pairs,5L) else active_pair()$pair_id,active_id=active_pair()$pair_id,
-          domain=alignment_domain(),ceilings=alignment_ceilings(),ns=session$ns)
+          domain=alignment_domain(),ceilings=alignment_ceilings(),ns=session$ns,
+          landmarks=mapped_alignment_regions(),show_regions=!identical(input$show_regions,FALSE))
     })
     output$alignment_bases <- renderUI({
       if(!length(selected_accessions())) return(NULL)
       fungal_alignment_bases(index=alignment_index(),mapped_rows=mapped_alignment(),pairs=candidates(),
           taxonomy=snapshot()$taxonomy,accessions=selected_accessions(),start=input$alignment_start %||% 1,
-          width=input$alignment_width %||% 80,active_id=active_pair()$pair_id,ceilings=alignment_ceilings())
+          width=input$alignment_width %||% 80,active_id=active_pair()$pair_id,ceilings=alignment_ceilings(),
+          landmarks=mapped_alignment_regions(),show_regions=!identical(input$show_regions,FALSE))
     })
     output$snapshot_meta <- renderUI({
       data <- snapshot()
@@ -499,6 +549,12 @@ fungalExplorerServer <- function(id) {
     output$download_alignment <- downloadHandler(filename=function() paste0(snapshot()$manifest$id,"-alignment.fasta"),content=function(file) write_fasta(snapshot()$alignment,file))
     output$download_alignment_sites <- downloadHandler(filename=function() paste0(snapshot()$manifest$id,"-primer-alignment-coordinates.csv"),content=function(file) {
       rows <- mapped_alignment()
+      rows$snapshot_id <- rep(snapshot()$manifest$id,nrow(rows))
+      write.csv(rows,file,row.names=FALSE,na="")
+    })
+    output$download_alignment_regions <- downloadHandler(filename=function() paste0(snapshot()$manifest$id,"-gene-region-alignment-coordinates.csv"),content=function(file) {
+      rows <- mapped_alignment_regions()
+      rows <- rows[rows$accession %in% selected_accessions(),,drop=FALSE]
       rows$snapshot_id <- rep(snapshot()$manifest$id,nrow(rows))
       write.csv(rows,file,row.names=FALSE,na="")
     })

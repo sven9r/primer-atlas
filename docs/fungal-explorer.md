@@ -66,6 +66,28 @@ bases and gaps with primer-site shading; a CSV exports both coordinate systems
 and the snapshot identity. Cross-clade spacer alignment remains exploratory
 and does not establish homology or PCR validation.
 
+**Show genes and regions** adds per-template rRNA gene and ITS spacer tracks
+on the same alignment columns as the primer products. Slate identifies genes;
+amber identifies spacers independently of sequencing-platform colors. The
+18S → ITS1 → 5.8S → ITS2 → 28S guide shows which boundaries are available
+on the selected combination-track template. Click an available region to zoom
+the overview and move the nucleotide window to that region. The template
+selector reports annotation counts and initially prefers an annotated
+template with actual product support when one exists.
+The overview repeats visible region names and their full alignment bounds
+above the chart, marks regions only partly in the zoomed window, and gives a
+sideways-scroll cue in narrow layouts.
+
+Every boundary is projected through its own frozen template's non-gap map.
+The nucleotide window adds labeled annotation rows and base tooltips; hover a
+track for raw bp, alignment columns and its source note. Unavailable boundaries
+remain disabled in the guide. V1's 18S/28S segments are labeled partial anchors
+and its curated pilot boundaries use dashed borders. V2 displays only its nine
+unambiguous accession-specific NCBI annotations, without assigning one
+template's gene boundaries to another. **Gene and region coordinates (CSV)**
+exports the selected lineages' frozen annotations, mapping status, both
+coordinate systems, source notes and snapshot identity.
+
 V1 captures the original catalog, FN812768.2 reference, landmarks, and eight
 legacy geometries. Its frozen exact-site outputs were computed when the
 baseline was captured; unresolved legacy placements do not supply platform
@@ -100,6 +122,7 @@ python3 scripts/build_fungal_reference_panel.py
 Rscript scripts/build_fungal_snapshots.R
 Rscript tests/test_fungal_explorer.R
 Rscript tests/test_fungal_alignment.R
+Rscript tests/test_fungal_alignment_regions.R
 Rscript tests/test_fungal_versions.R
 Rscript tests/test_fungal_workspace.R
 python3 -m unittest discover -s tests -p test_fungal_reference_panel.py

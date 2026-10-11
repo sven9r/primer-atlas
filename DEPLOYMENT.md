@@ -53,6 +53,20 @@ release, after the app implementation is reviewed and merged. Use
 `coi_previous_release_id` to select that immutable release and `promote=true`
 to build, validate, host and activate its next append-only version. Ordinary
 scheduled runs then restore the complete state selected by `latest.json`.
+The latest verified full-state stage on October 11 is
+`38151290190-1-COI`: 13,150 retained / 12,267 verified records, minimum 105
+per group. Two consecutive cloud builds and a same-session clean-bundle app
+refresh passed. After the required approving review and merge, the controlled
+first activation can use:
+
+```bash
+gh workflow run monthly-release.yml --ref main -f marker=COI -f promote=true -f coi_previous_release_id=38151290190-1-COI
+```
+
+This builds a further append-only version and changes public latest only after
+all gates and anonymous artifact checks pass. Until activation, manual/latest
+checks in the staged local preview retain its valid cohort because the older
+public pointer has no complete growing-reference state.
 See the dated [COI validation record](docs/2026-10-11-coi-growth.md) for actual
 staging release identities and proof limits. The temporary frozen seed is only
 for controlled recovery tests; it is not the recurring storage backend.

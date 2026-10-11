@@ -10,8 +10,14 @@ preserved all 12,721 prior sequence/header hash pairs. Full alignment and
 real-panel scoring finished successfully for all 22 groups. A cloud worker
 restored the frozen seed and published a verified immutable staging release
 with 13,005 retained / 12,122 verified records; all 988 artifacts passed public
-checksum checks. A second hosted-state restoration proof and public activation
-remain pending. The
+checksum checks. A second fresh cloud worker restored that hosted release,
+added 145 records and published 13,150 retained / 12,267 verified COI records,
+minimum 105 per group. All 1,087 artifacts passed public checksum checks;
+independent anonymous comparison preserved every previous sequence/header
+hash and 431 scientific source archives. The clean deployable app passed a
+same-session refresh between both hosted versions, including exact downloads.
+The local preview now uses the second hosted cohort. Public activation awaits
+the repository's required approving review and merge of PR #22. The
 broader scientific milestone still requires family coverage
 inventories, continued BeePrime-specific bee acquisition, a separate aquatic
 arthropod option, and family-level regional comparisons.
@@ -184,15 +190,21 @@ The project separates four operational responsibilities:
   completed successfully: 13,005 retained / 12,122 verified COI records,
   minimum 103 verified per group, 145 additions with exact seed sequence/header
   retention, and all 988 public artifact checksums verified. Those earlier
-  failures published no release. A second clean-worker hosted-state restoration
-  proof remains pending.
+  failures published no release. The second fresh worker,
+  [run 38151290190](https://github.com/sven9r/primer-atlas/actions/runs/38151290190),
+  restored this hosted state and completed acquisition, full alignment/scoring
+  and publication: 13,150 retained / 12,267 verified COI records, minimum 105
+  per group and 145 additions. All 1,087 artifact checksums passed. Independent
+  anonymous comparison retained every prior sequence/header hash and 431
+  scientific source archives. A clean 171-file app bundle passed a same-session
+  hosted-to-hosted refresh with complete QA and exact sequence downloads.
   All 22
   real local full alignments and scoring finished successfully: 550
   group/pair summaries, 321,500 pair/template rows, 643,000 primer/template
   rows and 14,904,740 position rows.
   Public pointers remain unchanged, and PR #22 review/merge is required before
-  app activation. Hosted-to-hosted recovery and public app activation remain
-  unverified at this cutoff.
+  app activation. Hosted-to-hosted recovery is verified; public app activation
+  remains pending at this cutoff.
 
 ## What still needs to be done
 
@@ -208,7 +220,7 @@ The project separates four operational responsibilities:
       retaining unresolved ranks and source checksums.
 - [x] Complete full reference-coordinate alignments for all 22 real groups.
 - [x] Complete real-panel scoring for all 22 groups and 25 curated pairs.
-- [ ] Complete two successive hosted clean-runner builds that restore every
+- [x] Complete two successive hosted clean-runner builds that restore every
       prior sequence and its metadata.
 - [ ] Publish coverage gaps and primer summaries for every supported order
       and its families, including zero-reference families from a versioned
@@ -249,10 +261,11 @@ The project separates four operational responsibilities:
 - [ ] Test the pinned-summary fallback during an intentional R2 outage.
 - [ ] Document release ownership, credential rotation, rollback, and recovery
       from a partially uploaded staging directory.
-- [ ] Verify hosted release recovery retains accession identities, sequence
-      bytes and header bytes across two real clean-runner releases. Local
-      fixtures and the two-acquisition proof pass; ledger persistence alone
-      does not satisfy this operational gate.
+- [x] Verify hosted release recovery retains accession identities, sequence
+      bytes and header bytes across two real clean-runner releases. The
+      October 11 cloud stages passed independent anonymous comparison of
+      all 13,005 prior sequence/header hashes and 431 scientific source
+      archives; see the dated COI validation record.
 
 ### P2 — Finish active pilots
 

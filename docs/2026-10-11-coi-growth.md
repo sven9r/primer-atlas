@@ -1,18 +1,27 @@
 # COI acquisition and retention proof — 2026-10-11
 
-The local panel now retains **12,860 arthropod COI records**, of which
-**11,977 pass marker-feature and taxonomy verification**. Each of the 22
-supported groups has at least 101 verified records. This exceeds the requested
-10,000 verified records overall and 100 per group.
+The latest verified hosted stage, **38151290190-1-COI**, retains **13,150
+arthropod accession-version records**, of which **12,267 pass marker-feature
+and taxonomy verification**. Each of the 22 supported groups has at least
+**105 verified records**. This exceeds the requested 10,000 verified COI
+records overall and 100 per group. The scope is 20 supported orders plus the
+Acari and Collembola composite display groups, not every arthropod order.
+
+Two consecutive cloud builds passed, including recovery of the first hosted
+cohort on a fresh worker, new acquisition, full alignment/scoring, immutable
+publication and anonymous checksum verification. This exercises the monthly
+workflow now; it does not claim that two calendar months have elapsed. The
+local preview at `http://127.0.0.1:3838/` uses the second immutable hosted
+cohort without changing the primary local panel or public latest pointer.
 
 A second real acquisition added **139 records** to the frozen initial panel
 of 12,721 retained / 11,838 verified records. Every group met
 `ceiling(previous retained × 1.01)`. All 12,721 previous sequence/header hash
 pairs were unchanged, and 327 cached NCBI source files passed checksum checks.
-This is measured local growth; it is not yet proof of two published monthly
-releases.
+The primary local panel remains at 12,860 retained / 11,977 verified records.
+The subsequent cloud versions are documented below.
 
-## Group counts
+## Frozen local proof group counts
 
 Local counts come from `data/derived/coi_reference_proof/retention_proof.csv`
 and `data/derived/coi_reference_panel/growth_qa.csv`.
@@ -55,8 +64,8 @@ The 50 local Bivalvia records remain a separate legacy archive; the 267
 Bivalvia records in the older public release remain in that immutable release.
 Neither contributes to the new arthropod totals.
 
-The 883 retained records that do not pass current marker-feature QC remain
-explicitly distinguishable from the 11,977 verified records. Neither marker
+The 883 inherited records that do not pass current marker-feature QC remain
+explicitly distinguishable from the verified records in each cohort. Neither marker
 verification nor panel inclusion establishes both primer binding sites or
 PCR success. Unknown taxonomy ranks remain unresolved. Query result counts
 precede QC, and acquisition is bounded rather than exhaustive or random.
@@ -103,13 +112,36 @@ The [immutable manifest](https://pub-f0382349aff94e77a952e7d562ded123.r2.dev/rel
 and [frozen growth QA](https://pub-f0382349aff94e77a952e7d562ded123.r2.dev/releases/COI/38144690584-1-COI/coi_state/data/derived/coi_reference_panel/growth_qa.csv)
 are public evidence. The failed attempts published no release.
 
-A second clean worker restoring this complete hosted release remains to be
-verified. Its first attempt, run 38150641509, stopped at a syntax error in the
+A second clean worker restored and extended this complete hosted release.
+Its first attempt, run 38150641509, stopped at a syntax error in the
 hosted-state restore command before acquisition or publication. That CLI path
-was bypassed by the successful seed-based build. The restore command is being
-repaired and exercised directly before another hosted recovery run.
+was bypassed by the successful seed-based build. The command is now corrected,
+covered by an actual subprocess recovery regression, and exercised against
+the real hosted release in an independent clean directory. All 921 restored
+state artifacts, including 841 source/archive files, match the hosted hashes;
+the 13,005 retained records, 12,122 verified markers and exact raw
+sequence/header hashes reconcile to the frozen manifest. The replacement
+[run 38151290190](https://github.com/sven9r/primer-atlas/actions/runs/38151290190)
+completed successfully at 16:29:38 UTC. It added **145 distinct accession
+versions**, producing **13,150 retained / 12,267 verified COI records** with
+minimum **105 verified per group**. All **1,087 hosted artifacts** passed
+anonymous SHA-256 read-back. Its [immutable manifest](https://pub-f0382349aff94e77a952e7d562ded123.r2.dev/releases/COI/38151290190-1-COI/manifest.json)
+has SHA-256 `c4641af857e536bde94fb88b436693af6bb47c4d9188a205622bede8efb943b2`;
+the [complete frozen growth QA](https://pub-f0382349aff94e77a952e7d562ded123.r2.dev/releases/COI/38151290190-1-COI/coi_state/data/derived/coi_reference_panel/growth_qa.csv)
+records all group counts and acquisition limits.
 
-The application reader passed against the actual hosted release: 13,005
+An independent anonymous first-to-second comparison passed at 16:30:58 UTC:
+all **13,005 previous sequence/header hashes** and **431 required immutable
+scientific source/archive hashes** were preserved exactly. Every group met
+`ceiling(previous retained × 1.01)`. All group alignment input hashes changed,
+and the second acquisition identifies the exact first frozen run-manifest
+hash. The release's exact application reader also passed with 13,150
+references and **631,200 ANML position rows**.
+The temporary GitHub draft seed release was removed after these recovery
+proofs passed; its local archive remains available. Future runs recover
+immutable hosted state rather than depending on that temporary seed.
+
+The application reader passed against the first actual hosted release: 13,005
 references and the expected 624,240 ANML position rows. A clean 171-file,
 16.3 MB Connect bundle also loaded this immutable candidate without any local
 raw panel or full alignments; its real Ephemeroptera sequence CSV and full
@@ -118,6 +150,24 @@ configured hosted pointer manually and every ten minutes. Complete verified
 cohorts replace the active reference together; invalid candidates preserve it.
 Custom COI scoring uses the unchanged pinned PrimerMiner evaluator and tables
 included with the application, without the installed build-only package.
+
+The actual 171-file Connect bundle passed a same-session first-to-second
+hosted refresh with no local raw panel or full alignment files. Changing only
+the copied bundle's pointer and triggering the real refresh input updated the
+version, all group counts, score denominators and download cache identity.
+The complete 22-row, 15-field QA exports reconciled to both frozen cohorts;
+Ephemeroptera sequence CSV and exact 1,536-column aligned FASTA downloads
+increased from 103 to 105 records and retained all previous sequence/header
+hashes. BeePrime publication evidence stayed unchanged.
+
+The live preview's **Sources and downloads** view now shows the second
+hosted cohort's whole-group previous, added, retained and marker-verified
+counts. Its actual **Complete growth QA CSV** download reconciles to the
+frozen hosted QA: **13,150 retained, 12,267 verified, minimum 105 per group,
+145 additions, 22 rows and all 15 fields**. Missing values are serialized as
+blank cells in the app export; all values otherwise match. The QA export
+keeps the complete release scope even when a group is selected. The counts
+and downloads follow the same verified session reference after an update.
 
 The public
 `latest.json` pointer is unchanged; public app activation

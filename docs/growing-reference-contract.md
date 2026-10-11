@@ -3,7 +3,13 @@
 **Requirement clarified and corrected by the user:** 2026-10-02.
 **Implementation status, 2026-10-11:** local acquisition and retention proof
 pass; full real-panel alignment and scoring are complete for all 22 groups.
-Hosted staging failed before acquisition and published no release.
+Two consecutive hosted staging builds passed. A fresh worker restored the
+first complete hosted state and added 145 accession versions, reaching
+13,150 retained / 12,267 verified records and at least 105 verified records
+per group. Anonymous comparison verified all prior sequence/header hashes
+and 431 scientific source archives; all 1,087 second-release artifacts passed
+public checksum checks. A clean Connect bundle also switched between these
+two hosted cohorts in one session with matching counts and exact downloads.
 The published 2026.10.02 app remains unchanged. Family
 coverage inventories and ecological comparisons are still incomplete.
 
@@ -220,8 +226,15 @@ retained / 12,122 verified records, minimum 103 verified per group. Anonymous
 raw/ledger reads establish exact seed sequence/header retention and real
 per-group growth; all 988 hosted artifacts passed SHA-256 read-back. Public
 pointers remain unchanged, and app activation awaits PR #22 review and merge.
-A second clean worker restoring that hosted full state, complete family
-inventories with zero-reference gaps,
+The [second staging run 38151290190](https://github.com/sven9r/primer-atlas/actions/runs/38151290190)
+passed fresh-worker hosted-state recovery, append-only growth, alignment,
+scoring, hard release gates and anonymous read-back of all 1,087 artifacts.
+It retains 13,150 records / 12,267 verified COI markers, minimum 105 per
+group. Independent comparison preserved all 13,005 prior sequence/header
+hashes and 431 scientific source archives, confirmed every group's growth
+target and the exact first-to-second acquisition lineage. The deployable app
+passed a same-session refresh across both hosted versions without any local
+raw panel or full alignments. Complete family inventories with zero-reference gaps,
 aquatic eligibility, new-reference geography and ecological comparisons remain
 acceptance work, not completed results.
 

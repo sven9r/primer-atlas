@@ -86,18 +86,27 @@ with a bee reference retained and extended for BeePrime only, broad
 arthropod references for general primers, and a separate aquatic arthropod
 option. Every supported order needs primer evaluation at least by family,
 with ecological comparisons using the matching reference and habitat scope.
-The bee publication alignment retains its study provenance. Current
-full-order scores do not yet contain family taxonomy;
-the app's study-specific family views do not complete this requirement. See
+The bee publication alignment retains its study provenance. The growing
+general panel joins frozen accession taxonomy to its sequence-level scores
+for family summaries. A versioned inventory of families without references
+and the ecological refinements remain incomplete. See
 [the growing-reference contract](docs/growing-reference-contract.md) for the
 implementation gaps and completion gates.
 
 General COI primer pairs are scored against full NC_001322.1-coordinate order
-alignments, not the Gurten centroid panel. The initial production target is at
-least 1,000 retained sequences for each listed arthropod order or composite
-target group when NCBI can supply them. Every monthly release is append-only:
+alignments, not the Gurten centroid panel. The current target is at least
+10,000 marker-verified COI records overall and 100 in each of the 20 supported
+orders plus the Acari and Collembola composite groups. Historical retained
+records that fail current marker QC are reported separately. Every successful
+monthly release is append-only:
 the target becomes `ceiling(previous retained × 1.01)`, and only unseen
 accessions are added. Existing accessions are not replaced by a fresh sample.
+In **Inspect taxa and sequences → Sources and downloads**, the growth table
+reports the previous panel, additions, retained records and verified COI
+records for the selected group. **Complete growth QA CSV** exports all groups
+and every original field from that session's frozen release. See the
+[October 11 acquisition and hosting proof](docs/2026-10-11-coi-growth.md) for
+measured results and the public activation status.
 
 BeePrime is a named exception: its Gurten et al. (2026) 99.5% author centroids
 remain available as study-specific, publication-linked evidence. They are not
@@ -112,8 +121,9 @@ machine-readable contract is in
 `scripts/validate_release.R` enforces schema, IUPAC, citation, checksum,
 coordinate, count, completeness, and accession gates. The monthly workflow
 builds COI and fungal ITS independently, stages artifacts in R2, and replaces a
-marker's `latest.json` only after its gates pass. Failed markers leave their
-previous pointers active and open a GitHub issue.
+marker's `latest.json` only after its gates pass. Acquisition and validation
+failures leave the previous pointer active. Publication failures open a GitHub
+issue whose resolution requires checking the actual hosted pointer and app.
 
 The app deliberately keeps these concepts separate:
 

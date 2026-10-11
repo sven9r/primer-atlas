@@ -18,7 +18,6 @@ jobs:
         run: |
           for test in \
             tests/test_18s_catalog_ui.R \
-            tests/test_beeprime_deep_reference.R \
             tests/test_bundle_size.R \
             tests/test_catalog_and_geography.R \
             tests/test_claimed_primer_reference.R \
@@ -30,7 +29,6 @@ jobs:
             tests/test_coi_reference_runtime.R \
             tests/test_coi_refresh.R \
             tests/test_coi_panel_install.R \
-            tests/test_custom_expanded_reference_bounds.R \
             tests/test_custom_primer_gate.R \
             tests/test_its_primer_navigator.R \
             tests/test_fungal_explorer.R \

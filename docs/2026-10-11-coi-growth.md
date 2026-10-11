@@ -104,7 +104,22 @@ and [frozen growth QA](https://pub-f0382349aff94e77a952e7d562ded123.r2.dev/relea
 are public evidence. The failed attempts published no release.
 
 A second clean worker restoring this complete hosted release remains to be
-verified. The public
+verified. Its first attempt, run 38150641509, stopped at a syntax error in the
+hosted-state restore command before acquisition or publication. That CLI path
+was bypassed by the successful seed-based build. The restore command is being
+repaired and exercised directly before another hosted recovery run.
+
+The application reader passed against the actual hosted release: 13,005
+references and the expected 624,240 ANML position rows. A clean 171-file,
+16.3 MB Connect bundle also loaded this immutable candidate without any local
+raw panel or full alignments; its real Ephemeroptera sequence CSV and full
+aligned FASTA downloads matched the frozen cohort. Each session can check a
+configured hosted pointer manually and every ten minutes. Complete verified
+cohorts replace the active reference together; invalid candidates preserve it.
+Custom COI scoring uses the unchanged pinned PrimerMiner evaluator and tables
+included with the application, without the installed build-only package.
+
+The public
 `latest.json` pointer is unchanged; public app activation
 requires [PR #22](https://github.com/sven9r/primer-atlas/pull/22) review and merge.
 Family coverage inventories, aquatic reference selection, accession geography,

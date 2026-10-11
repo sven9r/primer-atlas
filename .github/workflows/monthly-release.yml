@@ -13,6 +13,26 @@ on:
         description: Promote verified immutable release to latest
         type: boolean
         default: false
+      coi_previous_release_id:
+        description: Optional verified immutable COI release to restore instead of latest
+        type: string
+        default: ""
+      coi_bootstrap:
+        description: Recover published COI accession membership when the legacy release lacks raw state
+        type: boolean
+        default: false
+      coi_seed_tag:
+        description: Optional manual GitHub draft-release tag containing a frozen COI seed
+        type: string
+        default: ""
+      coi_seed_asset:
+        description: Exact seed tar.gz asset name (manual runs only)
+        type: string
+        default: ""
+      coi_seed_sha256:
+        description: SHA-256 of the complete COI seed archive
+        type: string
+        default: ""
 permissions:
   contents: write
   issues: write
@@ -33,6 +53,15 @@ jobs:
       AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
       ATLAS_DATA_BASE_URL: ${{ vars.ATLAS_DATA_BASE_URL }}
       ATLAS_MANIFEST_BASE_URL: ${{ vars.ATLAS_DATA_BASE_URL }}/releases
+      COI_PREVIOUS_RELEASE_ID: ${{ inputs.coi_previous_release_id }}
+      COI_ALLOW_BOOTSTRAP: ${{ inputs.coi_bootstrap || false }}
+      COI_TARGET_TOTAL: "10000"
+      COI_MIN_PER_GROUP: "100"
+      COI_MONTHLY_GROWTH: "0.01"
+      COI_REFRESH: "true"
+      COI_SEED_TAG: ${{ inputs.coi_seed_tag }}
+      COI_SEED_ASSET: ${{ inputs.coi_seed_asset }}
+      COI_SEED_SHA256: ${{ inputs.coi_seed_sha256 }}
     steps:
       - name: Preflight release configuration
         shell: bash
@@ -61,16 +90,21 @@ jobs:
           python -m pip install pandas lxml html5lib requests
           Rscript scripts/install_primerminer.R
       - name: Build marker independently
+        env: {GH_TOKEN: "${{ github.token }}"}
         run: |
-          if [ "$MARKER_ID" = COI ] && [ -n "$R2_BUCKET" ]; then
-            # Browser-copied repository secrets can retain a trailing newline.
-            # Normalise all S3 inputs before retrieving persistent COI state.
-            R2_ACCOUNT_ID="$(printf '%s' "$R2_ACCOUNT_ID" | tr -d '\r\n')"
-            R2_BUCKET="$(printf '%s' "$R2_BUCKET" | tr -d '\r\n')"
-            export AWS_ACCESS_KEY_ID="$(printf '%s' "$AWS_ACCESS_KEY_ID" | tr -d '\r\n')"
-            export AWS_SECRET_ACCESS_KEY="$(printf '%s' "$AWS_SECRET_ACCESS_KEY" | tr -d '\r\n')"
-            mkdir -p data/provenance
-            aws s3 cp "s3://${R2_BUCKET}/state/COI/coi_reference_accession_ledger.csv" data/provenance/coi_reference_accession_ledger.csv --endpoint-url "https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com" || true
+          if [ "$MARKER_ID" = COI ]; then
+            if [ -n "$COI_SEED_TAG" ]; then
+              [ "$GITHUB_EVENT_NAME" = workflow_dispatch ] || { echo 'COI seeds require a manual run' >&2; exit 1; }
+              [ -z "$COI_PREVIOUS_RELEASE_ID" ] && [ "$COI_ALLOW_BOOTSTRAP" != true ] || { echo 'Choose exactly one COI restoration source' >&2; exit 1; }
+              [[ "$COI_SEED_ASSET" =~ ^[A-Za-z0-9][A-Za-z0-9._-]*\.tar\.gz$ ]] || { echo 'Invalid COI seed asset name' >&2; exit 1; }
+              [[ "$COI_SEED_SHA256" =~ ^[A-Fa-f0-9]{64}$ ]] || { echo 'COI seed needs a complete SHA-256' >&2; exit 1; }
+              mkdir -p logs/coi_seed
+              gh release download "$COI_SEED_TAG" --repo "$GITHUB_REPOSITORY" --pattern "$COI_SEED_ASSET" --dir logs/coi_seed
+              python scripts/restore_coi_seed.py --archive "logs/coi_seed/$COI_SEED_ASSET" --sha256 "$COI_SEED_SHA256"
+            else
+              [ -z "$COI_SEED_ASSET$COI_SEED_SHA256" ] || { echo 'COI seed inputs require a tag' >&2; exit 1; }
+              Rscript scripts/restore_coi_reference_state.R
+            fi
           fi
           python scripts/import_unite_primers.py
           Rscript scripts/build_catalog.R
@@ -88,9 +122,9 @@ jobs:
           fi
           if [ "$MARKER_ID" = COI ]; then
             Rscript scripts/update_order_reference_panels.R
-            EVALUATION_MODE=full GB_SUBSET=1000 Rscript scripts/build_22_group_alignments.R
+            EVALUATION_MODE=full Rscript scripts/build_22_group_alignments.R
             Rscript scripts/build_primer_positions.R
-            Rscript scripts/build_order_scores.R
+            EVALUATION_MODE=full Rscript scripts/build_order_scores.R
             Rscript scripts/download_gurten2026_reference.R
             Rscript scripts/fetch_gurten2026_bee_taxonomy.R
             Rscript scripts/build_gurten2026_beeprime_scores.R
@@ -107,6 +141,7 @@ jobs:
           if [ "$MARKER_ID" = COI ]; then
             Rscript tests/test_custom_primer_gate.R
             Rscript tests/test_claimed_primer_reference.R
+            Rscript tests/test_coi_retention.R
             Rscript -e 'source("app.R", local=new.env()); message("Application startup passed")'
           fi
       - name: Publish immutable R2 release and verify public read-back

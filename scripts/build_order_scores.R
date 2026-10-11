@@ -4,6 +4,9 @@ project_root <- normalizePath(getwd(), mustWork = TRUE)
 .libPaths(c(file.path(project_root, ".Rlib"), .libPaths()))
 suppressPackageStartupMessages(library(PrimerMiner))
 source(file.path(project_root, "R", "functions.R"))
+source(file.path(project_root, "R", "data_layer.R"))
+source(file.path(project_root, "R", "coi_retention.R"))
+source(file.path(project_root, "R", "coi_scoring.R"))
 
 primers <- read.csv(
   file.path(project_root, "data", "primers.csv"),
@@ -15,20 +18,12 @@ bindings <- read.csv(
   stringsAsFactors = FALSE,
   check.names = FALSE
 )
-full_alignment_dir <- file.path(project_root, "data", "primerminer", "full_aligned_reference")
-alignment_dir <- if (dir.exists(full_alignment_dir) && length(list.files(full_alignment_dir, pattern = "_COX1_full_reference_aligned\\.fasta$"))) {
-  full_alignment_dir
-} else {
-  file.path(project_root, "data", "primerminer", "aligned_reference")
-}
-alignment_files <- list.files(
-  alignment_dir,
-  pattern = "_COX1(_full)?_reference_aligned\\.fasta$",
-  full.names = TRUE
+scoring_inputs <- coi_scoring_inputs(
+  project_root, mode = Sys.getenv("EVALUATION_MODE", "auto"),
+  minimum_per_group = as.integer(Sys.getenv("COI_MIN_PER_GROUP", "100")),
+  minimum_total = as.integer(Sys.getenv("COI_TARGET_TOTAL", "10000"))
 )
-if (!length(alignment_files)) {
-  stop("No installed reference-coordinate alignments found.")
-}
+alignment_files <- scoring_inputs$files
 
 output_dir <- file.path(project_root, "data", "derived")
 dir.create(output_dir, recursive = TRUE, showWarnings = FALSE)
@@ -55,8 +50,16 @@ position_row_count <- 0L
 position_output_path <- file.path(output_dir, "primer_position_scores.csv")
 position_temp_path <- paste0(position_output_path, ".tmp")
 if (file.exists(position_temp_path)) unlink(position_temp_path)
+position_partition_paths <- setNames(file.path(output_dir, paste0(
+  scoring_inputs$output_prefix, tolower(unique(primers$pair_id)), "_primer_positions.csv.gz"
+)), unique(primers$pair_id))
+position_partition_connections <- lapply(paste0(position_partition_paths, ".tmp"), gzfile, open = "wt")
+names(position_partition_connections) <- names(position_partition_paths)
+position_partition_started <- setNames(rep(FALSE, length(position_partition_paths)), names(position_partition_paths))
 on.exit({
   if (file.exists(position_temp_path)) unlink(position_temp_path)
+  for (connection in position_partition_connections) try(close(connection), silent = TRUE)
+  unlink(paste0(position_partition_paths, ".tmp"))
 }, add = TRUE)
 
 for (alignment_path in alignment_files) {
@@ -172,6 +175,10 @@ for (alignment_path in alignment_files) {
       )
     }
     position_block <- do.call(rbind, position_block)
+    write.table(position_block, file = position_partition_connections[[primer$pair_id]],
+      sep = ",", quote = TRUE, row.names = FALSE,
+      col.names = !position_partition_started[[primer$pair_id]], na = "")
+    position_partition_started[[primer$pair_id]] <- TRUE
     write.table(
       position_block,
       file = position_temp_path,
@@ -229,6 +236,8 @@ pair_template_scores$accession <- sub(
   "[|].*$", "",
   sub(" .*", "", sub("^_R_", "", pair_template_scores$template))
 )
+pair_template_scores$evaluation_mode <- scoring_inputs$evaluation_mode
+pair_template_scores$evidence_class <- scoring_inputs$evidence_class
 
 groups <- split(
   pair_template_scores,
@@ -241,6 +250,8 @@ order_pair_summary <- do.call(rbind, lapply(groups, function(x) {
     pair_id = x$pair_id[1],
     pair_label = x$pair_label[1],
     n_templates = nrow(x),
+    evaluation_mode = scoring_inputs$evaluation_mode,
+    evidence_class = scoring_inputs$evidence_class,
     n_pair_scorable = sum(scorable),
     pair_scorable_fraction = mean(scorable),
     unavailable_fraction = mean(!scorable),
@@ -315,6 +326,12 @@ write.csv(
 if (!file.rename(position_temp_path, position_output_path)) {
   stop("Could not atomically replace ", position_output_path)
 }
+for (pair_id in names(position_partition_connections)) {
+  close(position_partition_connections[[pair_id]])
+  if (!file.rename(paste0(position_partition_paths[[pair_id]], ".tmp"), position_partition_paths[[pair_id]])) {
+    stop("Could not atomically replace a primer-position partition")
+  }
+}
 write.csv(
   pair_template_scores,
   file.path(output_dir, "pair_template_scores.csv"),
@@ -325,7 +342,7 @@ for (pair_id in unique(pair_template_scores$pair_id)) {
   pair_rows <- pair_template_scores[pair_template_scores$pair_id == pair_id, , drop = FALSE]
   path <- file.path(
     output_dir,
-    paste0("full_order_", tolower(pair_id), "_sequence_scores.csv.gz")
+    paste0(scoring_inputs$output_prefix, tolower(pair_id), "_sequence_scores.csv.gz")
   )
   connection <- gzfile(path, open = "wt")
   write.csv(pair_rows, connection, row.names = FALSE, na = "")
@@ -342,6 +359,13 @@ write.csv(
   file.path(output_dir, "penalty_model_metadata.csv"),
   row.names = FALSE
 )
+if (!is.null(scoring_inputs$manifest)) {
+  scoring_manifest <- scoring_inputs$manifest
+  scoring_manifest$primer_catalog_sha256 <- atlas_sha256(file.path(project_root, "data/primers.csv"))
+  scoring_manifest$binding_coordinates_sha256 <- atlas_sha256(file.path(project_root, "data/derived/primer_bindings.csv"))
+  scoring_manifest$scored_at_utc <- format(Sys.time(), tz = "UTC", usetz = TRUE)
+  write.csv(scoring_manifest, file.path(project_root, "data/provenance/order_scoring_manifest.csv"), row.names = FALSE)
+}
 
 cat(
   "Wrote", nrow(primer_template_scores), "primer-template rows,",

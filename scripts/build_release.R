@@ -4,6 +4,7 @@ root <- normalizePath(getwd(), mustWork = TRUE)
 .libPaths(c(file.path(root, ".Rlib"), .libPaths()))
 suppressPackageStartupMessages({library(jsonlite); library(nanoparquet); library(digest)})
 source("R/data_layer.R")
+source("R/coi_retention.R")
 
 release_id <- Sys.getenv("RELEASE_ID", format(Sys.time(), tz = "UTC", "%Y%m%dT%H%M%SZ"))
 if (!grepl("^[A-Za-z0-9][A-Za-z0-9._-]*$", release_id)) stop("Invalid release identity")
@@ -43,6 +44,11 @@ write_marker <- function(marker_id) {
     full <- list.files("data/derived", pattern = "^full_order_.*_sequence_scores[.]csv[.]gz$", full.names = TRUE)
     names(full) <- sub("_sequence_scores[.]csv[.]gz$", "", basename(full))
     specs <- c(specs, full)
+    position_partitions <- list.files("data/derived", pattern = "^full_order_.*_primer_positions[.]csv[.]gz$", full.names = TRUE)
+    names(position_partitions) <- sub("[.]csv[.]gz$", "", basename(position_partitions))
+    if (length(position_partitions)) specs <- specs[names(specs) != "primer_positions"]
+    specs <- c(specs, position_partitions,
+      scoring_manifest = "data/provenance/order_scoring_manifest.csv")
     expanded_specs <- c(
       beeprime_expanded_scores = "data/derived/beeprime_expanded_scores.csv.gz",
       beeprime_expanded_geography = "data/derived/beeprime_expanded_geography.csv",
@@ -80,6 +86,13 @@ write_marker <- function(marker_id) {
     )
   }
   fungal_snapshots <- list()
+  coi_retained_state <- NULL
+  if (marker_id == "COI") {
+    coi_retained_state <- coi_stage_retained_state(root, release_dir, release_id, data_base)
+    for (name in names(coi_retained_state$artifacts)) {
+      artifacts[[paste0("coi_state_", name)]] <- coi_retained_state$artifacts[[name]]
+    }
+  }
   if (marker_id == "ITS_FUNGAL") {
     source("R/fungal_versions.R")
     index <- fungal_read_index(root, remote = FALSE)
@@ -127,7 +140,9 @@ write_marker <- function(marker_id) {
   }
   marker <- markers[markers$marker_id == marker_id, , drop = FALSE]
   previous_pointer <- file.path("data", "releases", marker_id, "latest.json")
-  previous_state <- tryCatch(atlas_read_manifest(marker_id, root), error = function(e) NULL)
+  previous_release_id <- if (marker_id == "COI") Sys.getenv("COI_PREVIOUS_RELEASE_ID", "") else ""
+  previous_state <- tryCatch(atlas_read_manifest(marker_id, root,
+    release_id = if (nzchar(previous_release_id)) previous_release_id else NULL), error = function(e) NULL)
   previous <- if (!is.null(previous_state)) previous_state$manifest$release_version else NULL
   reference_panels <- list()
   if (marker_id == "COI" && all(c(
@@ -166,6 +181,7 @@ write_marker <- function(marker_id) {
     artifacts = artifacts,
     reference_panels = reference_panels,
     fungal_snapshots = fungal_snapshots,
+    coi_retained_state = coi_retained_state,
     code_commit = tryCatch(system2("git", c("rev-parse", "HEAD"), stdout = TRUE, stderr = FALSE)[1], error = function(e) "unknown"),
     builder_sha256 = atlas_sha256("scripts/build_release.R"),
     snapshot_builder_sha256 = if (marker_id == "ITS_FUNGAL") atlas_sha256("scripts/build_fungal_snapshots.R") else NULL

@@ -74,9 +74,5 @@ fi
 aws s3 cp "$source_dir/manifest.json" "s3://${R2_BUCKET}/releases/${MARKER_ID}/latest.json" \
   --endpoint-url "$endpoint" --content-type application/json --cache-control no-cache
 
-if [ "$MARKER_ID" = "COI" ] && [ -f data/provenance/coi_reference_accession_ledger.csv ]; then
-  aws s3 cp data/provenance/coi_reference_accession_ledger.csv "s3://${R2_BUCKET}/state/COI/coi_reference_accession_ledger.csv" \
-    --endpoint-url "$endpoint" --content-type text/csv
-  aws s3 cp data/provenance/coi_reference_growth_qa.csv "s3://${R2_BUCKET}/state/COI/coi_reference_growth_qa.csv" \
-    --endpoint-url "$endpoint" --content-type text/csv
-fi
+# COI raw sequences and provenance are already immutable release artifacts.
+# The single latest pointer selects their complete state atomically.

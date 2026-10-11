@@ -12,6 +12,9 @@ library(DT)
 
 source("R/functions.R")
 source("R/data_layer.R")
+source("R/coi_retention.R")
+source("R/coi_scoring.R")
+source("R/coi_reference.R")
 source("R/reference_panels.R")
 source("R/fungal_explorer.R")
 source("R/fungal_versions.R")
@@ -20,6 +23,8 @@ source("R/fungal_alignment_ui.R")
 source("R/fungal_ui.R")
 
 coi_release_state <- tryCatch(atlas_read_manifest("COI"), error = function(e) NULL)
+coi_reference_panel <- coi_reference_load(coi_release_state)
+coi_release_state <- coi_reference_panel$state
 release_table <- function(name, fallback, col_types = NULL) {
   artifact <- if (!is.null(coi_release_state)) coi_release_state$manifest$artifacts[[name]] else NULL
   if (!is.null(artifact)) {
@@ -356,36 +361,24 @@ its_reference <- clean_sequence(
 )
 
 full_alignment_dir <- "data/primerminer/full_aligned_reference"
-alignment_dir <- if (dir.exists(full_alignment_dir) && length(list.files(full_alignment_dir, pattern = "_COX1_full_reference_aligned\\.fasta$"))) full_alignment_dir else "data/primerminer/aligned_reference"
-alignment_files <- list.files(
-  alignment_dir,
-  pattern = "_COX1(_full)?_reference_aligned\\.fasta$",
-  full.names = TRUE
-)
-alignment_orders <- sub(
-  "_COX1(_full)?_reference_aligned\\.fasta$",
-  "",
-  basename(alignment_files)
-)
-order_alignment_templates <- setNames(
-  lapply(alignment_files, function(path) {
-    sequences <- parse_fasta(path)
-    sequences[!grepl("^NC_001322\\.1_COX1_reference", names(sequences))]
-  }),
-  alignment_orders
-)
-order_scores <- read_csv("data/derived/order_pair_summary.csv", show_col_types = FALSE)
-pair_template_scores <- release_table(
+alignment_dir <- if (coi_reference_panel$alignment_mode == "full") full_alignment_dir else "data/primerminer/aligned_reference"
+alignment_files <- unname(coi_reference_panel$paths)
+alignment_orders <- names(coi_reference_panel$alignments)
+order_alignment_templates <- coi_reference_panel$alignments
+order_scores <- as_tibble(coi_reference_panel$overview)
+pair_template_scores <- if (!is.null(coi_reference_panel$pair_templates)) as_tibble(coi_reference_panel$pair_templates) else release_table(
   "pair_templates", "data/derived/pair_template_scores.csv",
   col_types = cols(template = col_character())
 )
-delayedAssign("primer_position_scores", {
-  release_table(
-    "primer_positions", "data/derived/primer_position_scores.csv",
-    col_types = cols(template = col_character())
-  ) |>
-    mutate(unavailable_reason = coalesce(unavailable_reason, ""))
-})
+read_order_position_scores <- function(pair_id) {
+  value <- tryCatch(coi_reference_pair_positions(coi_reference_panel, pair_id), error = identity)
+  if (inherits(value, "error")) {
+    empty <- as_tibble(.coi_reference_empty_positions())
+    attr(empty, "position_issue") <- paste("The selected release's position trace could not be verified:", conditionMessage(value))
+    return(empty)
+  }
+  as_tibble(value)
+}
 
 beeprime_reference_manifest <- read_csv(
   "data/derived/beeprime_reference_manifest.csv",
@@ -507,10 +500,14 @@ pair_sequence_evidence_spec <- function(pair_id) {
 
 read_pair_sequence_evidence <- function(pair_id) {
   spec <- pair_sequence_evidence_spec(pair_id)
-  if (file.exists(spec$path)) return(read_csv(spec$path, show_col_types = FALSE))
+  if (identical(pair_id, "BEEPRIME") && file.exists(spec$path)) return(read_csv(spec$path, show_col_types = FALSE))
   artifact <- if (!is.null(coi_release_state)) coi_release_state$manifest$artifacts[[spec$artifact]] else NULL
   if (is.null(artifact)) return(tibble())
-  tryCatch(as_tibble(atlas_read_artifact(artifact)), error = function(e) tibble())
+  value <- tryCatch(as_tibble(atlas_read_artifact(artifact)), error = function(e) tibble())
+  if (!identical(pair_id, "BEEPRIME") && nrow(value)) {
+    value <- as_tibble(coi_reference_pair_taxonomy(coi_reference_panel, value))
+  }
+  value
 }
 targeted_zbj_manifest <- read_csv(
   "data/external/targeted_zbj/targeted_complete_cox1_manifest.csv",
@@ -1487,7 +1484,7 @@ ui <- page_navbar(
       card(
         card_header("What is ready to explore?"),
         div(class = "readiness-list",
-            div(strong("Animal COI · active"), span("Primer map, reference fit, taxon detail, and reference-region comparison. Results depend on the selected reference panel.")),
+            div(strong("Animal COI · active"), span(coi_reference_status(coi_reference_panel))),
             div(strong("Fungal rDNA · versioned explorer"), span("Discover primer combinations by sequencing platform, compare a bounded NCBI reference-panel snapshot, and return to earlier catalog and reference versions. Candidate geometry remains distinct from experimental validation.")),
             div(strong("Eukaryotic 18S · pilot"), span("321 catalog primers and 123 documented sets. Ninety-three sets have drawable geometry; this is not broad taxonomic performance evidence.")),
             div(strong("12S, 16S, 28S · planned"), span("Marker targets are documented, but these markers have no interactive evidence view yet."))
@@ -1704,6 +1701,7 @@ ui <- page_navbar(
     div(
       class = "container-fluid",
       workspace_heading("Check taxonomic fit", "Compare COI binding-site availability and mismatch patterns, then inspect the underlying sequences."),
+      div(class = "callout tiny", strong("Active COI reference: "), coi_reference_status(coi_reference_panel)),
       card(
         fill = FALSE,
         class = "order-heatmap-card",
@@ -2240,13 +2238,12 @@ ui <- page_navbar(
           card_header("What each source supports"),
           h4("Reference alignments"),
           p(
-            "The repository currently bundles ", length(alignment_files),
-            " compact COX1 preview alignments. They remain useful for placement and UI regression tests, but they are not the production scoring denominator. "
-            , "Production releases retain and score full NC_001322.1-coordinate alignments for the 20 listed arthropod orders plus the Acari and Collembola composite target groups."
+            coi_reference_status(coi_reference_panel), " ",
+            "Production releases retain and score full NC_001322.1-coordinate alignments for the 20 listed arthropod orders plus the Acari and Collembola composite target groups."
           ),
           div(
             class = "reference-policy-grid",
-            div(class = "reference-policy-card", tags$b("Initial order baseline"), "At least 1,000 retained, quality-filtered sequences per arthropod target group; all available records are reported when the database cannot supply 1,000."),
+            div(class = "reference-policy-card", tags$b("Initial reference target"), "At least 10,000 retained, quality-filtered COI records in total and at least 100 per arthropod target group. Any unmet group minimum is reported explicitly."),
             div(class = "reference-policy-card", tags$b("Monthly growth"), "Append unseen accessions only. The next target is ceiling(previous retained count × 1.01); existing accessions are never replaced by a fresh random sample."),
             div(class = "reference-policy-card", tags$b("Scoring denominator"), "General primers use every retained sequence in the full order alignment. A clustered preview may never be reported as the production denominator."),
             div(class = "reference-policy-card", tags$b("BeePrime exception"), "The Gurten et al. 99.5% centroids remain a named, study-specific evidence layer for BeePrime and are not reused as universal evidence for unrelated primers.")
@@ -3426,11 +3423,14 @@ server <- function(input, output, session) {
   })
 
   order_lens_position_scores <- reactive({
+    req(input$detail_pair)
+    positions <- read_order_position_scores(input$detail_pair)
     collection <- custom_pair_collection()
-    if (!length(collection)) return(primer_position_scores)
+    if (!length(collection)) return(positions)
     bind_rows(
-      primer_position_scores,
-      bind_rows(lapply(collection, `[[`, "primer_position_scores"))
+      positions,
+      bind_rows(lapply(collection, `[[`, "primer_position_scores")) |>
+        filter(pair_id == input$detail_pair)
     ) |>
       mutate(unavailable_reason = coalesce(unavailable_reason, ""))
   })
@@ -4322,7 +4322,7 @@ server <- function(input, output, session) {
               ),
               title = paste0(
                 "No pair-scorable templates; ", row$n_templates,
-                " consensus templates inspected. Click for details."
+                " reference templates inspected. Click for details."
               ),
               div("NA"), tags$small("0% available")
             )
@@ -4449,7 +4449,10 @@ server <- function(input, output, session) {
       detail <- selected_positions |>
         filter(primer_name == primer_row$primer_name, direction == !!direction) |>
         arrange(primer_position_5_to_3)
-      if (!nrow(detail)) return(div(class = "callout", "No position records."))
+      if (!nrow(detail)) {
+        issue <- attr(order_lens_position_scores(), "position_issue")
+        return(div(class = "callout", if (is.null(issue)) "No position records for this reference template." else issue))
+      }
       div(
         h5(primer_row$primer_name, span(class = "pill", direction)),
         div(
@@ -4604,7 +4607,11 @@ server <- function(input, output, session) {
         ". Tables and downloads use this reference. Publication PCR results retain their original study denominator.")
   })
   output$beeprime_reference_status <- renderUI(beeprime_reference_status_ui())
-  output$lineage_reference_status <- renderUI(beeprime_reference_status_ui())
+  output$lineage_reference_status <- renderUI({
+    if (!identical(input$lineage_marker, "COI")) return(NULL)
+    if (identical(input$lineage_pair, "BEEPRIME")) return(beeprime_reference_status_ui())
+    div(class = "callout tiny", strong("Selected COI reference. "), coi_reference_status(coi_reference_panel))
+  })
   output$region_reference_status <- renderUI(beeprime_reference_status_ui())
 
   beeprime_taxon_data <- reactive({
@@ -6148,7 +6155,7 @@ server <- function(input, output, session) {
       selected = available$pair_id[1], server = TRUE
     )
     targets <- if (input$lineage_marker == "COI") {
-      sort(unique(claimed_primer_orders$order))
+      sort(unique(c(claimed_primer_orders$order, names(coi_reference_panel$counts))))
     } else if (input$lineage_marker == "18S") {
       sort(unique(na.omit(pr2_18s_sets$specificity)))
     } else {
@@ -6165,6 +6172,7 @@ server <- function(input, output, session) {
       if (!panel$available) return(region_geography_catalog[0, ])
       return(as_tibble(panel$geography))
     }
+    if (!identical(input$lineage_pair, "BEEPRIME")) return(as_tibble(coi_reference_geography(coi_reference_panel)))
     release_table("geography", "data/derived/reference_geography.csv") |>
       mutate(
         country_or_territory = na_if(country_or_territory, ""),
@@ -6192,6 +6200,9 @@ server <- function(input, output, session) {
       panel <- beeprime_reference()
       if (!panel$available) return(list(taxonomy = tibble(), geography = tibble()))
       as_tibble(panel$scores)
+    } else if (!identical(input$lineage_pair, "BEEPRIME")) {
+      if (!nrow(coi_reference_panel$taxonomy)) return(list(taxonomy = tibble(), geography = tibble()))
+      as_tibble(coi_reference_panel$taxonomy)
     } else expanded_reference_taxonomy
     geo <- lineage_geography()
     joined <- taxonomy |> left_join(geo, by = "accession")
@@ -6208,14 +6219,14 @@ server <- function(input, output, session) {
       marker_registry$display_name[match(input$lineage_marker, marker_registry$marker_id)],
       " geography and lineage partitions are scheduled for an expanded reference release. Primer combinations and mapped positions are already available in Primer map."
     ))
-    if (!is.null(input$lineage_pair) && input$lineage_pair != "BEEPRIME") {
+    if (!is.null(input$lineage_pair) && input$lineage_pair != "BEEPRIME" && !nrow(coi_reference_panel$taxonomy)) {
       return(div(
         class = "callout tiny",
         strong("Full order-alignment evidence. "),
-        "The Gurten centroid geography is not reused for this primer. Country and lineage denominators appear after its append-only full-panel artifact has been published."
+        "Taxonomy and geography are unavailable for this selected COI panel. Unrelated publication references are not used to fill missing metadata."
       ))
     }
-    if (beeprime_reference_mode() == "expanded" && !beeprime_reference()$available) return(NULL)
+    if (identical(input$lineage_pair, "BEEPRIME") && beeprime_reference_mode() == "expanded" && !beeprime_reference()$available) return(NULL)
     all_rows <- lineage_scope()$geography
     selected <- lineage_scope()$taxonomy
     located <- sum(!is.na(all_rows$country_or_territory))
@@ -6228,7 +6239,18 @@ server <- function(input, output, session) {
 
   lineage_summary_table <- function(source, rank) {
     if (input$lineage_marker != "COI" || is.null(input$lineage_pair)) return(tibble())
-    if (input$lineage_pair != "BEEPRIME") return(tibble())
+    if (input$lineage_pair != "BEEPRIME") {
+      if (!nrow(coi_reference_panel$taxonomy)) return(tibble())
+      rows <- lineage_raw_scores()
+      if (!is.null(input$lineage_target) && input$lineage_target != "All") rows <- rows |> filter(order == input$lineage_target)
+      rows <- rows |> filter(accession %in% lineage_scope()$taxonomy$accession)
+      if (!nrow(rows)) return(tibble())
+      groups <- c("pair_id", "pair_label", "order", "family")
+      if (rank %in% c("subfamily", "genus")) groups <- c(groups, rank)
+      return(as_tibble(summarize_expanded_primer_scores(rows, groups)) |>
+        rename(n_sequences = n_centroids) |>
+        mutate(reference_mode = "full", reference_version = coi_reference_panel$version))
+    }
     if (beeprime_reference_mode() == "expanded") {
       panel <- beeprime_reference()
       if (!panel$available) return(tibble())
@@ -6286,7 +6308,7 @@ server <- function(input, output, session) {
       } else claimed_primer_orders |> filter(pair_id == input$lineage_pair)
     } else {
       order_scores |> filter(pair_id == input$lineage_pair) |>
-        mutate(evidence_source = ifelse(alignment_dir == full_alignment_dir, "full order alignment", "legacy centroid preview · awaiting 1,000-sequence release"))
+        mutate(evidence_source = reference_evidence)
     }
     if (!is.null(input$lineage_target) && input$lineage_target != "All") summary <- summary |> filter(order == input$lineage_target)
     datatable(summary, options = list(pageLength = 12, scrollX = TRUE), filter = "top", rownames = FALSE)
@@ -6407,6 +6429,7 @@ server <- function(input, output, session) {
       if (!panel$available) return(region_geography_catalog[0, ])
       return(as_tibble(panel$geography))
     }
+    if (!identical(input$region_pair, "BEEPRIME")) return(as_tibble(coi_reference_geography(coi_reference_panel)))
     region_geography_catalog
   }) |> bindCache(input$region_marker, input$region_pair, beeprime_reference_mode())
 

@@ -12,6 +12,8 @@ jobs:
       - uses: r-lib/actions/setup-renv@v2
       - name: Install pinned custom-primer scorer
         run: Rscript scripts/install_primerminer.R
+      - name: Install COI alignment tools for clean-worker tests
+        run: sudo apt-get update && sudo apt-get install -y mafft vsearch
       - name: Run regression tests
         run: |
           for test in \
@@ -19,6 +21,9 @@ jobs:
             tests/test_bundle_size.R \
             tests/test_catalog_and_geography.R \
             tests/test_claimed_primer_reference.R \
+            tests/test_coi_scoring_inputs.R \
+            tests/test_coi_retention.R \
+            tests/test_coi_reference_runtime.R \
             tests/test_custom_primer_gate.R \
             tests/test_its_primer_navigator.R \
             tests/test_fungal_explorer.R \
@@ -40,3 +45,5 @@ jobs:
         run: Rscript tests/test_bundle_size.R
       - name: Verify fungal acquisition boundary rules
         run: python3 -m unittest discover -s tests -p test_fungal_reference_panel.py
+      - name: Verify COI acquisition and retention boundaries
+        run: python3 -m unittest discover -s tests -p 'test_coi_*.py'

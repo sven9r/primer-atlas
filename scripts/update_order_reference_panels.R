@@ -1,121 +1,83 @@
 #!/usr/bin/env Rscript
-
-# Append-only COI reference acquisition. The initial target is 1,000 retained
-# sequences per arthropod target group. Each later successful monthly release
-# requests ceil(previous_n * 1.01) and adds only previously unseen accessions.
-
+# Acquire through the feature-aware, append-only Entrez builder. Its panel
+# manifest, original headers and sequence bytes are the retention authority.
 root <- normalizePath(getwd(), mustWork = TRUE)
 .libPaths(c(file.path(root, ".Rlib"), .libPaths()))
-suppressPackageStartupMessages(library(rentrez))
-source(file.path(root, "R", "functions.R"))
+source("R/data_layer.R")
+source("R/coi_retention.R")
 
-orders <- read.csv("data/orders_22.csv", stringsAsFactors = FALSE)
-orders <- orders[orders$order != "Bivalvia", , drop = FALSE]
-baseline <- as.integer(Sys.getenv("COI_ORDER_BASELINE", "1000"))
+panel_dir <- Sys.getenv("COI_PANEL_DIR", "data/derived/coi_reference_panel")
+target_total <- as.integer(Sys.getenv("COI_TARGET_TOTAL", "10000"))
+minimum <- as.integer(Sys.getenv("COI_MIN_PER_GROUP", "100"))
 growth <- as.numeric(Sys.getenv("COI_MONTHLY_GROWTH", "0.01"))
 release_id <- Sys.getenv("RELEASE_ID", format(Sys.Date(), "%Y-%m-%d"))
-dry_run <- identical(tolower(Sys.getenv("DRY_RUN", "false")), "true")
-if (!is.finite(baseline) || baseline < 1000L) stop("COI_ORDER_BASELINE must be at least 1000.")
-if (!is.finite(growth) || growth < 0.01) stop("COI_MONTHLY_GROWTH must be at least 0.01.")
-
-ledger_path <- "data/provenance/coi_reference_accession_ledger.csv"
-ledger <- if (file.exists(ledger_path)) read.csv(ledger_path, stringsAsFactors = FALSE) else data.frame(
-  marker_id = character(), target_group = character(), accession = character(),
-  entrez_uid = character(), first_release_id = character(), added_at_utc = character()
-)
-dir.create(dirname(ledger_path), recursive = TRUE, showWarnings = FALSE)
-
-accession_from_header <- function(x) {
-  token <- sub(" .*", "", sub("^>", "", x))
-  token <- sub("^_R_", "", token)
-  sub("[|].*$", "", token)
+if (!is.finite(target_total) || target_total < 22L * minimum || !is.finite(minimum) || minimum < 100L) stop("COI target must support at least100 records per arthropod target group")
+if (!is.finite(growth) || growth < 0.01) stop("COI monthly growth must be at least0.01")
+python <- Sys.getenv("COI_PYTHON", Sys.which("python3"))
+if (!nzchar(python)) stop("Python3 is required for the COI Entrez builder")
+args <- c("scripts/build_coi_reference_panel.py", "--output-dir", panel_dir,
+          "--target-total", target_total, "--minimum-per-group", minimum,
+          "--growth", growth, "--release-id", release_id)
+previous_dir <- Sys.getenv("COI_PREVIOUS_PANEL_DIR", panel_dir)
+if (file.exists(file.path(previous_dir, "panel.fasta"))) {
+  args <- c(args, "--previous-dir", previous_dir)
+} else if (dir.exists("data/primerminer/raw")) {
+  args <- c(args, "--legacy-raw-dir", "data/primerminer/raw")
 }
-
-query_suffix <- paste0(
-  "[Organism] AND (COI[Gene] OR CO1[Gene] OR COX1[Gene] OR COXI[Gene])",
-  " AND 1200:1800[Sequence Length] NOT COII[Title]"
-)
-qa <- vector("list", nrow(orders))
-
-for (i in seq_len(nrow(orders))) {
-  group <- orders$order[i]
-  existing <- ledger[ledger$target_group == group, , drop = FALSE]
-  previous_n <- length(unique(existing$accession[nzchar(existing$accession)]))
-  target_n <- if (previous_n < baseline) baseline else ceiling(previous_n * (1 + growth))
-  requested_new <- max(0L, target_n - previous_n)
-  query <- paste0(group, query_suffix)
-  message(group, ": retained=", previous_n, ", target=", target_n, ", append=", requested_new)
-
-  search <- rentrez::entrez_search(
-    db = "nuccore", term = query,
-    retmax = max(target_n * 3L, baseline * 3L), sort = "pub date"
-  )
-  candidate_uids <- setdiff(as.character(search$ids), existing$entrez_uid)
-  chosen_uids <- head(candidate_uids, requested_new)
-  added_accessions <- character()
-  added_uids <- character()
-
-  raw_dir <- file.path("data", "primerminer", "raw", group)
-  raw_path <- file.path(raw_dir, paste0(group, "_GB.fasta"))
-  dir.create(raw_dir, recursive = TRUE, showWarnings = FALSE)
-  retained_sequences <- if (file.exists(raw_path)) parse_fasta(raw_path) else character()
-  retained_accessions <- if (length(retained_sequences)) accession_from_header(names(retained_sequences)) else character()
-
-  if (length(chosen_uids) && !dry_run) {
-    for (batch_start in seq(1L, length(chosen_uids), by = 100L)) {
-      batch <- chosen_uids[batch_start:min(batch_start + 99L, length(chosen_uids))]
-      fetched <- rentrez::entrez_fetch(db = "nuccore", id = batch, rettype = "fasta", retmode = "text")
-      scratch <- tempfile(fileext = ".fasta")
-      writeLines(fetched, scratch, useBytes = TRUE)
-      sequences <- parse_fasta(scratch)
-      unlink(scratch)
-      accessions <- accession_from_header(names(sequences))
-      keep <- nzchar(accessions) & !accessions %in% c(retained_accessions, added_accessions)
-      if (any(keep)) {
-        retained_sequences <- c(retained_sequences, sequences[keep])
-        added_accessions <- c(added_accessions, accessions[keep])
-        added_uids <- c(
-          added_uids,
-          if (length(sequences) == length(batch)) batch[keep] else rep(NA_character_, sum(keep))
-        )
-      }
-    }
-    write_fasta <- function(sequences, path) {
-      lines <- unlist(lapply(seq_along(sequences), function(j) {
-        starts <- seq(1L, nchar(sequences[[j]]), by = 80L)
-        c(paste0(">", names(sequences)[j]), substring(sequences[[j]], starts, pmin(starts + 79L, nchar(sequences[[j]]))))
-      }), use.names = FALSE)
-      writeLines(lines, path, useBytes = TRUE)
-    }
-    write_fasta(retained_sequences, raw_path)
-
-    if (length(added_accessions)) {
-      ledger <- rbind(ledger, data.frame(
-        marker_id = "COI", target_group = group,
-        accession = added_accessions, entrez_uid = added_uids,
-        first_release_id = release_id,
-        added_at_utc = format(Sys.time(), tz = "UTC", usetz = TRUE),
-        stringsAsFactors = FALSE
-      ))
-    }
-  }
-
-  retained_after <- previous_n + length(added_accessions)
-  target_met <- retained_after >= target_n
-  source_exhausted <- as.numeric(search$count) <= retained_after
-  qa[[i]] <- data.frame(
-    marker_id = "COI", target_group = group, available_in_ncbi = search$count,
-    previous_retained = previous_n, target_retained = target_n,
-    requested_new = requested_new, added_new = length(added_accessions),
-    target_met = target_met || source_exhausted,
-    target_shortfall_reason = if (target_met) "" else if (source_exhausted) "eligible NCBI query exhausted" else "new eligible accessions were not retained",
-    dry_run = dry_run, release_id = release_id, stringsAsFactors = FALSE
-  )
+if (identical(tolower(Sys.getenv("COI_OFFLINE", "false")), "true")) args <- c(args, "--offline")
+if (identical(tolower(Sys.getenv("COI_REFRESH", "false")), "true")) args <- c(args, "--refresh")
+published_baseline <- Sys.getenv("COI_PUBLISHED_BASELINE", "data/provenance/coi_published_baseline.csv")
+if (!file.exists(published_baseline)) published_baseline <- ""
+if (nzchar(published_baseline)) args <- c(args, "--published-baseline", published_baseline)
+use_existing <- identical(tolower(Sys.getenv("COI_USE_EXISTING_PANEL", "false")), "true")
+if (identical(tolower(Sys.getenv("DRY_RUN", "false")), "true")) {
+  message("COI acquisition dry run; no sequences or provenance were changed")
+  quit(status = 0L)
 }
-
-ledger <- ledger[!duplicated(paste(ledger$target_group, ledger$accession)), , drop = FALSE]
-write.csv(ledger, ledger_path, row.names = FALSE, na = "")
-qa <- do.call(rbind, qa)
-write.csv(qa, "data/provenance/coi_reference_growth_qa.csv", row.names = FALSE, na = "")
-print(qa, row.names = FALSE)
-if (!dry_run && any(!qa$target_met)) stop("One or more order panels did not meet their append-only target and did not exhaust the eligible query; see growth QA.")
+if (!use_existing) {
+  status <- system2(python, vapply(as.character(args), shQuote, character(1)))
+  if (status != 0L) stop("Feature-aware COI acquisition failed; existing retained inputs were not replaced")
+}
+required <- c("panel.fasta", "panel_manifest.csv", "ledger.csv", "taxonomy.csv", "growth_qa.csv", "run_manifest.json")
+if (!all(file.exists(file.path(panel_dir, required)))) stop("Incomplete acquired COI panel")
+sequences <- coi_read_fasta(file.path(panel_dir, "panel.fasta"))
+manifest <- read.csv(file.path(panel_dir, "panel_manifest.csv"), stringsAsFactors = FALSE, check.names = FALSE)
+required_columns <- c("target_group", "accession", "sequence_sha256", "header_sha256", "first_release_id", "added_at_utc")
+if (!all(required_columns %in% names(manifest))) stop("COI panel manifest lacks immutable retention provenance")
+accessions <- coi_accession(names(sequences))
+if (anyDuplicated(manifest$accession) || !setequal(accessions, manifest$accession)) stop("COI panel manifest and sequence identities differ")
+manifest <- manifest[match(accessions, manifest$accession), , drop = FALSE]
+actual_hash <- vapply(unname(sequences), digest::digest, character(1), algo = "sha256", serialize = FALSE)
+header_hash <- vapply(names(sequences), digest::digest, character(1), algo = "sha256", serialize = FALSE)
+if (!identical(tolower(actual_hash), tolower(manifest$sequence_sha256)) ||
+    !identical(tolower(header_hash), tolower(manifest$header_sha256))) stop("COI panel bytes differ from acquired provenance")
+orders <- read.csv("data/orders_22.csv", stringsAsFactors = FALSE)
+groups <- orders$order[orders$order != "Bivalvia"]
+if (!setequal(unique(manifest$target_group), groups)) stop("Acquired COI panel does not contain the22 arthropod target groups")
+# Verify all old records before replacing any group file.
+for (group in groups) {
+  path <- file.path("data/primerminer/raw", group, paste0(group, "_GB.fasta"))
+  if (!file.exists(path)) next
+  old <- coi_retained_records(root, group)
+  current <- manifest[manifest$target_group == group, , drop = FALSE]
+  coi_assert_retention(old, current)
+}
+write_fasta <- function(seqs, path) {
+  dir.create(dirname(path), recursive = TRUE, showWarnings = FALSE)
+  lines <- unlist(lapply(seq_along(seqs), function(i) {
+    start <- seq(1L, nchar(seqs[[i]]), by = 80L)
+    c(paste0(">", names(seqs)[i]), substring(seqs[[i]], start, pmin(start + 79L, nchar(seqs[[i]]))))
+  }), use.names = FALSE)
+  temporary <- tempfile(tmpdir = dirname(path))
+  writeLines(lines, temporary, useBytes = TRUE)
+  if (!file.rename(temporary, path)) stop("Could not install retained COI group input")
+}
+for (group in groups) {
+  seqs <- sequences[manifest$target_group == group]
+  write_fasta(seqs, file.path("data/primerminer/raw", group, paste0(group, "_GB.fasta")))
+}
+dir.create("data/provenance", recursive = TRUE, showWarnings = FALSE)
+if (!file.copy(file.path(panel_dir, "ledger.csv"), "data/provenance/coi_reference_accession_ledger.csv", overwrite = TRUE) ||
+    !file.copy(file.path(panel_dir, "growth_qa.csv"), "data/provenance/coi_reference_growth_qa.csv", overwrite = TRUE)) stop("Could not install acquired COI ledger and QA")
+state <- coi_validate_retained_state(root, groups)
+message("Installed ", nrow(state$records), " retained COI records across", length(groups), " arthropod target groups; historicalBivalvia inputs remain archived separately")

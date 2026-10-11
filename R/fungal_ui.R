@@ -268,21 +268,21 @@ fungalExplorerServer <- function(id) {
       height <- 80+nrow(rows)*65
       div(class="fungal-map",
           tags$svg(viewBox=paste("0 0 1000",height),role="img",`aria-label`="Comparison of selected amplicon product lengths",
-              tags$text(x=10,y=20,`font-size`=13,"Product lengths: median bars and observed min–max ranges"),
+              tags$text(x=10,y=20,`font-size`=16,"Product lengths: median bars and observed min–max ranges"),
               lapply(seq_len(nrow(rows)),function(i) {
                   pair <- rows[i,,drop=FALSE]
                   y <- 45+i*65
-                  tagList(tags$text(x=10,y=y+4,`font-size`=12,pair$pair_label),
+                  tagList(tags$text(x=10,y=y+4,`font-size`=16,pair$pair_label),
                       if(is.finite(pair$amplicon_median_bp)) tagList(
                           tags$line(x1=scale(0),x2=scale(pair$amplicon_median_bp),y1=y,y2=y,stroke=pair$tier_color,`stroke-width`=10),
                           tags$line(x1=scale(pair$amplicon_min_bp),x2=scale(pair$amplicon_max_bp),y1=y-12,y2=y-12,stroke=pair$tier_color,`stroke-width`=2),
-                          tags$text(x=870,y=y+4,`font-size`=12,paste0(pair$amplicon_median_bp," bp")),
-                          tags$text(x=230,y=y+25,`font-size`=10,paste0(pair$n_scorable," / ",pair$n_panel," exact-support templates · ",pair$length_tier)))
-                      else tags$text(x=230,y=y,`font-size`=12,"Unresolved length evidence"))
+                          tags$text(x=870,y=y+4,`font-size`=16,paste0(pair$amplicon_median_bp," bp")),
+                          tags$text(x=230,y=y+25,`font-size`=13,paste0(pair$n_scorable," / ",pair$n_panel," exact-support templates · ",pair$length_tier)))
+                      else tags$text(x=230,y=y,`font-size`=16,"Unresolved length evidence"))
               }),
               lapply(c(input$illumina_max %||% 500,input$pacbio_max %||% 2000,input$nanopore_max %||% 3500),function(bp) tagList(
                   tags$line(x1=scale(bp),x2=scale(bp),y1=40,y2=height-5,stroke="#94a3b8",`stroke-dasharray`="3 5"),
-                  tags$text(x=scale(bp),y=35,`font-size`=10,paste0(bp," bp"))))))
+                  tags$text(x=scale(bp),y=35,`font-size`=13,paste0(bp," bp"))))))
     })
     output$evidence <- renderUI({
       pair <- active_pair()
@@ -341,7 +341,17 @@ fungalExplorerServer <- function(id) {
       rows <- rows[rows$pair_id %in% pair$pair_id,,drop=FALSE]
       taxonomy <- snapshot()$taxonomy
       for (column in intersect(c("annotation_status","annotation_note"),names(taxonomy))) rows[[column]] <- taxonomy[[column]][match(rows$accession,taxonomy$accession)]
-      datatable(rows[,intersect(c("accession","organism","phylum","class","amplicon_bp","status","forward_status","reverse_status","annotation_status","annotation_note"),names(rows)),drop=FALSE],
+      display <- rows[,intersect(c("accession","organism","phylum","class","amplicon_bp","status","forward_status","reverse_status","annotation_status","annotation_note"),names(rows)),drop=FALSE]
+      for(column in intersect(c("status","forward_status","reverse_status","annotation_status"),names(display))) {
+        values <- gsub("_"," ",display[[column]],fixed=TRUE)
+        values[values=="scorable"] <- "Exact product"
+        values[values=="exact compatible site"] <- "Unique exact site"
+        values[values=="partial or unresolved boundaries"] <- "Incomplete boundaries"
+        display[[column]] <- values
+      }
+      labels <- c(accession="Accession",organism="Organism",phylum="Phylum",class="Class",amplicon_bp="Product (bp)",status="Site evidence",forward_status="Forward site",reverse_status="Reverse site",annotation_status="Gene landmarks",annotation_note="Annotation notes")
+      names(display) <- unname(labels[names(display)])
+      datatable(display,
                 rownames=FALSE,options=list(pageLength=5,scrollX=TRUE),class="compact stripe")
     })
     output$download_pairs <- downloadHandler(filename=function() paste0(snapshot()$manifest$id,"-combinations.csv"),content=function(file) {

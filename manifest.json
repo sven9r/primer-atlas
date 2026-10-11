@@ -2725,7 +2725,7 @@
   },
   "files": {
     "app.R": {
-      "checksum": "d375f07c2b8173bb513f6279ab24deac"
+      "checksum": "be66e998cf0bacd8550ea79a9ea8e9e6"
     },
     "data/catalog/claims.csv": {
       "checksum": "7e287c602b958d2d647bbee4089c0b39"
@@ -3164,6 +3164,9 @@
     },
     "data/releases/ITS_FUNGAL/latest.json": {
       "checksum": "1890d80605094aa7de14359e173f70be"
+    },
+    "R/app_assets.R": {
+      "checksum": "dbcba1d53a7015b191d5c1a69092215f"
     },
     "R/coi_promotion.R": {
       "checksum": "111fc39cfaf05ef2fd5569e5cfdf20ba"

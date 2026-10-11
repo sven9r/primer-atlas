@@ -10,6 +10,8 @@ library(dplyr)
 library(stringr)
 library(DT)
 
+source("R/app_assets.R")
+atlas_register_assets("www")
 source("R/functions.R")
 source("R/data_layer.R")
 source("R/coi_retention.R")
@@ -1507,7 +1509,7 @@ institution_banner <- div(
   div(
     class = "banner-home",
     tags$img(
-      src = "evolab-berkeley.png",
+      src = atlas_asset_url("evolab-berkeley.png"),
       alt = "EvoLab UC Berkeley"
     ),
     div(
@@ -1520,17 +1522,17 @@ institution_banner <- div(
     span(class = "banner-support-label", "Research home & support"),
     tags$img(
       class = "banner-logo fulbright",
-      src = "fulbright.png",
+      src = atlas_asset_url("fulbright.png"),
       alt = "Fulbright"
     ),
     tags$img(
       class = "banner-logo walter",
-      src = "walter-benjamin-dfg.png",
+      src = atlas_asset_url("walter-benjamin-dfg.png"),
       alt = "DFG Walter Benjamin Programme"
     ),
     tags$img(
       class = "banner-logo berkeley",
-      src = "uc-berkeley.png",
+      src = atlas_asset_url("uc-berkeley.png"),
       alt = "University of California, Berkeley"
     )
   )
@@ -1571,7 +1573,8 @@ ui <- page_navbar(
         class = "start-grid",
         div(class = "start-card", h3("Find primers"),
             p("Choose an organism group and marker, then browse documented primer pairs and where they bind."),
-            actionButton("go_find", "Find primers", class = "btn-primary btn-sm")),
+            actionButton("go_find", "Find primers", class = "btn-primary btn-sm"),
+            actionButton("go_18s_start", "18S primers", class = "btn-outline-primary btn-sm mt-2")),
         div(class = "start-card", h3("Check COI reference fit"),
             p("Compare COI reference fit and binding-site availability across animal groups. Open a group to inspect its sequences when available."),
             actionButton("go_fit", "Check COI reference fit", class = "btn-primary btn-sm")),
@@ -1601,6 +1604,9 @@ ui <- page_navbar(
     div(
       class = "container-fluid primer-map-page",
       workspace_heading("Find and combine primers", "Explore binding sites, compare amplicon lengths, and inspect the evidence for each combination."),
+      div(class = "mb-3",
+          actionButton("go_18s", "Open 18S primers", class = "btn btn-outline-primary btn-sm"),
+          span(class = "tiny ms-2", "PR2 catalog and documented combinations · opens all organism groups")),
       layout_sidebar(
         sidebar = sidebar(
           width = 340,
@@ -2407,6 +2413,7 @@ server <- function(input, output, session) {
   navigate_from("go_regions", "regions")
   navigate_from("go_taxa", "taxa")
   navigate_from("go_sources", "sources")
+  map_navigation_marker <- reactiveVal(NULL)
   marker_choice_labels <- function(rows) {
     setNames(
       rows$marker_id,
@@ -2494,6 +2501,28 @@ server <- function(input, output, session) {
       )
     }
   }
+  open_18s_pilot <- function() {
+    # Keep the requested marker through the asynchronous organism-input update.
+    # A previous arthropod scope otherwise supplies only COI marker choices.
+    map_navigation_marker(if (identical(input$map_organism, "ALL")) NULL else "18S")
+    updateRadioButtons(session, "map_organism", selected = "ALL")
+    updateSelectInput(session, "map_marker", choices = marker_choice_labels(released_marker_rows), selected = "18S")
+    updateSelectInput(session, "application_filter", selected = character())
+    updateSelectInput(session, "environment_filter", selected = character())
+    updateSelectInput(session, "intent_filter", selected = character())
+    updateSelectInput(session, "map_sort", selected = "binding_site")
+    choices <- pair_choices_for_marker("18S", "ALL", apply_filters = FALSE)
+    update_pair_selector("18S", choices, intersect(default_map_pairs("18S"), unname(choices)))
+    bp <- range(pair_meta$aligned_amplicon_bp[pair_meta$marker_id == "18S"], na.rm = TRUE)
+    limits <- c(max(20, floor(bp[1] / 10) * 10), ceiling(bp[2] / 10) * 10)
+    updateSliderInput(session, "amplicon_range", min = limits[1], max = limits[2], value = limits)
+    updateNavbarPage(session, "main_nav", selected = "find")
+  }
+  navigate_to_18s_from <- function(button) {
+    observeEvent(input[[button]], open_18s_pilot())
+  }
+  navigate_to_18s_from("go_18s")
+  navigate_to_18s_from("go_18s_start")
   output$pair_selector_ui <- renderUI({
     tagList(
       conditionalPanel(
@@ -2525,6 +2554,8 @@ server <- function(input, output, session) {
       )
     )
   })
+  # These inputs drive the visible map even while its filter sidebar is closed.
+  outputOptions(output, "pair_selector_ui", suspendWhenHidden = FALSE)
   selected_map_pairs <- reactive({
     if (identical(input$map_marker, "ITS_FUNGAL")) {
       its_filtered_pair_ids()
@@ -2544,7 +2575,10 @@ server <- function(input, output, session) {
   observeEvent(input$map_organism, {
     rows <- marker_rows_for_organism(input$map_organism, released_only = TRUE)
     if (!nrow(rows)) rows <- released_marker_rows
-    selected <- if (!is.null(input$map_marker) && input$map_marker %in% rows$marker_id) {
+    requested <- isolate(map_navigation_marker())
+    selected <- if (!is.null(requested) && requested %in% rows$marker_id) {
+      requested
+    } else if (!is.null(input$map_marker) && input$map_marker %in% rows$marker_id) {
       input$map_marker
     } else {
       rows$marker_id[1]
@@ -2553,9 +2587,14 @@ server <- function(input, output, session) {
       session, "map_marker",
       choices = marker_choice_labels(rows), selected = selected
     )
+    if (identical(input$map_organism, "ALL") && identical(selected, requested)) map_navigation_marker(NULL)
     if (selected %in% c("COI", "18S")) {
-      choices <- pair_choices_for_marker(selected, input$map_organism)
-      update_pair_selector(selected, choices, unname(choices))
+      opening_18s <- identical(requested, "18S") && identical(input$map_organism, "ALL")
+      choices <- pair_choices_for_marker(selected, input$map_organism, apply_filters = !opening_18s)
+      pair_selection <- if (opening_18s) {
+        intersect(default_map_pairs("18S"), unname(choices))
+      } else unname(choices)
+      update_pair_selector(selected, choices, pair_selection)
     }
   }, ignoreInit = FALSE)
   observeEvent(input$lineage_organism, {

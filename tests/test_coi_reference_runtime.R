@@ -110,13 +110,13 @@ expect_invalid(bad_width, "output differs|width changed")
 
 # Pair detail never reads a global artifact with millions of rows, and a
 # corrupt partition cannot fall back to a legacy table from another cohort.
-position_rows <- data.frame(order = "Araneae", pair_id = "MCO", template = "Araneae_A.1 fixture",
+position_rows <- data.frame(order = scores$order[scores$pair_id == "MCO"], pair_id = "MCO", template = scores$template[scores$pair_id == "MCO"],
   unavailable_reason = "", stringsAsFactors = FALSE)
 loaded$state$manifest$artifacts$full_order_mco_positions <- csv_artifact(position_rows, "mco_positions")
 loaded$state$manifest$artifacts$primer_positions <- list(rows = 11000000L,
   local_path = file.path(fixture_root, "global-must-not-load.csv"), sha256 = strrep("0", 64))
 positions <- coi_reference_pair_positions(loaded, "MCO")
-stopifnot(nrow(positions) == 1L, positions$pair_id == "MCO",
+stopifnot(nrow(positions) == 4L, all(positions$pair_id == "MCO"),
   nrow(coi_reference_pair_positions(loaded, "FOLMER")) == 0L)
 corrupt_partition <- loaded
 corrupt_partition$cache <- new.env(parent = emptyenv())
@@ -124,15 +124,134 @@ corrupt_partition$state$manifest$artifacts$full_order_mco_positions$sha256 <- st
 result <- tryCatch(coi_reference_pair_positions(corrupt_partition, "MCO"), error = identity)
 stopifnot(inherits(result, "error"), grepl("checksum", conditionMessage(result)))
 foreign <- position_rows
-foreign$template <- "OUTSIDE_PANEL.1 fixture"
+foreign$template[1L] <- "OUTSIDE_PANEL.1 fixture"
 outside <- loaded
 outside$cache <- new.env(parent = emptyenv())
 outside$state$manifest$artifacts$full_order_mco_positions <- csv_artifact(foreign, "foreign_positions")
 result <- tryCatch(coi_reference_pair_positions(outside, "MCO"), error = identity)
 stopifnot(inherits(result, "error"), grepl("outside", conditionMessage(result)))
+incomplete <- loaded
+incomplete$cache <- new.env(parent = emptyenv())
+partial_positions <- rbind(position_rows[-1L, ], position_rows[2L, ])
+partial_positions$alignment_position <- c(1L, 1L, 1L, 2L)
+incomplete$state$manifest$artifacts$full_order_mco_positions <- csv_artifact(partial_positions, "incomplete_positions")
+result <- tryCatch(coi_reference_pair_positions(incomplete, "MCO"), error = identity)
+stopifnot(inherits(result, "error"), grepl("every template", conditionMessage(result)))
 normalized <- coi_reference_pair_taxonomy(loaded, scores)
 stopifnot(all(normalized$cluster_size == 1L), all(normalized$forward_penalty == 0),
   all(!normalized$terminal_3_mismatch_pair), all(normalized$reference_version == "runtime-fixture"))
+
+# Full partitions must match the requested pair and the complete selected
+# cohort; BeePrime's named publication scope remains independent.
+pair_rows <- scores[scores$pair_id == "MCO", ]
+checked <- coi_reference_check_pair_scores(loaded, pair_rows, "MCO")
+stopifnot(nrow(checked) == 4L)
+wrong_pair <- pair_rows
+wrong_pair$pair_id[1L] <- "FOLMER"
+foreign_pair <- pair_rows
+foreign_pair$order[1L] <- "Foreign"
+wrong_accession <- pair_rows
+wrong_accession$accession[1L] <- "Foreign.1"
+for (bad in list(wrong_pair, foreign_pair, wrong_accession, pair_rows[-1L, ])) {
+  result <- tryCatch(coi_reference_check_pair_scores(loaded, bad, "MCO"), error = identity)
+  stopifnot(inherits(result, "error"))
+}
+publication_rows <- pair_rows[1L, ]
+publication_rows$pair_id <- "BEEPRIME"
+publication_rows$order <- "Independent publication group"
+stopifnot(identical(coi_reference_check_pair_scores(loaded, publication_rows, "BEEPRIME"), publication_rows))
+
+normalized_pair <- coi_reference_pair_taxonomy(loaded, checked)
+families <- coi_reference_taxon_summary(normalized_pair, "Araneae", "family")
+unknown_family <- families[families$taxon == "family unresolved", ]
+unknown_rows <- coi_reference_taxon_filter(normalized_pair[normalized_pair$order == "Araneae", ], "family", unknown_family$taxon)
+stopifnot(sum(families$n_centroids) == 2L, unknown_family$n_centroids == 1L,
+          nrow(unknown_rows) == 1L, is.na(unknown_rows$family),
+          unknown_rows$organism_label == "Example organism", unknown_rows$scientific_name_ncbi == "Example organism")
+exact <- coi_reference_selected_alignments(loaded, unknown_rows$accession)
+stopifnot(length(exact) == 1L, nchar(exact) == 1536L,
+          coi_accession(names(exact)) == unknown_rows$accession)
+result <- tryCatch(coi_reference_selected_alignments(loaded, "Foreign.1"), error = identity)
+stopifnot(inherits(result, "error"))
+
+# Exercise the actual main-app reactive branches with a small frozen cohort,
+# including selection of an unresolved family and its exact organisms.
+suppressPackageStartupMessages(library(shiny))
+suppressPackageStartupMessages(library(dplyr))
+app_ast <- parse("app.R")
+assignment_name <- function(value) {
+  if (is.call(value) && identical(value[[1L]], as.name("<-")) && is.symbol(value[[2L]])) as.character(value[[2L]]) else ""
+}
+app_assignment <- function(name) app_ast[[which(vapply(app_ast, assignment_name, character(1)) == name)]]
+runtime_environment <- new.env(parent = globalenv())
+runtime_environment$coi_reference_panel <- loaded
+runtime_environment$coi_release_state <- loaded$state
+runtime_environment$coi_release_state$manifest$artifacts$full_order_mco <- csv_artifact(pair_rows, "mco_sequence_partition")
+runtime_environment$coi_reference_panel$state <- runtime_environment$coi_release_state
+runtime_environment$coi_reference_current <- function() runtime_environment$coi_reference_panel
+eval(app_assignment("pair_sequence_evidence_spec"), runtime_environment)
+eval(app_assignment("read_pair_sequence_evidence"), runtime_environment)
+server_statements <- as.list(app_assignment("server")[[3L]][[3L]])[-1L]
+callback_names <- c("custom_detail_active", "full_general_detail", "full_general_raw_scores", "claimed_pair_overall",
+                    "targeted_zbj_active", "claimed_selected_scope", "claimed_taxon_data", "claimed_selected_orders",
+                    "claimed_taxon_selection", "claimed_taxon_selection_observer", "claimed_selected_taxon",
+                    "claimed_raw_scores", "claimed_selected_sequence_data")
+callbacks <- server_statements[vapply(server_statements, assignment_name, character(1)) %in% callback_names]
+fixture_server <- function(input, output, session) {
+  beeprime_reference_mode <- function() "publication"
+  for (statement in callbacks) eval(statement, environment())
+}
+environment(fixture_server) <- runtime_environment
+shiny::testServer(fixture_server, {
+  session$setInputs(detail_pair = "MCO", detail_order = "Araneae", claimed_taxon_rank = "family", claimed_taxon_sort = "taxon")
+  stopifnot(full_general_detail(), !targeted_zbj_active(), claimed_pair_overall()$n_centroids == 4L,
+            claimed_selected_scope()$n_centroids == 2L, sum(claimed_taxon_data()$n_centroids) == 2L)
+  unknown_index <- which(claimed_taxon_data()$taxon == "family unresolved")
+  session$setInputs(claimed_taxon_table_rows_selected = unknown_index)
+  selected <- claimed_selected_sequence_data()
+  stopifnot(nrow(selected) == 1L, selected$accession == unknown_rows$accession,
+            selected$organism_label == "Example organism", is.na(selected$family))
+})
+
+# Human-readable display projections preserve the exact source row indices;
+# filtered downloads keep all scientific fields and the frozen gapped bases.
+lineage_names <- c("lineage_geography", "lineage_scope", "lineage_summary_table", "lineage_raw_scores",
+  "lineage_family_selection", "lineage_family_selection_observer", "lineage_selected_family", "lineage_selected_family_order", "lineage_sequence_data", "lineage_summary_display", "lineage_sequence_display",
+  "lineage_selected_alignments", "write_lineage_sequence_csv", "write_lineage_alignment_fasta")
+lineage_callbacks <- server_statements[vapply(server_statements, assignment_name, character(1)) %in% lineage_names]
+lineage_server <- function(input, output, session) {
+  beeprime_reference_mode <- function() "publication"
+  claimed_primer_families <- claimed_primer_subfamilies <- claimed_primer_genera <- tibble()
+  for (statement in lineage_callbacks) eval(statement, environment())
+}
+environment(lineage_server) <- runtime_environment
+shiny::testServer(lineage_server, {
+  session$setInputs(lineage_marker = "COI", lineage_pair = "MCO", lineage_target = "Araneae",
+                    lineage_country = "All", lineage_locality = "All")
+  source_summary <- lineage_summary_table(claimed_primer_families, "family")
+  display_summary <- lineage_summary_display(source_summary, "family")
+  stopifnot(identical(display_summary$Family, source_summary$family),
+            identical(display_summary$References, source_summary$n_sequences),
+            identical(display_summary$`Scorable %`, round(source_summary$pair_scorable_fraction * 100, 1)),
+            !any(c("reference_version", "pair_id", "pair_label") %in% names(display_summary)))
+  index <- which(source_summary$family == "family unresolved")
+  session$setInputs(lineage_families_rows_selected = index)
+  selected <- lineage_sequence_data()
+  display_sequences <- lineage_sequence_display(selected)
+  stopifnot(nrow(selected) == 1L, identical(selected$accession, unknown_rows$accession),
+            identical(display_sequences$Accession, selected$accession), display_sequences$Family == "Unresolved",
+            sum(names(display_sequences) == "Organism") == 1L, !"reference_version" %in% names(display_sequences))
+  csv_path <- tempfile(fileext = ".csv")
+  fasta_path <- tempfile(fileext = ".fasta")
+  write_lineage_sequence_csv(csv_path)
+  write_lineage_alignment_fasta(fasta_path)
+  exported <- read.csv(csv_path, check.names = FALSE, stringsAsFactors = FALSE)
+  exported_fasta <- parse_fasta(fasta_path)
+  stopifnot(identical(names(exported), names(selected)), identical(exported$accession, selected$accession),
+            isTRUE(all.equal(exported$pair_penalty, selected$pair_penalty)),
+            identical(exported_fasta, lineage_selected_alignments()), nchar(exported_fasta) == 1536L)
+  unlink(c(csv_path, fasta_path))
+})
 
 # A complete local build may activate before publication, with an explicit
 # label. Loose full-alignment files alone cannot replace the chosen release.
@@ -173,7 +292,34 @@ for (pair in pairs) {
 }
 local <- .coi_reference_local_full(state, fixture_root, 1L, 4L)
 stopifnot(local$mode == "full_local", local$n_references == 4L,
-  grepl("publication pending", coi_reference_status(local)), nrow(coi_reference_pair_positions(local, "MCO")) == 1L)
+  grepl("publication pending", coi_reference_status(local)), nrow(coi_reference_pair_positions(local, "MCO")) == 4L)
+
+# A local cohort must meet the same growth and marker-proof contract as an
+# immutable hosted release; plausible score counts cannot rescue stale QA.
+growth_path <- file.path(fixture_root, "data/provenance/coi_reference_growth_qa.csv")
+python_qa <- qa
+python_qa$target_met <- "True"
+write.csv(python_qa, growth_path, row.names = FALSE)
+stopifnot(.coi_reference_local_full(state, fixture_root, 1L, 4L)$mode == "full_local")
+invalid_growth <- list(
+  missing_group = qa[-1L, ],
+  foreign_group = transform(qa, target_group = c("Foreign", groups[2L])),
+  stale_count = transform(qa, retained_after = retained_after + 1L),
+  failed_target = transform(qa, target_met = FALSE),
+  python_false = transform(qa, target_met = "False"),
+  invalid_flag = transform(qa, target_met = "unknown"),
+  missed_growth = transform(qa, previous_retained = retained_after, added_new = 0L),
+  unverified = transform(qa, verified_marker_records = 0L),
+  inflated_verified = transform(qa, verified_marker_records = retained_after + 1L),
+  missing_value = transform(qa, verified_marker_records = NA_integer_)
+)
+for (bad in invalid_growth) {
+  write.csv(bad, growth_path, row.names = FALSE)
+  result <- tryCatch(.coi_reference_local_full(state, fixture_root, 1L, 4L), error = identity)
+  stopifnot(inherits(result, "error"), grepl("growth proof", conditionMessage(result)))
+}
+write.csv(qa, growth_path, row.names = FALSE)
+stopifnot(.coi_reference_local_full(state, fixture_root, 1L, 4L)$mode == "full_local")
 scoring_manifest$alignment_sha256[1] <- strrep("0", 64)
 write.csv(scoring_manifest, file.path(fixture_root, "data/provenance/order_scoring_manifest.csv"), row.names = FALSE)
 result <- tryCatch(.coi_reference_local_full(state, fixture_root, 1L, 4L), error = identity)

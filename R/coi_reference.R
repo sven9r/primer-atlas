@@ -54,6 +54,29 @@ coi_reference_artifact <- function(artifact, root = getwd()) {
   invisible(TRUE)
 }
 
+.coi_reference_check_growth <- function(growth, groups, counts, minimum_per_group, minimum_total) {
+  columns <- c("target_group", "previous_retained", "added_new", "retained_after", "target_met", "verified_marker_records")
+  if (!all(columns %in% names(growth)) || anyNA(growth[columns])) {
+    stop("COI growth proof and the actual retained panel differ")
+  }
+  if (!is.logical(growth$target_met)) {
+    flags <- tolower(trimws(as.character(growth$target_met)))
+    if (any(!flags %in% c("true", "false"))) stop("COI growth proof has an invalid target flag")
+    growth$target_met <- flags == "true"
+  }
+  if (anyDuplicated(growth$target_group) ||
+      !setequal(growth$target_group, groups) || any(!growth$target_met) ||
+      any(growth$retained_after != as.integer(counts[growth$target_group])) ||
+      any(growth$retained_after != growth$previous_retained + growth$added_new) ||
+      any(growth$previous_retained < 0L) || any(growth$added_new < 0L) ||
+      any(growth$retained_after < ceiling(growth$previous_retained * 1.01)) ||
+      any(growth$verified_marker_records > growth$retained_after) ||
+      any(growth$verified_marker_records < minimum_per_group) || sum(growth$verified_marker_records) < minimum_total) {
+    stop("COI growth proof and the actual retained panel differ")
+  }
+  invisible(TRUE)
+}
+
 .coi_reference_taxonomy <- function(value, groups, records = NULL) {
   if (is.null(value)) return(data.frame())
   if (!all(c("target_group", "accession") %in% names(value))) stop("COI taxonomy lacks group/accession identities")
@@ -154,15 +177,7 @@ coi_reference_artifact <- function(artifact, root = getwd()) {
     .coi_reference_taxonomy(coi_reference_artifact(artifacts$panel_taxonomy, root), groups, records)
   } else data.frame()
   growth <- coi_reference_artifact(artifacts$growth_qa, root)
-  growth_columns <- c("target_group", "previous_retained", "added_new", "retained_after", "target_met", "verified_marker_records")
-  if (!all(growth_columns %in% names(growth)) || anyDuplicated(growth$target_group) ||
-      !setequal(growth$target_group, groups) || any(!growth$target_met) ||
-      any(growth$retained_after != as.integer(counts[growth$target_group])) ||
-      any(growth$retained_after != growth$previous_retained + growth$added_new) ||
-      any(growth$added_new < 0L) || any(growth$retained_after < ceiling(growth$previous_retained * 1.01)) ||
-      any(growth$verified_marker_records < minimum_per_group) || sum(growth$verified_marker_records) < minimum_total) {
-    stop("COI growth proof and the actual retained panel differ")
-  }
+  .coi_reference_check_growth(growth, groups, counts, minimum_per_group, minimum_total)
   list(mode = "full_release", alignment_mode = "full", state = state,
     version = manifest$release_version, overview = overview, paths = unlist(paths), alignments = alignments,
     counts = setNames(as.integer(counts), groups), n_references = as.integer(sum(counts)),
@@ -232,6 +247,7 @@ coi_reference_artifact <- function(artifact, root = getwd()) {
   taxonomy <- if (file.exists(taxonomy_path)) .coi_reference_taxonomy(read.csv(taxonomy_path, stringsAsFactors = FALSE), groups, records) else data.frame()
   qa_path <- file.path(root, "data/provenance/coi_reference_growth_qa.csv")
   growth <- if (file.exists(qa_path)) read.csv(qa_path, stringsAsFactors = FALSE) else data.frame()
+  .coi_reference_check_growth(growth, groups, counts, minimum_per_group, minimum_total)
   list(mode = "full_local", alignment_mode = "full", state = local_state,
     version = local_state$manifest$release_version, overview = overview, paths = setNames(inputs$files, groups),
     alignments = alignments, counts = counts, n_references = as.integer(sum(counts)), taxonomy = taxonomy,
@@ -297,7 +313,7 @@ coi_reference_status <- function(reference) {
       format(reference$preview_count, big.mark = ","), "-template legacy centroid preview.")
   } else {
     text <- paste0(count, " legacy COI centroid preview templates · release ", reference$version,
-      ". A complete full-sequence panel requires at least 10,000 retained records and 100 per target group.")
+      ". A complete full-sequence panel requires at least 10,000 marker-verified COI records overall and 100 per target group; inherited records with unresolved marker QC are reported separately.")
   }
   if (!is.null(reference$issue) && nzchar(reference$issue)) text <- paste0(text, " A newer reference could not be verified: ", reference$issue, ".")
   growth <- reference$growth_qa
@@ -315,6 +331,26 @@ coi_reference_status <- function(reference) {
     position_penalty = numeric(), mismatch = logical(), unavailable_reason = character(), stringsAsFactors = FALSE)
 }
 
+coi_reference_pair_sequences <- function(reference, pair_id, root = getwd()) {
+  if (length(pair_id) != 1L || is.na(pair_id) || !nzchar(pair_id)) return(data.frame())
+  name <- if (identical(pair_id, "BEEPRIME")) "exact_beeprime" else paste0("full_order_", tolower(pair_id))
+  artifact <- reference$state$manifest$artifacts[[name]]
+  if (is.null(artifact)) return(data.frame())
+  key <- paste0("scores_", pair_id, "_", artifact$sha256)
+  if (!identical(pair_id, "BEEPRIME") && exists(key, envir = reference$cache, inherits = FALSE)) {
+    return(get(key, envir = reference$cache))
+  }
+  scores <- coi_reference_artifact(artifact, root)
+  scores <- coi_reference_check_pair_scores(reference, scores, pair_id)
+  if (!identical(pair_id, "BEEPRIME")) {
+    scores <- coi_reference_pair_taxonomy(reference, scores)
+    previous <- ls(reference$cache, pattern = "^scores_")
+    if (length(previous) >= 2L) rm(list = previous[1L], envir = reference$cache)
+    assign(key, scores, envir = reference$cache)
+  }
+  scores
+}
+
 coi_reference_pair_positions <- function(reference, pair_id, maximum_legacy_rows = 2000000L) {
   if (length(pair_id) != 1L || is.na(pair_id) || !nzchar(pair_id) || grepl("^CUSTOM_", pair_id)) return(.coi_reference_empty_positions())
   key <- paste0("positions_", pair_id)
@@ -328,7 +364,9 @@ coi_reference_pair_positions <- function(reference, pair_id, maximum_legacy_rows
     if (!all(c("pair_id", "order", "template") %in% names(value)) || any(value$pair_id != pair_id)) stop("COI position partition has the wrong pair identity")
     if (reference$alignment_mode == "full" && nrow(reference$records)) {
       membership <- paste(reference$records$target_group, reference$records$accession)
-      if (any(!paste(value$order, coi_accession(value$template)) %in% membership)) stop("COI position partition is outside the selected frozen panel")
+      observed <- paste(value$order, coi_accession(value$template))
+      if (any(!observed %in% membership)) stop("COI position partition is outside the selected frozen panel")
+      if (!setequal(observed, membership)) stop("COI position partition does not cover every template in the selected frozen panel")
       if ("alignment_position" %in% names(value) &&
           any(!is.finite(value$alignment_position) | value$alignment_position < 1L | value$alignment_position > 1536L)) {
         stop("COI position partition contains invalid alignment columns")
@@ -365,6 +403,8 @@ coi_reference_pair_taxonomy <- function(reference, scores) {
   for (column in c("family", "subfamily", "genus", "species", "organism")) {
     if (!column %in% names(scores)) scores[[column]] <- rep(NA_character_, nrow(scores))
   }
+  if (!"organism_label" %in% names(scores)) scores$organism_label <- scores$organism
+  if (!"scientific_name_ncbi" %in% names(scores)) scores$scientific_name_ncbi <- scores$organism
   if (!"forward_penalty" %in% names(scores)) scores$forward_penalty <- scores$forward_primerminer_penalty
   if (!"reverse_penalty" %in% names(scores)) scores$reverse_penalty <- scores$reverse_primerminer_penalty
   if (!"cluster_size" %in% names(scores)) scores$cluster_size <- rep(1L, nrow(scores))
@@ -374,6 +414,53 @@ coi_reference_pair_taxonomy <- function(reference, scores) {
   scores$reference_mode <- "full"
   scores$reference_version <- reference$version
   scores
+}
+
+coi_reference_check_pair_scores <- function(reference, scores, pair_id) {
+  if (!all(c("pair_id", "order", "template") %in% names(scores)) ||
+      anyNA(scores$pair_id) || any(scores$pair_id != pair_id)) {
+    stop("COI sequence partition has the wrong pair identity")
+  }
+  if (reference$alignment_mode == "full" && !identical(pair_id, "BEEPRIME")) {
+    accession <- coi_accession(scores$template)
+    if ("accession" %in% names(scores) && anyNA(scores$accession)) stop("COI sequence partition lacks accession identities")
+    if ("accession" %in% names(scores) && any(scores$accession != accession)) stop("COI sequence partition has inconsistent accession identities")
+    scores$accession <- accession
+    membership <- paste(reference$records$target_group, reference$records$accession)
+    if (any(!paste(scores$order, scores$accession) %in% membership)) stop("COI sequence partition is outside the selected frozen panel")
+    overview <- reference$overview[reference$overview$pair_id == pair_id, , drop = FALSE]
+    .coi_reference_check_scores(scores, overview, names(reference$counts), reference$records)
+  }
+  scores
+}
+
+coi_reference_taxon_filter <- function(scores, rank, value) {
+  if (!rank %in% names(scores) || length(value) != 1L || is.na(value)) return(scores[FALSE, , drop = FALSE])
+  values <- as.character(scores[[rank]])
+  unresolved <- is.na(values) | !nzchar(trimws(values))
+  keep <- if (identical(as.character(value), paste0(rank, " unresolved"))) unresolved else !unresolved & values == value
+  scores[keep, , drop = FALSE]
+}
+
+coi_reference_taxon_summary <- function(scores, group, rank) {
+  if (!rank %in% c("family", "subfamily", "genus")) stop("Unsupported COI taxonomy rank")
+  rows <- scores[scores$order == group, , drop = FALSE]
+  if (!nrow(rows)) return(data.frame())
+  groups <- c("pair_id", "pair_label", "order", "family")
+  if (rank != "family") groups <- c(groups, rank)
+  summary <- summarize_expanded_primer_scores(rows, groups)
+  summary$taxon <- summary[[rank]]
+  summary$context <- if (rank == "family") summary$order else paste(summary$order, summary$family, sep = " · ")
+  summary
+}
+
+coi_reference_selected_alignments <- function(reference, accessions) {
+  if (reference$alignment_mode != "full") stop("Frozen full COI alignments are unavailable")
+  sequences <- do.call(c, unname(reference$alignments))
+  keys <- coi_accession(names(sequences))
+  selected <- match(unique(as.character(accessions)), keys)
+  if (anyNA(selected)) stop("Selected COI accessions are outside the frozen alignment")
+  sequences[selected]
 }
 
 coi_reference_geography <- function(reference) {

@@ -1,9 +1,11 @@
 # Growing COI references, families, and ecological comparisons
 
 **Requirement clarified and corrected by the user:** 2026-10-02.
-**Implementation status:** required next scientific milestone; incomplete in
-the published 2026.10.02 app. This document defines the work and its acceptance
-criteria; it does not claim that a new sequence pipeline has been deployed.
+**Implementation status, 2026-10-11:** local acquisition and retention proof
+pass; full real-panel alignment and scoring are complete for all 22 groups.
+Hosted staging failed before acquisition and published no release.
+The published 2026.10.02 app remains unchanged. Family
+coverage inventories and ecological comparisons are still incomplete.
 
 ## Core purpose
 
@@ -61,12 +63,14 @@ mollusks, and the broader zooplankton grouping already in the app.
 
 An order-wide total is insufficient to establish family coverage. Additional
 sequences should be able to fill missing families and regional gaps rather
-than only increase the size of already common lineages. The existing minimum
-1% per-order growth policy is a volume floor, not evidence that every family
-or ecological region has been sampled adequately. The working planning
-assumption is to fill family and regional coverage gaps first, then increase
-overall counts. An optional user question about that acquisition priority is
-pending; this assumption does not change the current 1% pipeline settings.
+than only increase the size of already common lineages. The minimum 1%
+retained-growth policy for each supported group is a volume floor, not
+evidence that every family or ecological region has been sampled adequately.
+The current user goal is **10,000 marker-verified COI records overall and at
+least 100 in each supported group**, rather than 1,000 per group. Preserved
+historical records with unresolved or failed current marker QC remain
+separate from the verified denominator. Family and regional gap filling
+remains a scientific requirement beyond those volume targets.
 
 “Every family” means every family in the explicitly versioned inventory for
 the supported order. A family with no eligible sequence must appear as a
@@ -134,6 +138,11 @@ the pilot alone does not complete that requirement.
 
 ## Code and public-artifact audit on 2026-10-02
 
+This is the historical audit of the published baseline. The October 11 local
+implementation below supersedes its restoration, alignment-invalidation and
+general-reference consumer gaps in the working branch; it has not yet
+replaced the public release or completed the ecological requirements.
+
 - `.github/workflows/monthly-release.yml` restores the accession ledger from
   mutable R2 state, but does not restore its retained raw FASTA files.
   `scripts/update_order_reference_panels.R` uses the ledger to calculate
@@ -165,6 +174,56 @@ the pilot alone does not complete that requirement.
   Its growth QA records zero previous retained accessions for all 22 groups;
   this release cannot prove cross-month persistence. No immutable reference
   state is described by that manifest.
+
+## Local implementation and proof on 2026-10-11
+
+The [dated growth note](2026-10-11-coi-growth.md) records a real second
+acquisition: 12,721 to 12,860 retained records, 11,838 to 11,977 verified
+markers, 139 additions, and unchanged sequence/header hashes for every prior
+record. All 22 groups meet at least 1% retained growth and have at least 101
+verified markers. The proof also validates 327 checksummed source files.
+Recovered published accession membership is preserved, but unavailable
+historical raw bytes cannot be retrospectively verified.
+
+Completed local machinery and checks include:
+
+- Complete immutable retained-state descriptors and checksummed restoration
+  of raw files, ledgers and alignment inputs, with clean-worker retention,
+  corruption and incomplete-state fixtures.
+- Feature-aware NCBI acquisition with source-backed order/family/genus/species
+  metadata, unresolved ranks, deduplication and explicit marker-QC outcomes.
+- Alignment invalidation on changed sequence or coordinate-reference inputs,
+  and release validation that reconciles reference identities and counts.
+- Coherent app loading of a verified full release or complete consistent local
+  build. A damaged release cannot silently mix its scores with legacy local
+  references. Position evidence loads by pair, and legacy centroid previews
+  carry an explicit scope label. BeePrime study denominators remain separate.
+- Per-marker monthly-workflow serialization and a check immediately before
+  promotion against the currently hosted COI release. A candidate must retain
+  its exact sequences, headers and scientific source archives. First activation
+  from the legacy release instead verifies accession membership and its frozen
+  publication URL/checksum, without asserting unavailable original raw bytes.
+  Unavailable or stale hosted pointers prevent promotion.
+- Legacy bootstrap preserves the publication source URL/checksum separately
+  from the new NCBI response hashes; the real R-to-Python recovery regression
+  verifies that distinction.
+
+Full alignment and scoring of this real panel finished successfully for all
+22 groups: 550 group/pair summaries, 321,500 pair/template rows, 643,000
+primer/template rows and 14,904,740 position rows. The app's COI map retains
+the fixed NC_001322.1 geometry; full alignments supply placement support and
+sequence-score evidence, rather than a new all-reference visual alignment
+matrix. The monthly first-day 06:00 UTC schedule remains in
+place. [Successful staging run 38144690584](https://github.com/sven9r/primer-atlas/actions/runs/38144690584)
+restored the frozen seed and added 145 distinct accession versions: 13,005
+retained / 12,122 verified records, minimum 103 verified per group. Anonymous
+raw/ledger reads establish exact seed sequence/header retention and real
+per-group growth; all 988 hosted artifacts passed SHA-256 read-back. Public
+pointers remain unchanged, and app activation awaits PR #22 review and merge.
+A second clean worker restoring that hosted full state, complete family
+inventories with zero-reference gaps,
+aquatic eligibility, new-reference geography and ecological comparisons remain
+acceptance work, not completed results.
 
 ## Completion gates
 

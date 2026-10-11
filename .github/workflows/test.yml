@@ -18,13 +18,19 @@ jobs:
         run: |
           for test in \
             tests/test_18s_catalog_ui.R \
+            tests/test_beeprime_deep_reference.R \
             tests/test_bundle_size.R \
             tests/test_catalog_and_geography.R \
             tests/test_claimed_primer_reference.R \
             tests/test_coi_scoring_inputs.R \
             tests/test_coi_retention.R \
+            tests/test_coi_bootstrap_provenance.R \
+            tests/test_coi_hosted_retention.R \
+            tests/test_coi_promotion.R \
             tests/test_coi_reference_runtime.R \
+            tests/test_coi_refresh.R \
             tests/test_coi_panel_install.R \
+            tests/test_custom_expanded_reference_bounds.R \
             tests/test_custom_primer_gate.R \
             tests/test_its_primer_navigator.R \
             tests/test_fungal_explorer.R \
@@ -35,6 +41,7 @@ jobs:
             tests/test_order_lens_interaction.R \
             tests/test_primer_map_domain.R \
             tests/test_primer_map_details.R \
+            tests/test_primerminer_runtime.R \
             tests/test_region_comparison.R \
             tests/test_reference_panel_policy.R \
             tests/test_reference_alignment_choice.R \

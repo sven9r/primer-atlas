@@ -100,7 +100,7 @@ coi_validate_full_alignment <- function(alignment_path, raw_path, reference_path
     names(values) <- sub("^>", "", lines[starts]); values
   }
   reference <- grepl("^(_R_)?NC_001322[.]1_COX1_reference([[:space:]]|$)", names(aligned))
-  if (sum(reference) != 1L || any(nchar(aligned) != 1536L)) stop("Full COI alignment must contain one reference and1536 columns")
+  if (sum(reference) != 1L || any(nchar(aligned) != 1536L)) stop("Full COI alignment must contain one reference and 1536 columns")
   accessions <- coi_accession(names(aligned)[!reference])
   if (anyDuplicated(accessions) || !setequal(accessions, coi_accession(names(raw))) || length(accessions) != length(raw)) {
     stop("Full COI alignment does not contain every retained raw accession exactly once")
@@ -184,7 +184,8 @@ coi_recover_published_membership <- function(manifest, root = getwd()) {
   groups <- orders$order[orders$order != "Bivalvia"]
   result <- data.frame(target_group = rows[[group_column]], accession = coi_accession(rows[[template_column]]),
     template = rows[[template_column]], published_release_id = manifest$release_version,
-    publication_artifact_sha256 = artifact$sha256,
+    published_artifact_url = if (is.null(artifact$url)) "" else artifact$url,
+    published_artifact_sha256 = artifact$sha256,
     original_raw_bytes_available = FALSE, stringsAsFactors = FALSE)
   result <- result[result$target_group %in% groups & nzchar(result$accession) &
     !grepl("^NC_001322[.]1_COX1_reference", result$accession), , drop = FALSE]

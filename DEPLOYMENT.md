@@ -5,6 +5,12 @@
 Connect this public GitHub repository in Connect Cloud and deploy `app.R` from
 `main`. Set `ATLAS_MANIFEST_BASE_URL` to the public R2 URL ending in `/releases`.
 Runtime writes are caches only and may disappear when a worker stops.
+The app checks this hosted pointer when a session opens, every ten minutes,
+and through **Check for COI updates**. It verifies a complete candidate before
+swapping that session's reference; a failed check preserves the current cohort.
+Without the environment variable, it can only inspect the bundled pointer.
+The Connect bundle includes the unchanged pinned PrimerMiner evaluator and
+tables, so custom COI scoring does not require the installed build-only package.
 
 ## Cloudflare R2
 
@@ -24,7 +30,7 @@ gh variable list
 After configuration, start a controlled release and follow it to completion:
 
 ```bash
-gh workflow run monthly-release.yml
+gh workflow run monthly-release.yml -f marker=all -f promote=false
 gh run watch
 ```
 
@@ -33,6 +39,23 @@ Do not close a release-failure issue until both marker jobs pass, their
 load the promoted manifests. The workflow has an early configuration gate so a
 missing secret or variable is reported before the reference builds consume
 runner time.
+
+The schedule runs both markers on the first day of each month at 06:00 UTC.
+Manual dispatch defaults to ITS_FUNGAL; select `COI` or `all` explicitly when
+testing the growing COI panel. Each marker's publisher is serialized. COI
+promotion also checks the currently hosted latest panel for exact retained
+sequence/header hashes and scientific source archives before replacing its
+pointer. A failed or stale current-pointer read prevents promotion.
+
+The legacy public COI release lacks recoverable full raw state. Its first
+activation must therefore start from an explicitly verified full-state staging
+release, after the app implementation is reviewed and merged. Use
+`coi_previous_release_id` to select that immutable release and `promote=true`
+to build, validate, host and activate its next append-only version. Ordinary
+scheduled runs then restore the complete state selected by `latest.json`.
+See the dated [COI validation record](docs/2026-10-11-coi-growth.md) for actual
+staging release identities and proof limits. The temporary frozen seed is only
+for controlled recovery tests; it is not the recurring storage backend.
 
 ## GitHub Pages
 

@@ -71,6 +71,9 @@ if [ "$PROMOTE_RELEASE" != true ]; then
   echo "Immutable release uploaded and verified; latest.json retained (PROMOTE_RELEASE=false)."
   exit 0
 fi
+if [ "$MARKER_ID" = COI ]; then
+  Rscript scripts/verify_coi_promotion.R
+fi
 aws s3 cp "$source_dir/manifest.json" "s3://${R2_BUCKET}/releases/${MARKER_ID}/latest.json" \
   --endpoint-url "$endpoint" --content-type application/json --cache-control no-cache
 

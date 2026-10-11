@@ -70,8 +70,8 @@ shiny::testServer(app$serverFuncSource(), {
             sum(beeprime_taxon_data()$n_centroids) == 590L)
 })
 
-old_release <- coi_release_state
-coi_release_state$manifest$reference_panels$beeprime_expanded <- descriptor
+old_reference <- coi_reference_panel
+coi_reference_panel$state$manifest$reference_panels$beeprime_expanded <- descriptor
 shiny::testServer(app$serverFuncSource(), {
   session$setInputs(map_marker = "COI", map_organism = "ALL", amplicon_range = c(110, 710),
     pair_select = "MCO", sodium = 50, ta_offset = 4,
@@ -93,5 +93,5 @@ shiny::testServer(app$serverFuncSource(), {
   session$setInputs(beeprime_reference_mode = "publication")
   stopifnot(sum(beeprime_taxon_data()$n_centroids) == 590L)
 })
-coi_release_state <- old_release
+coi_reference_panel <- old_reference
 message("Publication/expanded reference routing, provenance, integrity and no-fallback checks passed.")

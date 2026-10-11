@@ -2,14 +2,22 @@
 
 **Status date:** 2026-10-11
 
-**Current phase:** Public Shiny hosting and both monthly marker releases are operational.
-The 2026.10.02 interface/catalog update is published and verified at commit
-`648dd55`. The next required scientific milestone is a growing sequence
-reference with order and family scores across every supported order, including
-continued BeePrime-specific bee acquisition, a separate aquatic arthropod
-option, and family-level regional comparisons.
-Current release evidence and the remaining backlog are in
-[`docs/2026-10-02-release.md`](docs/2026-10-02-release.md).
+**Current phase:** Public hosting retains the verified 2026.10.02 app and
+October 1 marker releases. The October 11 local COI acquisition now retains
+12,860 records / 11,977 verified markers, with at least 101 verified records
+in each supported group. A second real acquisition added 139 records and
+preserved all 12,721 prior sequence/header hash pairs. Full alignment and
+real-panel scoring finished successfully for all 22 groups. A cloud worker
+restored the frozen seed and published a verified immutable staging release
+with 13,005 retained / 12,122 verified records; all 988 artifacts passed public
+checksum checks. A second hosted-state restoration proof and public activation
+remain pending. The
+broader scientific milestone still requires family coverage
+inventories, continued BeePrime-specific bee acquisition, a separate aquatic
+arthropod option, and family-level regional comparisons.
+The measured local growth and rollout limits are in
+[`docs/2026-10-11-coi-growth.md`](docs/2026-10-11-coi-growth.md); the last published
+app evidence is in [`docs/2026-10-02-release.md`](docs/2026-10-02-release.md).
 The clarified scope, implementation gaps, and completion gates are in
 [`docs/growing-reference-contract.md`](docs/growing-reference-contract.md).
 
@@ -90,6 +98,18 @@ The project separates four operational responsibilities:
 
 - Established full-reference and study-specific panel policies so Gurten bee
   centroids are not silently reused as general COI evidence.
+- Acquired and locally verified a growing general COI panel across 20 orders
+  plus the Acari and Collembola composite groups. The goal is 10,000 verified
+  COI records overall and at least 100 per group, with retained legacy records
+  reported separately from marker-verified records. The October 11 proof
+  verifies actual additions, previous sequence/header retention, and 327
+  checksummed NCBI source files; it does not establish primer-site coverage.
+- Added accession-level NCBI taxonomy with explicit unresolved ranks and a
+  coherent reference consumer that validates full alignments, score-table
+  membership and denominators. Pair-specific position files load lazily;
+  corrupt artifacts cannot silently borrow a different release's evidence.
+  Consumer tests pass; the real panel's full alignment and scoring are
+  complete, and hosted activation is still pending.
 - Added a local BeePrime reference-alignment choice for the unchanged
   publication panel or a Bee-only expanded panel. The monthly builder verifies
   bee lineage with NCBI taxonomy, preserves the exact 590 publication
@@ -112,6 +132,11 @@ The project separates four operational responsibilities:
 - Implemented marker-independent matrix jobs, hard release gates, immutable
   release directories, atomic `latest.json` promotion, QA-artifact upload, and
   automatic failure issues.
+- Implemented checksummed immutable COI raw/state restoration, exact ledger
+  validation, and input-hash invalidation of changed alignments. Clean-worker
+  fixtures verify successive restoration, retention, additions, and rejection
+  of incomplete or corrupt state. These checks complement the real local
+  acquisition proof; two successive hosted clean-runner releases remain open.
 
 ### Collaboration foundation
 
@@ -143,38 +168,68 @@ The project separates four operational responsibilities:
   PR #20 merged at `648dd55`; both PR and merged-main CI passed all 16 tests.
   Posit publication, public switch/filter checks, and the 126-row/46-column
   metadata download were verified. Details are recorded in the release note.
-- Cloud runtime excludes build-only PrimerMiner and readxl. A new custom pair
-  can be mapped, but its interactive COI reference scoring needs PrimerMiner
-  and remains unavailable on Connect Cloud.
+- The published October 2 runtime excludes build-only PrimerMiner and readxl;
+  its custom COI reference scoring is unavailable on Connect Cloud. The working
+  branch now bundles the unchanged pinned PrimerMiner 0.22 evaluator, default
+  tables and GPL-3 license in an isolated runtime. Numerical parity and both
+  custom-scoring paths pass without the installed PrimerMiner or seqinr package.
 - Research foundations are versioned independently of public evidence. The
   regional COI audit and 48-accession ITS scoring outputs are not loaded into
   the app or promoted as broad performance results.
+- The first-day monthly schedule remains 06:00 UTC. The October 11 COI
+  staging attempts initially failed before acquisition after frozen-seed
+  recovery passed. Diagnostics identified the Python library selected when
+  launched from R; the corrected
+  [run 38144690584](https://github.com/sven9r/primer-atlas/actions/runs/38144690584)
+  completed successfully: 13,005 retained / 12,122 verified COI records,
+  minimum 103 verified per group, 145 additions with exact seed sequence/header
+  retention, and all 988 public artifact checksums verified. Those earlier
+  failures published no release. A second clean-worker hosted-state restoration
+  proof remains pending.
+  All 22
+  real local full alignments and scoring finished successfully: 550
+  group/pair summaries, 321,500 pair/template rows, 643,000 primer/template
+  rows and 14,904,740 position rows.
+  Public pointers remain unchanged, and PR #22 review/merge is required before
+  app activation. Hosted-to-hosted recovery and public app activation remain
+  unverified at this cutoff.
 
 ## What still needs to be done
 
 ### P0 — Growing references and family evaluation across all orders
 
-- [ ] Persist and restore complete retained sequence files with their ledger
-      in immutable releases. Verify two successive builds on clean runners;
-      the current workflow restores only the ledger.
-- [ ] Rebuild or extend alignments when retained sequence input changes.
-- [ ] Attach accession-level order/family taxonomy to the growing panels and
-      publish coverage gaps plus primer summaries for every supported order
-      and its families, retaining unresolved assignments and denominators.
+- [x] Implement immutable retained sequence/state restoration with exact
+      sequence/header checks and clean-worker regression coverage.
+- [x] Demonstrate real local growth with at least 10,000 verified COI records
+      overall, 100 per group, and at least 1% retained growth in all 22 groups.
+- [x] Invalidate stale alignments when retained inputs change; test the input
+      hash and reference-coordinate contract.
+- [x] Attach accession-level order/family taxonomy to the growing panel,
+      retaining unresolved ranks and source checksums.
+- [x] Complete full reference-coordinate alignments for all 22 real groups.
+- [x] Complete real-panel scoring for all 22 groups and 25 curated pairs.
+- [ ] Complete two successive hosted clean-runner builds that restore every
+      prior sequence and its metadata.
+- [ ] Publish coverage gaps and primer summaries for every supported order
+      and its families, including zero-reference families from a versioned
+      inventory, unresolved assignments and exact denominators.
 - [ ] Publish and verify the new BeePrime publication/expanded alignment
       choice. The local build added 30 NCBI-classified bees to the 590-accession
       publication baseline; monthly clean-runner retention and the public app
       still need verification. Preserve the publication panel and never route
       the new bee records to general primers.
-- [ ] Route general arthropod primers to their broad arthropod reference,
-      covering all supported orders and families, with explicit panel identity.
+- [x] Implement and test coherent general COI reference routing with explicit
+      full-panel versus legacy-preview identity and pair-lazy evidence.
+- [ ] Verify that routing with the real scored release in the public app,
+      including the retained versus marker-verified counts for every group.
 - [ ] Add a separate aquatic arthropod option with freshwater/marine
       refinement, matching primer uses, and an ecology-supported reference
       subset at family/finer-taxon resolution. Mixed-habitat orders cannot
       establish aquatic membership for every sequence.
-- [ ] Expose family evaluation for every curated pair/order in the app. Current
-      full-order score artifacts have no family taxonomy, while current
-      lineage family views are restricted to BeePrime study evidence.
+- [ ] Publish and verify family evaluation for every curated pair/order in
+      the app. General-panel taxonomy joins and family consumers are tested
+      locally; real scored artifacts, coverage inventories and public routing
+      still need verification.
 - [ ] Extend accession geography to the growing panels and recalculate
       ecological comparisons within order/family and source-resolved regions.
 - [ ] Pass the complete gates in `docs/growing-reference-contract.md` before
@@ -194,8 +249,10 @@ The project separates four operational responsibilities:
 - [ ] Test the pinned-summary fallback during an intentional R2 outage.
 - [ ] Document release ownership, credential rotation, rollback, and recovery
       from a partially uploaded staging directory.
-- [ ] Verify release recovery retains both accession identities and sequences;
-      ledger persistence alone does not demonstrate sequence-panel growth.
+- [ ] Verify hosted release recovery retains accession identities, sequence
+      bytes and header bytes across two real clean-runner releases. Local
+      fixtures and the two-acquisition proof pass; ledger persistence alone
+      does not satisfy this operational gate.
 
 ### P2 — Finish active pilots
 

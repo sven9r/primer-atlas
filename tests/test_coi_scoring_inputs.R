@@ -4,10 +4,40 @@ source("R/data_layer.R")
 source("R/coi_retention.R")
 source("R/coi_scoring.R")
 
+# Load only the pure provenance helper; sourcing the builder would run MAFFT.
+builder_expressions <- parse("scripts/build_22_group_alignments.R")
+helper <- Filter(function(expression) is.call(expression) && identical(expression[[1]], as.name("<-")) &&
+  identical(expression[[2]], as.name("coi_alignment_acquisition_provenance")), as.list(builder_expressions))
+stopifnot(length(helper) == 1L)
+eval(helper[[1]])
+
 root <- tempfile("coi_scoring_test_")
 dir.create(root)
 on.exit(unlink(root, recursive = TRUE), add = TRUE)
 groups <- c("OrderA", "OrderB")
+
+# Alignment provenance must use the actual acquisition query and source hash,
+# rather than an unrelated environment setting or legacy 1,200–1,800-bp query.
+empty_provenance <- coi_alignment_acquisition_provenance(root, groups[1])
+stopifnot(empty_provenance$query == "", is.na(empty_provenance$candidate_limit),
+  empty_provenance$acquisition_run_manifest == "")
+acquisition_manifest <- file.path(root, "data/derived/coi_reference_panel/run_manifest.json")
+dir.create(dirname(acquisition_manifest), recursive = TRUE)
+searches <- lapply(groups, function(group) list(target_group = group,
+  query = paste0(group, "[Organism:exp] AND 500:20000[SLEN]"), fetched_candidate_limit = 2000L))
+jsonlite::write_json(list(marker_id = "COI", searches = searches), acquisition_manifest, auto_unbox = TRUE)
+provenance <- coi_alignment_acquisition_provenance(root, groups[1])
+stopifnot(provenance$query == searches[[1]]$query, provenance$candidate_limit == 2000L,
+  provenance$acquisition_run_manifest_sha256 == atlas_sha256(acquisition_manifest),
+  grepl("acquires no sequences", provenance$acquisition_note, fixed = TRUE))
+expect_provenance_failure <- function(expression) stopifnot(inherits(tryCatch(force(expression), error = identity), "error"))
+expect_provenance_failure(coi_alignment_acquisition_provenance(root, "MissingGroup"))
+jsonlite::write_json(list(marker_id = "COI", searches = c(searches, searches[1])), acquisition_manifest, auto_unbox = TRUE)
+expect_provenance_failure(coi_alignment_acquisition_provenance(root, groups[1]))
+jsonlite::write_json(list(marker_id = "COI", searches = list(list(target_group = groups[1], query = "actual query"))),
+  acquisition_manifest, auto_unbox = TRUE)
+expect_provenance_failure(coi_alignment_acquisition_provenance(root, groups[1]))
+
 ref <- file.path(root, "data/reference/coi_reference_NC_001322.1.fasta")
 dir.create(dirname(ref), recursive = TRUE)
 writeLines(c(">NC_001322.1_COX1_reference", strrep("A", 1536)), ref)

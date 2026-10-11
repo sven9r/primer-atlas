@@ -26,8 +26,6 @@ if (nzchar(requested_raw)) {
   orders <- orders[match(requested, orders$order), , drop = FALSE]
 }
 
-subset_size <- as.integer(Sys.getenv("GB_SUBSET", "100"))
-if (is.na(subset_size) || subset_size < 1) stop("GB_SUBSET must be a positive integer.")
 evaluation_mode <- tolower(Sys.getenv("EVALUATION_MODE", "full"))
 if (!evaluation_mode %in% c("full", "centroid_preview")) {
   stop("EVALUATION_MODE must be 'full' or 'centroid_preview'.")
@@ -137,24 +135,35 @@ run_primerminer_clustering <- function(raw_path, destination_dir) {
 
 manifest_rows <- vector("list", nrow(orders))
 aligner_version <- system2(mafft, "--version", stdout = TRUE, stderr = TRUE)
-query_mode <- tolower(Sys.getenv("QUERY_MODE", "broad"))
-query_suffix <- switch(
-  query_mode,
-  broad = paste0(
-    "[Organism] AND (COI[Gene] OR CO1[Gene] OR COX1[Gene] OR COXI[Gene])",
-    " AND 1200:1800[Sequence Length]"
-  ),
-  complete_cds = paste0(
-    "[Organism] AND (COI[Gene] OR CO1[Gene] OR COX1[Gene] OR COXI[Gene])",
-    " AND 1400:1800[Sequence Length] AND complete cds[Title]",
-    " NOT COII[Title]"
-  ),
-  folmer_barcode = paste0(
-    "[Organism] AND (COI[Gene] OR CO1[Gene] OR COX1[Gene] OR COXI[Gene])",
-    " AND 600:800[Sequence Length]"
-  ),
-  stop("QUERY_MODE must be 'broad', 'complete_cds', or 'folmer_barcode'.")
-)
+
+# Source labels describe the frozen acquisition input. This stage only aligns
+# those records; it never submits a new query or applies an acquisition subset.
+coi_alignment_acquisition_provenance <- function(root, group) {
+  relative <- "data/derived/coi_reference_panel/run_manifest.json"
+  path <- file.path(root, relative)
+  result <- list(query = "", candidate_limit = NA_integer_,
+    acquisition_run_manifest = "", acquisition_run_manifest_sha256 = "",
+    acquisition_note = "Alignment stage acquires no sequences; no acquisition manifest is available for this legacy input.")
+  if (!file.exists(path)) return(result)
+  manifest <- jsonlite::read_json(path, simplifyVector = FALSE)
+  if (!identical(manifest$marker_id, "COI")) stop("Alignment acquisition manifest is not a COI panel")
+  matches <- Filter(function(row) identical(row$target_group, group), manifest$searches)
+  if (length(matches) != 1L) stop("Acquisition provenance needs exactly one current search for ", group)
+  row <- matches[[1]]
+  if (!is.character(row$query) || length(row$query) != 1L || !nzchar(row$query) ||
+      !is.numeric(row$fetched_candidate_limit) || length(row$fetched_candidate_limit) != 1L ||
+      is.na(row$fetched_candidate_limit) || row$fetched_candidate_limit < 1 ||
+      row$fetched_candidate_limit != as.integer(row$fetched_candidate_limit)) {
+    stop("Acquisition search provenance is incomplete for ", group)
+  }
+  result$query <- row$query
+  result$candidate_limit <- as.integer(row$fetched_candidate_limit)
+  result$acquisition_run_manifest <- relative
+  result$acquisition_run_manifest_sha256 <- atlas_sha256(path)
+  result$acquisition_note <- paste("Alignment stage acquires no sequences. Query and candidate_limit describe the current acquisition search before QC;",
+    "retained earlier records can have different source searches recorded in their provenance.")
+  result
+}
 
 for (i in seq_len(nrow(orders))) {
   order_name <- orders$order[i]
@@ -230,11 +239,16 @@ for (i in seq_len(nrow(orders))) {
     message("FAILED: ", note)
   })
 
+  acquisition <- coi_alignment_acquisition_provenance(project_root, order_name)
   manifest_rows[[i]] <- data.frame(
     order = order_name,
     environment_group = orders$environment_group[i],
-    query = paste0(order_name, query_suffix),
-    requested_subset = subset_size,
+    query = acquisition$query,
+    requested_subset = NA_integer_,
+    candidate_limit = acquisition$candidate_limit,
+    acquisition_run_manifest = acquisition$acquisition_run_manifest,
+    acquisition_run_manifest_sha256 = acquisition$acquisition_run_manifest_sha256,
+    acquisition_note = acquisition$acquisition_note,
     downloaded_sequences = count_fasta(raw_path),
     consensus_clusters = count_fasta(cluster_path),
     aligned_sequences_including_reference = count_fasta(aligned_path),

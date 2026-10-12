@@ -14,7 +14,7 @@ fungalFitUI <- function(id) {
   index <- fungal_read_index()
   versions <- setNames(index$id, sub(" ·.*$", "", index$label))
   div(class = "atlas-workspace fungal-fit-workspace",
-      tags$script(HTML("(function(){ var pending=null; document.addEventListener('click', function(e) { var b=e.target.closest('.atlas-fit-taxon'); if(b && window.Shiny) { pending=b.dataset.inspector; Shiny.setInputValue(b.dataset.input, {group:b.dataset.group, nonce:Date.now()}, {priority:'event'}); } }); new MutationObserver(function(){ if(!pending) return; var p=document.getElementById(pending); if(p && p.querySelector('.atlas-fit-inspector')) { pending=null; window.requestAnimationFrame(function(){ p.scrollIntoView({behavior:'smooth',block:'start'}); }); } }).observe(document.documentElement,{childList:true,subtree:true}); })();")),
+      tags$script(HTML("(function(){ var pending=null; document.addEventListener('click', function(e) { var b=e.target.closest('.atlas-fit-taxon'); if(b && window.Shiny) { pending=b.dataset.inspector; Shiny.setInputValue(b.dataset.input, {group:b.dataset.group, nonce:Date.now()}, {priority:'event'}); } }); new MutationObserver(function(){ if(!pending) return; var p=document.getElementById(pending); var panel=p && p.querySelector('.atlas-fit-inspector'); if(panel) { pending=null; window.requestAnimationFrame(function(){ panel.scrollIntoView({behavior:'smooth',block:'start'}); }); } }).observe(document.documentElement,{childList:true,subtree:true}); })();")),
       div(class = "atlas-workspace-toolbar atlas-fit-toolbar",
           selectInput(ns("version"), "Reference version", versions, selected = tail(index$id, 1L)),
           selectizeInput(ns("pair"), "Primer combination", choices = NULL,

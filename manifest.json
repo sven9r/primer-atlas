@@ -2725,7 +2725,7 @@
   },
   "files": {
     "app.R": {
-      "checksum": "b20a81357aa83970437b238dd8dddcf5"
+      "checksum": "5ba07b635214ccb8ab0b756598b0eae2"
     },
     "data/catalog/claims.csv": {
       "checksum": "7e287c602b958d2d647bbee4089c0b39"
@@ -3502,7 +3502,7 @@
       "checksum": "82db3b79ee091af118b486177645460c"
     },
     "R/fungal_fit_ui.R": {
-      "checksum": "dca27b93308337c7914a930f4c94164b"
+      "checksum": "16ce6b312a0b14cdcd4bc5e359357f7c"
     },
     "R/fungal_fit.R": {
       "checksum": "77e6441dc909672f779f3ee8ddcf47ce"

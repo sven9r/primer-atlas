@@ -14,7 +14,7 @@ fungalFitUI <- function(id) {
   index <- fungal_read_index()
   versions <- setNames(index$id, sub(" ·.*$", "", index$label))
   div(class = "atlas-workspace fungal-fit-workspace",
-      tags$script(HTML("(function(){ var pending=null; document.addEventListener('click', function(e) { var b=e.target.closest('.atlas-fit-taxon'); if(b && window.Shiny) { pending=b.dataset.inspector; Shiny.setInputValue(b.dataset.input, {group:b.dataset.group, nonce:Date.now()}, {priority:'event'}); } }); new MutationObserver(function(){ if(!pending) return; var p=document.getElementById(pending); var panel=p && p.querySelector('.atlas-fit-inspector'); if(panel) { pending=null; window.requestAnimationFrame(function(){ panel.scrollIntoView({behavior:'smooth',block:'start'}); }); } }).observe(document.documentElement,{childList:true,subtree:true}); })();")),
+      tags$script(HTML("(function(){ var pending=null; document.addEventListener('click', function(e) { var b=e.target.closest('.atlas-fit-taxon'); if(b && window.Shiny) { pending=b.dataset.inspector; Shiny.setInputValue(b.dataset.input, {group:b.dataset.group, nonce:Date.now()}, {priority:'event'}); } }); new MutationObserver(function(){ if(!pending) return; var p=document.getElementById(pending); var panel=p && p.querySelector('.atlas-fit-inspector'); if(panel && panel.querySelector('table.dataTable tbody tr')) { pending=null; window.requestAnimationFrame(function(){ panel.scrollIntoView({behavior:'smooth',block:'start'}); }); } }).observe(document.documentElement,{childList:true,subtree:true}); })();")),
       div(class = "atlas-workspace-toolbar atlas-fit-toolbar",
           selectInput(ns("version"), "Reference version", versions, selected = tail(index$id, 1L)),
           selectizeInput(ns("pair"), "Primer combination", choices = NULL,
@@ -197,7 +197,7 @@ fungalFitServer <- function(id, selection = NULL) {
       display <- data.frame(Accession = rows$accession, Organism = rows$organism,
           `Site evidence` = unname(state_labels[rows$fit_state]), `Encoded product (bp)` = rows$amplicon_bp,
           `Ambiguous product bases` = rows$n_ambiguous_product_bases, Reason = rows$reason, check.names = FALSE)
-      datatable(display, rownames = FALSE, escape = TRUE, options = list(pageLength = 5, lengthChange = FALSE, scrollX = TRUE), class = "compact stripe")
+      datatable(display, rownames = FALSE, escape = TRUE, options = list(pageLength = 5, lengthChange = FALSE, scrollX = TRUE), class = "compact stripe nowrap")
     })
     output$download_summary <- downloadHandler(filename = function() paste0(snapshot()$manifest$id, "-fungal-fit-", fit_data()$metadata$rank, ".csv"),
         content = function(file) write.csv(groups(), file, row.names = FALSE, na = ""))

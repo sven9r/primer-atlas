@@ -2485,7 +2485,7 @@ server <- function(input, output, session) {
     labels <- c(accession = "Accession", organism = "Organism", phylum = "Phylum", class = "Class",
         order = "Order", family = "Family", length_bp = "Encoded reference length (bp)")
     names(data) <- unname(labels[names(data)])
-    datatable(data, rownames = FALSE, escape = TRUE, options = list(pageLength = 10, scrollX = TRUE), class = "compact stripe")
+    datatable(data, rownames = FALSE, escape = TRUE, options = list(pageLength = 10, scrollX = TRUE), class = "compact stripe nowrap")
   })
   output$download_fungal_library <- downloadHandler(filename = function() paste0(fungal_fit_workspace$snapshot()$manifest$id, "-reference-metadata.csv"),
       content = function(file) {

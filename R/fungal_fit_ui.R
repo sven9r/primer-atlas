@@ -12,9 +12,9 @@ fungal_fit_bar <- function(value, total, label = "Exact product support") {
 fungalFitUI <- function(id) {
   ns <- shiny::NS(id)
   index <- fungal_read_index()
-  versions <- setNames(index$id, index$label)
+  versions <- setNames(index$id, sub(" ·.*$", "", index$label))
   div(class = "atlas-workspace fungal-fit-workspace",
-      tags$script(HTML("document.addEventListener('click', function(e) { var b=e.target.closest('.atlas-fit-taxon'); if(b && window.Shiny) Shiny.setInputValue(b.dataset.input, {group:b.dataset.group, nonce:Date.now()}, {priority:'event'}); });")),
+      tags$script(HTML("(function(){ var pending=null; document.addEventListener('click', function(e) { var b=e.target.closest('.atlas-fit-taxon'); if(b && window.Shiny) { pending=b.dataset.inspector; Shiny.setInputValue(b.dataset.input, {group:b.dataset.group, nonce:Date.now()}, {priority:'event'}); } }); new MutationObserver(function(){ if(!pending) return; var p=document.getElementById(pending); if(p && p.querySelector('.atlas-fit-inspector')) { pending=null; window.requestAnimationFrame(function(){ p.scrollIntoView({behavior:'smooth',block:'start'}); }); } }).observe(document.documentElement,{childList:true,subtree:true}); })();")),
       div(class = "atlas-workspace-toolbar atlas-fit-toolbar",
           selectInput(ns("version"), "Reference version", versions, selected = tail(index$id, 1L)),
           selectizeInput(ns("pair"), "Primer combination", choices = NULL,
@@ -23,7 +23,7 @@ fungalFitUI <- function(id) {
       div(class = "atlas-fit-context", uiOutput(ns("context")),
           actionButton(ns("open_explorer"), "Show primer product →", class = "btn-outline-primary btn-sm")),
       uiOutput(ns("metrics")),
-      div(class = "atlas-panel atlas-fit-results",
+      div(id = ns("taxon_groups"), class = "atlas-panel atlas-fit-results",
           div(class = "atlas-fit-results-heading", h3("Reference support by taxon"),
               p(class = "atlas-context-line", "Click a taxon to inspect its references.")),
           div(class = "atlas-fit-list-tools",
@@ -140,10 +140,9 @@ fungalFitServer <- function(id, selection = NULL) {
       data <- fit_data()
       pair <- pair_catalog()[match(selected_pair(), pair_catalog()$pair_id), , drop = FALSE]
       div(class = "atlas-context-line",
-          span(class = "atlas-status-chip", "Fungal reference panel"),
           span(class = "atlas-status-chip", if (pair$evidence_status == "documented_pair") "Documented pair" else "Candidate combination"),
-          span(paste(data$metadata$n_snapshot_templates, "retained templates ·", snapshot()$manifest$label)),
-          span("Exact binding-site evidence · bounded panel"))
+          span(paste(data$metadata$n_snapshot_templates, "retained templates ·", sub(" ·.*$", "", snapshot()$manifest$label))),
+          span("Bounded reference panel"))
     })
     output$metrics <- renderUI({
       rows <- fit_data()$summary
@@ -165,6 +164,7 @@ fungalFitServer <- function(id, selection = NULL) {
         other <- row$n_panel - row$n_exact_products - row$n_partial_sites - row$n_unavailable
         tags$button(type = "button", class = paste("atlas-taxon-card atlas-fit-taxon", if (identical(selected_taxon(), row$group_id)) "is-selected"),
             `data-input` = session$ns("taxon_click"), `data-group` = row$group_id,
+            `data-inspector` = session$ns("taxon_inspector"),
             `aria-pressed` = if (identical(selected_taxon(), row$group_id)) "true" else "false",
             div(class = "atlas-taxon-card__heading", strong(row$taxon), span(class = "atlas-status-chip", paste(row$n_panel, "refs"))),
             if (nzchar(row$parent_path)) span(class = "atlas-taxon-card__meta", row$parent_path),
@@ -183,6 +183,7 @@ fungalFitServer <- function(id, selection = NULL) {
           div(class = "atlas-fit-results-heading", h3(row$taxon),
               p(class = "atlas-context-line", row$parent_path)),
           div(class = "atlas-card-actions",
+              tags$a(href = paste0("#", session$ns("taxon_groups")), class = "btn btn-outline-secondary btn-sm", "Back to taxon groups ↑"),
               downloadButton(session$ns("download_taxon"), "These references (CSV)", class = "btn-outline-secondary btn-sm")),
           p(class = "atlas-context-line", paste(row$n_exact_products, "exact products ·", row$n_partial_sites, "partial site pairs ·",
               row$n_unresolved_sites, "ambiguous/unresolved ·", row$n_no_exact_sites, "no exact sites ·",

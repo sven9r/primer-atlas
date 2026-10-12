@@ -1458,6 +1458,9 @@ app_js <- "
   });
 
   document.addEventListener('shiny:connected', wireHeatmapScrollers);
+  document.addEventListener('shown.bs.tab', function(event) {
+    if (event.target && event.target.closest('#main_nav')) window.scrollTo({top:0, behavior:'auto'});
+  });
   document.addEventListener('shiny:value', function() {
     window.requestAnimationFrame(wireHeatmapScrollers);
   });

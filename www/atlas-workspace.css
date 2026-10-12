@@ -117,8 +117,17 @@
   .atlas-fit-results-heading { align-items:start; }
   .atlas-fit-list-tools > .shiny-input-container { flex-basis:100%; }
 }
-@media(max-width:380px) {
-  .atlas-fit-metrics { grid-template-columns:1fr; }
-  .atlas-fit-metrics .atlas-metric + .atlas-metric { border-left:0; border-top:1px solid var(--atlas-line); }
+/* A common app pane still has enough room for paired controls. Keep version
+   names wide; pair and rank share the next row in the native tab order. */
+@media(min-width:421px) and (max-width:700px) {
+  .fungal-fit-workspace { gap:12px; }
+  .atlas-fit-toolbar { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px 12px; }
+  .atlas-fit-toolbar > .shiny-input-container:first-child { grid-column:1 / -1; grid-row:1; }
+  .atlas-fit-toolbar > .shiny-input-container:nth-child(2) { grid-column:1; grid-row:2; }
+  .atlas-fit-toolbar > .shiny-input-container:nth-child(3) { grid-column:2; grid-row:2; }
+  .atlas-fit-list-tools { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+  .atlas-fit-context > .shiny-html-output { flex-basis:240px; }
+  .atlas-fit-context > .btn { width:auto; }
+  .atlas-fit-metrics .atlas-metric { padding:10px; }
 }
 @media(prefers-reduced-motion:reduce) { .atlas-workspace * { scroll-behavior:auto!important; } }

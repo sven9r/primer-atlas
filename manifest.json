@@ -2725,7 +2725,7 @@
   },
   "files": {
     "app.R": {
-      "checksum": "3e9d6f4dc2a11eed0ecc277c997b462f"
+      "checksum": "b20a81357aa83970437b238dd8dddcf5"
     },
     "data/catalog/claims.csv": {
       "checksum": "7e287c602b958d2d647bbee4089c0b39"
@@ -3502,7 +3502,7 @@
       "checksum": "82db3b79ee091af118b486177645460c"
     },
     "R/fungal_fit_ui.R": {
-      "checksum": "5bf0857b8317f9e59908043c52dedd8d"
+      "checksum": "b0468a592e0a486c16c402046f5ad0ec"
     },
     "R/fungal_fit.R": {
       "checksum": "77e6441dc909672f779f3ee8ddcf47ce"
@@ -3538,7 +3538,7 @@
       "checksum": "2180b2ba634e28a907e7c4c1701afd6a"
     },
     "www/atlas-workspace.css": {
-      "checksum": "da4c44013abf268dcd437aa2de55cbb9"
+      "checksum": "65085fdddccf29aff7cf6aaaed709bc0"
     },
     "www/evolab-berkeley.png": {
       "checksum": "d954558e15002f445db3995d94e4ae0c"

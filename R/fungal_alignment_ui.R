@@ -76,9 +76,28 @@
   )
 }
 
+.fungal_alignment_ui_is_domain <- function(rows) {
+  if (is.null(rows) || !nrow(rows)) return(logical())
+  if (!"landmark_type" %in% names(rows)) return(rep(FALSE, nrow(rows)))
+  !is.na(rows$landmark_type) & rows$landmark_type == "divergent_domain"
+}
+
+.fungal_alignment_ui_domain_rows <- function(rows) {
+  if (is.null(rows) || !nrow(rows)) return(rows)
+  rows <- rows[.fungal_alignment_ui_is_domain(rows), , drop = FALSE]
+  number <- suppressWarnings(as.integer(sub("^D([0-9]+).*$", "\\1", rows$label)))
+  rows[order(number, rows$label, na.last = TRUE), , drop = FALSE]
+}
+
+.fungal_alignment_ui_partial <- function(row) {
+  "boundary_status" %in% names(row) && !is.na(row$boundary_status[1L]) &&
+    grepl("partial|clipped", row$boundary_status[1L], ignore.case = TRUE)
+}
+
 .fungal_alignment_ui_region_label <- function(row) {
   label <- as.character(row$label[1])
-  if (grepl("ANCHOR", row$landmark_id[1], fixed = TRUE)) paste0(label, " anchor (partial)") else label
+  if (grepl("ANCHOR", row$landmark_id[1], fixed = TRUE)) paste0(label, " anchor (partial)")
+  else if (.fungal_alignment_ui_partial(row)) paste0(label, " (partial)") else label
 }
 
 .fungal_alignment_ui_region_color <- function(row) {
@@ -86,11 +105,54 @@
 }
 
 .fungal_alignment_ui_region_title <- function(row) {
+  evidence <- as.character(row$evidence_status[1L])
+  source <- if (evidence == "curated_reference") "Curated pilot boundaries"
+    else if (evidence == "mapped_reference_domain") "Projected structural-reference domain"
+    else if (evidence == "annotated_reference") "Frozen NCBI annotation"
+    else gsub("_", " ", evidence, fixed = TRUE)
+  extras <- vapply(intersect(c("domain_scheme", "source_reference", "boundary_status"), names(row)), function(name) {
+    value <- as.character(row[[name]][1L])
+    if (is.na(value) || !nzchar(value)) "" else paste0("\n", gsub("_", " ", name, fixed = TRUE), ": ", value)
+  }, character(1))
   paste0(.fungal_alignment_ui_region_label(row), " · ", row$accession,
          "\nRaw bases ", row$start, "–", row$end, " (", row$raw_bp, " bp)",
          "\nAlignment columns ", row$left_col, "–", row$right_col,
-         "\n", if (row$evidence_status == "curated_reference") "Curated pilot boundaries" else "Frozen NCBI annotation",
-         " · ", row$source_note)
+         "\n", source, " · ", row$source_note, paste(extras, collapse = ""))
+}
+
+# Focus is measured on the selected original sequence, then projected to the
+# shared alignment. A gap-filled column distance cannot substitute for bp.
+.fungal_alignment_ui_region_window <- function(index, row, left = 1000L, right = 2000L) {
+  if (!inherits(index, "fungal_alignment_index") || nrow(row) != 1L ||
+      !identical(as.character(row$alignment_status[1L]), "mapped")) return(NULL)
+  map <- index$maps[[as.character(row$accession[1L])]]
+  bounds <- as.integer(c(row$start[1L], row$end[1L]))
+  if (!length(map) || anyNA(bounds) || bounds[1L] < 1L || bounds[2L] > length(map)) return(NULL)
+  raw <- c(max(1L, bounds[1L] - left), min(length(map), bounds[2L] + right))
+  list(raw = as.integer(raw), columns = range(unname(map[raw])),
+       focus_columns = range(unname(map[bounds])))
+}
+
+.fungal_alignment_ui_domain_coverage <- function(row, regions, accession) {
+  domains <- .fungal_alignment_ui_domain_rows(regions)
+  if(!is.null(domains) && nrow(domains)) domains <- domains[
+    domains$accession %in% accession & domains$alignment_status=="mapped" &
+      is.finite(domains$start) & is.finite(domains$end),,drop=FALSE]
+  available <- nrow(row)==1L && identical(as.character(row$alignment_status[1L]),"mapped") &&
+    row$accession[1L] %in% accession && is.finite(row$forward_start[1L]) && is.finite(row$reverse_end[1L])
+  if(is.null(domains)) domains <- data.frame(label=character(),landmark_id=character())
+  overlaps <- domains[FALSE,,drop=FALSE]
+  overlaps$overlap_bp <- integer()
+  overlaps$coverage <- character()
+  if(available && nrow(domains)) {
+    bp <- pmax(0L,pmin(domains$end,row$reverse_end)-pmax(domains$start,row$forward_start)+1L)
+    overlaps <- domains[bp>0L,,drop=FALSE]
+    overlaps$overlap_bp <- as.integer(bp[bp>0L])
+    full <- overlaps$start>=row$forward_start & overlaps$end<=row$reverse_end
+    partial_source <- vapply(seq_len(nrow(overlaps)),function(i) .fungal_alignment_ui_partial(overlaps[i,,drop=FALSE]),logical(1))
+    overlaps$coverage <- ifelse(full & !partial_source,"full","partial")
+  }
+  list(available=available,domains=domains,overlaps=overlaps)
 }
 
 .fungal_alignment_ui_visible_regions <- function(rows, accession, domain) {
@@ -106,35 +168,42 @@
   if (!length(rows) || !nrow(rows)) return(.fungal_alignment_ui_svg_text(
     scale(domain[1]), y + 4, "No frozen gene / region boundary in this window", size = 11))
   center <- (scale(pmax(domain[1], rows$left_col)) + scale(pmin(domain[2], rows$right_col))) / 2
+  nested <- .fungal_alignment_ui_is_domain(rows)
   spacer <- grepl("^ITS[12]$", rows$label)
   label_x <- center
-  for (lane in c(FALSE, TRUE)) {
-    ids <- which(spacer == lane)
+  lanes <- ifelse(nested, "domain", ifelse(spacer, "spacer", "gene"))
+  for (lane in c("gene", "spacer", "domain")) {
+    ids <- which(lanes == lane)
     ids <- ids[order(center[ids])]
     if (length(ids)) {
+      spacing <- if (lane == "domain") 44 else 88
       for (k in seq_along(ids)) {
         label_x[ids[k]] <- max(scale(domain[1]) + 22, center[ids[k]],
-                               if (k > 1L) label_x[ids[k - 1L]] + 88 else -Inf)
+                               if (k > 1L) label_x[ids[k - 1L]] + spacing else -Inf)
       }
       overflow <- max(0, tail(label_x[ids], 1) - (scale(domain[2]) - 22))
       label_x[ids] <- label_x[ids] - overflow
     }
   }
-  htmltools::tagList(lapply(seq_len(nrow(rows)), function(i) {
+  htmltools::tagList(
+    if (any(nested)) .fungal_alignment_ui_svg_text(10, y + 46, "28S domains", size = 10),
+    lapply(seq_len(nrow(rows)), function(i) {
     row <- rows[i, , drop = FALSE]
     left <- scale(max(domain[1], row$left_col))
     right <- scale(min(domain[2], row$right_col))
     color <- .fungal_alignment_ui_region_color(row)
-    label_y <- y + if (spacer[i]) 29 else -15
-    htmltools::tags$g(class = "fungal-alignment-region", `data-accession` = accession,
+    track_y <- y + if (nested[i]) 46 else 0
+    label_y <- y + if (nested[i]) 70 else if (spacer[i]) 29 else -15
+    htmltools::tags$g(class = if (nested[i]) "fungal-alignment-domain" else "fungal-alignment-region", `data-accession` = accession,
       `data-landmark-id` = row$landmark_id, `data-start-col` = row$left_col,
+      `data-parent-landmark` = if (nested[i]) row$parent_landmark else NULL,
       `data-end-col` = row$right_col, `data-evidence` = row$evidence_status,
       htmltools::tags$title(.fungal_alignment_ui_region_title(row)),
-      htmltools::tags$rect(x = left, y = y - 7, width = max(1, right - left), height = 14,
+      htmltools::tags$rect(x = left, y = track_y - 7, width = max(1, right - left), height = if (nested[i]) 10 else 14,
         rx = 2, fill = color, `fill-opacity` = .16, stroke = color,
-        `stroke-dasharray` = if (row$evidence_status == "curated_reference") "3 2" else NULL),
-      htmltools::tags$line(x1 = center[i], x2 = label_x[i], y1 = y + if (spacer[i]) 8 else -8,
-                          y2 = label_y + if (spacer[i]) -10 else 3, stroke = color, `stroke-width` = .8),
+        `stroke-dasharray` = if (row$evidence_status == "curated_reference" || .fungal_alignment_ui_partial(row)) "3 2" else NULL),
+      htmltools::tags$line(x1 = center[i], x2 = label_x[i], y1 = track_y + if (spacer[i] || nested[i]) 8 else -8,
+                          y2 = label_y + if (spacer[i] || nested[i]) -10 else 3, stroke = color, `stroke-width` = .8),
       .fungal_alignment_ui_svg_text(label_x[i], label_y, .fungal_alignment_ui_region_label(row),
                                    size = 11, color = color, `text-anchor` = "middle", `font-weight` = 700)
     )
@@ -351,7 +420,19 @@ fungal_alignment_template_bp_view <- function(index, mapped_rows, pairs, taxonom
   shown_ids <- head(unique(c(priorities, pairs$pair_id)), 20L)
   shown <- pairs[match(shown_ids, pairs$pair_id), , drop = FALSE]
   visible_regions <- if (isTRUE(show_regions)) .fungal_alignment_ui_bp_regions(landmarks, reference_accession, domain) else NULL
-  region_height <- if (isTRUE(show_regions)) 72L else 0L
+  nested_regions <- .fungal_alignment_ui_is_domain(visible_regions)
+  region_centers <- if (length(visible_regions)) (scale(pmax(domain[1], visible_regions$start) - .5) +
+    scale(pmin(domain[2], visible_regions$end) + .5)) / 2 else numeric()
+  domain_labels <- region_centers
+  domain_ids <- which(nested_regions)
+  domain_ids <- domain_ids[order(region_centers[domain_ids])]
+  if (length(domain_ids)) {
+    for (k in seq_along(domain_ids)) domain_labels[domain_ids[k]] <- max(scale(domain[1] - .5) + 22,
+      region_centers[domain_ids[k]], if (k > 1L) domain_labels[domain_ids[k-1L]] + 44 else -Inf)
+    overflow <- max(0, tail(domain_labels[domain_ids], 1L) - (scale(domain[2] + .5) - 22))
+    domain_labels[domain_ids] <- domain_labels[domain_ids] - overflow
+  }
+  region_height <- if (isTRUE(show_regions)) 72L + (if (any(nested_regions)) 52L else 0L) else 0L
   height <- 86L + region_height + nrow(shown) * 34L
   reference_svg <- tags$svg(viewBox = paste("0 0 1160", height), role = "img",
     `aria-label` = paste("Raw template bases", paste(domain, collapse = "through"), "on", reference_accession,
@@ -360,6 +441,7 @@ fungal_alignment_template_bp_view <- function(index, mapped_rows, pairs, taxonom
     .fungal_alignment_ui_axis(domain, scale, height - 10L),
     if (isTRUE(show_regions)) htmltools::tagList(
       .fungal_alignment_ui_svg_text(10, 58, "Genes / regions", size = 12, `font-weight` = 700),
+      if (any(nested_regions)) .fungal_alignment_ui_svg_text(10, 112, "28S domains", size = 10),
       if (!length(visible_regions) || !nrow(visible_regions)) .fungal_alignment_ui_svg_text(290, 68,
         "No frozen gene / region boundary in this raw-base window", size = 11),
       lapply(seq_len(if (length(visible_regions)) nrow(visible_regions) else 0L), function(i) {
@@ -367,14 +449,17 @@ fungal_alignment_template_bp_view <- function(index, mapped_rows, pairs, taxonom
         left <- scale(max(domain[1], row$start) - .5)
         right <- scale(min(domain[2], row$end) + .5)
         color <- .fungal_alignment_ui_region_color(row)
-        tags$g(class = "fungal-template-bp-region", `data-accession` = row$accession,
+        nested <- nested_regions[i]
+        tags$g(class = if (nested) "fungal-template-bp-domain" else "fungal-template-bp-region", `data-accession` = row$accession,
           `data-landmark-id` = row$landmark_id, `data-start-base` = row$start, `data-end-base` = row$end,
+          `data-parent-landmark` = if (nested) row$parent_landmark else NULL,
           `data-raw-bp` = row$raw_bp, `data-start-col` = row$left_col, `data-end-col` = row$right_col,
           `data-evidence` = row$evidence_status, tags$title(.fungal_alignment_ui_region_title(row)),
-          tags$rect(x = left, y = 57, width = right - left, height = 14, rx = 2, fill = color,
+          tags$rect(x = left, y = if (nested) 103 else 57, width = right - left, height = if (nested) 10 else 14, rx = 2, fill = color,
             `fill-opacity` = .16, stroke = color,
-            `stroke-dasharray` = if (row$evidence_status == "curated_reference") "3 2" else NULL),
-          .fungal_alignment_ui_svg_text((left + right) / 2, if (grepl("^ITS[12]$", row$label)) 95 else 47,
+            `stroke-dasharray` = if (row$evidence_status == "curated_reference" || .fungal_alignment_ui_partial(row)) "3 2" else NULL),
+          if (nested) tags$line(x1=region_centers[i],x2=domain_labels[i],y1=116,y2=126,stroke=color,`stroke-width`=.8),
+          .fungal_alignment_ui_svg_text(if(nested) domain_labels[i] else (left + right) / 2, if (nested) 136 else if (grepl("^ITS[12]$", row$label)) 95 else 47,
             .fungal_alignment_ui_region_label(row), size = 11, color = color, `text-anchor` = "middle", `font-weight` = 700)
         )
       })),
@@ -396,7 +481,8 @@ fungal_alignment_template_bp_view <- function(index, mapped_rows, pairs, taxonom
     tags$p(class = "tiny", .fungal_alignment_ui_taxon(taxonomy, reference_accession),
       paste0(" · Raw bases ", format(domain[1], big.mark = ","), "–", format(domain[2], big.mark = ","),
         " of ", format(n_bases, big.mark = ","), ". Each base occupies one bp; alignment gaps have no width. Product lengths include both primers.")),
-    if (isTRUE(show_regions)) tags$div(class = "fungal-template-bp-window-regions",
+    if (isTRUE(show_regions)) tags$details(class = "fungal-template-bp-window-regions",
+      tags$summary("Region coordinates and sources"),
       tags$p(class = "tiny", "Regions in this raw-base window · ", reference_accession),
       if (length(visible_regions) && nrow(visible_regions)) lapply(seq_len(nrow(visible_regions)), function(i) {
         row <- visible_regions[i, , drop = FALSE]
@@ -412,8 +498,8 @@ fungal_alignment_template_bp_view <- function(index, mapped_rows, pairs, taxonom
       }) else tags$p(class = "tiny", "No frozen gene or region boundary overlaps this raw-base window.")),
     tags$p(class = "tiny fungal-alignment-pan-hint", "Scroll sideways to inspect the full raw-base track and product lengths."),
     tags$div(class = "fungal-alignment-scroll", reference_svg),
-    tags$div(class = "fungal-template-bp-accounting",
-      tags$h5("Product length and alignment gaps"),
+    tags$details(class = "fungal-template-bp-accounting",
+      tags$summary("Product length and alignment gaps"),
       tags$ul(lapply(seq_len(nrow(shown)), function(i) {
         pair <- shown[i, , drop = FALSE]
         row <- .fungal_alignment_ui_row(mapped_rows, reference_accession, pair$pair_id)
@@ -457,15 +543,21 @@ fungal_alignment_overview <- function(index, mapped_rows, pairs, taxonomy, refer
   scale <- function(column) 290 + (column - domain[1]) / max(1L, diff(domain)) * 710
   visible_regions <- if (isTRUE(show_regions))
     .fungal_alignment_ui_visible_regions(landmarks, reference_accession, domain) else NULL
-  region_height <- if (isTRUE(show_regions)) 72L else 0L
+  domain_rows <- .fungal_alignment_ui_domain_rows(landmarks)
+  has_visible_domains <- !is.null(domain_rows) && nrow(domain_rows) &&
+    any(domain_rows$accession %in% unique(c(reference_accession, selected_accessions)) &
+        domain_rows$alignment_status == "mapped" &
+        domain_rows$right_col >= domain[1] & domain_rows$left_col <= domain[2])
+  region_height <- if (isTRUE(show_regions)) 72L + (if (has_visible_domains) 52L else 0L) else 0L
   reference_height <- 90 + region_height + nrow(shown) * 32
   reference_svg <- if (isTRUE(show_candidate_tracks)) tags$svg(viewBox = paste("0 0 1160", reference_height), role = "img",
     `aria-label` = paste("Frozen alignment columns", paste(domain, collapse = "through"),
                         "with", nrow(shown), "candidate primer combinations",
                         if (isTRUE(show_regions)) "and template-specific genes and regions", "on", reference_accession),
     if (isTRUE(show_regions)) {
-      lapply(seq_len(if (length(visible_regions)) nrow(visible_regions) else 0L), function(i) {
-        row <- visible_regions[i, , drop = FALSE]
+      band_rows <- if (length(visible_regions)) visible_regions[!.fungal_alignment_ui_is_domain(visible_regions), , drop = FALSE] else NULL
+      lapply(seq_len(if (length(band_rows)) nrow(band_rows) else 0L), function(i) {
+        row <- band_rows[i, , drop = FALSE]
         left <- scale(max(domain[1], row$left_col))
         right <- scale(min(domain[2], row$right_col))
         tags$rect(class = "fungal-alignment-region-band", `data-accession` = reference_accession,
@@ -532,7 +624,8 @@ fungal_alignment_overview <- function(index, mapped_rows, pairs, taxonomy, refer
       format(domain[2], big.mark = ","), " of ", format(index$n_columns, big.mark = ","),
       ". Grey marks show non-gap sequence; empty stretches are alignment gaps. Product labels count raw template bases including primers.")),
     if (isTRUE(show_candidate_tracks)) htmltools::tagList(tags$h5(paste0("Candidate combinations on ", reference_accession)),
-    if (isTRUE(show_regions)) tags$div(class = "fungal-alignment-window-regions",
+    if (isTRUE(show_regions)) tags$details(class = "fungal-alignment-window-regions",
+      tags$summary("Region coordinates and sources"),
       tags$p(class = "tiny", "Regions in this window · ", reference_accession),
       if (length(visible_regions) && nrow(visible_regions)) lapply(seq_len(nrow(visible_regions)), function(i) {
         row <- visible_regions[i, , drop = FALSE]
@@ -552,7 +645,7 @@ fungal_alignment_overview <- function(index, mapped_rows, pairs, taxonomy, refer
     if (length(selected_accessions)) tags$div(class = "fungal-alignment-scroll", template_svg)
       else tags$p("No alignment templates match the current lineage filters."),
     tags$p(class = "tiny", "Colors describe each template's raw product length tier. Dark primer blocks and arrowheads show binding spans and extension direction.",
-      if (isTRUE(show_regions)) " Slate tracks mark rRNA genes; amber tracks mark ITS spacers. Each annotation belongs to its labeled template. Dashed borders identify curated pilot boundaries; partial anchors are labeled.",
+      if (isTRUE(show_regions)) " Slate tracks mark rRNA genes; amber tracks mark ITS spacers. Nested 28S tracks mark source-backed divergent domains. Each feature belongs to its labeled template. Dashed borders identify partial or curated pilot boundaries; structural-reference mappings retain their own provenance.",
       " Across-clade variable-region alignment does not establish positional homology or experimental amplification performance.")
   )
 }

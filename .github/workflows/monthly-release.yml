@@ -124,6 +124,7 @@ jobs:
         env: {GH_TOKEN: "${{ github.token }}"}
         run: |
           if [ "$MARKER_ID" = ITS_FUNGAL ]; then
+            Rscript tests/test_fungal_restore_selection.R
             Rscript scripts/build_fungal_snapshots.R restore
             if [ -f data/derived/fungal_previous_reference_panel/panel.fasta ]; then
               python scripts/build_fungal_reference_panel.py --previous-dir data/derived/fungal_previous_reference_panel

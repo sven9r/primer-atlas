@@ -259,7 +259,7 @@ fungalExplorerServer <- function(id) {
       counts <- as.integer(annotation_counts[taxonomy$accession])
       counts[is.na(counts)] <- 0L
       labels <- if(nrow(taxonomy)) paste0(taxonomy$accession," · ",taxonomy$organism," · ",taxonomy$class,
-          " · ",counts," annotated regions") else character()
+          " · ",counts," mapped regions") else character()
       updateSelectInput(session,"alignment_reference",choices=setNames(taxonomy$accession,labels),selected=alignment_reference())
     })
     alignment_domain <- reactive({
@@ -290,11 +290,46 @@ fungalExplorerServer <- function(id) {
       range <- if(length(columns)) c(max(1,min(columns)-flank),min(maximum,max(columns)+flank)) else c(1,maximum)
       updateSliderInput(session,"alignment_range",min=1,max=maximum,value=range,step=1)
     }
-    observeEvent(list(alignment_index(),alignment_reference(),alignment_pairs()), {
-      rows <- mapped_alignment()
-      rows <- rows[rows$accession %in% alignment_reference() & rows$pair_id %in% alignment_pairs()$pair_id,,drop=FALSE]
-      columns <- unlist(rows[,c("forward_start_col","forward_end_col","reverse_start_col","reverse_end_col"),drop=FALSE],use.names=FALSE)
-      set_alignment_domain(columns)
+    alignment_focus_state <- reactiveVal(list(kind="product",landmark=NULL,nonce=0L))
+    focused_alignment_region <- reactive({
+      focus <- alignment_focus_state()
+      rows <- mapped_alignment_regions()
+      if(focus$kind!="region") return(rows[FALSE,,drop=FALSE])
+      rows[rows$accession %in% alignment_reference() & rows$landmark_id %in% focus$landmark &
+           rows$alignment_status=="mapped",,drop=FALSE]
+    })
+    focus_inputs <- reactive({
+      focus <- alignment_focus_state()
+      list(version=snapshot()$manifest$id,reference=alignment_reference(),focus=focus,
+           pair=if(focus$kind=="product") active_pair()$pair_id else NULL)
+    })
+    observeEvent(focus_inputs(),{
+      focus <- alignment_focus_state()
+      if(!length(alignment_reference())) return()
+      if(focus$kind=="full") {
+        set_alignment_domain(c(1L,alignment_index()$n_columns),flank=0L)
+        return()
+      }
+      rows <- focused_alignment_region()
+      if(nrow(rows)==1L) {
+        window <- .fungal_alignment_ui_region_window(alignment_index(),rows)
+        if(!is.null(window)) {
+          set_alignment_domain(window$columns,flank=0L)
+          updateNumericInput(session,"alignment_start",min=1,max=alignment_index()$n_columns,
+            value=max(1L,min(window$focus_columns)-10L))
+          return()
+        }
+      }
+      # Product focus is the default and the fallback when a selected region
+      # lacks verified boundaries on a newly chosen reference. Candidate-list
+      # changes do not reset an explicit gene/domain or full-alignment focus.
+      row <- alignment_focus_row()
+      if(nrow(row)==1L && identical(row$alignment_status[1L],"mapped")) {
+        interval <- data.frame(accession=row$accession,start=row$forward_start,end=row$reverse_end,
+          alignment_status="mapped",stringsAsFactors=FALSE)
+        window <- .fungal_alignment_ui_region_window(alignment_index(),interval)
+        if(!is.null(window)) set_alignment_domain(window$columns,flank=0L)
+      } else set_alignment_domain(c(1L,alignment_index()$n_columns),flank=0L)
     })
     show_alignment_site <- function(side="forward") {
       row <- alignment_focus_row()
@@ -307,44 +342,83 @@ fungalExplorerServer <- function(id) {
     observeEvent(input$alignment_forward,show_alignment_site("forward"))
     observeEvent(input$alignment_reverse,show_alignment_site("reverse"))
     observeEvent(input$alignment_focus,{
-      row <- alignment_focus_row()
-      columns <- if(nrow(row)) unlist(row[,c("forward_start_col","forward_end_col","reverse_start_col","reverse_end_col"),drop=FALSE],use.names=FALSE) else numeric()
-      if(any(is.finite(columns))) set_alignment_domain(columns)
+      alignment_focus_state(list(kind="product",landmark=NULL,nonce=input$alignment_focus))
     })
-    observeEvent(input$alignment_full,set_alignment_domain(c(1,alignment_index()$n_columns),flank=0))
+    observeEvent(input$alignment_full,alignment_focus_state(list(kind="full",landmark=NULL,nonce=input$alignment_full)))
     observeEvent(input$region_click,{
       rows <- mapped_alignment_regions()
       rows <- rows[rows$accession %in% alignment_reference() & rows$accession %in% input$region_click$accession &
                    rows$landmark_id %in% input$region_click$landmark & rows$alignment_status=="mapped",,drop=FALSE]
       if(nrow(rows)!=1L) return()
-      set_alignment_domain(c(rows$left_col,rows$right_col))
-      updateNumericInput(session,"alignment_start",min=1,max=alignment_index()$n_columns,
-          value=max(1L,rows$left_col[1]-10L))
+      window <- .fungal_alignment_ui_region_window(alignment_index(),rows)
+      if(is.null(window)) return()
+      alignment_focus_state(list(kind="region",landmark=rows$landmark_id[1L],nonce=input$region_click$nonce))
     })
     alignment_ceilings <- reactive(c(input$illumina_max %||% 500,input$pacbio_max %||% 2000,input$nanopore_max %||% 3500))
     output$alignment_regions <- renderUI({
       if(identical(input$show_regions,FALSE) || !length(alignment_reference())) return(NULL)
       rows <- mapped_alignment_regions()
       rows <- rows[rows$accession %in% alignment_reference() & rows$alignment_status=="mapped",,drop=FALSE]
+      domains <- .fungal_alignment_ui_domain_rows(rows)
+      genes <- rows[!.fungal_alignment_ui_is_domain(rows),,drop=FALSE]
       architecture <- c("18S","ITS1","5.8S","ITS2","28S")
+      region_button <- function(at, label, known=nrow(at)==1L, nested=FALSE, display_label=NULL) {
+        tags$button(type="button",class=paste("fungal-region-choice",if(nested) "domain" else if(grepl("^ITS",label)) "spacer" else "gene"),
+          disabled=if(!known) "disabled" else NULL,
+          `data-input`=session$ns("region_click"),`data-accession`=alignment_reference(),
+          `data-landmark`=if(known) at$landmark_id else NULL,
+          `data-parent-landmark`=if(nested && known) at$parent_landmark else NULL,
+          title=if(known) .fungal_alignment_ui_region_title(at) else paste(label,"boundary is unavailable on this template"),
+          if(known) display_label %||% .fungal_alignment_ui_region_label(at) else paste0(label," · boundary unavailable"))
+      }
       div(class="fungal-region-guide",
         h4("Genes and regions"),
-        p(class="tiny",strong(alignment_reference())," · rDNA architecture: 18S → ITS1 → 5.8S → ITS2 → 28S. Choose a labeled region to zoom to its boundaries."),
+        p(class="tiny",strong(alignment_reference())," · context: 1,000 bp left / 2,000 bp right, clipped to the template"),
         div(class="fungal-region-choices",lapply(architecture,function(label) {
-          at <- rows[rows$label==label,,drop=FALSE]
-          known <- nrow(at)==1L
-          tags$button(type="button",class=paste("fungal-region-choice",if(grepl("^ITS",label)) "spacer" else "gene"),
-            disabled=if(!known) "disabled" else NULL,
-            `data-input`=session$ns("region_click"),`data-accession`=alignment_reference(),
-            `data-landmark`=if(known) at$landmark_id else NULL,
-            title=if(known) .fungal_alignment_ui_region_title(at) else paste(label,"boundary is unavailable on this template"),
-            if(known) .fungal_alignment_ui_region_label(at) else paste0(label," · boundary unavailable"))
+          at <- genes[genes$label==label,,drop=FALSE]
+          if(nrow(at)>1L) lapply(seq_len(nrow(at)),function(i) {
+            copy <- at[i,,drop=FALSE]
+            region_button(copy,label,display_label=paste0(.fungal_alignment_ui_region_label(copy),
+              " · bases ",format(copy$start,big.mark=",",trim=TRUE),"–",format(copy$end,big.mark=",",trim=TRUE)))
+          }) else region_button(at,label)
         })),
-        p(class="tiny",if(nrow(rows) && any(rows$evidence_status=="curated_reference"))
+        if(nrow(domains)) div(class="fungal-region-domains",
+          strong(class="tiny","28S divergent domains"),
+          div(class="fungal-region-choices",lapply(seq_len(nrow(domains)),function(i) {
+            at <- domains[i,,drop=FALSE]
+            label <- if(sum(domains$label==at$label)>1L) paste0(.fungal_alignment_ui_region_label(at),
+              " · bases ",format(at$start,big.mark=",",trim=TRUE),"–",format(at$end,big.mark=",",trim=TRUE)) else NULL
+            region_button(at,at$label,nested=TRUE,display_label=label)
+          }))),
+        p(class="tiny",if(nrow(domains)) "Projected structural-reference boundaries" else if(any(genes$label=="28S"))
+          "28S domain boundaries unavailable" else "Only available boundaries are shown"),
+        tags$details(class="fungal-annotation-evidence",
+          tags$summary("Annotation evidence"),
+          p(class="tiny",if(nrow(genes) && any(genes$evidence_status=="curated_reference"))
             "This version uses curated pilot boundaries. The 18S and 28S segments are partial anchors."
-          else if(nrow(rows)) "Shown boundaries come from this template's frozen NCBI annotations; incomplete or repeated gene features remain unavailable."
-          else "This template has no complete frozen gene boundaries. Select a template with annotated regions to see its gene track.",
-          " Gene tracks use slate; ITS spacers use amber. Primer colors continue to identify sequencing platforms."))
+          else if(nrow(genes)) "Gene boundaries come from this template's frozen NCBI annotations. Partial intervals are labeled; unavailable or ambiguous boundaries are not estimated."
+          else "This template has no complete frozen gene boundaries. Available domain intervals do not establish a complete parent-gene boundary."),
+          if(nrow(domains)) p(class="tiny","Domain boundaries are homology projections from their structural reference, not new NCBI gene annotations. Partial boundaries are labeled. Each button's source tooltip and the coordinate export retain the scheme and reference provenance."),
+          p(class="tiny","Gene tracks use slate; ITS spacers use amber. Primer colors identify sequencing length tiers.")))
+    })
+    alignment_domain_coverage <- reactive({
+      reference <- alignment_reference()
+      if(!length(reference)) return(NULL)
+      regions <- mapped_alignment_regions()
+      coverage <- .fungal_alignment_ui_domain_coverage(alignment_focus_row(),regions,reference)
+      own_genes <- regions[regions$accession %in% reference & regions$label=="28S" & regions$alignment_status=="mapped",,drop=FALSE]
+      raw_window <- template_base_domain()
+      relevant <- nrow(coverage$domains)>0L || (nrow(own_genes)>0L && length(raw_window)==2L &&
+        any(own_genes$end>=raw_window[1L] & own_genes$start<=raw_window[2L]))
+      if(!relevant) return(NULL)
+      if(!nrow(coverage$domains)) return("28S domain coverage unavailable: no mapped boundaries on this template.")
+      if(!coverage$available) return("28S domain coverage unavailable: the selected pair has no complete mapped product.")
+      if(!nrow(coverage$overlaps)) return("No mapped D domain overlap.")
+      labels <- vapply(seq_len(nrow(coverage$overlaps)),function(i) .fungal_alignment_ui_region_label(coverage$overlaps[i,,drop=FALSE]),character(1))
+      full <- labels[coverage$overlaps$coverage=="full"]
+      partial <- labels[coverage$overlaps$coverage=="partial"]
+      paste(c(if(length(full)) paste0("fully covered: ",paste(full,collapse=", ")),
+              if(length(partial)) paste0("partial overlap: ",paste(partial,collapse=", "))),collapse=" · ")
     })
     output$alignment_status <- renderUI({
       data <- snapshot()
@@ -358,6 +432,11 @@ fungalExplorerServer <- function(id) {
             p("Showing 20 combination tracks, including the selected and compared pairs. Filter primers or switch to compared combinations to focus the alignment."),
           if(length(reference) && nrow(pair) && (!nrow(own) || own$alignment_status[1]!="mapped"))
             p("The selected combination has no complete exact-site product on ",reference,". Verified individual sites are shown when available; choose another template to inspect a complete product."),
+          if(length(reference) && alignment_focus_state()$kind=="region" && nrow(focused_alignment_region())!=1L)
+            p("The focused region has no verified boundaries on ",reference,"; the view falls back to the selected combination or full alignment."),
+          if(!is.null(alignment_domain_coverage())) p(class="tiny fungal-domain-coverage",
+            title="Coordinate overlap of the complete raw product, independent of the visible window; it does not establish PCR success.",
+            strong("Selected product · "),alignment_domain_coverage()),
           if(!length(reference)) p("No templates match these lineage filters."))
     })
     output$alignment_bp_accounting <- renderUI({
@@ -374,21 +453,24 @@ fungalExplorerServer <- function(id) {
       visible_bp <- if(length(raw_domain)==2L) max(0L,min(row$reverse_end,raw_domain[2])-max(row$forward_start,raw_domain[1])+1L) else 0L
       div(class="fungal-bp-accounting",`data-product-bp`=row$amplicon_bp,
         `data-alignment-span`=row$product_alignment_span,`data-gap-columns`=row$n_gap_columns_in_product,
-        h4("Where the bp count comes from"),
-        p(strong(pair$pair_label)," · ",row$accession),
-        p(strong(format_count(row$amplicon_bp)," bp")," · raw template bases ",
-          format_count(row$forward_start),"–",format_count(row$reverse_end)),
-        p(class="mono",format_count(row$reverse_end)," − ",format_count(row$forward_start),
-          " + 1 = ",format_count(row$amplicon_bp)," bp"),
-        if(interior_bp>=0L) p(class="tiny",format_count(forward_bp)," bp forward binding site + ",
-          format_count(interior_bp)," bp between sites + ",format_count(reverse_bp)," bp reverse binding site."),
-        if(clipped) p(class="tiny",format_count(visible_bp)," of ",format_count(row$amplicon_bp),
-          " bp are within the current raw-base window. Zoom to the selected combination to see its complete length."),
-        p(class="tiny", "In the frozen alignment: ",format_count(row$product_alignment_span)," columns = ",
-          format_count(row$amplicon_bp)," sequence bases + ",format_count(row$n_gap_columns_in_product)," gap columns.",
-          " Alignment columns ",format_count(row$product_start_col),"–",format_count(row$product_end_col),
-          " are positions in the shared alignment; gaps do not add bp to the PCR product."),
-        p(class="tiny","Product lengths include both primer binding sites and exclude added adapters. Sequencing-platform limits use these actual sequence lengths."))
+        p(class="fungal-selected-product",strong(pair$pair_label)," · ",strong(format_count(row$amplicon_bp)," bp"),
+          " · raw bases ",format_count(row$forward_start),"–",format_count(row$reverse_end),
+          if(clipped) paste0(" · ",format_count(visible_bp)," bp in view")),
+        tags$details(class="fungal-length-details",
+          tags$summary("How length is calculated"),
+          h4("Where the bp count comes from"),
+          p(class="tiny",row$accession," · ",pair$pair_label),
+          p(class="mono",format_count(row$reverse_end)," − ",format_count(row$forward_start),
+            " + 1 = ",format_count(row$amplicon_bp)," bp"),
+          if(interior_bp>=0L) p(class="tiny",format_count(forward_bp)," bp forward binding site + ",
+            format_count(interior_bp)," bp between sites + ",format_count(reverse_bp)," bp reverse binding site."),
+          if(clipped) p(class="tiny",format_count(visible_bp)," of ",format_count(row$amplicon_bp),
+            " bp are within the current raw-base window. Zoom to the selected combination to see its complete length."),
+          p(class="tiny", "In the frozen alignment: ",format_count(row$product_alignment_span)," columns = ",
+            format_count(row$amplicon_bp)," sequence bases + ",format_count(row$n_gap_columns_in_product)," gap columns.",
+            " Alignment columns ",format_count(row$product_start_col),"–",format_count(row$product_end_col),
+            " are positions in the shared alignment; gaps do not add bp to the PCR product."),
+          p(class="tiny","Product lengths include both primer binding sites and exclude added adapters. Sequencing-platform limits use these actual sequence lengths.")))
     })
     output$alignment_overview <- renderUI({
       if(!length(selected_accessions())) return(div(class="callout","No template rows match these lineage filters."))
@@ -534,7 +616,7 @@ fungalExplorerServer <- function(id) {
           p(fungal_evidence_label(pair$evidence_status)," · ",pair$region," · component targets: ",pair$target),
           p(strong(length_text(pair))," · exact support ",pair$n_scorable," / ",pair$n_panel," selected templates"),
           p(pair$platforms),
-          p(class="tiny", "Gene landmarks are shown only where NCBI supplies an unambiguous complete boundary. Missing or partial annotations do not change the product length measured between exact primer sites."),
+          p(class="tiny", "Gene and region tracks distinguish NCBI intervals (including labeled partial features), curated pilot landmarks, and projected 28S domains. Product bp are measured between exact primer sites, independently of those annotations."),
           if (isTRUE(pair$length_range_crosses_tiers)) div(class="callout","Template lengths span multiple tiers: ",pair$length_tier_range,". Inspect the per-template counts before choosing a ceiling."),
           div(class="fungal-map", lapply(seq_len(nrow(examples)),function(i) {
               row <- examples[i,,drop=FALSE]

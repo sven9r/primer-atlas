@@ -15,6 +15,13 @@
       "description": "Bounded NCBI fungal rDNA reference panel with frozen accession taxonomy, alignment, landmark evidence and exact primer-site results.",
       "created_at": "2026-10-11 12:00:49 UTC",
       "manifest": "v2-2b629f0f2fe8/manifest.json"
+    },
+    {
+      "id": "v3-c6fa87f256e1",
+      "label": "V3 · LSU domains and partial genes",
+      "description": "Sequences, alignment, catalog and primer results are unchanged from v2-2b629f0f2fe8; reviewed LSU domain annotations and their source evidence are frozen in this version.",
+      "created_at": "2026-10-12 14:32:10 UTC",
+      "manifest": "v3-c6fa87f256e1/manifest.json"
     }
   ]
 }

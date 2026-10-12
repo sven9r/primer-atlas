@@ -218,6 +218,18 @@ def write_csv(path, rows, fields):
         writer.writerows(rows)
 
 
+def write_landmark_csv(path, rows):
+    # Retained annotation-only snapshots may add structural-domain provenance.
+    # Keep every field and row; a fixed six-column projection would silently
+    # erase the evidence behind those retained raw-template coordinates.
+    fields = ["accession", "landmark_id", "label", "start", "end", "source_note"]
+    for row in rows:
+        for field in row:
+            if field not in fields:
+                fields.append(field)
+    write_csv(path, rows, fields)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output-dir", type=Path, default=ROOT / "data/derived/fungal_reference_panel")
@@ -322,7 +334,7 @@ def main():
               "length_bp", "sequence_sha256", "source", "source_url", "definition", "annotation_status",
               "annotation_note", "taxonomy_source_sha256", "reference_role"]
     write_csv(out / "panel_manifest.csv", metadata, fields)
-    write_csv(out / "landmarks.csv", landmarks, ["accession", "landmark_id", "label", "start", "end", "source_note"])
+    write_landmark_csv(out / "landmarks.csv", landmarks)
     aligned = subprocess.run(["mafft", "--quiet", "--thread", "2", "--auto", str(out / "panel.fasta")],
                              capture_output=True, text=True, check=True)
     (out / "alignment.fasta").write_text(aligned.stdout)

@@ -54,6 +54,10 @@ view <- function(reference = "A", domain = c(1L, 12L), rows = mapped, annotation
 # 2..10, excludes all three alignment gaps, and keeps its full raw bounds.
 forward_view <- view()
 reverse_view <- view("B")
+for(class_name in c("fungal-template-bp-window-regions","fungal-template-bp-accounting")) {
+  secondary <- one_tag(forward_view,class_name)
+  stopifnot(secondary$name=="details",is.null(secondary$attribs$open))
+}
 forward_product <- one_tag(forward_view, "fungal-template-bp-product")
 reverse_product <- one_tag(reverse_view, "fungal-template-bp-product")
 near(forward_product$attribs$x, 290 + 710 / 12)

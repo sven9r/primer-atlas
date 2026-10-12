@@ -169,6 +169,41 @@ class RetentionTests(unittest.TestCase):
             with self.assertRaises(RuntimeError):
                 panel.retain_previous_panel(directory, {"X.1": "TGCA" * 750}, [], [])
 
+    def test_monthly_rewrite_retains_domain_provenance_columns_and_row_order(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            sequence = "ACGT" * 750
+            self.write_previous(directory, sequence)
+            with (directory / "landmarks.csv").open() as handle:
+                previous = list(csv.DictReader(handle))
+            domain = {"accession": "X.1", "landmark_id": "D7a", "label": "D7a fixture",
+                      "start": "1900", "end": "2000", "source_note": "Synthetic projected structural-domain fixture",
+                      "parent_landmark": "28S", "domain_scheme": "classic D-domain fixture",
+                      "source_reference": "SYNTHETIC.1", "source_start": "101", "source_end": "201",
+                      "evidence_status": "mapped_reference_domain", "projection_identity": "0.94"}
+            unavailable = dict(domain, landmark_id="D10", label="D10 fixture", start="", end="",
+                               evidence_status="unavailable", source_note="Synthetic source interval withheld")
+            panel.write_landmark_csv(directory / "landmarks.csv", previous + [domain, unavailable])
+            with (directory / "landmarks.csv").open() as handle:
+                frozen = list(csv.DictReader(handle))
+            fresh = {"accession": "Y.1", "landmark_id": "18S", "label": "18S",
+                     "start": "1", "end": "1800", "source_note": "New synthetic gene fixture"}
+            landmarks = [fresh, {"accession": "X.1", "source_note": "conflicting replacement"}]
+            panel.retain_previous_panel(directory, {"X.1": sequence, "Y.1": "ACGA" * 800}, [], landmarks)
+            output = directory / "next_landmarks.csv"
+            panel.write_landmark_csv(output, landmarks)
+            with output.open() as handle:
+                reader = csv.DictReader(handle)
+                fields = reader.fieldnames
+                retained = list(reader)
+            self.assertEqual(fields[:6], ["accession", "landmark_id", "label", "start", "end", "source_note"])
+            self.assertEqual(retained[1:], frozen)
+            self.assertEqual([row["landmark_id"] for row in retained], ["18S", "18S", "D7a", "D10"])
+            self.assertEqual(retained[2]["parent_landmark"], "28S")
+            self.assertEqual(retained[2]["projection_identity"], "0.94")
+            self.assertEqual(retained[3]["start"], "")
+            self.assertEqual(retained[3]["evidence_status"], "unavailable")
+
 
 if __name__ == "__main__":
     unittest.main()

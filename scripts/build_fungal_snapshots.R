@@ -134,6 +134,13 @@ build_fungal_snapshot <- function(number, panel_dir = Sys.getenv("FUNGAL_PANEL_D
     path <- file.path(staging, filename)
     write_snapshot_csv(frames[[name]], path)
     artifacts[[name]] <- list(path = filename, sha256 = atlas_sha256(path), bytes = unname(file.info(path)$size), rows = nrow(frames[[name]]))
+    if (name == "landmarks" && any(!names(frames[[name]]) %in%
+        c("accession", "landmark_id", "label", "start", "end", "source_note"))) {
+      # Extended structural-domain provenance includes strings such as '28S'
+      # which permissive CSV guessing can otherwise turn into numeric28.
+      artifacts[[name]]$character_columns <- names(frames[[name]])[
+        vapply(frames[[name]], is.character, logical(1)) & !names(frames[[name]]) %in% c("start", "end")]
+    }
   }
   for (name in c("sequences", "alignment")) {
     path <- file.path(staging, paste0(name, ".fasta"))
@@ -234,12 +241,12 @@ if ("restore" %in% requested) {
     stop("Previous fungal release is unreachable; refusing to reset retained sequences")
   }
   descriptors <- previous$manifest$fungal_snapshots
+  local_index <- fungal_read_index(root, remote = FALSE)
   if (!length(descriptors)) {
-    message("Previous release is catalog-only; no fungal sequence panel to restore")
+    message("Previous release is catalog-only; retaining bundled fungal history")
   } else {
     # A clean git runner must restore every earlier immutable snapshot, not
     # only the latest sequence panel, before allocating the next ordinal.
-    local_index <- fungal_read_index(root, remote = FALSE)
     for (historical in descriptors) {
       if (!grepl("^v[0-9]+-[a-f0-9]{12}$", historical$id)) stop("Invalid prior fungal snapshot identity")
       remote_manifest <- atlas_cached_artifact(historical$manifest$url, historical$manifest$sha256)
@@ -279,20 +286,51 @@ if ("restore" %in% requested) {
     temporary_index <- tempfile(tmpdir = version_root)
     jsonlite::write_json(list(schema_version = "1.0.0", marker_id = "ITS_FUNGAL", versions = entries), temporary_index, auto_unbox = TRUE, pretty = TRUE)
     if (!file.rename(temporary_index, file.path(version_root, "index.json"))) stop("Could not restore fungal history index")
-    descriptor <- descriptors[[length(descriptors)]]
+  }
+  # A reviewed bundled annotation version can be newer than hosted latest.
+  # Choose from the complete verified history, rather than allowing an older
+  # hosted panel (or a catalog-only release) to drop its retained landmarks.
+  snapshots <- lapply(seq_len(nrow(local_index)), function(i) {
+    fungal_read_snapshot(local_index$id[i], root, remote = FALSE)
+  })
+  manifests <- lapply(snapshots, `[[`, "manifest")
+  numbers <- vapply(manifests, function(value) as.integer(value$version_number), integer(1))
+  if (anyNA(numbers) || any(numbers < 1L)) stop("Invalid retained fungal version ordinal")
+  eligible <- which(numbers > 1L)
+  if (length(eligible)) {
+    latest <- eligible[numbers[eligible] == max(numbers[eligible])]
+    if (length(latest) != 1L) stop("Ambiguous latest fungal history; refusing to choose between immutable snapshots")
+    selected <- manifests[[latest]]
+    values <- snapshots[[latest]]
+    sequence_ids <- sub("[[:space:]].*$", "", names(values$sequences))
+    if (anyDuplicated(sequence_ids) || anyDuplicated(values$taxonomy$accession) ||
+        !setequal(sequence_ids, values$taxonomy$accession) ||
+        !"accession" %in% names(values$landmarks) || anyNA(values$landmarks$accession) ||
+        any(!values$landmarks$accession %in% sequence_ids)) {
+      stop("Retained fungal sequences, taxonomy and landmark accession ownership differ")
+    }
+    selected_sequences <- setNames(values$sequences, sequence_ids)
+    for (snapshot in snapshots) {
+      earlier <- snapshot$sequences
+      earlier_ids <- sub("[[:space:]].*$", "", names(earlier))
+      if (!all(earlier_ids %in% sequence_ids) ||
+          !identical(unname(earlier), unname(selected_sequences[earlier_ids]))) {
+        stop("Latest fungal history does not retain earlier accession-version sequence bytes")
+      }
+    }
+    selected_directory <- dirname(file.path(version_root, local_index$manifest[latest]))
     destination <- "data/derived/fungal_previous_reference_panel"
     dir.create(destination, recursive = TRUE, showWarnings = FALSE)
     mapping <- c(sequences = "panel.fasta", taxonomy = "panel_manifest.csv", landmarks = "landmarks.csv", run_manifest = "run_manifest.json")
     for (name in names(mapping)) {
-      artifact <- descriptor$artifacts[[name]]
+      artifact <- selected$artifacts[[name]]
       if (is.null(artifact)) stop("Previous fungal panel lacks retained input: ", name)
-      source_path <- artifact$local_path
-      if (is.null(source_path) || !file.exists(source_path)) source_path <- atlas_cached_artifact(artifact$url, artifact$sha256)
+      source_path <- file.path(selected_directory, artifact$path)
       if (!identical(atlas_sha256(source_path), artifact$sha256)) stop("Previous fungal input checksum differs")
       if (!file.copy(source_path, file.path(destination, mapping[[name]]), overwrite = TRUE)) stop("Could not restore fungal input")
     }
-    message("Restored complete fungal sequence, taxonomy and landmark state: ", descriptor$id)
-  }
+    message("Restored latest verified fungal sequence, taxonomy and landmark state: ", selected$id)
+  } else message("No expanded fungal sequence panel is available to restore")
 } else if ("capture" %in% requested) {
   capture_fungal_baseline()
   message("Captured original fungal inputs")

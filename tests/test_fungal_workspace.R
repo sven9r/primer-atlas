@@ -10,8 +10,10 @@ source("R/fungal_alignment_ui.R")
 source("R/fungal_ui.R")
 versions <- fungal_read_index()
 stopifnot(nrow(versions) >= 2L)
+baseline_v2 <- versions$id[grepl("^v2-",versions$id)][1L]
+stopifnot(length(baseline_v2)==1L,!is.na(baseline_v2))
 shiny::testServer(fungalExplorerServer, args=list(id="test"), {
-  session$setInputs(version=tail(versions$id,1),platform="ALL",illumina_max=500,pacbio_max=2000,
+  session$setInputs(version=baseline_v2,platform="ALL",illumina_max=500,pacbio_max=2000,
                     nanopore_max=3500,phylum="ALL",class="ALL",locus="ALL",search="",
                     examples_only=TRUE,show_unresolved=TRUE)
   session$flushReact()

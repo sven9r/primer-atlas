@@ -93,8 +93,14 @@ fungal_alignment_landmark_rows <- function(index, landmarks, reference_accession
     rows$accession <- rep(reference, nrow(rows))
   }
   if (!"source_note" %in% names(rows)) rows$source_note <- rep("Frozen snapshot landmark", nrow(rows))
-  rows$evidence_status <- ifelse(grepl("curated", rows$source_note, ignore.case = TRUE),
-                                "curated_reference", "annotated_reference")
+  legacy_evidence <- ifelse(grepl("curated", rows$source_note, ignore.case = TRUE),
+                            "curated_reference", "annotated_reference")
+  if (!"evidence_status" %in% names(rows)) rows$evidence_status <- legacy_evidence
+  else {
+    rows$evidence_status <- as.character(rows$evidence_status)
+    missing_evidence <- is.na(rows$evidence_status) | !nzchar(trimws(rows$evidence_status))
+    rows$evidence_status[missing_evidence] <- legacy_evidence[missing_evidence]
+  }
   for (column in c("start_col", "end_col", "left_col", "right_col", "direction", "raw_bp")) {
     rows[[column]] <- rep(NA_integer_, nrow(rows))
   }

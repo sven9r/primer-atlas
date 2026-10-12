@@ -39,6 +39,9 @@ jobs:
             tests/test_fungal_alignment.R \
             tests/test_fungal_alignment_regions.R \
             tests/test_fungal_amplicon_bp_view.R \
+            tests/test_fungal_domain_ui.R \
+            tests/test_fungal_domain_snapshot.R \
+            tests/test_fungal_restore_selection.R \
             tests/test_fungal_versions.R \
             tests/test_fungal_workspace.R \
             tests/test_marker_runtime.R \
@@ -57,5 +60,7 @@ jobs:
         run: Rscript tests/test_bundle_size.R
       - name: Verify fungal acquisition boundary rules
         run: python3 -m unittest discover -s tests -p test_fungal_reference_panel.py
+      - name: Verify fungal domain projection boundaries
+        run: python3 -m unittest discover -s tests -p test_fungal_domain_mapping.py
       - name: Verify COI acquisition and retention boundaries
         run: python3 -m unittest discover -s tests -p 'test_coi_*.py'

@@ -72,6 +72,26 @@ fungal_read_index <- function(root = getwd(), remote = TRUE) {
   result
 }
 
+fungal_snapshot_read_artifact <- function(artifact) {
+  columns <- artifact$character_columns
+  if (is.null(columns)) return(atlas_read_artifact(artifact))
+  columns <- unlist(columns, use.names = FALSE)
+  if (!is.character(columns) || !length(columns) || anyNA(columns) ||
+      any(!nzchar(columns)) || anyDuplicated(columns)) stop("Invalid fungal artifact character_columns")
+  path <- artifact$local_path
+  if (is.null(path) || !file.exists(path)) path <- atlas_cached_artifact(artifact$url, artifact$sha256)
+  if (!grepl("[.]csv([.]gz)?$", path, ignore.case = TRUE)) stop("character_columns requires a CSV artifact")
+  if (!identical(tolower(atlas_sha256(path)), tolower(artifact$sha256))) stop("Fungal artifact checksum failed")
+  header <- readr::read_csv(path, n_max = 0L, col_types = readr::cols(.default = readr::col_character()),
+    show_col_types = FALSE, name_repair = "minimal")
+  if (anyDuplicated(names(header)) || !all(columns %in% names(header))) stop("Fungal character_columns names differ from CSV headers")
+  if (any(columns %in% c("start", "end"))) stop("Fungal raw coordinate columns must remain numeric")
+  spec <- readr::cols(.default = readr::col_guess())
+  spec$cols <- setNames(rep(list(readr::col_character()), length(columns)), columns)
+  for (coordinate in intersect(c("start", "end"), names(header))) spec$cols[[coordinate]] <- readr::col_double()
+  readr::read_csv(path, col_types = spec, show_col_types = FALSE, name_repair = "minimal")
+}
+
 fungal_snapshot_artifact <- function(manifest, name, directory) {
   artifact <- manifest$artifacts[[name]]
   if (is.null(artifact)) return(NULL)
@@ -83,7 +103,7 @@ fungal_snapshot_artifact <- function(manifest, name, directory) {
     stop("Fungal snapshot artifact lacks SHA-256: ", name)
   }
   artifact$local_path <- file.path(directory, path)
-  value <- atlas_read_artifact(artifact)
+  value <- fungal_snapshot_read_artifact(artifact)
   actual_rows <- if (is.data.frame(value)) nrow(value) else if (is.character(value)) length(value) else NULL
   if (!is.null(actual_rows) && !is.null(artifact$rows) && actual_rows != artifact$rows) {
     stop("Fungal snapshot row count differs: ", name)
@@ -107,7 +127,8 @@ fungal_read_snapshot <- function(version_id, root = getwd(), remote = TRUE) {
           inner <- manifest$artifacts[[name]]
           if (is.null(artifact) || !identical(artifact$sha256, inner$sha256)) stop("Hosted fungal artifact differs from its frozen manifest")
           artifact$local_path <- NULL
-          value <- atlas_read_artifact(artifact)
+          artifact$character_columns <- inner$character_columns
+          value <- fungal_snapshot_read_artifact(artifact)
           rows <- if (is.data.frame(value)) nrow(value) else if (is.character(value)) length(value) else NULL
           if (!is.null(rows) && !is.null(inner$rows) && rows != inner$rows) stop("Hosted fungal artifact row count differs")
           result[[name]] <- value

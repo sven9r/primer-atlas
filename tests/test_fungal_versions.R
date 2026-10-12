@@ -120,6 +120,12 @@ if (dir.exists(panel) && file.exists("R/fungal_explorer.R")) {
   extra$source_url <- ""
   metadata <- rbind(metadata, extra)
   write.csv(metadata, file.path(worker_panel, "panel_manifest.csv"), row.names = FALSE, na = "")
+  # Extended-provenance parser fixture: text '28S' must remain text while
+  # numeric reference indices remain numeric in new general monthly snapshots.
+  landmark_fixture <- read.csv(file.path(worker_panel, "landmarks.csv"), stringsAsFactors = FALSE)
+  landmark_fixture$parser_fixture_label <- "28S"
+  landmark_fixture$parser_fixture_reference_index <- 101L
+  write.csv(landmark_fixture, file.path(worker_panel, "landmarks.csv"), row.names = FALSE, na = "")
   provenance_path <- file.path(worker_panel, "run_manifest.json")
   provenance <- jsonlite::read_json(provenance_path, simplifyVector = FALSE)
   provenance$panel_count <- length(raw)
@@ -138,6 +144,8 @@ if (dir.exists(panel) && file.exists("R/fungal_explorer.R")) {
   stopifnot(startsWith(after$manifest$id, paste0("v", after$manifest$version_number, "-")))
   stopifnot(identical(after$sequences[names(before$sequences)], before$sequences))
   stopifnot(synthetic_accession %in% after$taxonomy$accession)
+  stopifnot(identical(after$landmarks$parser_fixture_label, rep("28S", nrow(after$landmarks))),
+    is.numeric(after$landmarks$parser_fixture_reference_index), is.numeric(after$landmarks$start))
   stopifnot(!identical(after$manifest$artifacts$alignment$sha256, before$manifest$artifacts$alignment$sha256))
   stopifnot(identical(previous_manifest_hash, atlas_sha256(file.path(fungal_version_root(worker), tail(worker_index$manifest, 1)))))
   builder()

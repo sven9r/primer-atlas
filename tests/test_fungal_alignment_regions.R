@@ -213,6 +213,9 @@ summary_fixture <- rbind(summary_fixture, outside_mapped, unresolved_landmark)
 summary_tags <- function(html) regmatches(html, gregexpr(
   '<span class="fungal-alignment-window-region [^"]*"[^>]*>', html, perl = TRUE))[[1L]]
 summary_html <- overview(TRUE, summary_fixture, c(5L, 8L))
+secondary_summary <- regmatches(summary_html,regexpr('<details class="fungal-alignment-window-regions"[^>]*>',summary_html))
+stopifnot(length(secondary_summary)==1L,nzchar(secondary_summary),!grepl(" open",secondary_summary,fixed=TRUE),
+  grepl("Region coordinates and sources",summary_html,fixed=TRUE))
 summary <- summary_tags(summary_html)
 stopifnot(length(summary) == 1L,
           grepl('data-accession="A"', summary, fixed = TRUE),

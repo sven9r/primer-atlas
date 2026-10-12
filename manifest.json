@@ -2899,7 +2899,7 @@
       "checksum": "8a340130db5e0ce8d9851b578028dc21"
     },
     "data/pinned/ITS_FUNGAL/versions/index.json": {
-      "checksum": "3c27253e97702e5e0bb3229c794e6753"
+      "checksum": "a4bda2f7f91fb7c60aad503de8440a9b"
     },
     "data/pinned/ITS_FUNGAL/versions/v1-9e958f105c46/alignment.fasta": {
       "checksum": "72bda6c828668d5b9f4f382f62a571ca"
@@ -3007,6 +3007,309 @@
       "checksum": "2ed069417d82fb39218be00e3770b996"
     },
     "data/pinned/ITS_FUNGAL/versions/v2-2b629f0f2fe8/taxonomy.csv": {
+      "checksum": "fe521e844b1acd23b041a4a653071b31"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v3-c6fa87f256e1/alignment.fasta": {
+      "checksum": "823fb9f85f5948f64cde1d6bdc7165ef"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v3-c6fa87f256e1/annotation_sources/source_001.fasta": {
+      "checksum": "a7c2c8cb5cba630c382247347088f23d"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v3-c6fa87f256e1/annotation_sources/source_002.fasta": {
+      "checksum": "821ce6509603d03c127c1350056cbaae"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v3-c6fa87f256e1/annotation_sources/source_003.fasta": {
+      "checksum": "9696cc4f094d79a007e6538435176b88"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v3-c6fa87f256e1/annotation_sources/source_004.fasta": {
+      "checksum": "e85b5da932fa581e8abe816bbb079c9f"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v3-c6fa87f256e1/annotation_sources/source_005.fasta": {
+      "checksum": "06d98d3a0ab2412191ee64214fd72d46"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v3-c6fa87f256e1/annotation_sources/source_006.fasta": {
+      "checksum": "259cd22628318c4b42ba21aeeaf4cbf9"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v3-c6fa87f256e1/annotation_sources/source_007.fasta": {
+      "checksum": "3dd391e36a6756f303eee1da9300950a"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v3-c6fa87f256e1/annotation_sources/source_008.fasta": {
+      "checksum": "420f14194a6bc08a4b07a99db3fb248b"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v3-c6fa87f256e1/annotation_sources/source_009.fasta": {
+      "checksum": "a7c2c8cb5cba630c382247347088f23d"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v3-c6fa87f256e1/annotation_sources/source_010.fasta": {
+      "checksum": "821ce6509603d03c127c1350056cbaae"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v3-c6fa87f256e1/annotation_sources/source_011.fasta": {
+      "checksum": "06d98d3a0ab2412191ee64214fd72d46"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v3-c6fa87f256e1/annotation_sources/source_012.fasta": {
+      "checksum": "259cd22628318c4b42ba21aeeaf4cbf9"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v3-c6fa87f256e1/annotation_sources/source_013.fasta": {
+      "checksum": "3a74d5c06218c0ad22feb87d569050e6"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v3-c6fa87f256e1/annotation_sources/source_014.fasta": {
+      "checksum": "420f14194a6bc08a4b07a99db3fb248b"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v3-c6fa87f256e1/annotation_sources/source_015.fasta": {
+      "checksum": "06d98d3a0ab2412191ee64214fd72d46"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v3-c6fa87f256e1/annotation_sources/source_016.fasta": {
+      "checksum": "259cd22628318c4b42ba21aeeaf4cbf9"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v3-c6fa87f256e1/annotation_sources/source_017.fasta": {
+      "checksum": "3e5696302ef61d2c53fda46a44e53da3"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v3-c6fa87f256e1/annotation_sources/source_018.fasta": {
+      "checksum": "086a99121d8819d30f0c1c673c220ff3"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v3-c6fa87f256e1/annotation_sources/source_019.fasta": {
+      "checksum": "3e5696302ef61d2c53fda46a44e53da3"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v3-c6fa87f256e1/annotation_sources/source_020.fasta": {
+      "checksum": "086a99121d8819d30f0c1c673c220ff3"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v3-c6fa87f256e1/annotation_sources/source_021.fasta": {
+      "checksum": "e6d91e8694a634e82a6b37bc8440789e"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v3-c6fa87f256e1/annotation_sources/source_022.fasta": {
+      "checksum": "086a99121d8819d30f0c1c673c220ff3"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v3-c6fa87f256e1/annotation_sources/source_023.fasta": {
+      "checksum": "d2644496ddcb3a7374348b3e1390ded5"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v3-c6fa87f256e1/annotation_sources/source_024.fasta": {
+      "checksum": "20954be9993683618ccf801fa0c7f84e"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v3-c6fa87f256e1/annotation_sources/source_025.fasta": {
+      "checksum": "495e403ea4c563e0351219d9e30e7093"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v3-c6fa87f256e1/annotation_sources/source_026.fasta": {
+      "checksum": "ed4caaa7c4818fcf1e9960bcf3a25177"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v3-c6fa87f256e1/annotation_sources/source_027.fasta": {
+      "checksum": "8881ce72829c68ce1835cadc22ba43e4"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v3-c6fa87f256e1/annotation_sources/source_028.fasta": {
+      "checksum": "5f5645453aa918b245981171ec0bde3d"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v3-c6fa87f256e1/annotation_sources/source_029.fasta": {
+      "checksum": "947f8ba269b769c9bff6213f641e6f41"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v3-c6fa87f256e1/annotation_sources/source_030.fasta": {
+      "checksum": "ed4caaa7c4818fcf1e9960bcf3a25177"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v3-c6fa87f256e1/annotation_sources/source_031.fasta": {
+      "checksum": "b38513d9276e6ad53ddba81c2080135c"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v3-c6fa87f256e1/annotation_sources/source_032.fasta": {
+      "checksum": "20954be9993683618ccf801fa0c7f84e"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v3-c6fa87f256e1/annotation_sources/source_033.fasta": {
+      "checksum": "c6a70da0517dce19f15619409aa94392"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v3-c6fa87f256e1/annotation_sources/source_034.fasta": {
+      "checksum": "e85b5da932fa581e8abe816bbb079c9f"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v3-c6fa87f256e1/annotation_sources/source_035.fasta": {
+      "checksum": "06d98d3a0ab2412191ee64214fd72d46"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v3-c6fa87f256e1/annotation_sources/source_036.fasta": {
+      "checksum": "259cd22628318c4b42ba21aeeaf4cbf9"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v3-c6fa87f256e1/annotation_sources/source_037.fasta": {
+      "checksum": "e6d91e8694a634e82a6b37bc8440789e"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v3-c6fa87f256e1/annotation_sources/source_038.fasta": {
+      "checksum": "086a99121d8819d30f0c1c673c220ff3"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v3-c6fa87f256e1/annotation_sources/source_039.fasta": {
+      "checksum": "c6a70da0517dce19f15619409aa94392"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v3-c6fa87f256e1/annotation_sources/source_040.fasta": {
+      "checksum": "e85b5da932fa581e8abe816bbb079c9f"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v3-c6fa87f256e1/annotation_sources/source_041.fasta": {
+      "checksum": "94edf647c6b60017f705d3e56980d88e"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v3-c6fa87f256e1/annotation_sources/source_042.fasta": {
+      "checksum": "5f5645453aa918b245981171ec0bde3d"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v3-c6fa87f256e1/annotation_sources/source_043.fasta": {
+      "checksum": "9696cc4f094d79a007e6538435176b88"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v3-c6fa87f256e1/annotation_sources/source_044.fasta": {
+      "checksum": "e85b5da932fa581e8abe816bbb079c9f"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v3-c6fa87f256e1/annotation_sources/source_045.fasta": {
+      "checksum": "a7c2c8cb5cba630c382247347088f23d"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v3-c6fa87f256e1/annotation_sources/source_046.fasta": {
+      "checksum": "821ce6509603d03c127c1350056cbaae"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v3-c6fa87f256e1/annotation_sources/source_047.fasta": {
+      "checksum": "3dd391e36a6756f303eee1da9300950a"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v3-c6fa87f256e1/annotation_sources/source_048.fasta": {
+      "checksum": "420f14194a6bc08a4b07a99db3fb248b"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v3-c6fa87f256e1/annotation_sources/source_049.fasta": {
+      "checksum": "94edf647c6b60017f705d3e56980d88e"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v3-c6fa87f256e1/annotation_sources/source_050.fasta": {
+      "checksum": "5f5645453aa918b245981171ec0bde3d"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v3-c6fa87f256e1/annotation_sources/source_051.fasta": {
+      "checksum": "947f8ba269b769c9bff6213f641e6f41"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v3-c6fa87f256e1/annotation_sources/source_052.fasta": {
+      "checksum": "ed4caaa7c4818fcf1e9960bcf3a25177"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v3-c6fa87f256e1/annotation_sources/source_053.fasta": {
+      "checksum": "d2644496ddcb3a7374348b3e1390ded5"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v3-c6fa87f256e1/annotation_sources/source_054.fasta": {
+      "checksum": "20954be9993683618ccf801fa0c7f84e"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v3-c6fa87f256e1/annotation_sources/source_055.fasta": {
+      "checksum": "8881ce72829c68ce1835cadc22ba43e4"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v3-c6fa87f256e1/annotation_sources/source_056.fasta": {
+      "checksum": "5f5645453aa918b245981171ec0bde3d"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v3-c6fa87f256e1/annotation_sources/source_057.fasta": {
+      "checksum": "b38513d9276e6ad53ddba81c2080135c"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v3-c6fa87f256e1/annotation_sources/source_058.fasta": {
+      "checksum": "20954be9993683618ccf801fa0c7f84e"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v3-c6fa87f256e1/annotation_sources/source_059.fasta": {
+      "checksum": "3a74d5c06218c0ad22feb87d569050e6"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v3-c6fa87f256e1/annotation_sources/source_060.fasta": {
+      "checksum": "420f14194a6bc08a4b07a99db3fb248b"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v3-c6fa87f256e1/annotation_sources/source_061.fasta": {
+      "checksum": "a7c2c8cb5cba630c382247347088f23d"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v3-c6fa87f256e1/annotation_sources/source_062.fasta": {
+      "checksum": "821ce6509603d03c127c1350056cbaae"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v3-c6fa87f256e1/annotation_sources/source_063.fasta": {
+      "checksum": "495e403ea4c563e0351219d9e30e7093"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v3-c6fa87f256e1/annotation_sources/source_064.fasta": {
+      "checksum": "ed4caaa7c4818fcf1e9960bcf3a25177"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v3-c6fa87f256e1/annotation_sources/source_065.py": {
+      "checksum": "7433245548826fda0b987a9651285ea1"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v3-c6fa87f256e1/annotation_sources/source_066.json": {
+      "checksum": "f345092e6501aa9b1def2a4291be69e6"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v3-c6fa87f256e1/annotation_sources/source_067.json": {
+      "checksum": "8ec98323ea8aa2d298e13a5e718f7b4e"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v3-c6fa87f256e1/annotation_sources/source_068.csv": {
+      "checksum": "41284a0d71e83b9cb4f20fae49659db8"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v3-c6fa87f256e1/annotation_sources/source_069.csv": {
+      "checksum": "b5c41b9165c239312e364c314a6b8a5e"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v3-c6fa87f256e1/annotation_sources/source_070.fasta": {
+      "checksum": "22d0fbf6f4b888da13d0c62f1e625198"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v3-c6fa87f256e1/annotation_sources/source_071.txt": {
+      "checksum": "95a3feb255658a096e42e53952f2585c"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v3-c6fa87f256e1/annotation_sources/source_072.txt": {
+      "checksum": "91165326e859521d23a889fb6a5ddb3e"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v3-c6fa87f256e1/annotation_sources/source_073.txt": {
+      "checksum": "0f6de663196f860d8d453d065c4c5739"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v3-c6fa87f256e1/annotation_sources/source_074.csv": {
+      "checksum": "b91cd7c340319aa8c2cd9a55d56da4a3"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v3-c6fa87f256e1/annotation_sources/source_075.json": {
+      "checksum": "cefe2083e4c079a0bf4c4e510cc465d2"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v3-c6fa87f256e1/annotation_sources/source_076.fasta": {
+      "checksum": "f808dbb5925ba1f898fe0f59bdb14902"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v3-c6fa87f256e1/catalog.csv": {
+      "checksum": "91d45a78101409c93166d6b54193c002"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v3-c6fa87f256e1/code_acquisition.py": {
+      "checksum": "328ba9b0c246fe28ce9eabc1c50bed8a"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v3-c6fa87f256e1/code_data_layer.R": {
+      "checksum": "ef3c9e0c4b133e0a79b89f09a90cc063"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v3-c6fa87f256e1/code_domain_retention_pipeline.py": {
+      "checksum": "a33b4b26391547d809a6ddb78a7c5935"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v3-c6fa87f256e1/code_domain_snapshot_builder.R": {
+      "checksum": "b5cb191a29ef6397354f22d04caed280"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v3-c6fa87f256e1/code_domain_snapshot_reader.R": {
+      "checksum": "90d16ccaedf4a943c9f95a62dd8ff249"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v3-c6fa87f256e1/code_explorer.R": {
+      "checksum": "82db3b79ee091af118b486177645460c"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v3-c6fa87f256e1/code_functions.R": {
+      "checksum": "0b8135548921fa241dbc1c06a26c5c6f"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v3-c6fa87f256e1/code_snapshot_builder.R": {
+      "checksum": "96cb35099f6d7eb8435d732034324113"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v3-c6fa87f256e1/code_version_reader.R": {
+      "checksum": "264e321c4ecf0d07f6ec17af7c8a1500"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v3-c6fa87f256e1/domain_annotation_run_manifest.json": {
+      "checksum": "859aa33dadf5065d220a62a953ac76c3"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v3-c6fa87f256e1/geometry.csv": {
+      "checksum": "54316a5f53a13fe8f6a50c770082c643"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v3-c6fa87f256e1/landmarks.csv": {
+      "checksum": "a15a7f272d2be6d01917a027428d7fd4"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v3-c6fa87f256e1/manifest.json": {
+      "checksum": "1f76acbd0587a6099a8c136b38955c80"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v3-c6fa87f256e1/oligos.csv": {
+      "checksum": "f2985e9f5e76f340a5d214fccd8d6cb4"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v3-c6fa87f256e1/pair_oligos.csv": {
+      "checksum": "a6fd947d8ec3f648eeab0113b4dea20a"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v3-c6fa87f256e1/pair_sequences.csv": {
+      "checksum": "8d9b9c3633b7b928482cbbfbfd42c0fa"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v3-c6fa87f256e1/pairs.csv": {
+      "checksum": "0df94cea09337482a74133bf99095f90"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v3-c6fa87f256e1/primer_pairs.csv": {
+      "checksum": "16530131e05f08000e1ff25a4f939b30"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v3-c6fa87f256e1/raw_catalog.csv": {
+      "checksum": "5a8cf3f174cf46271ab7c4668745f6ac"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v3-c6fa87f256e1/run_manifest.json": {
+      "checksum": "ca38ac33a87dc09125b7b9ac6cf17455"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v3-c6fa87f256e1/sequences.fasta": {
+      "checksum": "c73db0c8d3fce6deba6bb05c0e2c28d5"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v3-c6fa87f256e1/sites.csv": {
+      "checksum": "2ed069417d82fb39218be00e3770b996"
+    },
+    "data/pinned/ITS_FUNGAL/versions/v3-c6fa87f256e1/taxonomy.csv": {
       "checksum": "fe521e844b1acd23b041a4a653071b31"
     },
     "data/primer_target_claims.csv": {
@@ -3190,19 +3493,19 @@
       "checksum": "bc7ecb8eb2df4ae29bffde148308fb3c"
     },
     "R/fungal_alignment_ui.R": {
-      "checksum": "f017484451971d17931551b9b57953bd"
+      "checksum": "9baece4ca746340785be4f45bf8254a8"
     },
     "R/fungal_alignment.R": {
-      "checksum": "e3f423833bd4e1e8bd55a35bf2445d87"
+      "checksum": "2763ceaab3886056fb60dede0c1084ac"
     },
     "R/fungal_explorer.R": {
       "checksum": "82db3b79ee091af118b486177645460c"
     },
     "R/fungal_ui.R": {
-      "checksum": "2753567aaa67cfcd0ae3e0854a5daa15"
+      "checksum": "3418776704fa7ea998ee6cc46169a540"
     },
     "R/fungal_versions.R": {
-      "checksum": "264e321c4ecf0d07f6ec17af7c8a1500"
+      "checksum": "90d16ccaedf4a943c9f95a62dd8ff249"
     },
     "R/primerminer_runtime.R": {
       "checksum": "7544e593f3fc8aa3bbd50882ad87b480"

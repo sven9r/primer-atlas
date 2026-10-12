@@ -24,6 +24,8 @@ source("R/fungal_versions.R")
 source("R/fungal_alignment.R")
 source("R/fungal_alignment_ui.R")
 source("R/fungal_ui.R")
+source("R/fungal_fit.R")
+source("R/fungal_fit_ui.R")
 
 coi_release_state <- tryCatch(atlas_read_manifest("COI"), error = function(e) NULL)
 coi_reference_panel <- coi_reference_load(coi_release_state)
@@ -1416,6 +1418,8 @@ app_js <- "
     }, {priority: 'event'});
     var detail = document.querySelector('.order-detail-layout');
     if (detail) {
+      var disclosure = detail.closest('details');
+      if (disclosure) disclosure.open = true;
       detail.scrollIntoView({behavior:'smooth', block:'start'});
       window.setTimeout(function() {
         detail.scrollIntoView({behavior:'smooth', block:'start'});
@@ -1477,7 +1481,11 @@ app_js <- "
     Shiny.addCustomMessageHandler('scroll_order_detail', function(message) {
       window.setTimeout(function() {
         var detail = document.querySelector('.order-detail-layout');
-        if (detail) detail.scrollIntoView({behavior:'smooth', block:'start'});
+        if (detail) {
+          var disclosure = detail.closest('details');
+          if (disclosure) disclosure.open = true;
+          detail.scrollIntoView({behavior:'smooth', block:'start'});
+        }
       }, 180);
     });
   } else {
@@ -1493,10 +1501,14 @@ app_js <- "
         if (message.center && Number.isFinite(Number(message.center.latitude))) regionGlobeState.lat0 = Number(message.center.latitude);
         window.requestAnimationFrame(wireRegionGlobe);
       });
-      Shiny.addCustomMessageHandler('scroll_order_detail', function(message) {
-        window.setTimeout(function() {
-          var detail = document.querySelector('.order-detail-layout');
-          if (detail) detail.scrollIntoView({behavior:'smooth', block:'start'});
+        Shiny.addCustomMessageHandler('scroll_order_detail', function(message) {
+          window.setTimeout(function() {
+            var detail = document.querySelector('.order-detail-layout');
+            if (detail) {
+              var disclosure = detail.closest('details');
+              if (disclosure) disclosure.open = true;
+              detail.scrollIntoView({behavior:'smooth', block:'start'});
+            }
         }, 180);
       });
     }, {once:true});
@@ -1541,10 +1553,10 @@ institution_banner <- div(
 hero <- div(
   class = "hero",
   div(class = "eyebrow", "Multi-marker primer decision support"),
-  h1("See the gap before it becomes bias."),
+  h1("Choose a marker. Explore its evidence."),
   p(
-    "Compare binding geometry, thermal compatibility, and lineage-level mismatch ",
-    "risk without collapsing them into a single overconfident score."
+    "Find primer combinations, check their reference support, ",
+    "and follow a result to the sequences behind it."
   )
 )
 
@@ -1559,40 +1571,44 @@ ui <- page_navbar(
   header = tagList(
     tags$style(HTML(app_css)),
     tags$script(HTML(app_js)),
-    institution_banner,
-    coiReferenceRefreshUI("coi_refresh"),
-    uiOutput("data_status")
+    tags$link(rel = "stylesheet", href = atlas_asset_url("atlas-workspace.css"))
   ),
   nav_panel(
     "Start here", value = "start",
     div(
-      class = "container-fluid",
+      class = "container-fluid atlas-home",
       hero,
-      p("Choose what you want to investigate. Each view keeps its own filters and shows the evidence behind its results."),
       div(
-        class = "start-grid",
-        div(class = "start-card", h3("Find primers"),
-            p("Choose an organism group and marker, then browse documented primer pairs and where they bind."),
-            actionButton("go_find", "Find primers", class = "btn-primary btn-sm"),
-            actionButton("go_18s_start", "18S primers", class = "btn-outline-primary btn-sm mt-2")),
-        div(class = "start-card", h3("Check COI reference fit"),
-            p("Compare COI reference fit and binding-site availability across animal groups. Open a group to inspect its sequences when available."),
-            actionButton("go_fit", "Check COI reference fit", class = "btn-primary btn-sm")),
-        div(class = "start-card", h3("Compare regions"),
-            p("Compare COI reference sequences from two reported source geographies, with sample sizes and missing locations visible."),
-            actionButton("go_regions", "Compare reference regions", class = "btn-primary btn-sm")),
-        div(class = "start-card", h3("Inspect evidence"),
-            p("Filter taxa and accessions, review original sources, and download the records behind a result."),
-            actionButton("go_taxa", "Inspect taxa and sequences", class = "btn-primary btn-sm"),
-            actionButton("go_sources", "Read sources and methods", class = "btn-outline-secondary btn-sm mt-2"))
+        class = "start-grid atlas-marker-grid",
+        div(class = "start-card atlas-marker-card",
+            span(class = "atlas-status-chip", "Animal marker"), h3("COI"),
+            p("Explore animal primer products and binding-site fit across the retained reference groups."),
+            div(class = "atlas-card-actions",
+                actionButton("go_coi_explore", "Explore primers →", class = "btn-primary"),
+                actionButton("go_fit", "Check taxonomic fit", class = "btn-outline-secondary"))),
+        div(class = "start-card atlas-marker-card",
+            span(class = "atlas-status-chip", "Fungal marker"), h3("Fungal rDNA"),
+            p("Explore 18S, ITS and 28S regions. Check which fungal references support a selected combination."),
+            div(class = "atlas-card-actions",
+                actionButton("go_fungal_explore", "Explore primers →", class = "btn-primary"),
+                actionButton("go_fungal_fit", "Check taxonomic fit", class = "btn-outline-secondary"))),
+        div(class = "start-card atlas-marker-card atlas-18s-entry",
+            span(class = "atlas-status-chip", "Eukaryotic marker"), h3("18S"),
+            p("Browse documented SSU combinations and their regions in the PR2 primer catalog."),
+            div(class = "atlas-card-actions",
+                actionButton("go_18s_start", "18S primers →", class = "btn-primary")))
       ),
-      card(
-        card_header("What is ready to explore?"),
+      div(class = "atlas-home-links",
+          actionButton("go_find", "Return to primer explorer", class = "btn-outline-secondary btn-sm"),
+          actionButton("go_taxa", "Open reference library", class = "btn-outline-secondary btn-sm"),
+          actionButton("go_sources", "Sources and methods", class = "btn-outline-secondary btn-sm")),
+      tags$details(class = "atlas-detail atlas-home-status",
+        tags$summary("Reference status and available evidence"),
         div(class = "readiness-list",
             div(strong("Animal COI · active"), uiOutput("coi_start_reference_status")),
-            div(strong("Fungal rDNA · versioned explorer"), span("Discover primer combinations by sequencing platform, compare a bounded NCBI reference-panel snapshot, and return to earlier catalog and reference versions. Candidate geometry remains distinct from experimental validation.")),
+            div(strong("Fungal rDNA · versioned panel"), span("Primer products, gene/domain tracks and taxonomic reference support use the selected immutable snapshot. This small panel does not establish broad fungal amplification performance.")),
             div(strong("Eukaryotic 18S · pilot"), span("321 catalog primers and 123 documented sets. Ninety-three sets have drawable geometry; this is not broad taxonomic performance evidence.")),
-            div(strong("12S, 16S, 28S · planned"), span("Marker targets are documented, but these markers have no interactive evidence view yet."))
+            div(strong("Additional 12S, 16S and broad 28S panels · planned"), span("Fungal 28S is available within the rDNA explorer. Other marker reference panels remain planned."))
         ),
         p(class = "tiny mt-3 mb-0", "Reference fit and sampling describe available sequences. They do not predict PCR success or establish a species' geographic range. The Hawaiʻi–Madagascar audit is separate research documented in the repository and is not loaded into this app."),
         p(class = "tiny mt-3 mb-0", "App version 2026.10.11 · Growing COI references and versioned fungal combinations")
@@ -1600,18 +1616,19 @@ ui <- page_navbar(
     )
   ),
   nav_panel(
-    "Find primers", value = "find",
+    "Primer explorer", value = "find",
     div(
       class = "container-fluid primer-map-page",
-      workspace_heading("Find and combine primers", "Explore binding sites, compare amplicon lengths, and inspect the evidence for each combination."),
-      div(class = "mb-3",
+      workspace_heading("Primer explorer", "Choose a marker, then inspect its regions and primer products."),
+      div(class = "atlas-page-tools",
+          actionButton("go_coi_map", "Animal COI", class = "btn btn-outline-primary btn-sm"),
+          actionButton("go_fungal_map", "Fungal rDNA", class = "btn btn-outline-primary btn-sm"),
           actionButton("go_18s", "Open 18S primers", class = "btn btn-outline-primary btn-sm"),
-          span(class = "tiny ms-2", "PR2 catalog and documented combinations · opens all organism groups")),
+          span(class = "tiny", "More filters are available beside the map.")),
       layout_sidebar(
         sidebar = sidebar(
           width = 340,
-          open = list(desktop = "open", mobile = "closed"),
-          max_height_mobile = "420px",
+          open = list(desktop = "closed", mobile = "closed"),
           h4("Build the view"),
           tags$a(href = "#primer-map-card", class = "btn btn-outline-success btn-sm mb-3", "Jump to primer map"),
           div(
@@ -1782,8 +1799,7 @@ ui <- page_navbar(
           ),
           conditionalPanel(
             condition = "input.map_marker != 'ITS_FUNGAL'",
-            uiOutput("combination_browser_ui"),
-            uiOutput("overview_metrics"),
+            tags$details(class = "atlas-detail", tags$summary("Browse primer combinations"), uiOutput("combination_browser_ui")),
             div(
               class = "map-legend",
               span(
@@ -1796,7 +1812,8 @@ ui <- page_navbar(
             ),
             p(class = "map-scroll-hint tiny", "Swipe horizontally across the map to see later positions and source columns."),
             uiOutput("primer_map"),
-            uiOutput("its_map_catalog_ui"),
+            tags$details(class = "atlas-detail", tags$summary("Selection summary and catalog"),
+                uiOutput("overview_metrics"), uiOutput("its_map_catalog_ui")),
             uiOutput("custom_diagnostic_selector"),
             uiOutput("custom_location_detail")
           )
@@ -1805,23 +1822,23 @@ ui <- page_navbar(
     )
   ),
   nav_panel(
-    "Check taxonomic fit · COI", value = "fit",
+    "Taxonomic fit", value = "fit",
     div(
       class = "container-fluid",
-      workspace_heading("Check taxonomic fit", "Compare COI binding-site availability and mismatch patterns, then inspect the underlying sequences."),
+      workspace_heading("Taxonomic fit", "Choose a marker and investigate the reference evidence behind a primer combination."),
+      div(class = "atlas-segmented atlas-fit-marker",
+          radioButtons("fit_marker", "Marker", c("Animal COI" = "COI", "Fungal rDNA" = "ITS_FUNGAL"), "COI", inline = TRUE)),
+      conditionalPanel(condition = "input.fit_marker == 'ITS_FUNGAL'", fungalFitUI("fungal_fit")),
+      conditionalPanel(condition = "input.fit_marker == 'COI'",
       div(class = "callout tiny", strong("Active COI reference: "), uiOutput("coi_fit_reference_status")),
       card(
         fill = FALSE,
         class = "order-heatmap-card",
         card_header("Which orders are at risk — and why?"),
-        div(
-          class = "callout",
-          strong("Use this heatmap for triage, not as a PCR verdict. "),
-          "Mismatch fit and reference-site availability are shown separately. ",
-          "Neither number is an amplification probability or a universal pass/fail score."
-        ),
-        br(),
-        div(
+        p(class = "atlas-context-line", "Compare mismatch penalties and binding-site availability. Click a cell to inspect its evidence."),
+        tags$details(class = "atlas-detail",
+          tags$summary("How to read the COI evidence"),
+          div(
           class = "heatmap-reading-guide",
           div(
             h5("How to read each cell"),
@@ -1882,12 +1899,12 @@ ui <- page_navbar(
               )
             )
           )
-        ),
+        )),
         selectizeInput(
           "order_pair_select",
           "Primer pairs shown",
           choices = setNames(pair_meta$pair_id[pair_meta$marker_id == "COI"], pair_meta$pair_label[pair_meta$marker_id == "COI"]),
-          selected = pair_meta$pair_id[pair_meta$marker_id == "COI"],
+          selected = intersect(c("MCO", "LERAY_XT", "ANML", "BF2_BR2", "FWH2"), pair_meta$pair_id[pair_meta$marker_id == "COI"]),
           multiple = TRUE,
           width = "100%",
           options = list(
@@ -1911,7 +1928,9 @@ ui <- page_navbar(
         uiOutput("order_matrix")
       ),
       br(),
-      layout_columns(
+      tags$details(class = "atlas-detail atlas-coi-inspector",
+        tags$summary("Inspect a COI comparison and binding-site trace"),
+        layout_columns(
         col_widths = c(12, 12),
         fill = FALSE,
         fillable = FALSE,
@@ -1973,9 +1992,11 @@ ui <- page_navbar(
             uiOutput("mismatch_detail")
           )
         )
-      ),
+      )),
       br(),
-      conditionalPanel(
+      tags$details(class = "atlas-detail",
+        tags$summary("Study validation and exact sequence drill-down"),
+        conditionalPanel(
         condition = "input.detail_order == 'Hymenoptera' && input.detail_pair == 'BEEPRIME'",
         card(
           fill = FALSE,
@@ -2132,19 +2153,23 @@ ui <- page_navbar(
             )
           )
         )
+      ))
       )
     )
   ),
   nav_panel(
-    "Inspect taxa & sequences", value = "taxa",
+    "Reference library", value = "taxa",
     div(
       class = "container-fluid",
       workspace_heading("Inspect taxa and sequences", "Follow a result to its reference records, taxonomy, and source evidence."),
-      div(
+      div(class = "atlas-page-tools",
+          actionButton("go_coi_library", "Animal COI", class = "btn-outline-primary btn-sm"),
+          actionButton("go_fungal_library", "Fungal rDNA", class = "btn-outline-primary btn-sm")),
+      tags$details(class = "atlas-detail", tags$summary("What the reference library supports"), div(
         class = "callout",
         strong("Reference evidence, not regional amplification probability. "),
         "Geography frequently proxies taxonomy and sampling bias. Every geographic view reports located/all eligible sequences, missing locations, and taxonomic composition."
-      ),
+      )),
       br(),
       layout_sidebar(
         sidebar = sidebar(
@@ -2167,6 +2192,9 @@ ui <- page_navbar(
               marker_registry$display_name[marker_registry$status %in% c("active", "pilot")]
             ), selected = "COI"
           ),
+          conditionalPanel(condition = "input.lineage_marker == 'ITS_FUNGAL'",
+              p(class = "atlas-context-line", "The fungal library shows the full frozen panel selected in Taxonomic fit.")),
+          conditionalPanel(condition = "input.lineage_marker != 'ITS_FUNGAL'",
           selectizeInput("lineage_pair", "Primer pair", choices = NULL),
           conditionalPanel(
             condition = "input.lineage_marker == 'COI' && input.lineage_pair == 'BEEPRIME'",
@@ -2182,9 +2210,15 @@ ui <- page_navbar(
             id = "propose_primer_link", class = "btn btn-primary btn-sm w-100",
             href = "https://github.com/sven9r/primer-atlas/issues/new?template=propose-primer.yml",
             target = "_blank", "Propose this primer"
-          )
+          ))
         ),
-        navset_card_tab(
+        conditionalPanel(condition = "input.lineage_marker == 'ITS_FUNGAL'",
+          div(class = "atlas-panel", uiOutput("fungal_library_context"),
+              div(class = "atlas-card-actions",
+                  actionButton("go_fungal_fit_library", "Check this panel's taxonomic fit →", class = "btn-outline-primary btn-sm"),
+                  downloadButton("download_fungal_library", "Reference metadata (CSV)", class = "btn-outline-secondary btn-sm")),
+              DTOutput("fungal_library_records"))),
+        conditionalPanel(condition = "input.lineage_marker != 'ITS_FUNGAL'", navset_card_tab(
           id = "lineage_tabs",
           nav_panel("Overview", uiOutput("lineage_overview")),
           nav_panel("Families", DTOutput("lineage_families")),
@@ -2192,20 +2226,21 @@ ui <- page_navbar(
           nav_panel("Genera", uiOutput("lineage_genera_ui")),
           nav_panel("Sequences", uiOutput("lineage_sequence_note"), DTOutput("lineage_sequences")),
           nav_panel("Sources and downloads", uiOutput("lineage_sources"))
-        )
+        ))
       )
     )
   ),
+  nav_menu("More",
   nav_panel(
     "Compare regions · COI", value = "regions",
     div(
       class = "container-fluid",
       workspace_heading("Compare reference regions", "Explore differences between COI reference subsets with sampling and missing locations in view."),
-      div(
+      tags$details(class = "atlas-detail", tags$summary("How to interpret location comparisons"), div(
         class = "callout",
         strong("Compare reference sequences—not regional amplification probability. "),
         "This view tests whether primer-binding sequences represented in two reference-geography subsets differ. Geography can proxy taxonomy, collection effort, and database bias, so the order-stratified table and located/all denominators remain visible."
-      ),
+      )),
       br(),
       layout_sidebar(
         sidebar = sidebar(
@@ -2328,7 +2363,10 @@ ui <- page_navbar(
     div(
       class = "container-fluid",
       workspace_heading("Sources and methods", "Review the provenance, assumptions, and downloadable records behind the atlas."),
-      layout_columns(
+      tags$details(class = "atlas-detail", tags$summary("Reference updates and application status"),
+          coiReferenceRefreshUI("coi_refresh"), uiOutput("data_status")),
+      tags$details(class = "atlas-detail", tags$summary("Research home and support"), institution_banner),
+      tags$details(class = "atlas-detail atlas-panel", tags$summary("Publications, citations and downloads"), layout_columns(
         col_widths = c(7, 5),
         card(
           card_header("Published evidence and reference data"),
@@ -2363,9 +2401,9 @@ ui <- page_navbar(
           p("The current estimator is deliberately transparent and fast. A production release should add a full nearest-neighbor engine with Mg²⁺, primer concentration, and chemistry-specific corrections."),
           div(class = "callout", "Open-source principle: every number should reveal its data source, assumptions, and uncertainty.")
         )
-      ),
+      )),
       br(),
-      card(
+      tags$details(class = "atlas-detail atlas-panel", tags$summary("Fungal primer catalog and original references"), card(
         card_header("UNITE fungal rDNA primer catalog · original citations retained"),
         div(
           class = "callout tiny mb-3",
@@ -2373,13 +2411,16 @@ ui <- page_navbar(
           "UNITE is recorded as the compilation provenance. The Reference column names the original paper or explicitly says unpublished/not reported; it is never replaced by a generic UNITE citation. Curated primer pairs remain a smaller, source-supported subset because the atlas does not invent pairings from individual oligos."
         ),
         DTOutput("unite_primer_catalog")
-      )
+      ))
     )
-  )
+  ))
 )
 
 server <- function(input, output, session) {
-  fungalExplorerServer("fungal")
+  fungal_fit_context <- reactiveVal(NULL)
+  fungal_explorer_context <- reactiveVal(NULL)
+  fungal_workspace <- fungalExplorerServer("fungal", selection = fungal_explorer_context)
+  fungal_fit_workspace <- fungalFitServer("fungal_fit", selection = fungal_fit_context)
   coi_refresh <- coiReferenceRefreshServer("coi_refresh", initial = coi_reference_panel)
   coi_reference_current <- coi_refresh$reference
   current_order_scores <- reactive(as_tibble(coi_reference_current()$overview))
@@ -2409,7 +2450,63 @@ server <- function(input, output, session) {
     })
   }
   navigate_from("go_find", "find")
-  navigate_from("go_fit", "fit")
+  observeEvent(input$go_fit, {
+    updateRadioButtons(session, "fit_marker", selected = "COI")
+    updateNavbarPage(session, "main_nav", selected = "fit")
+  })
+  observeEvent(input$go_fungal_fit, {
+    updateRadioButtons(session, "fit_marker", selected = "ITS_FUNGAL")
+    updateNavbarPage(session, "main_nav", selected = "fit")
+  })
+  observeEvent(input$go_fungal_fit_library, {
+    updateRadioButtons(session, "fit_marker", selected = "ITS_FUNGAL")
+    updateNavbarPage(session, "main_nav", selected = "fit")
+  })
+  observeEvent(input$go_fungal_library, {
+    updateRadioButtons(session, "lineage_organism", selected = "FUNGI")
+    updateSelectInput(session, "lineage_marker", selected = "ITS_FUNGAL")
+  })
+  observeEvent(input$go_coi_library, {
+    updateRadioButtons(session, "lineage_organism", selected = "ALL")
+    updateSelectInput(session, "lineage_marker", selected = "COI")
+  })
+  output$fungal_library_context <- renderUI({
+    data <- fungal_fit_workspace$snapshot()
+    tagList(h3("Fungal reference records"), p(class = "atlas-context-line",
+        paste(length(data$sequences), "retained templates ·", data$manifest$label)))
+  })
+  output$fungal_library_records <- renderDT({
+    data <- fungal_fit_workspace$snapshot()$taxonomy
+    columns <- intersect(c("accession", "organism", "phylum", "class", "order", "family", "length_bp"), names(data))
+    data <- data[, columns, drop = FALSE]
+    labels <- c(accession = "Accession", organism = "Organism", phylum = "Phylum", class = "Class",
+        order = "Order", family = "Family", length_bp = "Encoded reference length (bp)")
+    names(data) <- unname(labels[names(data)])
+    datatable(data, rownames = FALSE, escape = TRUE, options = list(pageLength = 10, scrollX = TRUE), class = "compact stripe")
+  })
+  output$download_fungal_library <- downloadHandler(filename = function() paste0(fungal_fit_workspace$snapshot()$manifest$id, "-reference-metadata.csv"),
+      content = function(file) {
+        data <- fungal_fit_workspace$snapshot()
+        rows <- data$taxonomy
+        rows$snapshot_id <- data$manifest$id
+        write.csv(rows, file, row.names = FALSE, na = "")
+      })
+  observeEvent(input[["fungal-open_fit"]], {
+    pair <- fungal_workspace$active_pair()
+    if (nrow(pair) != 1L || is.na(pair$pair_id) || !nzchar(pair$pair_id)) {
+      showNotification("Choose a primer combination before checking its taxonomic fit.", type = "message", id = "fungal-fit-selection")
+      return(invisible(NULL))
+    }
+    fungal_fit_context(list(version = fungal_workspace$snapshot()$manifest$id,
+      pair = pair$pair_id, nonce = input[["fungal-open_fit"]]))
+    updateRadioButtons(session, "fit_marker", selected = "ITS_FUNGAL")
+    updateNavbarPage(session, "main_nav", selected = "fit")
+  })
+  observeEvent(input[["fungal_fit-open_explorer"]], {
+    fungal_explorer_context(list(version = fungal_fit_workspace$snapshot()$manifest$id,
+      pair = fungal_fit_workspace$selected_pair(), nonce = input[["fungal_fit-open_explorer"]]))
+    open_explorer_marker("ITS_FUNGAL", "FUNGI")
+  })
   navigate_from("go_regions", "regions")
   navigate_from("go_taxa", "taxa")
   navigate_from("go_sources", "sources")
@@ -2523,6 +2620,24 @@ server <- function(input, output, session) {
   }
   navigate_to_18s_from("go_18s")
   navigate_to_18s_from("go_18s_start")
+  open_explorer_marker <- function(marker, group = "ALL") {
+    map_navigation_marker(if (identical(input$map_organism, group)) NULL else marker)
+    updateRadioButtons(session, "map_organism", selected = group)
+    rows <- marker_rows_for_organism(group, released_only = TRUE)
+    updateSelectInput(session, "map_marker", choices = marker_choice_labels(rows), selected = marker)
+    for (id in c("application_filter", "environment_filter", "intent_filter")) {
+      updateSelectInput(session, id, selected = character())
+    }
+    if (identical(marker, "COI")) {
+      choices <- pair_choices_for_marker(marker, group, apply_filters = FALSE)
+      update_pair_selector(marker, choices, intersect(default_map_pairs(marker), unname(choices)))
+    }
+    updateNavbarPage(session, "main_nav", selected = "find")
+  }
+  observeEvent(input$go_coi_explore, open_explorer_marker("COI"))
+  observeEvent(input$go_coi_map, open_explorer_marker("COI"))
+  observeEvent(input$go_fungal_explore, open_explorer_marker("ITS_FUNGAL", "FUNGI"))
+  observeEvent(input$go_fungal_map, open_explorer_marker("ITS_FUNGAL", "FUNGI"))
   output$pair_selector_ui <- renderUI({
     tagList(
       conditionalPanel(
@@ -2587,7 +2702,8 @@ server <- function(input, output, session) {
       session, "map_marker",
       choices = marker_choice_labels(rows), selected = selected
     )
-    if (identical(input$map_organism, "ALL") && identical(selected, requested)) map_navigation_marker(NULL)
+    if (identical(selected, requested) && (identical(input$map_organism, "ALL") ||
+        (identical(requested, "ITS_FUNGAL") && identical(input$map_organism, "FUNGI")))) map_navigation_marker(NULL)
     if (selected %in% c("COI", "18S")) {
       opening_18s <- identical(requested, "18S") && identical(input$map_organism, "ALL")
       choices <- pair_choices_for_marker(selected, input$map_organism, apply_filters = !opening_18s)

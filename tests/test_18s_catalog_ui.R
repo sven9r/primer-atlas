@@ -18,11 +18,12 @@ stopifnot(
   identical(env$marker_rows_for_organism("PROTISTS", released_only = TRUE)$marker_id, "18S")
 )
 ui <- as.character(env$ui)
-first_start_card <- regmatches(ui, regexpr('<div class="start-card">[\\s\\S]*?</div>', ui, perl = TRUE))
+start_cards <- regmatches(ui, gregexpr('<div class="start-card[^"]*">[\\s\\S]*?</div>', ui, perl = TRUE))[[1L]]
+start_18s_card <- start_cards[grepl('id="go_18s_start"', start_cards, fixed = TRUE)]
 stopifnot(grepl('id="go_18s"', ui, fixed = TRUE),
           grepl('id="go_18s_start"', ui, fixed = TRUE),
           grepl("Open 18S primers", ui, fixed = TRUE),
-          grepl('id="go_18s_start"', first_start_card, fixed = TRUE),
+          length(start_18s_card) == 1L, grepl("18S", start_18s_card, fixed = TRUE),
           length(regmatches(ui, gregexpr('id="go_18s_start"', ui, fixed = TRUE))[[1L]]) == 1L)
 
 # MockShinySession does not store output suspension settings. Capture the real

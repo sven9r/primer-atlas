@@ -33,19 +33,19 @@ fungalExplorerUI <- function(id) {
   ns <- NS(id)
   versions <- fungal_read_index()
   choices <- setNames(versions$id, paste0(versions$label, " · ", substr(versions$id, 4, 11)))
-  div(class = "fungal-workspace",
-      tags$script(HTML("document.addEventListener('click', function(e) { var b=e.target.closest('.fungal-pair-choice'); if(b && window.Shiny) Shiny.setInputValue(b.dataset.input, {pair:b.dataset.pair, nonce:Date.now()}, {priority:'event'}); var r=e.target.closest('.fungal-region-choice'); if(r && !r.disabled && window.Shiny) Shiny.setInputValue(r.dataset.input, {accession:r.dataset.accession, landmark:r.dataset.landmark, nonce:Date.now()}, {priority:'event'}); });")),
+  div(class = "fungal-workspace atlas-workspace",
+      tags$script(HTML("document.addEventListener('click', function(e) { var b=e.target.closest('.fungal-pair-choice'); if(b && window.Shiny) Shiny.setInputValue(b.dataset.input, {pair:b.dataset.pair, nonce:Date.now()}, {priority:'event'}); var r=e.target.closest('.fungal-region-choice'); if(r && !r.disabled && window.Shiny) Shiny.setInputValue(r.dataset.input, {accession:r.dataset.accession, landmark:r.dataset.landmark, nonce:Date.now()}, {priority:'event'}); var o=e.target.closest('[data-atlas-open]'); if(o) { var d=document.getElementById(o.dataset.atlasOpen); if(d) { d.open=true; d.scrollIntoView({behavior:'smooth',block:'start'}); } } });")),
       div(class = "fungal-version-bar",
           selectInput(ns("version"), "Reference version", choices, selected = tail(versions$id, 1)),
-          uiOutput(ns("snapshot_meta")),
-          downloadButton(ns("download_manifest"), "Snapshot manifest", class = "btn-outline-secondary btn-sm")),
-      div(class = "fungal-controls",
-          radioButtons(ns("platform"), "Sequencing platform", c("All platforms"="ALL", "Illumina"="ILLUMINA", "PacBio"="PACBIO", "Nanopore"="NANOPORE"), "ALL", inline=TRUE),
-          div(class = "fungal-platform-legend",
-              span(class="fungal-platform-badge illumina", "Illumina"),
-              span(class="fungal-platform-badge pacbio", "PacBio"),
-              span(class="fungal-platform-badge nanopore", "Nanopore"),
-              span(class="fungal-platform-badge unresolved", "Unresolved")),
+          uiOutput(ns("snapshot_meta"))),
+      uiOutput(ns("selection_status")),
+      div(class="atlas-workspace-toolbar",
+          selectizeInput(ns("active_combination"),"Primer combination",choices=NULL,
+              options=list(placeholder="Choose a combination")),
+          div(class="atlas-segmented",radioButtons(ns("platform"), "Sequencing platform", c("All platforms"="ALL", "Illumina"="ILLUMINA", "PacBio"="PACBIO", "Nanopore"="NANOPORE"), "ALL", inline=TRUE)),
+          actionButton(ns("open_fit"),"Check taxonomic fit",class="btn-primary")),
+      tags$details(class="atlas-detail fungal-controls",
+          tags$summary("Refine combinations and length limits"),
           tags$details(tags$summary("Adjust project length ceilings"),
               layout_columns(col_widths=c(4,4,4),
                   sliderInput(ns("illumina_max"), "Illumina ceiling (bp)", min=452,max=500,value=500,step=1),
@@ -64,29 +64,32 @@ fungalExplorerUI <- function(id) {
               checkboxInput(ns("show_unresolved"),"Include unresolved documented pairs",TRUE),
               actionButton(ns("reset"),"Reset filters",class="btn-outline-secondary btn-sm"))),
       uiOutput(ns("discovery_status")),
-      selectizeInput(ns("compare_pairs"),"Compare up to five combinations",choices=NULL,multiple=TRUE,
-          options=list(placeholder="Choose combinations to show together on the alignment",maxItems=5,plugins=list("remove_button"))),
-      div(class="fungal-alignment-workspace",
-          h3("Primer combinations on the alignment"),
-          p(class="tiny", "Inspect physical product lengths on the chosen template's base axis, or switch to its gapped alignment columns. Cross-template comparisons and nucleotide windows use the selected version's frozen alignment."),
+      div(class="fungal-alignment-workspace atlas-panel",
+          h3("Genes and amplicons"),
           div(class="fungal-alignment-controls",
               selectInput(ns("alignment_reference"),"Template for combination tracks",choices=NULL),
-              radioButtons(ns("product_coordinates"),"Combination chart axis",
+              div(class="atlas-segmented",radioButtons(ns("product_coordinates"),"Combination chart axis",
                   c("Template bases (bp)"="template_bases","Gapped alignment columns"="alignment_columns"),
-                  "template_bases",inline=TRUE),
-              checkboxInput(ns("show_regions"),"Show genes and regions",TRUE),
+                  "template_bases",inline=TRUE)),
               uiOutput(ns("alignment_regions")),
-              radioButtons(ns("alignment_scope"),"Combinations on the alignment",
-                  c("Shown combinations"="shown","Compared combinations"="compared","Selected combination"="active"),"shown",inline=TRUE),
               div(class="d-flex flex-wrap gap-2",
                   actionButton(ns("alignment_focus"),"Zoom to selected combination",class="btn-outline-primary btn-sm"),
-                  actionButton(ns("alignment_full"),"Show full alignment",class="btn-outline-secondary btn-sm")),
-              sliderInput(ns("alignment_range"),"Visible alignment columns (gaps included)",min=1,max=20,value=c(1,20),step=1),
-              p(class="tiny","This alignment window also selects the corresponding raw bases for the template-base chart.")),
+                  actionButton(ns("alignment_full"),"Show full alignment",class="btn-outline-secondary btn-sm"))),
           uiOutput(ns("alignment_status")),
           uiOutput(ns("alignment_bp_accounting")),
           uiOutput(ns("alignment_overview")),
-          tags$details(class="fungal-alignment-detail",open=NA,
+          tags$details(class="atlas-detail",
+              tags$summary("Compare combinations and adjust the window"),
+              selectizeInput(ns("compare_pairs"),"Compare up to five combinations",choices=NULL,multiple=TRUE,
+                  options=list(placeholder="Choose combinations",maxItems=5,plugins=list("remove_button"))),
+              div(class="atlas-segmented",radioButtons(ns("product_display"),"Product tracks",
+                  c("Selected and compared"="focused","All shown combinations"="all"),"focused",inline=TRUE)),
+              radioButtons(ns("alignment_scope"),"Comparison scope",
+                  c("Shown combinations"="shown","Compared combinations"="compared","Selected combination"="active"),"shown",inline=TRUE),
+              checkboxInput(ns("show_regions"),"Show genes and regions",TRUE),
+              sliderInput(ns("alignment_range"),"Visible alignment columns (gaps included)",min=1,max=20,value=c(1,20),step=1),
+              p(class="tiny","The alignment window also selects the corresponding raw bases for the template-base chart.")),
+          tags$details(id=ns("sequence_inspector"),class="fungal-alignment-detail atlas-detail",
               tags$summary("Inspect aligned nucleotides and primer sites"),
               div(class="fungal-alignment-base-controls",
                   numericInput(ns("alignment_start"),"First alignment column",1,min=1,step=1),
@@ -95,27 +98,48 @@ fungalExplorerUI <- function(id) {
                       actionButton(ns("alignment_forward"),"Show forward site",class="btn-outline-primary btn-sm"),
                       actionButton(ns("alignment_reverse"),"Show reverse site",class="btn-outline-secondary btn-sm"))),
               uiOutput(ns("alignment_bases")))),
-      navset_card_tab(
+      div(class="atlas-action-grid",
+          tags$button(type="button",class="atlas-action-card",`data-atlas-open`=ns("candidate_browser"),
+              span(class="atlas-action-card__label","Browse combinations"),span(class="atlas-action-card__meta","Compare starter examples and their exact-product counts")),
+          tags$button(type="button",class="atlas-action-card",`data-atlas-open`=ns("pair_inspector"),
+              span(class="atlas-action-card__label","Inspect selected pair"),span(class="atlas-action-card__meta","Binding examples, original sources and exports"))),
+      tags$details(id=ns("candidate_browser"),class="atlas-detail",
+          tags$summary("Browse candidate combinations"),
+          uiOutput(ns("quick_candidates")),
+          div(class="atlas-pagination",actionButton(ns("previous_candidates"),"Previous",class="btn-outline-secondary btn-sm"),
+              uiOutput(ns("candidate_page_label"),inline=TRUE),actionButton(ns("next_candidates"),"Next",class="btn-outline-secondary btn-sm")),
+          tags$details(class="atlas-detail",
+              tags$summary("Complete tables, pairing matrix and version changes"),
+              navset_card_tab(
           nav_panel("Combination list", DTOutput(ns("pairs"))),
           nav_panel("Pairing matrix", uiOutput(ns("matrix"))),
           nav_panel("Version changes", uiOutput(ns("version_changes"))),
-          nav_panel("Frozen primer catalog", DTOutput(ns("catalog")))),
-      uiOutput(ns("comparison")),
-      div(class="fungal-evidence", uiOutput(ns("evidence"))),
-      div(class="d-flex flex-wrap gap-2 mt-3",
+          nav_panel("Frozen primer catalog", DTOutput(ns("catalog")))))),
+      tags$details(id=ns("pair_inspector"),class="atlas-detail",
+          tags$summary("Selected pair evidence and exports"),
+          div(class="fungal-evidence", uiOutput(ns("evidence"))),
+          tags$details(class="atlas-detail",tags$summary("Compare product-length distributions"),uiOutput(ns("comparison"))),
+          tags$details(class="atlas-detail",tags$summary("Reference provenance"),uiOutput(ns("snapshot_provenance"))),
+          div(class="d-flex flex-wrap gap-2 mt-3",
+          downloadButton(ns("download_manifest"), "Snapshot manifest", class = "btn-outline-secondary btn-sm"),
           downloadButton(ns("download_pairs"),"Current combinations (CSV)",class="btn-outline-primary btn-sm"),
           downloadButton(ns("download_sequences"),"Selected reference sequences (FASTA)",class="btn-outline-secondary btn-sm"),
           downloadButton(ns("download_alignment_sites"),"Primer alignment coordinates (CSV)",class="btn-outline-secondary btn-sm"),
           downloadButton(ns("download_alignment_regions"),"Gene and region coordinates (CSV)",class="btn-outline-secondary btn-sm"),
           downloadButton(ns("download_alignment"),"Frozen alignment (FASTA)",class="btn-outline-secondary btn-sm")),
-      p(class="tiny mt-3", "Exact IUPAC-compatible sites establish candidate geometry on these templates. Unmatched sites remain unresolved. Length eligibility uses raw template products including primers, excluding adapters; colors describe the observed median and badges give per-template counts. This selected panel does not establish broad fungal amplification performance."))
+          p(class="tiny mt-3", "Exact compatible sites establish candidate geometry on this panel. Length eligibility includes primers and excludes adapters; it does not establish PCR success.")))
 }
 
-fungalExplorerServer <- function(id) {
+fungalExplorerServer <- function(id,selection=NULL) {
   moduleServer(id, function(input, output, session) {
     index <- fungal_read_index()
     updateSelectInput(session,"version",choices=setNames(index$id,paste0(index$label," · ",substr(sub("^v[0-9]+-","",index$id),1,8))),selected=tail(index$id,1))
     selected_pair <- reactiveVal(NULL)
+    requested_pair <- reactiveVal(NULL)
+    pending_selection <- reactiveVal(NULL)
+    combination_ack <- reactiveVal(NULL)
+    selection_message <- reactiveVal(NULL)
+    candidate_page <- reactiveVal(1L)
     snapshot <- reactive({
       validate(need(nrow(index)>0,"No complete fungal snapshots are installed."))
       version <- input$version
@@ -157,6 +181,13 @@ fungalExplorerServer <- function(id) {
         rows <- rows[grepl(tolower(query),tolower(text),fixed=TRUE),,drop=FALSE]
       }
       if (isTRUE(input$examples_only)) rows <- fungal_starter_examples(rows)
+      requested <- requested_pair()
+      if(!is.null(requested) && identical(snapshot()$manifest$id,requested$version) &&
+          !requested$pair %in% rows$pair_id) {
+        inspected <- all_pairs()
+        inspected <- inspected[inspected$pair_id==requested$pair,,drop=FALSE]
+        rows <- rbind(inspected,rows)
+      }
       rows
     })
     observeEvent(snapshot(), {
@@ -183,6 +214,10 @@ fungalExplorerServer <- function(id) {
       updateSelectInput(session,"class",choices=c("All represented classes"="ALL",setNames(classes,classes)),selected=selected)
     })
     observeEvent(input$reset, {
+      requested_pair(NULL)
+      pending_selection(NULL)
+      combination_ack(NULL)
+      selection_message(NULL)
       for (name in c("phylum","class","locus")) updateSelectInput(session,name,selected="ALL")
       for (name in c("forward","reverse")) updateSelectizeInput(session,name,selected=character())
       updateTextInput(session,"search",value="")
@@ -192,16 +227,45 @@ fungalExplorerServer <- function(id) {
     })
     observeEvent(input$pair_click, {
       pair <- input$pair_click$pair
-      if (length(pair)==1 && pair %in% candidates()$pair_id) selected_pair(pair)
+      if (length(pair)==1 && pair %in% candidates()$pair_id) {
+        selected_pair(pair)
+        if(!is.null(requested_pair()) && pair!=requested_pair()$pair) {
+          requested_pair(NULL)
+          pending_selection(NULL)
+          selection_message(NULL)
+        }
+        # A card click is newer than any queued dropdown acknowledgement.
+        # Wait for this card's selection before accepting other dropdown values.
+        combination_ack(pair)
+      }
+    })
+    observeEvent(input$version, {
+      request <- requested_pair()
+      if(!is.null(request) && !identical(input$version,request$version)) {
+        requested_pair(NULL)
+        pending_selection(NULL)
+        combination_ack(NULL)
+        selection_message(NULL)
+      }
+    },ignoreInit=TRUE)
+    observeEvent(input$active_combination,{
+      pair <- input$active_combination
+      expected <- combination_ack()
+      if(!is.null(expected)) {
+        if(!identical(pair,expected)) return()
+        combination_ack(NULL)
+      }
+      if(!is.null(pending_selection())) return()
+      if(length(pair)==1L && pair %in% candidates()$pair_id) {
+        selected_pair(pair)
+        if(!is.null(requested_pair()) && pair!=requested_pair()$pair) requested_pair(NULL)
+      }
     })
     observe({
       rows <- candidates()
       choices <- setNames(rows$pair_id,rows$pair_label)
       current <- isolate(input$compare_pairs)
-      if (is.null(current)) {
-        targets <- c("ITS3 + ITS4","ITS1 + ITS4","FF700 + LR7")
-        current <- rows$pair_id[match(targets,rows$pair_label,nomatch=0)]
-      }
+      if (is.null(current)) current <- character()
       updateSelectizeInput(session,"compare_pairs",choices=choices,selected=intersect(current,rows$pair_id))
     })
     active_pair <- reactive({
@@ -210,6 +274,82 @@ fungalExplorerServer <- function(id) {
       current <- selected_pair()
       if (is.null(current) || !current %in% rows$pair_id) current <- rows$pair_id[1]
       rows[match(current,rows$pair_id),,drop=FALSE]
+    })
+    observe({
+      rows <- candidates()
+      updateSelectizeInput(session,"active_combination",choices=setNames(rows$pair_id,rows$pair_label),
+        selected=active_pair()$pair_id,server=TRUE)
+    })
+    if(!is.null(selection)) observeEvent(selection(),{
+      request <- selection()
+      valid <- is.list(request) && length(request$version)==1L && !is.na(request$version) &&
+        request$version %in% index$id && length(request$pair)==1L && !is.na(request$pair)
+      target <- if(valid) tryCatch(fungal_read_snapshot(request$version),error=function(e) NULL) else NULL
+      if(is.null(target) || !request$pair %in% target$pairs$pair_id) {
+        selection_message("The requested comparison is unavailable in the frozen reference; the current selection is retained.")
+        return()
+      }
+      requested_pair(request)
+      pending_selection(request)
+      combination_ack(request$pair)
+      selection_message("Opening the selected frozen comparison…")
+      updateSelectInput(session,"version",selected=request$version)
+      for(name in c("phylum","class","locus")) updateSelectInput(session,name,selected="ALL")
+      for(name in c("forward","reverse")) updateSelectizeInput(session,name,selected=character())
+      updateTextInput(session,"search",value="")
+      updateRadioButtons(session,"platform",selected="ALL")
+      updateCheckboxInput(session,"examples_only",value=FALSE)
+      updateCheckboxInput(session,"show_unresolved",value=TRUE)
+      updateSelectizeInput(session,"compare_pairs",selected=character())
+    },ignoreNULL=TRUE)
+    observeEvent(list(snapshot(),candidates(),pending_selection()),{
+      request <- pending_selection()
+      if(is.null(request) || !identical(snapshot()$manifest$id,request$version)) return()
+      scope_ready <- all(vapply(c("phylum","class","locus"),function(name)
+        identical(input[[name]] %||% "ALL","ALL"),logical(1))) &&
+        !length(input$forward) && !length(input$reverse) &&
+        !nzchar(trimws(input$search %||% "")) &&
+        identical(input$platform %||% "ALL","ALL") &&
+        identical(input$examples_only,FALSE) && isTRUE(input$show_unresolved)
+      if(!scope_ready) return()
+      if(!request$pair %in% candidates()$pair_id) return()
+      selected_pair(request$pair)
+      alignment_focus_state(list(kind="product",landmark=NULL,nonce=request$nonce %||% 0L))
+      candidate_page(1L)
+      ordinary <- all_pairs()[all_pairs()$pair_id==request$pair,,drop=FALSE]
+      if(ordinary$n_scorable>0L || ordinary$evidence_status=="documented_pair") requested_pair(NULL)
+      pending_selection(NULL)
+      selection_message(NULL)
+    },priority=-10L)
+    observeEvent(list(input$phylum,input$class,input$locus,input$forward,input$reverse,
+        input$search,input$platform,input$examples_only,input$show_unresolved),{
+      if(is.null(pending_selection()) && !is.null(requested_pair())) requested_pair(NULL)
+    },ignoreInit=TRUE)
+    output$selection_status <- renderUI({
+      if(is.null(selection_message())) return(NULL)
+      div(class="atlas-context-line",selection_message())
+    })
+    candidate_pages <- reactive(max(1L,ceiling(nrow(candidates())/5L)))
+    current_candidate_page <- reactive(min(candidate_pages(),max(1L,candidate_page())))
+    observeEvent(input$previous_candidates,candidate_page(max(1L,current_candidate_page()-1L)))
+    observeEvent(input$next_candidates,candidate_page(min(candidate_pages(),current_candidate_page()+1L)))
+    output$candidate_page_label <- renderUI(span(class="atlas-context-line",paste("Page",current_candidate_page(),"of",candidate_pages())))
+    output$quick_candidates <- renderUI({
+      rows <- candidates()
+      if(!nrow(rows)) return(p("No combinations match these filters."))
+      start <- (current_candidate_page()-1L)*5L+1L
+      rows <- rows[seq.int(start,min(nrow(rows),start+4L)),,drop=FALSE]
+      div(class="atlas-action-grid",lapply(seq_len(nrow(rows)),function(i) {
+        row <- rows[i,,drop=FALSE]
+        fraction <- if(row$n_panel>0L) row$n_scorable/row$n_panel else 0
+        tags$button(type="button",class=paste("atlas-action-card fungal-pair-choice",if(row$pair_id %in% active_pair()$pair_id) "is-selected"),
+          `data-input`=session$ns("pair_click"),`data-pair`=row$pair_id,`aria-pressed`=tolower(as.character(row$pair_id %in% active_pair()$pair_id)),
+          span(class="atlas-action-card__label",row$pair_label),
+          span(class="atlas-action-card__meta",if(is.finite(row$amplicon_median_bp)) paste0(row$amplicon_median_bp," bp median · ",row$length_tier) else "Product unresolved"),
+          span(class="atlas-evidence-bar",span(class="atlas-evidence-bar__label","Exact products"),
+            span(class="atlas-evidence-bar__value",paste0(row$n_scorable," / ",row$n_panel)),
+            span(class="atlas-evidence-bar__track",span(class="atlas-evidence-bar__fill",style=paste0("width:",round(100*fraction,1),"%")))))
+      }))
     })
     alignment_index <- reactive({
       data <- snapshot()
@@ -236,6 +376,12 @@ fungalExplorerServer <- function(id) {
         rows <- rows[unique(c(match(priority,rows$pair_id,nomatch=0L),seq_len(nrow(rows)))),,drop=FALSE]
       }
       head(rows,20L)
+    })
+    display_alignment_pairs <- reactive({
+      rows <- alignment_pairs()
+      if(identical(input$product_display,"all")) return(rows)
+      ids <- unique(c(active_pair()$pair_id,head(input$compare_pairs,5L)))
+      rows[match(intersect(ids,rows$pair_id),rows$pair_id),,drop=FALSE]
     })
     alignment_reference <- reactive({
       accessions <- selected_accessions()
@@ -426,10 +572,7 @@ fungalExplorerServer <- function(id) {
       reference <- alignment_reference()
       selected <- if(nrow(pair)) pair$pair_label else "none"
       own <- alignment_focus_row()
-      div(class="tiny",strong(data$manifest$id)," · ",alignment_index()$n_columns," frozen alignment columns · ",
-          length(selected_accessions())," template rows · selected combination: ",selected,
-          if(nrow(candidates())>20 && identical(input$alignment_scope %||% "shown","shown"))
-            p("Showing 20 combination tracks, including the selected and compared pairs. Filter primers or switch to compared combinations to focus the alignment."),
+      div(class="atlas-context-line",length(selected_accessions())," references · ",nrow(display_alignment_pairs())," product tracks",
           if(length(reference) && nrow(pair) && (!nrow(own) || own$alignment_status[1]!="mapped"))
             p("The selected combination has no complete exact-site product on ",reference,". Verified individual sites are shown when available; choose another template to inspect a complete product."),
           if(length(reference) && alignment_focus_state()$kind=="region" && nrow(focused_alignment_region())!=1L)
@@ -474,21 +617,21 @@ fungalExplorerServer <- function(id) {
     })
     output$alignment_overview <- renderUI({
       if(!length(selected_accessions())) return(div(class="callout","No template rows match these lineage filters."))
-      aligned <- function(show_candidate_tracks=TRUE) fungal_alignment_overview(index=alignment_index(),mapped_rows=mapped_alignment(),pairs=alignment_pairs(),
+      aligned <- function(show_candidate_tracks=TRUE) fungal_alignment_overview(index=alignment_index(),mapped_rows=mapped_alignment(),pairs=display_alignment_pairs(),
           taxonomy=snapshot()$taxonomy,reference_accession=alignment_reference(),selected_accessions=selected_accessions(),
           compare_ids=if(length(input$compare_pairs)) head(input$compare_pairs,5L) else active_pair()$pair_id,active_id=active_pair()$pair_id,
           domain=alignment_domain(),ceilings=alignment_ceilings(),ns=session$ns,
           landmarks=mapped_alignment_regions(),show_regions=!identical(input$show_regions,FALSE),
           show_candidate_tracks=show_candidate_tracks)
       if(identical(input$product_coordinates %||% "template_bases","template_bases")) {
-        bp_pairs <- alignment_pairs()
+        bp_pairs <- display_alignment_pairs()
         priority_ids <- intersect(unique(c(active_pair()$pair_id,head(input$compare_pairs,5L))),bp_pairs$pair_id)
         bp_pairs <- bp_pairs[match(unique(c(priority_ids,bp_pairs$pair_id)),bp_pairs$pair_id),,drop=FALSE]
         tagList(fungal_alignment_template_bp_view(index=alignment_index(),mapped_rows=mapped_alignment(),pairs=bp_pairs,
           taxonomy=snapshot()$taxonomy,reference_accession=alignment_reference(),active_id=active_pair()$pair_id,
           domain=template_base_domain(),ceilings=alignment_ceilings(),ns=session$ns,
           landmarks=mapped_alignment_regions(),show_regions=!identical(input$show_regions,FALSE)),
-          aligned(show_candidate_tracks=FALSE))
+          tags$details(class="atlas-detail",tags$summary("Compare templates on the shared alignment"),aligned(show_candidate_tracks=FALSE)))
       } else aligned()
     })
     output$alignment_bases <- renderUI({
@@ -503,7 +646,11 @@ fungalExplorerServer <- function(id) {
       counts <- data$taxonomy
       class_count <- length(setdiff(unique(na.omit(counts$class)),c("unresolved","")))
       div(strong(length(data$sequences)," templates · ",class_count," resolved classes"),
-          div(class="tiny",data$manifest$id," · ",data$manifest$created_at),
+          div(class="tiny",sub("-.*$","",data$manifest$id)," · frozen reference"))
+    })
+    output$snapshot_provenance <- renderUI({
+      data <- snapshot()
+      div(div(class="tiny",data$manifest$id," · ",data$manifest$created_at),
           div(class="tiny",data$manifest$transport_source %||% "Bundled pinned snapshot",
               if(isTRUE(attr(index,"stale"))) paste0(" · ",attr(index,"fallback_reason"))),
           div(class="tiny",data$manifest$description))

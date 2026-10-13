@@ -26,6 +26,8 @@ source("R/fungal_alignment_ui.R")
 source("R/fungal_ui.R")
 source("R/fungal_fit.R")
 source("R/fungal_fit_ui.R")
+source("R/unite_reference.R")
+source("R/unite_reference_ui.R")
 
 coi_release_state <- tryCatch(atlas_read_manifest("COI"), error = function(e) NULL)
 coi_reference_panel <- coi_reference_load(coi_release_state)
@@ -1591,7 +1593,7 @@ ui <- page_navbar(
                 actionButton("go_fit", "Check taxonomic fit", class = "btn-outline-secondary"))),
         div(class = "start-card atlas-marker-card",
             span(class = "atlas-status-chip", "Fungal marker"), h3("Fungal rDNA"),
-            p("Explore 18S, ITS and 28S regions. Check which fungal references support a selected combination."),
+                p("Compare fungal ITS regions across clades, or inspect 18S and 28S primer maps."),
             div(class = "atlas-card-actions",
                 actionButton("go_fungal_explore", "Explore primers →", class = "btn-primary"),
                 actionButton("go_fungal_fit", "Check taxonomic fit", class = "btn-outline-secondary"))),
@@ -1627,7 +1629,8 @@ ui <- page_navbar(
           actionButton("go_coi_map", "Animal COI", class = "btn btn-outline-primary btn-sm"),
           actionButton("go_fungal_map", "Fungal rDNA", class = "btn btn-outline-primary btn-sm"),
           actionButton("go_18s", "Open 18S primers", class = "btn btn-outline-primary btn-sm"),
-          span(class = "tiny", "More filters are available beside the map.")),
+          conditionalPanel(condition = "input.map_marker != 'ITS_FUNGAL' || input.fungal_explore_source != 'UNITE'",
+              span(class = "tiny", "More filters are available beside the map."))),
       layout_sidebar(
         sidebar = sidebar(
           width = 340,
@@ -1798,7 +1801,11 @@ ui <- page_navbar(
           card_header(uiOutput("map_card_title", inline = TRUE)),
           conditionalPanel(
             condition = "input.map_marker == 'ITS_FUNGAL'",
-            fungalExplorerUI("fungal")
+            div(class = "atlas-segmented atlas-fungal-collection",
+                radioButtons("fungal_explore_source", "Reference collection",
+                    c("ITS alignments · UNITE" = "UNITE", "18S / 28S maps · NCBI" = "NCBI"), "UNITE", inline = TRUE)),
+            conditionalPanel(condition = "input.fungal_explore_source == 'UNITE'", uniteReferenceUI("unite_explorer", initial_mode = "alignment")),
+            conditionalPanel(condition = "input.fungal_explore_source == 'NCBI'", fungalExplorerUI("fungal"))
           ),
           conditionalPanel(
             condition = "input.map_marker != 'ITS_FUNGAL'",
@@ -1831,7 +1838,12 @@ ui <- page_navbar(
       workspace_heading("Taxonomic fit", "Choose a marker and investigate the reference evidence behind a primer combination."),
       div(class = "atlas-segmented atlas-fit-marker",
           radioButtons("fit_marker", "Marker", c("Animal COI" = "COI", "Fungal rDNA" = "ITS_FUNGAL"), "COI", inline = TRUE)),
-      conditionalPanel(condition = "input.fit_marker == 'ITS_FUNGAL'", fungalFitUI("fungal_fit")),
+      conditionalPanel(condition = "input.fit_marker == 'ITS_FUNGAL'",
+          div(class = "atlas-segmented atlas-fungal-collection",
+              radioButtons("fungal_fit_source", "Reference collection",
+                  c("Broad ITS · UNITE" = "UNITE", "Long rDNA · NCBI" = "NCBI"), "UNITE", inline = TRUE)),
+          conditionalPanel(condition = "input.fungal_fit_source == 'UNITE'", uniteReferenceUI("unite_fit", initial_mode = "primers")),
+          conditionalPanel(condition = "input.fungal_fit_source == 'NCBI'", fungalFitUI("fungal_fit"))),
       conditionalPanel(condition = "input.fit_marker == 'COI'",
       div(class = "callout tiny", strong("Active COI reference: "), uiOutput("coi_fit_reference_status")),
       card(
@@ -2216,11 +2228,15 @@ ui <- page_navbar(
           ))
         ),
         conditionalPanel(condition = "input.lineage_marker == 'ITS_FUNGAL'",
-          div(class = "atlas-panel", uiOutput("fungal_library_context"),
+          div(class = "atlas-segmented atlas-fungal-collection",
+              radioButtons("fungal_library_source", "Reference collection",
+                  c("Broad ITS · UNITE" = "UNITE", "Long rDNA · NCBI" = "NCBI"), "UNITE", inline = TRUE)),
+          conditionalPanel(condition = "input.fungal_library_source == 'UNITE'", uniteReferenceUI("unite_library", initial_mode = "coverage")),
+          conditionalPanel(condition = "input.fungal_library_source == 'NCBI'", div(class = "atlas-panel", uiOutput("fungal_library_context"),
               div(class = "atlas-card-actions",
                   actionButton("go_fungal_fit_library", "Check this panel's taxonomic fit →", class = "btn-outline-primary btn-sm"),
                   downloadButton("download_fungal_library", "Reference metadata (CSV)", class = "btn-outline-secondary btn-sm")),
-              DTOutput("fungal_library_records"))),
+              DTOutput("fungal_library_records")))),
         conditionalPanel(condition = "input.lineage_marker != 'ITS_FUNGAL'", navset_card_tab(
           id = "lineage_tabs",
           nav_panel("Overview", uiOutput("lineage_overview")),
@@ -2411,7 +2427,7 @@ ui <- page_navbar(
         div(
           class = "callout tiny mb-3",
           strong(format(nrow(unite_catalog), big.mark = ","), " sequence-valid primer records are available in the pilot catalog. "),
-          "UNITE is recorded as the compilation provenance. The Reference column names the original paper or explicitly says unpublished/not reported; it is never replaced by a generic UNITE citation. Curated primer pairs remain a smaller, source-supported subset because the atlas does not invent pairings from individual oligos."
+          "UNITE is recorded as the compilation provenance. The Reference column names the original paper or explicitly says unpublished/not reported. Documented pairs and candidate combinations of individual primers are labelled separately; candidate combinations need independent validation."
         ),
         DTOutput("unite_primer_catalog")
       ))
@@ -2424,6 +2440,9 @@ server <- function(input, output, session) {
   fungal_explorer_context <- reactiveVal(NULL)
   fungal_workspace <- fungalExplorerServer("fungal", selection = fungal_explorer_context)
   fungal_fit_workspace <- fungalFitServer("fungal_fit", selection = fungal_fit_context)
+  unite_explorer_workspace <- uniteReferenceServer("unite_explorer", initial_mode = "alignment")
+  unite_fit_workspace <- uniteReferenceServer("unite_fit", initial_mode = "primers")
+  unite_library_workspace <- uniteReferenceServer("unite_library", initial_mode = "coverage")
   coi_refresh <- coiReferenceRefreshServer("coi_refresh", initial = coi_reference_panel)
   coi_reference_current <- coi_refresh$reference
   current_order_scores <- reactive(as_tibble(coi_reference_current()$overview))
@@ -2459,10 +2478,12 @@ server <- function(input, output, session) {
   })
   observeEvent(input$go_fungal_fit, {
     updateRadioButtons(session, "fit_marker", selected = "ITS_FUNGAL")
+    updateRadioButtons(session, "fungal_fit_source", selected = "UNITE")
     updateNavbarPage(session, "main_nav", selected = "fit")
   })
   observeEvent(input$go_fungal_fit_library, {
     updateRadioButtons(session, "fit_marker", selected = "ITS_FUNGAL")
+    updateRadioButtons(session, "fungal_fit_source", selected = "NCBI")
     updateNavbarPage(session, "main_nav", selected = "fit")
   })
   observeEvent(input$go_fungal_library, {
@@ -2503,11 +2524,13 @@ server <- function(input, output, session) {
     fungal_fit_context(list(version = fungal_workspace$snapshot()$manifest$id,
       pair = pair$pair_id, nonce = input[["fungal-open_fit"]]))
     updateRadioButtons(session, "fit_marker", selected = "ITS_FUNGAL")
+    updateRadioButtons(session, "fungal_fit_source", selected = "NCBI")
     updateNavbarPage(session, "main_nav", selected = "fit")
   })
   observeEvent(input[["fungal_fit-open_explorer"]], {
     fungal_explorer_context(list(version = fungal_fit_workspace$snapshot()$manifest$id,
       pair = fungal_fit_workspace$selected_pair(), nonce = input[["fungal_fit-open_explorer"]]))
+    updateRadioButtons(session, "fungal_explore_source", selected = "NCBI")
     open_explorer_marker("ITS_FUNGAL", "FUNGI")
   })
   navigate_from("go_regions", "regions")
@@ -2639,7 +2662,10 @@ server <- function(input, output, session) {
   }
   observeEvent(input$go_coi_explore, open_explorer_marker("COI"))
   observeEvent(input$go_coi_map, open_explorer_marker("COI"))
-  observeEvent(input$go_fungal_explore, open_explorer_marker("ITS_FUNGAL", "FUNGI"))
+  observeEvent(input$go_fungal_explore, {
+    updateRadioButtons(session, "fungal_explore_source", selected = "UNITE")
+    open_explorer_marker("ITS_FUNGAL", "FUNGI")
+  })
   observeEvent(input$go_fungal_map, open_explorer_marker("ITS_FUNGAL", "FUNGI"))
   output$pair_selector_ui <- renderUI({
     tagList(
@@ -2812,7 +2838,8 @@ server <- function(input, output, session) {
   }, ignoreInit = FALSE)
 
   output$map_card_title <- renderUI({
-    "Primer combinations and binding sites"
+    if (identical(input$map_marker, "ITS_FUNGAL") && identical(input$fungal_explore_source, "UNITE"))
+      "Regional alignments and fungal reference evidence" else "Primer combinations and binding sites"
   })
 
   its_member_choices <- function(direction) {

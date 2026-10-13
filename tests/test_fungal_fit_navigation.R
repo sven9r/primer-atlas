@@ -53,13 +53,20 @@ shiny::testServer(env$server, {
     "fungal_fit-version" = v3_id, "fungal_fit-pair" = pair,
     "fungal_fit-rank" = "class", "fungal_fit-platform" = "ALL")
   session$flushReact()
+  # The broad ITS collection has an independent cohort; changing its view
+  # cannot silently replace the NCBI rDNA version or pair denominator.
+  broad <- unite_explorer_workspace$data()
+  stopifnot(unite_explorer_workspace$available(), nrow(broad$metadata) == broad$manifest$n_selected,
+      broad$manifest$n_selected > 10000L, broad$manifest$n_source > 100000L,
+      length(fungal_workspace$snapshot()$sequences) == 21L)
   sent <- list()
   session$sendInputMessage <- function(inputId, message) sent[[inputId]] <<- message
 
   # Each landing entry specifies the evidence mode and uses the same fit page.
   session$setInputs(go_fungal_fit = 1L)
   session$flushReact()
-  stopifnot(sent$main_nav$value == "fit", sent$fit_marker$value == "ITS_FUNGAL")
+  stopifnot(sent$main_nav$value == "fit", sent$fit_marker$value == "ITS_FUNGAL",
+      sent$fungal_fit_source$value == "UNITE")
   session$setInputs(fit_marker = "ITS_FUNGAL")
   session$flushReact()
   session$setInputs(go_fit = 1L)
@@ -72,7 +79,7 @@ shiny::testServer(env$server, {
   session$setInputs(go_fungal_explore = 1L)
   session$flushReact()
   stopifnot(sent$main_nav$value == "find", sent$map_marker$value == "ITS_FUNGAL",
-            sent$map_organism$value == "FUNGI")
+            sent$map_organism$value == "FUNGI", sent$fungal_explore_source$value == "UNITE")
   session$setInputs(go_coi_explore = 1L)
   session$flushReact()
   stopifnot(sent$main_nav$value == "find", sent$map_marker$value == "COI")
@@ -91,7 +98,7 @@ shiny::testServer(env$server, {
   context <- fungal_fit_context()
   stopifnot(context$version == v3_id, context$pair == pair,
             length(context$nonce) == 1L, sent$main_nav$value == "fit",
-            sent$fit_marker$value == "ITS_FUNGAL")
+            sent$fit_marker$value == "ITS_FUNGAL", sent$fungal_fit_source$value == "NCBI")
 
   # Apply browser input updates explicitly: MockShinySession records an
   # updateSelectInput message but does not synthesize the client response.

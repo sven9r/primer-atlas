@@ -45,6 +45,8 @@ jobs:
             tests/test_fungal_fit.R \
             tests/test_fungal_fit_ui.R \
             tests/test_fungal_fit_navigation.R \
+            tests/test_unite_reference.R \
+            tests/test_unite_reference_ui.R \
             tests/test_fungal_explorer_ui.R \
             tests/test_fungal_versions.R \
             tests/test_fungal_workspace.R \
@@ -66,5 +68,7 @@ jobs:
         run: python3 -m unittest discover -s tests -p test_fungal_reference_panel.py
       - name: Verify fungal domain projection boundaries
         run: python3 -m unittest discover -s tests -p test_fungal_domain_mapping.py
+      - name: Verify UNITE import, region and snapshot boundaries
+        run: python3 -m unittest discover -s tests -p 'test_unite_*.py'
       - name: Verify COI acquisition and retention boundaries
         run: python3 -m unittest discover -s tests -p 'test_coi_*.py'

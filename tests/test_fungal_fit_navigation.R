@@ -113,7 +113,7 @@ shiny::testServer(env$server, {
   fungal_overview_evidence(request)
   session$flushReact()
   stopifnot(!fungal_overview_broad_selection()$available,
-      grepl("no matching forward and reverse oligos",output$primer_overview_evidence_status$html,fixed=TRUE),
+      grepl("not both covered",output$primer_overview_evidence_status$html,fixed=TRUE),
       fungal_workspace$snapshot()$manifest$id==v3_id)
   set_fungal_overview_evidence(pair,92L)
   session$setInputs(map_marker="COI")

@@ -12,7 +12,7 @@ stopifnot(bytes < 100 * 1024^2)
 manifest <- jsonlite::read_json("manifest.json", simplifyVector = FALSE)
 runtime_packages <- c(
   "shiny", "bslib", "readr", "dplyr", "stringr", "DT",
-  "httr2", "jsonlite", "digest", "nanoparquet"
+  "httr2", "jsonlite", "digest", "nanoparquet", "zip"
 )
 stopifnot(
   all(runtime_packages %in% names(manifest$packages)),

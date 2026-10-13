@@ -30,6 +30,11 @@ source("R/unite_reference.R")
 source("R/unite_reference_ui.R")
 source("R/primer_overview.R")
 source("R/fungal_primer_overview.R")
+source("R/fungal_combination_builder.R")
+source("R/unite_candidate_pairs.R")
+source("R/primer_publication_export.R")
+source("R/fungal_builder_ui.R")
+primer_publication_citations <- read.csv("data/catalog/primer_publication_citations.csv",stringsAsFactors=FALSE)
 
 coi_release_state <- tryCatch(atlas_read_manifest("COI"), error = function(e) NULL)
 coi_reference_panel <- coi_reference_load(coi_release_state)
@@ -1801,15 +1806,13 @@ ui <- page_navbar(
           full_screen = TRUE,
           card_header(uiOutput("map_card_title", inline = TRUE)),
           uiOutput("primer_overview_controls"),
+          conditionalPanel(condition="input.map_marker == 'ITS_FUNGAL'",fungalCombinationBuilderUI()),
           div(class="atlas-segmented",
               radioButtons("primer_overview_platform", "Sequencing platform",
                   c("All platforms"="ALL", "Illumina"="ILLUMINA", "PacBio"="PACBIO", "Nanopore"="NANOPORE"),
                   "ALL", inline=TRUE)),
-          tags$details(class="atlas-detail", tags$summary("Browse primer combinations"),
-              conditionalPanel(condition="input.map_marker == 'ITS_FUNGAL'",
-                  checkboxInput("fungal_overview_starters", "Show 20 starter examples", TRUE),
-                  uiOutput("fungal_overview_choices")),
-              conditionalPanel(condition="input.map_marker != 'ITS_FUNGAL'", uiOutput("combination_browser_ui"))),
+          conditionalPanel(condition="input.map_marker != 'ITS_FUNGAL'",
+              tags$details(class="atlas-detail", tags$summary("Browse primer combinations"),uiOutput("combination_browser_ui"))),
           uiOutput("primer_overview_context"),
           div(class="map-legend",
               span(span(class="legend-number", "1"), "Dynamic row number"),
@@ -1824,10 +1827,14 @@ ui <- page_navbar(
               tags$summary("Inspect evidence and alignments"),
               uiOutput("primer_overview_inspector_controls"),
               conditionalPanel(condition="input.map_marker == 'ITS_FUNGAL'",
+                  h3("2 · Check taxonomic evidence"),
+                  uiOutput("fungal_builder_oligo_evidence"),
+                  actionButton("fungal_builder_open_fit","Open taxonomic fit",class="btn-primary btn-sm"),
                   uiOutput("primer_overview_evidence_status"),
                   conditionalPanel(condition="output.primer_overview_broad_available", uniteReferenceUI("unite_explorer", initial_mode="primers")),
-                  tags$details(class="atlas-detail", tags$summary("Mapped-template details and historical versions"),
-                      fungalExplorerUI("fungal"))),
+                  conditionalPanel(condition="output.primer_overview_historical_pair",
+                    tags$details(class="atlas-detail", tags$summary("Mapped-template details and historical versions"),fungalExplorerUI("fungal"))),
+                  fungalPublicationUI()),
               conditionalPanel(condition="input.map_marker != 'ITS_FUNGAL'",
                   uiOutput("overview_metrics"), uiOutput("its_map_catalog_ui"),
                   conditionalPanel(condition="input.map_marker == 'COI'",
@@ -2447,12 +2454,15 @@ server <- function(input, output, session) {
   fungal_overview_evidence <- reactiveVal(NULL)
   overview_clicked_pair <- reactiveVal(NULL)
   overview_page <- reactiveVal(1L)
+  fungal_builder_state <- reactiveValues(version=NULL,forward=character(),reverse=character())
   fungal_workspace <- fungalExplorerServer("fungal", selection = fungal_explorer_context)
   fungal_fit_workspace <- fungalFitServer("fungal_fit", selection = fungal_fit_context)
   unite_explorer_workspace <- uniteReferenceServer("unite_explorer", initial_mode = "primers",
-      pair_provider=reactive(fungal_overview_broad_selection()$pair))
+      dataset=function(version_id=NULL) fungal_builder_broad_data(version_id %||% input[["unite_explorer-version"]]),
+      pair_provider=reactive(fungal_overview_evidence()$pair))
   unite_fit_workspace <- uniteReferenceServer("unite_fit", initial_mode = "primers",
-      pair_provider=reactive(fungal_overview_broad_selection()$pair))
+      dataset=function(version_id=NULL) fungal_builder_broad_data(version_id %||% input[["unite_fit-version"]]),
+      pair_provider=reactive(fungal_overview_evidence()$pair))
   unite_library_workspace <- uniteReferenceServer("unite_library", initial_mode = "coverage")
   coi_refresh <- coiReferenceRefreshServer("coi_refresh", initial = coi_reference_panel)
   coi_reference_current <- coi_refresh$reference
@@ -2462,28 +2472,43 @@ server <- function(input, output, session) {
     if (!is.null(reference$pair_templates)) as_tibble(reference$pair_templates) else pair_template_scores
   })
   set_fungal_overview_evidence <- function(pair,nonce) {
-    data <- fungal_workspace$snapshot()
+    data <- fungal_builder_result()$working_snapshot
     row <- data$pairs[data$pairs$pair_id==pair,,drop=FALSE]
     if(nrow(row)!=1L) return(invisible(NULL))
     fungal_overview_evidence(list(pair=pair,version=data$manifest$id,
-        forward_sequence=row$forward_sequence,reverse_sequence=row$reverse_sequence,nonce=nonce))
+        forward_sequence=row$forward_sequence,reverse_sequence=row$reverse_sequence,row=row,nonce=nonce))
+  }
+  fungal_builder_broad_data <- function(version_id=NULL) {
+    broad <- unite_reference_read(version_id=version_id)
+    if(is.null(broad)) return(NULL)
+    candidates <- fungal_builder_result()$selected_pairs
+    request <- fungal_overview_evidence()
+    if(is.list(request) && is.data.frame(request$row) && !request$pair %in% candidates$pair_id)
+      candidates <- bind_rows(candidates,request$row)
+    unite_reference_with_candidates(broad,candidates)$data
   }
   fungal_overview_broad_selection <- reactive({
     request <- fungal_overview_evidence()
-    if(is.null(request)) return(list(available=TRUE,pair=NULL))
-    broad <- unite_reference_read()
+    if(is.null(request)) return(list(available=FALSE,pair=NULL,request=NULL,
+      reason="Choose a forward and a reverse primer to inspect a requested combination."))
+    version <- if(identical(input$main_nav,"fit")) input[["unite_fit-version"]] else input[["unite_explorer-version"]]
+    broad <- fungal_builder_broad_data(version)
     rows <- if(!is.null(broad)) broad$pairs[broad$pairs$pair_id==request$pair,,drop=FALSE] else data.frame()
     valid <- nrow(rows)==1L && identical(toupper(rows$forward_sequence),toupper(request$forward_sequence)) &&
         identical(toupper(rows$reverse_sequence),toupper(request$reverse_sequence))
     list(available=valid,pair=if(valid) request$pair else NULL,request=request,
-        reason=if(!valid) "This mapped combination has no matching forward and reverse oligos in the broad UNITE snapshot. Its NCBI selection is retained.")
+        reason=if(!valid) "These exact forward and reverse oligos are not both covered by the broad UNITE snapshot's completed site searches. The requested combination is retained; broad evidence is unavailable.")
   })
   output$primer_overview_broad_available <- reactive(isTRUE(fungal_overview_broad_selection()$available))
   outputOptions(output,"primer_overview_broad_available",suspendWhenHidden=FALSE)
+  output$primer_overview_historical_pair <- reactive({
+    pair <- overview_selected_pair()
+    length(pair)==1L && pair %in% fungal_workspace$snapshot()$pairs$pair_id
+  })
+  outputOptions(output,"primer_overview_historical_pair",suspendWhenHidden=FALSE)
   output$primer_overview_evidence_status <- renderUI({
     selection <- fungal_overview_broad_selection()
     if(!isTRUE(selection$available)) return(div(class="callout",selection$reason))
-    if(is.null(selection$request)) return(p(class="tiny","Choose a mapped combination to follow it into the broad UNITE ITS evidence."))
     p(class="atlas-context-line","Mapped geometry: ",selection$request$version,
         " · broad primer evidence: separate UNITE ITS snapshot. The two reference counts describe different collections.")
   })
@@ -2493,40 +2518,121 @@ server <- function(input, output, session) {
     if(length(selected)==1L && selected %in% names(data$sequences)) return(selected)
     pinned <- data$manifest$reference_accession
     if(length(pinned)==1L && pinned %in% names(data$sequences)) return(pinned)
-    fungal_primer_overview_default_accession(data, fungal_workspace$candidates())
+    fungal_primer_overview_default_accession(data)
+  })
+  fungal_builder_defaults <- reactive({
+    snapshot <- fungal_workspace$snapshot()
+    defaults <- fungal_combination_defaults(snapshot,accession=fungal_overview_reference(),region="ITS",n_forward=5L,n_reverse=5L)
+    # A consistent published-component teaching set makes the initial 5 × 5
+    # comparison reproducible; missing products remain part of the exercise.
+    choose <- function(names,direction,fallback) {
+      rows <- snapshot$catalog[snapshot$catalog$direction==direction,,drop=FALSE]
+      ids <- lapply(names,function(name) rows$catalog_id[rows$primer_name==name])
+      if(all(lengths(ids)==1L)) unlist(ids,use.names=FALSE) else fallback
+    }
+    defaults$forward_ids <- choose(c("ITS1","ITS1F","ITS5","ITS3","fITS7"),"forward",defaults$forward_ids)
+    defaults$reverse_ids <- choose(c("ITS2","ITS4","ITS4B","LR21","LR3"),"reverse",defaults$reverse_ids)
+    defaults
+  })
+  fungal_builder_forward <- reactive({
+    if(is.null(fungal_builder_state$version)) return(fungal_builder_defaults()$forward_ids)
+    intersect(fungal_builder_state$forward,fungal_workspace$snapshot()$catalog$catalog_id)
+  })
+  fungal_builder_reverse <- reactive({
+    if(is.null(fungal_builder_state$version)) return(fungal_builder_defaults()$reverse_ids)
+    intersect(fungal_builder_state$reverse,fungal_workspace$snapshot()$catalog$catalog_id)
+  })
+  observeEvent(fungal_workspace$snapshot()$manifest$id,{
+    defaults <- fungal_builder_defaults()
+    fungal_builder_state$version <- fungal_workspace$snapshot()$manifest$id
+    fungal_builder_state$forward <- defaults$forward_ids
+    fungal_builder_state$reverse <- defaults$reverse_ids
+  },priority=100)
+  observeEvent(input$fungal_builder_forward,{
+    fungal_builder_state$forward <- input$fungal_builder_forward %||% character()
+  },ignoreInit=TRUE,ignoreNULL=FALSE)
+  observeEvent(input$fungal_builder_reverse,{
+    fungal_builder_state$reverse <- input$fungal_builder_reverse %||% character()
+  },ignoreInit=TRUE,ignoreNULL=FALSE)
+  output$fungal_builder_controls <- renderUI({
+    catalog <- fungal_combination_catalog(fungal_workspace$snapshot())
+    choices <- function(direction) {
+      rows <- catalog[catalog$direction==direction,,drop=FALSE]
+      setNames(rows$catalog_id,paste0(rows$primer_name," · ",rows$gene_locus))
+    }
+    div(class="fungal-builder-fields",
+      selectizeInput("fungal_builder_forward","Forward primers →",choices("forward"),
+        selected=isolate(fungal_builder_forward()),multiple=TRUE,
+        options=list(maxItems=5,plugins=list("remove_button"),placeholder="Search a forward primer or locus")),
+      selectizeInput("fungal_builder_reverse","← Reverse primers",choices("reverse"),
+        selected=isolate(fungal_builder_reverse()),multiple=TRUE,
+        options=list(maxItems=5,plugins=list("remove_button"),placeholder="Search a reverse primer or locus")))
+  })
+  observeEvent(input$fungal_builder_examples,{
+    defaults <- fungal_builder_defaults()
+    fungal_builder_state$forward <- defaults$forward_ids
+    fungal_builder_state$reverse <- defaults$reverse_ids
+    updateSelectizeInput(session,"fungal_builder_forward",selected=defaults$forward_ids)
+    updateSelectizeInput(session,"fungal_builder_reverse",selected=defaults$reverse_ids)
+    updateNumericInput(session,"fungal_builder_min_bp",value=100)
+    updateNumericInput(session,"fungal_builder_max_bp",value=3500)
+    updateSelectInput(session,"fungal_builder_evidence",selected="ALL")
+    updateRadioButtons(session,"primer_overview_platform",selected="ALL")
+  })
+  observeEvent(input$fungal_builder_clear,{
+    fungal_builder_state$forward <- fungal_builder_state$reverse <- character()
+    overview_clicked_pair(NULL)
+    fungal_overview_evidence(NULL)
+    updateSelectizeInput(session,"fungal_builder_forward",selected=character())
+    updateSelectizeInput(session,"fungal_builder_reverse",selected=character())
+  })
+  fungal_builder_length_range <- reactive({
+    limits <- c(input$fungal_builder_min_bp %||% 100,input$fungal_builder_max_bp %||% 3500)
+    validate(need(length(limits)==2L && all(is.finite(limits)) && limits[1L]>=100L && limits[2L]>=limits[1L],
+      "Use a minimum of 100 bp or more, and a maximum at least as large as the minimum."))
+    limits
+  })
+  fungal_builder_result <- reactive(fungal_combination_builder(fungal_workspace$snapshot(),
+      forward_ids=fungal_builder_forward(),reverse_ids=fungal_builder_reverse(),accession=fungal_overview_reference(),
+      platform=input$primer_overview_platform %||% "ALL",length_range=fungal_builder_length_range(),max_per_direction=5L))
+  observeEvent(list(fungal_builder_result()$selected_pairs$pair_id,fungal_workspace$snapshot()$manifest$id),{
+    ids <- fungal_builder_result()$selected_pairs$pair_id
+    previous <- fungal_overview_evidence()
+    if(!length(ids)) {
+      overview_clicked_pair(NULL)
+      fungal_overview_evidence(NULL)
+    } else if(is.null(previous) || !previous$pair %in% ids || !identical(previous$version,fungal_workspace$snapshot()$manifest$id)) {
+      overview_clicked_pair(NULL)
+      set_fungal_overview_evidence(ids[1L],paste(ids,collapse="|"))
+    }
   })
   fungal_overview_data <- reactive({
-    rows <- fungal_workspace$candidates()
-    chosen <- input$fungal_overview_pairs
-    if(!is.null(chosen)) rows <- rows[rows$pair_id %in% chosen,,drop=FALSE]
+    result <- fungal_builder_result()
+    rows <- result$selected_pairs
     region <- input$primer_overview_region
     if(is.null(region) || !region %in% c("ALL","SSU","ITS","LSU") && !startsWith(region,"landmark:")) region <- "ITS"
-    fungal_primer_overview_data(fungal_workspace$snapshot(), rows, fungal_overview_reference(), region=region,
-        max_rows=max(20L,nrow(rows)))
+    fungal_primer_overview_data(result$working_snapshot, rows, fungal_overview_reference(), region=region,
+        max_rows=max(25L,nrow(rows)))
   })
-  observeEvent(input$fungal_overview_starters,
-      updateCheckboxInput(session,"fungal-examples_only",value=isTRUE(input$fungal_overview_starters)),ignoreInit=TRUE)
   observeEvent(input$primer_overview_version, {
     if(identical(input$map_marker,"ITS_FUNGAL") && input$primer_overview_version %in% fungal_read_index()$id)
       updateSelectInput(session,"fungal-version",selected=input$primer_overview_version)
   },ignoreInit=TRUE)
-  output$fungal_overview_choices <- renderUI({
-    rows <- fungal_workspace$candidates()
-    current <- isolate(input$fungal_overview_pairs)
-    if(is.null(current)) current <- rows$pair_id
-    checkboxGroupInput("fungal_overview_pairs", "Primer combinations",
-        choices=setNames(rows$pair_id, paste0(rows$pair_label," · ",fungal_evidence_label(rows$evidence_status))),
-        selected=intersect(current,rows$pair_id))
-  })
-  observeEvent(fungal_workspace$snapshot()$manifest$id, {
-    rows <- fungal_workspace$candidates()
-    updateCheckboxGroupInput(session,"fungal_overview_pairs",selected=rows$pair_id)
-  },ignoreInit=TRUE)
-  observeEvent(list(fungal_workspace$candidates()$pair_id,fungal_explorer_context()), {
+  observeEvent(list(fungal_explorer_context(),fungal_workspace$snapshot()$manifest$id), {
     request <- fungal_explorer_context()
     if(is.list(request) && identical(request$version,fungal_workspace$snapshot()$manifest$id) &&
-        request$pair %in% fungal_workspace$candidates()$pair_id)
-      updateCheckboxGroupInput(session,"fungal_overview_pairs",selected=unique(c(isolate(input$fungal_overview_pairs),request$pair)))
+        request$pair %in% fungal_workspace$snapshot()$pairs$pair_id) {
+      pair <- fungal_workspace$snapshot()$pairs[fungal_workspace$snapshot()$pairs$pair_id==request$pair,,drop=FALSE]
+      catalog <- fungal_workspace$snapshot()$catalog
+      f <- catalog$catalog_id[catalog$primer_name==pair$forward_primer & catalog$sequence==pair$forward_sequence & catalog$direction=="forward"]
+      r <- catalog$catalog_id[catalog$primer_name==pair$reverse_primer & catalog$sequence==pair$reverse_sequence & catalog$direction=="reverse"]
+      current_forward <- isolate(fungal_builder_forward())
+      current_reverse <- isolate(fungal_builder_reverse())
+      if(length(f)==1L && !f %in% current_forward) fungal_builder_state$forward <- c(f,head(current_forward,4L))
+      if(length(r)==1L && !r %in% current_reverse) fungal_builder_state$reverse <- c(r,head(current_reverse,4L))
+      updateSelectizeInput(session,"fungal_builder_forward",selected=fungal_builder_state$forward)
+      updateSelectizeInput(session,"fungal_builder_reverse",selected=fungal_builder_state$reverse)
+    }
   },ignoreInit=TRUE)
   output$primer_overview_controls <- renderUI({
     req(input$map_marker)
@@ -2536,7 +2642,9 @@ server <- function(input, output, session) {
       taxonomy <- data$taxonomy
       labels <- paste0(taxonomy$accession," · ",taxonomy$organism)
       versions <- fungal_read_index()
-      own <- data$landmarks[data$landmarks$accession==accession,,drop=FALSE]
+      own <- data$landmarks
+      if(!"accession" %in% names(own)) own$accession <- rep(data$manifest$reference_accession %||% "",nrow(own))
+      own <- own[!is.na(own$accession) & own$accession==accession,,drop=FALSE]
       landmark_labels <- own$label
       if("boundary_status" %in% names(own)) landmark_labels <- paste0(landmark_labels,
           ifelse(!is.na(own$boundary_status) & nzchar(own$boundary_status),paste0(" · ",own$boundary_status),""))
@@ -2568,7 +2676,9 @@ server <- function(input, output, session) {
     data <- fungal_workspace$snapshot()
     accession <- input$primer_overview_reference
     if(!accession %in% names(data$sequences)) return()
-    own <- data$landmarks[data$landmarks$accession==accession,,drop=FALSE]
+    own <- data$landmarks
+    if(!"accession" %in% names(own)) own$accession <- rep(data$manifest$reference_accession %||% "",nrow(own))
+    own <- own[!is.na(own$accession) & own$accession==accession,,drop=FALSE]
     labels <- own$label
     if("boundary_status" %in% names(own)) labels <- paste0(labels,
         ifelse(!is.na(own$boundary_status) & nzchar(own$boundary_status),paste0(" · ",own$boundary_status),""))
@@ -2583,7 +2693,14 @@ server <- function(input, output, session) {
     platform <- input$primer_overview_platform %||% "ALL"
     ceiling <- switch(platform,ILLUMINA=500,PACBIO=2000,NANOPORE=3500,Inf)
     rows <- rows[is.finite(rows$aligned_amplicon_bp) & rows$aligned_amplicon_bp<=ceiling,,drop=FALSE]
-    if(identical(input$map_marker,"ITS_FUNGAL")) rows <- sort_primer_map_rows(rows,input$map_sort %||% "binding_site")
+    if(identical(input$map_marker,"ITS_FUNGAL")) {
+      limits <- fungal_builder_length_range()
+      rows <- rows[rows$aligned_amplicon_bp>=limits[1L] & rows$aligned_amplicon_bp<=limits[2L],,drop=FALSE]
+      evidence <- input$fungal_builder_evidence %||% "ALL"
+      if(evidence=="DOCUMENTED") rows <- rows[rows$evidence_status=="documented_pair",,drop=FALSE]
+      if(evidence=="PUBLISHED") rows <- rows[rows$evidence_status %in% c("documented_pair","candidate_published_components"),,drop=FALSE]
+      rows <- sort_primer_map_rows(rows,input$map_sort %||% "binding_site")
+    }
     rows
   })
   overview_visible_rows <- reactive({
@@ -2606,43 +2723,49 @@ server <- function(input, output, session) {
         actionButton("overview_next","Next",class="btn-outline-secondary btn-sm",disabled=if(page==pages) "disabled" else NULL))
   })
   overview_selected_pair <- reactive({
-    ids <- overview_rows()$pair_id
+    ids <- overview_inspector_rows()$pair_id
     current <- overview_clicked_pair() %||% input$overview_evidence_pair
     if(length(current)==1L && current %in% ids) current else if(length(ids)) ids[1L] else NULL
+  })
+  overview_inspector_rows <- reactive({
+    if(identical(input$map_marker,"ITS_FUNGAL")) fungal_builder_result()$selected_pairs else overview_rows()
   })
   output$primer_overview_context <- renderUI({
     rows <- overview_rows()
     if(identical(input$map_marker,"ITS_FUNGAL")) {
       data <- fungal_overview_data()
-      return(p(class="atlas-context-line", strong(nrow(rows)," mapped combinations"),
-          " · raw template bases on ",data$accession," · ",length(fungal_workspace$snapshot()$sequences)," NCBI long-rDNA references",
-          if(nrow(data$missing_pairs)) paste0(" · ",nrow(data$missing_pairs)," selected combinations lack a verified product on this template"),
-          ". Broad UNITE ITS evidence is available under Inspect evidence."))
+      result <- fungal_builder_result()
+      filtered_count <- max(0L,nrow(result$selected_pairs)-nrow(rows)-nrow(result$unmapped_pairs))
+      return(p(class="atlas-context-line",strong(length(fungal_builder_forward())," forward × ",length(fungal_builder_reverse()),
+          " reverse = ",nrow(result$selected_pairs)," requested combinations"),
+          " · ",nrow(rows)," mapped · ",filtered_count," outside current filters · ",nrow(result$unmapped_pairs)," without a verified product on this reference.",
+          br(),"Map positions: ",data$accession," · raw bp including primers. Click a lane, or inspect any requested combination in Refine evidence."))
     }
     p(class="atlas-context-line",strong(nrow(rows)," mapped combinations"),
         " · reference bases; product lengths include both primers.")
   })
   output$primer_overview_inspector_controls <- renderUI({
-    rows <- overview_rows()
-    if(!nrow(rows)) return(p("Select a mapped primer combination to inspect its evidence."))
+    rows <- overview_inspector_rows()
+    if(!nrow(rows)) return(p("Choose at least one forward and one reverse primer to inspect their combinations."))
     selectizeInput("overview_evidence_pair","Primer combination",setNames(rows$pair_id,rows$pair_label),selected=isolate(overview_selected_pair()))
   })
   observeEvent(input$primer_overview_pair_click, {
     pair <- input$primer_overview_pair_click$pair
-    if(length(pair)==1L && pair %in% overview_rows()$pair_id) {
+    if(length(pair)==1L && pair %in% overview_inspector_rows()$pair_id) {
       overview_clicked_pair(pair)
       updateSelectizeInput(session,"overview_evidence_pair",selected=pair)
       session$sendCustomMessage("primer-overview-inspect",list(pair=pair))
       if(identical(input$map_marker,"ITS_FUNGAL")) {
         set_fungal_overview_evidence(pair,input$primer_overview_pair_click$nonce)
-        fungal_explorer_context(list(pair=pair,version=fungal_workspace$snapshot()$manifest$id,
-            nonce=input$primer_overview_pair_click$nonce))
+        if(pair %in% fungal_workspace$snapshot()$pairs$pair_id)
+          fungal_explorer_context(list(pair=pair,version=fungal_workspace$snapshot()$manifest$id,
+              nonce=input$primer_overview_pair_click$nonce))
       }
     }
   })
   observeEvent(input$overview_evidence_pair, {
     pair <- input$overview_evidence_pair
-    if(length(pair)==1L && pair %in% overview_rows()$pair_id) {
+    if(length(pair)==1L && pair %in% overview_inspector_rows()$pair_id) {
       overview_clicked_pair(pair)
       if(identical(input$map_marker,"ITS_FUNGAL"))
         set_fungal_overview_evidence(pair,pair)
@@ -2653,6 +2776,140 @@ server <- function(input, output, session) {
     if(identical(input$map_marker,"ITS_FUNGAL") && length(pair)==1L)
       set_fungal_overview_evidence(pair,input$primer_overview_inspector_open$nonce)
   })
+  output$fungal_builder_combination_table <- renderUI({
+    result <- fungal_builder_result()
+    rows <- result$selected_pairs
+    if(!nrow(rows)) return(p(class="fungal-builder-summary","Choose a forward and a reverse primer. Their combinations will appear here."))
+    observed <- result$pair_sequences[result$pair_sequences$accession==fungal_overview_reference(),,drop=FALSE]
+    current <- match(rows$pair_id,observed$pair_id)
+    bp <- observed$amplicon_bp[current]
+    status <- observed$status[current]
+    included <- rows$pair_id %in% overview_rows()$pair_id
+    div(class="fungal-builder-table-wrap",tags$table(class="fungal-builder-table",
+      tags$thead(tags$tr(tags$th("Combination"),tags$th("Product bp"),tags$th("Map status"),tags$th("Publication evidence"))),
+      tags$tbody(lapply(seq_len(nrow(rows)),function(i) tags$tr(
+        tags$td(tags$button(type="button",class="pair-inspect",`data-pair-input`="primer_overview_pair_click",`data-pair-id`=rows$pair_id[i],rows$pair_label[i])),
+        tags$td(if(is.finite(bp[i])) format(bp[i],trim=TRUE) else "Unresolved"),
+        tags$td(if(included[i]) "In the map" else if(identical(status[i],"scorable")) "Outside current filters" else gsub("_"," ",status[i] %||% "Evidence unavailable",fixed=TRUE)),
+        tags$td(fungal_evidence_label(rows$evidence_status[i])))))))
+  })
+  output$fungal_builder_oligo_evidence <- renderUI({
+    pair <- overview_selected_pair()
+    rows <- fungal_overview_data()$primers
+    # The focused map may exclude this pair. Resolve its source identities from
+    # the complete selected combination's working catalog instead.
+    snapshot <- fungal_builder_result()$working_snapshot
+    definition <- snapshot$pairs[snapshot$pairs$pair_id==pair,,drop=FALSE]
+    if(nrow(definition)!=1L) return(NULL)
+    div(class="fungal-oligo-evidence",lapply(c("forward","reverse"),function(direction) {
+      row <- .fungal_overview_component(snapshot,definition,direction)
+      if(is.null(row)) return(div("Component source evidence unavailable."))
+      reference <- .fungal_overview_text(row,"reference","Original citation unavailable")
+      url <- .fungal_overview_text(row,"primary_reference_url",.fungal_overview_text(row,"source_url"))
+      bibliography <- primer_publication_citations[primer_publication_citations$primary_reference_key==
+        .fungal_overview_text(row,"primary_reference_key"),,drop=FALSE]
+      if(nrow(bibliography)==1L) url <- bibliography$url
+      div(strong(if(direction=="forward") "Forward · " else "Reverse · ",row$primer_name),
+        p(tags$code(row$sequence)," · 5′→3′"),
+        p("Catalog target note: ",.fungal_overview_text(row,"target","Not reported")),
+        if(nzchar(.fungal_overview_text(row,"remarks"))) p(.fungal_overview_text(row,"remarks")),
+        if(nzchar(url)) tags$a(href=url,target="_blank",rel="noopener",reference) else p(reference))
+    }))
+  })
+  observeEvent(input$fungal_builder_open_fit,{
+    pair <- overview_selected_pair()
+    if(length(pair)!=1L) return()
+    set_fungal_overview_evidence(pair,input$fungal_builder_open_fit)
+    updateRadioButtons(session,"fit_marker",selected="ITS_FUNGAL")
+    updateRadioButtons(session,"fungal_fit_source",selected="UNITE")
+    updateNavbarPage(session,"main_nav",selected="fit")
+  })
+  output$fungal_publication_taxon_control <- renderUI({
+    data <- fungal_builder_broad_data(input[["unite_explorer-version"]])
+    if(is.null(data)) return(p("Broad taxonomic reference evidence is unavailable."))
+    rank <- input$fungal_publication_rank %||% "class"
+    groups <- unite_reference_groups(data,rank=rank)
+    choices <- c("All retained UNITE references"="ALL",setNames(groups$group_id,paste0(groups$taxon," · ",groups$n_selected," references")))
+    selected <- isolate(input$fungal_publication_taxon)
+    if(is.null(selected) || !selected %in% choices) selected <- "ALL"
+    selectizeInput("fungal_publication_taxon","Evidence scope for the table",choices,selected=selected)
+  })
+  output$fungal_publication_png_control <- renderUI({
+    if(requireNamespace("rsvg",quietly=TRUE)) downloadButton("fungal_download_png","Primer figure (PNG)",class="btn-outline-secondary btn-sm")
+  })
+  fungal_publication_build <- function() {
+    result <- fungal_builder_result()
+    req(nrow(result$selected_pairs)>0L)
+    broad <- fungal_builder_broad_data(input[["unite_explorer-version"]])
+    rank <- input$fungal_publication_rank %||% "class"
+    group <- input$fungal_publication_taxon %||% "ALL"
+    broad_evidence <- NULL
+    if(!is.null(broad)) {
+      summaries <- lapply(result$selected_pairs$pair_id,function(id) {
+        if(!id %in% broad$pairs$pair_id) return(NULL)
+        fit <- unite_reference_pair_fit(broad,id,rank=rank)
+        rows <- fit$summary
+        if(group!="ALL") rows <- rows[rows$group_id==group,,drop=FALSE]
+        if(!nrow(rows)) return(NULL)
+        if(group=="ALL") {
+          counts <- c("n_selected","n_exact_products","n_single_sites","n_no_exact_sites","n_unresolved","n_unavailable","n_withheld")
+          rows <- as.data.frame(lapply(rows[counts],sum),stringsAsFactors=FALSE)
+          rows$group_id <- "ALL"; rows$taxon <- "All retained UNITE references"
+        }
+        rows$pair_id <- id; rows$version_id <- broad$manifest$id; rows$rank <- rank
+        rows
+      })
+      summary <- bind_rows(summaries)
+      broad_evidence <- list(summary=summary,details=NULL,
+        metadata=list(version_id=broad$manifest$id,rank=rank,group_id=group,
+          source_doi=broad$manifest$source_doi,n_selected=if(nrow(summary)) summary$n_selected[1L] else NA_integer_))
+    }
+    context <- fungal_publication_context(result$working_snapshot,pair_ids=result$selected_pairs$pair_id,
+      accession=fungal_overview_reference(),broad_evidence=broad_evidence,
+      filters=list(minbp=fungal_builder_length_range()[1L],maxbp=fungal_builder_length_range()[2L],
+        platform=input$primer_overview_platform %||% "ALL",evidence=input$fungal_builder_evidence %||% "ALL",
+        figure_pair_ids=overview_rows()$pair_id,region=input$primer_overview_region %||% "ITS"),
+      region=input$primer_overview_region %||% "ITS",domain=fungal_overview_data()$domain,
+      title=input$fungal_publication_title %||% "Fungal primer combinations",citation_lookup=primer_publication_citations)
+    primer_publication_export(context)
+  }
+  fungal_publication_filename <- function(extension) paste0(fungal_workspace$snapshot()$manifest$id,"-primer-combinations.",extension)
+  output$fungal_download_figure <- downloadHandler(filename=function() fungal_publication_filename("svg"),
+    content=function(file) primer_publication_write(fungal_publication_build(),file,"svg"),contentType="image/svg+xml")
+  output$fungal_download_png <- downloadHandler(filename=function() fungal_publication_filename("png"),
+    content=function(file) primer_publication_write(fungal_publication_build(),file,"png"),contentType="image/png")
+  output$fungal_download_table <- downloadHandler(filename=function() fungal_publication_filename("csv"),
+    content=function(file) primer_publication_write(fungal_publication_build(),file,"csv"),contentType="text/csv")
+  output$fungal_download_print_table <- downloadHandler(filename=function() fungal_publication_filename("html"),
+    content=function(file) primer_publication_write(fungal_publication_build(),file,"html"),contentType="text/html")
+  output$fungal_download_package <- downloadHandler(filename=function() fungal_publication_filename("zip"),
+    content=function(file) {
+      exported <- fungal_publication_build()
+      staging <- tempfile("primer-publication-"); dir.create(staging)
+      on.exit(unlink(staging,recursive=TRUE),add=TRUE)
+      for(format in c("svg","csv","html","caption","methods","citations")) {
+        extension <- if(format %in% c("caption","methods","citations")) "txt" else format
+        filename <- if(format %in% c("caption","methods","citations")) paste0(format,".txt") else paste0("primer-combinations.",extension)
+        primer_publication_write(exported,file.path(staging,filename),format)
+      }
+      if(requireNamespace("rsvg",quietly=TRUE)) primer_publication_write(exported,file.path(staging,"primer-combinations.png"),"png")
+      write.csv(fungal_builder_result()$selected_pairs,file.path(staging,"requested-pairs.csv"),row.names=FALSE,na="")
+      write.csv(fungal_builder_result()$pair_sequences,file.path(staging,"long-rDNA-template-evidence.csv"),row.names=FALSE,na="")
+      if(unite_explorer_workspace$available() && unite_explorer_workspace$mode()=="alignment") {
+        alignment <- unite_explorer_workspace$alignment()
+        if(length(alignment$alignment)) {
+          writeLines(unlist(lapply(seq_along(alignment$alignment),function(i) c(paste0(">",names(alignment$alignment)[i]),alignment$alignment[i])),use.names=FALSE),
+            file.path(staging,"displayed-regional-alignment.fasta"))
+          figure <- primer_publication_alignment_export(unite_explorer_workspace$window(),
+            region=input[["unite_explorer-region"]] %||% "ITS1",group=unite_explorer_workspace$alignment_group(),
+            version=unite_explorer_workspace$data()$manifest$id,source_doi=unite_explorer_workspace$data()$manifest$source_doi,
+            pair=overview_selected_pair())
+          writeLines(figure$svg,file.path(staging,"regional-alignment.svg"))
+          writeLines(figure$caption,file.path(staging,"regional-alignment-caption.txt"))
+        }
+      }
+      zip::zipr(file,files=list.files(staging,full.names=TRUE),root=staging,include_directories=FALSE)
+    },contentType="application/zip")
   observeEvent(input$overview_open_fit, {
     pair <- overview_selected_pair()
     if(identical(input$map_marker,"COI") && length(pair)==1L) {
@@ -4104,6 +4361,8 @@ server <- function(input, output, session) {
 
   output$primer_map <- renderUI({
     rows <- overview_visible_rows()
+    if(!nrow(rows) && identical(input$map_marker,"ITS_FUNGAL") && !nrow(fungal_builder_result()$selected_pairs))
+      return(div(class="callout","Choose at least one forward and one reverse primer. The map will compare all their combinations."))
     if(!nrow(rows)) return(div(class="callout",
         "No verified primer products match this reference, region and platform. Adjust the selection or inspect the missing-site evidence."))
     sodium <- input$sodium %||% 50

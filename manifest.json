@@ -2721,11 +2721,41 @@
         "RemoteRepos": "https://cran.rstudio.com",
         "RemoteSha.Version": "2.3.12"
       }
+    },
+    "zip": {
+      "Source": "CRAN",
+      "Repository": "https://cloud.r-project.org",
+      "description": {
+        "Package": "zip",
+        "Title": "Cross-Platform 'zip' Compression",
+        "Version": "3.0.1",
+        "Authors@R": "c(\n    person(\"Gábor\", \"Csárdi\", , \"csardi.gabor@gmail.com\", role = c(\"aut\", \"cre\")),\n    person(\"Kuba\", \"Podgórski\", role = \"ctb\"),\n    person(\"Rich\", \"Geldreich\", role = \"ctb\"),\n    person(\"Arm Limited\", role = c(\"ctb\", \"cph\"),\n           comment = \"bundled Mbed TLS crypto subset in src/mbedtls/ (Apache-2.0)\"),\n    person(\"Posit Software, PBC\", role = c(\"cph\", \"fnd\"),\n           comment = c(ROR = \"03wc8by49\"))\n  )",
+        "Description": "Cross-Platform 'zip' Compression Library. A replacement for\n    the 'zip' function, that does not require any additional external\n    tools on any platform.",
+        "License": "MIT + file LICENSE",
+        "URL": "https://github.com/r-lib/zip, https://r-lib.github.io/zip/",
+        "BugReports": "https://github.com/r-lib/zip/issues",
+        "LinkingTo": "cli",
+        "Suggests": "callr, cli, curl, pillar, processx, R6, testthat, webfakes,\nwithr",
+        "Config/Needs/website": "tidyverse/tidytemplate",
+        "Config/testthat/edition": "3",
+        "Config/testthat/parallel": "true",
+        "Config/testthat/start-first": "large-files, http",
+        "Config/usethis/last-upkeep": "2025-05-07",
+        "Encoding": "UTF-8",
+        "Config/roxygen2/version": "8.0.0",
+        "NeedsCompilation": "yes",
+        "Packaged": "2026-07-13 07:41:12 UTC; gaborcsardi",
+        "Author": "Gábor Csárdi [aut, cre],\n  Kuba Podgórski [ctb],\n  Rich Geldreich [ctb],\n  Arm Limited [ctb, cph] (bundled Mbed TLS crypto subset in src/mbedtls/\n    (Apache-2.0)),\n  Posit Software, PBC [cph, fnd] (ROR: <https://ror.org/03wc8by49>)",
+        "Maintainer": "Gábor Csárdi <csardi.gabor@gmail.com>",
+        "Repository": "CRAN",
+        "Date/Publication": "2026-07-13 10:00:02 UTC",
+        "Built": "R 4.6.1; aarch64-apple-darwin23; 2026-07-13 14:17:06 UTC; unix"
+      }
     }
   },
   "files": {
     "app.R": {
-      "checksum": "6f181fce83b573cb458849c1049db156"
+      "checksum": "b57033a139f546c2b0b47239c004dbb9"
     },
     "data/catalog/claims.csv": {
       "checksum": "7e287c602b958d2d647bbee4089c0b39"
@@ -2765,6 +2795,9 @@
     },
     "data/catalog/primer_pairs.csv": {
       "checksum": "8b105c8bcee9d2fa989c15f2311cf614"
+    },
+    "data/catalog/primer_publication_citations.csv": {
+      "checksum": "01e434b08efb48dbf4060450578c98e5"
     },
     "data/catalog/range/regions.csv": {
       "checksum": "98e8845c3603d30b82b91efbef0fd412"
@@ -9762,6 +9795,12 @@
     "R/fungal_alignment.R": {
       "checksum": "2763ceaab3886056fb60dede0c1084ac"
     },
+    "R/fungal_builder_ui.R": {
+      "checksum": "f7ab31d727f2fb665aa18896fb339935"
+    },
+    "R/fungal_combination_builder.R": {
+      "checksum": "05efd11a6fa5cb4eea2723e58c247cf6"
+    },
     "R/fungal_explorer.R": {
       "checksum": "82db3b79ee091af118b486177645460c"
     },
@@ -9782,6 +9821,9 @@
     },
     "R/primer_overview.R": {
       "checksum": "91330b4bd94e536e4dfbe640e6d2c48e"
+    },
+    "R/primer_publication_export.R": {
+      "checksum": "bece593741170f62d2bd13b7243b8dcd"
     },
     "R/primerminer_runtime.R": {
       "checksum": "7544e593f3fc8aa3bbd50882ad87b480"
@@ -9804,14 +9846,17 @@
     "R/reference_panels.R": {
       "checksum": "fc935cd571e18642b94b10d6811ed7fc"
     },
+    "R/unite_candidate_pairs.R": {
+      "checksum": "96cfb06fa1c10e668171cc80e0cb33eb"
+    },
     "R/unite_reference_ui.R": {
-      "checksum": "e003e314b592c54f666f3928a2ab541d"
+      "checksum": "a4636f9e0ee5fb755a9bed85903f4b5f"
     },
     "R/unite_reference.R": {
       "checksum": "2ef2f257fc93d96b4e9ce0e5acee3e36"
     },
     "renv.lock": {
-      "checksum": "2180b2ba634e28a907e7c4c1701afd6a"
+      "checksum": "6931b31b4d88e1fefb43ffeeb80014ef"
     },
     "www/atlas-workspace.css": {
       "checksum": "65085fdddccf29aff7cf6aaaed709bc0"

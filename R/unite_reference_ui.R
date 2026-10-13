@@ -241,6 +241,7 @@ uniteReferenceServer <- function(id,dataset=unite_reference_read,pair_provider=N
     pair_catalog <- shiny::reactive(data()$pairs)
     pair_choices <- shiny::reactive(setNames(pair_catalog()$pair_id,pair_catalog()$pair_label))
     requested_pair <- shiny::reactiveVal(NULL)
+    unavailable_request <- shiny::reactiveVal(NULL)
     default_pair <- shiny::reactive({
       ids <- pair_catalog()$pair_id
       if(!length(ids)) return(NULL)
@@ -248,6 +249,7 @@ uniteReferenceServer <- function(id,dataset=unite_reference_read,pair_provider=N
       if(length(preferred)) preferred[1L] else ids[1L]
     })
     pair <- shiny::reactive({
+      if(!is.null(unavailable_request())) return(NULL)
       ids <- pair_catalog()$pair_id
       if(!length(ids)) return(NULL)
       requested <- requested_pair()
@@ -257,15 +259,23 @@ uniteReferenceServer <- function(id,dataset=unite_reference_read,pair_provider=N
     })
     shiny::observeEvent(pair_catalog(),shiny::updateSelectizeInput(session,"pair",
       choices=pair_choices(),selected=pair(),server=TRUE))
-    if(!is.null(pair_provider)) shiny::observeEvent(pair_provider(),{
+    if(!is.null(pair_provider)) shiny::observeEvent(list(pair_provider(),pair_catalog()),{
       provided <- pair_provider()
       if(is.list(provided)) provided <- .unite_reference_ui_value(provided$pair_id,provided$pair)
       if(length(provided)==1L && provided %in% pair_catalog()$pair_id) {
+        unavailable_request(NULL)
         requested_pair(provided)
         shiny::updateSelectizeInput(session,"pair",choices=pair_choices(),selected=provided,server=TRUE)
+      } else {
+        requested_pair(NULL)
+        unavailable_request(if(length(provided)==1L)
+          "The requested combination's exact oligos are unavailable in this selected UNITE version. Choose another reference version or an available combination."
+          else "Choose a forward and a reverse primer in the overview to inspect their evidence.")
+        shiny::updateSelectizeInput(session,"pair",choices=pair_choices(),selected=character(),server=TRUE)
       }
-    },ignoreNULL=TRUE)
+    },ignoreNULL=FALSE)
     shiny::observeEvent(input$pair,{
+      if(length(input$pair)==1L && input$pair %in% pair_catalog()$pair_id) unavailable_request(NULL)
       if(identical(input$pair,requested_pair())) requested_pair(NULL)
     },ignoreNULL=TRUE)
     support <- shiny::reactive({
@@ -388,6 +398,7 @@ uniteReferenceServer <- function(id,dataset=unite_reference_read,pair_provider=N
           if("status" %in% names(missing)) paste0(" · ",gsub("_"," ",missing$status[i],fixed=TRUE))))))
     })
     output$site_tally <- shiny::renderUI({
+      if(!is.null(unavailable_request())) return(.unite_reference_ui_empty(unavailable_request()))
       rows <- support()$summary
       if(!nrow(rows)) return(.unite_reference_ui_empty("No primer-site evidence is available for this combination."))
       selected_pair <- pair_catalog()[pair_catalog()$pair_id==pair(),,drop=FALSE]

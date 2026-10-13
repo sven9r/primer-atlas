@@ -121,6 +121,23 @@ for(svg in collect(rendered,"svg")) {
   stopifnot(all(vapply(texts,function(row) as.numeric(row$attribs$y)>0 && as.numeric(row$attribs$y)<height,logical(1L))))
 }
 historical<-fungal_read_snapshot("v1-9e958f105c46",remote=FALSE)
+source("R/fungal_primer_orientation.R",local=atlas)
+variants <- atlas$fungal_orientation_catalog(snapshot)
+parent <- snapshot$catalog[snapshot$catalog$primer_name=="ITS1F" & snapshot$catalog$direction=="forward",]
+reversed <- variants[variants$parent_catalog_id==parent$catalog_id,]
+context <- atlas$fungal_primer_atlas_data(snapshot,"PZ276773.1","ALL")
+reversed_map <- atlas$fungal_primer_atlas(context,selected_reverse=reversed$catalog_id,variant_catalog=variants)
+reversed_groups <- filter_attr(has_class(collect(reversed_map,"g"),"fungal-atlas-primer"),"data-catalog-id",parent$catalog_id)
+site <- context$rows[context$rows$catalog_id==parent$catalog_id,]
+stopifnot(length(reversed_groups)>0L,all(vapply(reversed_groups,function(row)
+  row$attribs[["data-direction"]]=="reverse" && row$attribs[["data-catalog-direction"]]=="forward" &&
+  row$attribs[["data-assigned-catalog-id"]]==reversed$catalog_id && row$attribs[["data-selection-state"]]=="reversed" &&
+  row$attribs[["data-three-prime-bp"]]==site$start && row$attribs[["data-start-bp"]]==site$start &&
+  row$attribs[["data-end-bp"]]==site$end && row$attribs[["aria-pressed"]]=="true",logical(1L))),
+  grepl("ITS1F [RC]",as.character(reversed_map),fixed=TRUE))
+forged <- variants;forged$sequence[forged$catalog_id==reversed$catalog_id] <- parent$sequence
+stopifnot(inherits(try(atlas$fungal_primer_atlas(context,selected_reverse=reversed$catalog_id,variant_catalog=forged),silent=TRUE),"try-error"),
+  inherits(try(atlas$fungal_primer_atlas(context,selected_forward=parent$catalog_id,selected_reverse=reversed$catalog_id,variant_catalog=variants),silent=TRUE),"try-error"))
 old<-atlas$fungal_primer_atlas_data(historical,"FN812768.2")
 stopifnot(all(old$landmarks$accession=="FN812768.2"),
   all(old$landmarks$boundary_status[old$landmarks$landmark_type=="conserved_anchor"]=="partial"),

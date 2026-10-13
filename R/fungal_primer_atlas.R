@@ -210,10 +210,36 @@ fungal_primer_atlas_data <- function(snapshot,accession,region="ALL") {
   data.frame(catalog_id=ids,label_x=(xmin+xmax)/2,label_left=xmin,label_right=xmax,lane=lanes)
 }
 
-fungal_primer_atlas <- function(data,selected_forward=character(),selected_reverse=character(),click_input="fungal_atlas_primer_click") {
+fungal_primer_atlas <- function(data,selected_forward=character(),selected_reverse=character(),click_input="fungal_atlas_primer_click",variant_catalog=NULL) {
   if(!is.list(data) || !all(c("rows","landmarks","panels","missing","catalog","accession","version_id") %in% names(data))) stop("Build an explicit frozen primer-atlas context first")
-  if(any(!selected_forward %in% data$catalog$catalog_id[data$catalog$direction=="forward"]) ||
-      any(!selected_reverse %in% data$catalog$catalog_id[data$catalog$direction=="reverse"])) stop("Atlas selections do not belong to this frozen catalog and direction")
+  if(is.null(variant_catalog)) variant_catalog <- data.frame(catalog_id=character(),direction=character(),parent_catalog_id=character())
+  if(!all(c("catalog_id","direction","parent_catalog_id") %in% names(variant_catalog)) || anyDuplicated(variant_catalog$catalog_id)) stop("Atlas variant identity is incomplete")
+  if(any(!selected_forward %in% c(data$catalog$catalog_id[data$catalog$direction=="forward"],variant_catalog$catalog_id[variant_catalog$direction=="forward"])) ||
+      any(!selected_reverse %in% c(data$catalog$catalog_id[data$catalog$direction=="reverse"],variant_catalog$catalog_id[variant_catalog$direction=="reverse"]))) stop("Atlas selections do not belong to this frozen catalog and direction")
+  data$rows$parent_catalog_id <- data$rows$catalog_id
+  data$rows$parent_direction <- data$rows$direction
+  data$rows$parent_primer_name <- data$rows$primer_name
+  data$rows$orientation_derived <- FALSE
+  selected_variants <- variant_catalog[variant_catalog$catalog_id %in% c(selected_forward,selected_reverse),,drop=FALSE]
+  if(nrow(selected_variants)) {
+    if(!exists("fungal_orientation_validate",mode="function")) stop("Source the orientation helper before rendering reversed primers")
+    fungal_orientation_validate(list(manifest=list(id=data$version_id),catalog=data$catalog),selected_variants)
+  }
+  for(i in seq_len(nrow(selected_variants))) {
+    variant <- selected_variants[i,,drop=FALSE]
+    index <- match(variant$parent_catalog_id,data$rows$catalog_id)
+    if(is.na(index)) next
+    if(variant$parent_catalog_id %in% c(selected_forward,selected_reverse)) stop("Assign each primer to one direction at a time")
+    parent <- data$rows[index,,drop=FALSE]
+    if(variant$direction==parent$direction || !variant$direction %in% c("forward","reverse")) stop("Reversed atlas role must differ from its catalog role")
+    fields <- intersect(names(variant),names(data$rows))
+    data$rows[index,fields] <- variant[,fields,drop=FALSE]
+    data$rows$parent_catalog_id[index] <- parent$catalog_id
+    data$rows$parent_direction[index] <- parent$direction
+    data$rows$parent_primer_name[index] <- parent$primer_name
+    data$rows$orientation_derived[index] <- TRUE
+    data$rows$three_prime_bp[index] <- if(variant$direction=="forward") parent$end else parent$start
+  }
   tags <- htmltools::tags
   if(!nrow(data$panels)) return(tags$div(class="fungal-primer-atlas",tags$p("No individually verified primer placements are available in this view. Missing or ambiguous sites do not establish locus absence.")))
   panel_tags <- lapply(seq_len(nrow(data$panels)),function(p) {
@@ -249,16 +275,19 @@ fungal_primer_atlas <- function(data,selected_forward=character(),selected_rever
           "\n",.fungal_atlas_text(row,"remarks"))
         label_y<-if(role=="forward") y-11 else y+23
         label_height<-23
+        state <- if(!selected) "unselected" else if(isTRUE(row$orientation_derived)) "reversed" else "catalog"
         tags$g(class=paste("fungal-atlas-primer",if(selected) "is-selected" else ""),role="button",tabindex="0",
-          `aria-label`=paste(if(selected) "Remove" else "Select",role,"primer",row$primer_name),`aria-pressed`=tolower(as.character(selected)),
-          `data-catalog-id`=row$catalog_id,`data-direction`=role,`data-primer-name`=row$primer_name,
+          `aria-label`=paste(if(state=="reversed") "Remove reversed" else if(selected) "Reverse direction of" else "Select",role,"primer",row$primer_name),`aria-pressed`=tolower(as.character(selected)),
+          `data-catalog-id`=row$parent_catalog_id,`data-assigned-catalog-id`=row$catalog_id,
+          `data-catalog-direction`=row$parent_direction,`data-selection-state`=state,
+          `data-direction`=role,`data-primer-name`=row$primer_name,`data-parent-primer-name`=row$parent_primer_name,
           `data-start-bp`=row$start,`data-end-bp`=row$end,`data-three-prime-bp`=tip,
           `data-primer-input`=click_input,`data-version-id`=data$version_id,`data-accession`=data$accession,
           `data-panel-id`=panel$panel_id,`data-selected`=tolower(as.character(selected)),
           `data-label-lane`=layout$lane,`data-label-left`=layout$label_left,`data-label-right`=layout$label_right,style="cursor:pointer",
           tags$title(note),
           tags$line(x1=scale((row$start+row$end)/2),x2=layout$label_x,y1=gene_y+if(role=="forward") -15 else 20,
-            y2=y,stroke=color,opacity=.2,`stroke-width`=1),
+            y2=y,stroke=color,opacity=.2,`stroke-width`=1,`pointer-events`="none"),
           tags$rect(x=layout$label_left,y=label_y-17,width=layout$label_right-layout$label_left,height=label_height,rx=4,
             fill=if(selected) if(role=="forward") "#dbeafe" else "#fee2e2" else "transparent",
             stroke=if(selected) color else "none",`pointer-events`="all"),
@@ -309,7 +338,7 @@ fungal_primer_atlas <- function(data,selected_forward=character(),selected_rever
   })
   tags$div(class="fungal-primer-atlas",`data-version-id`=data$version_id,`data-accession`=data$accession,
     tags$style(htmltools::HTML(".fungal-atlas-panel{margin:0 0 20px}.fungal-atlas-panel h4{font-size:1rem;margin:10px 0 2px}.fungal-atlas-axis-note,.fungal-atlas-context{font-size:.8rem;color:#64748b;margin:0 0 8px}.fungal-atlas-scroll{overflow-x:auto;max-width:100%;border:1px solid #e2e8f0;border-radius:10px;background:#fff}.fungal-atlas-svg{display:block;width:100%;min-width:1000px;height:auto}.fungal-atlas-primer:focus-visible{outline:2px solid #4f46e5}.fungal-atlas-scroll-cue{font-size:.8rem;color:#64748b;margin:4px 0}@media(min-width:1100px){.fungal-atlas-scroll-cue{display:none}}")),
-    tags$p(class="fungal-atlas-context",paste0(nrow(data$rows)," uniquely placed primers in this view · UNITE catalog; positions on NCBI ",data$accession," · raw bp. Blue → forward; red ← reverse. Click to select up to five each.")),
+    tags$p(class="fungal-atlas-context",paste0(nrow(data$rows)," uniquely placed primers in this view · UNITE catalog; positions on NCBI ",data$accession," · raw bp. Blue → forward; red ← reverse. Click: select → reverse direction → remove. Up to five each.")),
     tags$p(class="fungal-atlas-scroll-cue","Scroll sideways to see the complete gene bar and primer labels."),panel_tags,
     tags$details(tags$summary(paste0(nrow(data$missing)," catalog primers have missing, multiple or unavailable placements on this template")),
       tags$p("These site states do not establish amplification failure or absence of the locus. Boundary primers can appear in both panels with the same selection identity."),

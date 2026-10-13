@@ -409,6 +409,9 @@ uniteReferenceServer <- function(id,dataset=unite_reference_read,pair_provider=N
         candidate_published_components="Components have published sources; this combination needs independent validation.",
         candidate_unpublished_component="Includes an unpublished component; this combination needs independent validation.",
         "Pair provenance is incomplete; this combination needs independent validation.")
+      if(nrow(selected_pair) && "has_derived_reverse_complement" %in% names(selected_pair) &&
+          isTRUE(selected_pair$has_derived_reverse_complement[1L]))
+        detail <- "Includes a derived reverse-complement primer. Parent citations describe the original oligo; reference-site support does not validate this modified primer."
       shiny::tagList(shiny::p(class="unite-context",shiny::strong(provenance)," · ",detail),
         shiny::p(class="unite-site-tally",strong(sum(rows$n_exact_products)," of ",sum(rows$n_selected)," selected references have an exact product"),
           " · ",sum(rows$n_single_sites)," one-site records · ",sum(rows$n_no_exact_sites)," no exact sites · ",sum(rows$n_unavailable)," unavailable"))

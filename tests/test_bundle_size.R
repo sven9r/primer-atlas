@@ -22,6 +22,7 @@ stopifnot(
 required_files <- c(
   "app.R", "R/coi_reference.R", "R/coi_refresh.R", "data/catalog/primer_pair_organisms.csv",
   "R/fungal_primer_atlas.R", "R/fungal_builder_ui.R",
+  "R/fungal_primer_orientation.R",
   "data/catalog/primer_pair_diet_uses.csv", "data/catalog/primer_pair_facets.csv",
   "R/primerminer_runtime.R", "R/primerminer_runtime/evaluate_primer.R",
   "R/primerminer_runtime/Position_v1.csv", "R/primerminer_runtime/Type_v1.csv",

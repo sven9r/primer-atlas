@@ -43,6 +43,13 @@ fungal_combination_catalog <- function(snapshot,region="ALL",catalog=NULL) {
   if (!all(required %in% names(base)) || anyNA(base$catalog_id) || anyDuplicated(base$catalog_id)) stop("Frozen component catalog identity is incomplete.")
   base$component_origin <- "frozen_snapshot_catalog"
   base$component_source_version <- rep(snapshot$manifest$id,nrow(base))
+  derived_base <- if ("orientation_origin" %in% names(base)) !is.na(base$orientation_origin) & base$orientation_origin=="derived_reverse_complement" else rep(FALSE,nrow(base))
+  if (any(derived_base)) {
+    if (!exists("fungal_orientation_validate",mode="function") || !is.data.frame(snapshot$frozen_component_catalog)) stop("Derived working components require their frozen parent catalog and orientation verifier.")
+    fungal_orientation_validate(snapshot,base[derived_base,,drop=FALSE],require_source_version=!identical(snapshot$manifest$marker_id,"UNITE_ITS"))
+    base$component_origin[derived_base] <- "derived_reverse_complement"
+    base$component_source_version[derived_base] <- base$source_version[derived_base]
+  }
   if (!is.null(catalog)) {
     extra <- as.data.frame(catalog,stringsAsFactors=FALSE)
     if (!all(required %in% names(extra)) || anyNA(extra$catalog_id) || anyDuplicated(extra$catalog_id)) stop("Explicit supplemental catalog identity is incomplete.")
@@ -56,6 +63,17 @@ fungal_combination_catalog <- function(snapshot,region="ALL",catalog=NULL) {
     extra <- extra[!repeated,,drop=FALSE]
     if (nrow(extra)) {
       extra$component_origin <- "explicit_supplemental_catalog"
+      derived <- if ("orientation_origin" %in% names(extra)) !is.na(extra$orientation_origin) & extra$orientation_origin=="derived_reverse_complement" else rep(FALSE,nrow(extra))
+      # A changed-role oligo is not an unscanned new component. Verify its
+      # canonical parent/RC identity before permitting frozen evidence reuse.
+      if (any(derived)) {
+        if (!exists("fungal_orientation_validate",mode="function")) stop("Source R/fungal_primer_orientation.R before selecting derived orientations.")
+        frozen <- snapshot
+        if (is.data.frame(snapshot$frozen_component_catalog)) frozen$catalog <- snapshot$frozen_component_catalog
+        fungal_orientation_validate(frozen,extra[derived,,drop=FALSE],require_source_version=!identical(snapshot$manifest$marker_id,"UNITE_ITS"))
+        extra$component_origin[derived] <- "derived_reverse_complement"
+      }
+      if ("orientation_derived" %in% names(extra) && any(!derived & !is.na(extra$orientation_derived) & extra$orientation_derived)) stop("A derived orientation lacks its explicit verified origin.")
       extra$component_source_version <- if ("source_version" %in% names(extra)) as.character(extra$source_version) else
         if ("source_snapshot_utc" %in% names(extra)) as.character(extra$source_snapshot_utc) else "unversioned_explicit_catalog"
       base <- .fungal_combo_bind(list(base,extra))
@@ -71,6 +89,7 @@ fungal_combination_catalog <- function(snapshot,region="ALL",catalog=NULL) {
   status <- if ("primary_reference_status" %in% names(base)) as.character(base$primary_reference_status) else rep("",nrow(base))
   status[is.na(status)] <- ""
   base$publication_flag <- ifelse(status=="publication_cited","cited component",ifelse(status=="unpublished","unpublished component","provenance incomplete"))
+  base$publication_flag[base$component_origin=="derived_reverse_complement"] <- "derived RC candidate"
   base$region_label <- ifelse(is.na(base$gene_locus) | !nzchar(base$gene_locus),"locus unresolved",base$gene_locus)
   base$selection_label <- paste(base$primer_name,base$region_label,base$publication_flag,sep=" · ")
   duplicate_label <- duplicated(base$selection_label) | duplicated(base$selection_label,fromLast=TRUE)
@@ -82,6 +101,7 @@ fungal_combination_catalog <- function(snapshot,region="ALL",catalog=NULL) {
 .fungal_combo_sparse_proof <- function(snapshot) {
   proof <- snapshot$search_manifest
   base <- if (is.data.frame(snapshot$frozen_component_catalog)) snapshot$frozen_component_catalog else snapshot$catalog
+  sites <- if (is.data.frame(snapshot$frozen_component_sites)) snapshot$frozen_component_sites else snapshot$sites
   artifacts <- snapshot$manifest$artifacts
   ids <- names(snapshot$sequences)
   fields <- c(sequence_sha256="sequences",catalog_artifact_sha256="catalog",pair_artifact_sha256="pairs",site_artifact_sha256="sites")
@@ -90,7 +110,7 @@ fungal_combination_catalog <- function(snapshot,region="ALL",catalog=NULL) {
     !is.null(descriptor$sha256) && identical(proof[[field]],descriptor$sha256)
   },logical(1))
   valid <- !is.null(proof) && isTRUE(proof$complete) && identical(proof$scan_rule_version,"exact_iupac_unique_sites_v1") &&
-    isTRUE(proof$n_records==length(ids)) && isTRUE(proof$n_catalog==nrow(base)) && isTRUE(proof$n_sparse_rows==nrow(snapshot$sites)) &&
+    isTRUE(proof$n_records==length(ids)) && isTRUE(proof$n_catalog==nrow(base)) && isTRUE(proof$n_sparse_rows==nrow(sites)) &&
     isTRUE(proof$n_site_searches==length(ids)*nrow(base)) && isTRUE(proof$n_no_exact_hits+proof$n_sparse_rows==proof$n_site_searches) &&
     identical(proof$record_ids_sha256,digest::digest(paste(sort(ids),collapse="\n"),algo="sha256",serialize=FALSE)) && all(checks)
   if (!valid) stop("Omitted UNITE hits require a complete search proof tied to this frozen cohort and catalog.")
@@ -102,7 +122,7 @@ fungal_combination_catalog <- function(snapshot,region="ALL",catalog=NULL) {
     empty<-.fungal_empty_sites();empty$site_evidence_origin<-character();return(empty)
   }
   sequences <- snapshot$sequences[accessions]
-  cache <- snapshot$sites
+  cache <- if (is.data.frame(snapshot$frozen_component_sites)) snapshot$frozen_component_sites else snapshot$sites
   if (!is.data.frame(cache)) cache <- data.frame()
   sparse <- nrow(cache)>0L && "record_id" %in% names(cache)
   if (identical(snapshot$manifest$marker_id,"UNITE_ITS")) sparse <- TRUE
@@ -114,22 +134,37 @@ fungal_combination_catalog <- function(snapshot,region="ALL",catalog=NULL) {
   frozen_catalog <- if(is.data.frame(snapshot$frozen_component_catalog)) snapshot$frozen_component_catalog else snapshot$catalog
   if(nrow(cache) && any(!cache$catalog_id %in% frozen_catalog$catalog_id)) stop("A frozen site belongs to an unknown component.")
   fresh <- components$component_origin=="explicit_supplemental_catalog"
+  derived <- components$component_origin=="derived_reverse_complement"
+  if (any(derived)) {
+    if (!exists("fungal_orientation_validate",mode="function")) stop("Derived orientation verification is unavailable.")
+    frozen <- snapshot;frozen$catalog<-frozen_catalog
+    fungal_orientation_validate(frozen,components[derived,,drop=FALSE],require_source_version=!identical(snapshot$manifest$marker_id,"UNITE_ITS"))
+  }
   n_fresh <- sum(fresh)*length(accessions)
   allow_fresh <- n_fresh<=max_new_site_searches
   blocks <- lapply(seq_len(nrow(components)),function(i) {
     component <- components[i,,drop=FALSE]
-    index <- match(paste(accessions,component$catalog_id,sep="\036"),keys)
+    evidence_id <- if (derived[i]) component$parent_catalog_id else component$catalog_id
+    index <- match(paste(accessions,evidence_id,sep="\036"),keys)
     rows <- data.frame(catalog_id=rep(component$catalog_id,length(accessions)),primer_name=rep(component$primer_name,length(accessions)),
       direction=rep(component$direction,length(accessions)),accession=accessions,start=rep(NA_integer_,length(accessions)),end=rep(NA_integer_,length(accessions)),
       n_matches=integer(length(accessions)),status=rep("binding_evidence_unavailable",length(accessions)),
       site_evidence_origin=rep("frozen_site_row_unavailable",length(accessions)),stringsAsFactors=FALSE)
     found <- !is.na(index)
+    if (derived[i] && any(found)) {
+      parent <- frozen_catalog[match(evidence_id,frozen_catalog$catalog_id),,drop=FALSE]
+      for (field in intersect(c("primer_name","direction"),names(cache))) {
+        if (anyNA(cache[[field]][index[found]]) || any(as.character(cache[[field]][index[found]])!=as.character(parent[[field]]))) stop("Frozen parent site metadata conflicts with its catalog identity.")
+      }
+    }
     for (field in c("start","end","n_matches","status")) if (any(found)) rows[[field]][found] <- cache[[field]][index[found]]
     rows$site_evidence_origin[found] <- "frozen_exact_site_results"
+    if (derived[i]) rows$site_evidence_origin[found] <- "derived_reverse_complement_parent_frozen_sites"
     omitted <- !found & !fresh[i]
     if (sparse && any(omitted)) {
       rows$status[omitted] <- "no_exact_binding_site"
       rows$site_evidence_origin[omitted] <- "verified_exhaustive_sparse_search_no_hit"
+      if (derived[i]) rows$site_evidence_origin[omitted] <- "derived_reverse_complement_parent_sparse_no_hit"
     }
     if (fresh[i] && length(accessions)) {
       if (allow_fresh) {
@@ -140,6 +175,7 @@ fungal_combination_catalog <- function(snapshot,region="ALL",catalog=NULL) {
       } else rows$site_evidence_origin <- "supplemental_search_exceeds_interactive_bound"
     }
     rows$start <- suppressWarnings(as.integer(rows$start));rows$end <- suppressWarnings(as.integer(rows$end));rows$n_matches <- as.integer(rows$n_matches)
+    rows$parent_catalog_id <- if (derived[i]) rep(evidence_id,length(accessions)) else rep(NA_character_,length(accessions))
     # Independently check every cached positive site against its own raw bases.
     for (j in which(rows$status=="exact_compatible_site")) {
       bounds <- c(rows$start[j],rows$end[j]);sequence <- toupper(unname(sequences[j]))
@@ -208,15 +244,17 @@ fungal_combination_builder <- function(snapshot,forward_ids,reverse_ids,accessio
   components <- universe[universe$catalog_id %in% c(forward_ids,reverse_ids),,drop=FALSE]
   sites <- .fungal_combo_sites(snapshot,components,accessions,max_new_site_searches)
   cross <- expand.grid(reverse=ri,forward=fi,KEEP.OUT.ATTRS=FALSE,stringsAsFactors=FALSE)
-  known_keys <- .fungal_combo_pair_keys(snapshot$pairs)
-  if (anyDuplicated(known_keys) || anyDuplicated(snapshot$pairs$pair_id)) stop("Frozen pair component identity is ambiguous.")
+  frozen_pairs <- if (is.data.frame(snapshot$frozen_pair_catalog)) snapshot$frozen_pair_catalog else snapshot$pairs
+  if (!is.null(snapshot$on_demand_candidate_pair_ids)) frozen_pairs <- frozen_pairs[!frozen_pairs$pair_id %in% snapshot$on_demand_candidate_pair_ids,,drop=FALSE]
+  known_keys <- .fungal_combo_pair_keys(frozen_pairs)
+  if (anyDuplicated(known_keys) || anyDuplicated(frozen_pairs$pair_id)) stop("Frozen pair component identity is ambiguous.")
   definitions <- list();blocks<-list()
   site_keys <- paste(sites$catalog_id,sites$accession,sep="\036")
   for (i in seq_len(nrow(cross))) {
     f <- universe[cross$forward[i],,drop=FALSE];r<-universe[cross$reverse[i],,drop=FALSE]
     key <- paste(f$primer_name,f$sequence,r$primer_name,r$sequence,sep="\036");existing<-match(key,known_keys)
     if (!is.na(existing)) {
-      pair <- as.data.frame(snapshot$pairs[existing,,drop=FALSE],stringsAsFactors=FALSE);origin<-"frozen_pair_identity"
+      pair <- as.data.frame(frozen_pairs[existing,,drop=FALSE],stringsAsFactors=FALSE);origin<-"frozen_pair_identity"
     } else {
       status <- c(.fungal_combo_text(f,"primary_reference_status"),.fungal_combo_text(r,"primary_reference_status"))
       evidence <- if ("unpublished" %in% status) "candidate_unpublished_component" else
@@ -229,6 +267,12 @@ fungal_combination_builder <- function(snapshot,forward_ids,reverse_ids,accessio
       origin<-"new_selected_cartesian_candidate"
     }
     pair$forward_catalog_id<-f$catalog_id;pair$reverse_catalog_id<-r$catalog_id;pair$pair_origin<-origin
+    pair$has_derived_reverse_complement <- any(c(f$component_origin,r$component_origin)=="derived_reverse_complement")
+    pair$forward_orientation_origin <- .fungal_combo_text(f,"orientation_origin","frozen_effective_role")
+    pair$reverse_orientation_origin <- .fungal_combo_text(r,"orientation_origin","frozen_effective_role")
+    pair$forward_parent_catalog_id <- .fungal_combo_text(f,"parent_catalog_id")
+    pair$reverse_parent_catalog_id <- .fungal_combo_text(r,"parent_catalog_id")
+    if (pair$has_derived_reverse_complement) pair$evidence_status <- "candidate_incomplete_provenance"
     pair$parent_version_id<-snapshot$manifest$id
     pair$forward_source_citation<-.fungal_combo_text(f,"reference");pair$reverse_source_citation<-.fungal_combo_text(r,"reference")
     pair$forward_source_url<-.fungal_combo_text(f,"primary_reference_url",.fungal_combo_text(f,"source_url"));pair$reverse_source_url<-.fungal_combo_text(r,"primary_reference_url",.fungal_combo_text(r,"source_url"))
@@ -300,7 +344,10 @@ fungal_combination_builder <- function(snapshot,forward_ids,reverse_ids,accessio
     paste(codes,collapse=" | ")
   })
   selected_pairs$filter_reason<-if(length(reasons)) unlist(reasons,use.names=FALSE) else character();selected_pairs$included_in_map<-!nzchar(selected_pairs$filter_reason)
-  working<-snapshot;working$catalog<-universe;working$frozen_component_catalog<-snapshot$catalog
+  working<-snapshot;working$catalog<-universe
+  working$frozen_component_catalog<-if(is.data.frame(snapshot$frozen_component_catalog)) snapshot$frozen_component_catalog else snapshot$catalog
+  working$frozen_component_sites<-if(is.data.frame(snapshot$frozen_component_sites)) snapshot$frozen_component_sites else snapshot$sites
+  working$frozen_pair_catalog<-frozen_pairs
   remaining_pairs<-snapshot$pairs[!snapshot$pairs$pair_id %in% selected_pairs$pair_id,,drop=FALSE]
   working$pairs<-.fungal_combo_bind(list(remaining_pairs,selected_pairs))
   old_sequences<-snapshot$pair_sequences

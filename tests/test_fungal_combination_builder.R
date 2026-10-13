@@ -2,7 +2,7 @@
 .libPaths(c(file.path(getwd(),".Rlib"),.libPaths()))
 source("R/functions.R");source("R/data_layer.R");source("R/fungal_explorer.R")
 source("R/fungal_versions.R");source("R/fungal_primer_overview.R")
-source("R/unite_reference.R");source("R/fungal_combination_builder.R")
+source("R/unite_reference.R");source("R/fungal_primer_orientation.R");source("R/fungal_combination_builder.R")
 
 snapshot<-fungal_read_snapshot("v3-c6fa87f256e1",remote=FALSE)
 before<-serialize(snapshot,NULL)
@@ -146,4 +146,78 @@ stopifnot(nrow(broad_cross$selected_pairs)==1L,broad_cross$selected_pairs$n_pane
   any(broad_cross$sites$site_evidence_origin=="verified_exhaustive_sparse_search_no_hit"))
 broken_proof<-broad;broken_proof$search_manifest$complete<-FALSE
 stopifnot(inherits(try(fungal_combination_builder(broken_proof,f[1L],r[3L],subset_ids[1L],accessions=subset_ids),silent=TRUE),"try-error"))
+
+# Opposite-role RC oligos keep the SAME genomic exact-search query as their
+# parent. Their physical role changes: inward, outward, missing and multiple
+# sites must therefore be evaluated anew, without running another site scan.
+variants <- fungal_orientation_catalog(synthetic)
+rc_f5 <- variants[variants$parent_catalog_id==synthetic_catalog$catalog_id[5L],,drop=FALSE]
+rc_r1 <- variants[variants$parent_catalog_id==synthetic_catalog$catalog_id[6L],,drop=FALSE]
+saved_search <- .fungal_exact_site
+.fungal_exact_site <- function(...) stop("A derived RC component must not run a fresh exact-site scan")
+rc_reverse <- fungal_combination_builder(synthetic,synthetic_catalog$catalog_id[1L],rc_f5$catalog_id,"A",catalog=variants,max_new_site_searches=0L)
+rc_forward <- fungal_combination_builder(synthetic,rc_r1$catalog_id,synthetic_catalog$catalog_id[10L],"A",catalog=variants,max_new_site_searches=0L)
+outward <- fungal_combination_builder(synthetic,rc_r1$catalog_id,rc_f5$catalog_id,"A",catalog=variants,max_new_site_searches=0L)
+rc_sites <- .fungal_combo_sites(synthetic,fungal_combination_catalog(synthetic,catalog=variants)[11:20,],c("A","B"),0L)
+.fungal_exact_site <- saved_search
+stopifnot(nrow(rc_reverse$map_pair_rows)==1L,rc_reverse$map_pair_rows$reference_amplicon_bp==120L,
+  rc_reverse$pair_sequences$forward_start[rc_reverse$pair_sequences$accession=="A"]==1L,
+  rc_reverse$pair_sequences$reverse_end[rc_reverse$pair_sequences$accession=="A"]==120L,
+  nrow(rc_forward$map_pair_rows)==1L,rc_forward$map_pair_rows$reference_amplicon_bp==120L,
+  rc_forward$selected_pairs$forward_sequence==reverse_complement(synthetic_catalog$sequence[6L]),
+  rc_reverse$selected_pairs$has_derived_reverse_complement,
+  rc_reverse$selected_pairs$reverse_parent_catalog_id==synthetic_catalog$catalog_id[5L],
+  rc_reverse$selected_pairs$evidence_status=="candidate_incomplete_provenance",
+  all(rc_reverse$selected_pairs$pair_origin=="new_selected_cartesian_candidate"),
+  any(rc_reverse$sites$site_evidence_origin=="derived_reverse_complement_parent_frozen_sites"),
+  outward$selected_pairs$reference_status=="outward_or_overlapping_sites",nrow(outward$map_pair_rows)==0L,
+  all(is.na(outward$pair_sequences$amplicon_bp)),
+  identical(rc_reverse$working_snapshot$frozen_component_catalog,synthetic$catalog),
+  identical(rc_reverse$working_snapshot$frozen_component_sites,synthetic$sites))
+repeat_rc <- fungal_combination_builder(rc_reverse$working_snapshot,synthetic_catalog$catalog_id[1L],rc_f5$catalog_id,"A",max_new_site_searches=0L)
+stopifnot(identical(repeat_rc$selected_pairs$pair_id,rc_reverse$selected_pairs$pair_id),
+  repeat_rc$selected_pairs$pair_origin=="new_selected_cartesian_candidate",repeat_rc$selected_pairs$evidence_status!="documented_pair",
+  repeat_rc$summary$n_frozen_pair_identities==0L,repeat_rc$selected_pairs$reference_amplicon_bp==120L)
+parent_index <- match(paste(rc_sites$accession,rc_sites$parent_catalog_id),paste(synthetic$sites$accession,synthetic$sites$catalog_id))
+for (field in c("start","end","n_matches","status")) stopifnot(identical(rc_sites[[field]],synthetic$sites[[field]][parent_index]))
+stopifnot(any(rc_sites$status=="ambiguous_binding_site" & rc_sites$n_matches==2L),any(rc_sites$status=="no_exact_binding_site"))
+for (field in c("parent_catalog_id","parent_primer_name","parent_sequence","parent_direction","sequence","source_version","derivation_rule")) {
+  forged <- rc_f5;forged[[field]] <- paste0(forged[[field]],"_forged")
+  stopifnot(inherits(try(fungal_combination_catalog(synthetic,catalog=forged),silent=TRUE),"try-error"))
+}
+same_oligo <- rc_f5;same_oligo$sequence <- same_oligo$parent_sequence
+stopifnot(inherits(try(fungal_combination_catalog(synthetic,catalog=same_oligo),silent=TRUE),"try-error"))
+bad_parent_site <- synthetic
+bad_parent_site$sites$primer_name[bad_parent_site$sites$catalog_id==rc_f5$parent_catalog_id] <- "Wrong parent name"
+stopifnot(inherits(try(fungal_combination_builder(bad_parent_site,synthetic_catalog$catalog_id[1L],rc_f5$catalog_id,"A",catalog=rc_f5),silent=TRUE),"try-error"))
+bad_parent_site <- synthetic
+bad_parent_site$sites$start[bad_parent_site$sites$accession=="A" & bad_parent_site$sites$catalog_id==rc_f5$parent_catalog_id] <- 102L
+stopifnot(inherits(try(fungal_combination_builder(bad_parent_site,synthetic_catalog$catalog_id[1L],rc_f5$catalog_id,"A",catalog=rc_f5),silent=TRUE),"try-error"))
+
+# Full real catalog includes inosine parents. I/N normalization preserves the
+# established nucleotide sets and every frozen exact/missing/multiple result.
+real_variants <- fungal_orientation_catalog(snapshot)
+real_rc_components <- fungal_combination_catalog(snapshot,catalog=real_variants)
+real_rc_components <- real_rc_components[real_rc_components$component_origin=="derived_reverse_complement",]
+real_rc_sites <- .fungal_combo_sites(snapshot,real_rc_components,names(snapshot$sequences),0L)
+parent_index <- match(paste(real_rc_sites$accession,real_rc_sites$parent_catalog_id),paste(snapshot$sites$accession,snapshot$sites$catalog_id))
+for (field in c("start","end","n_matches")) stopifnot(identical(real_rc_sites[[field]],as.integer(snapshot$sites[[field]][parent_index])))
+stopifnot(identical(real_rc_sites$status,snapshot$sites$status[parent_index]))
+stopifnot(nrow(real_rc_sites)==2352L,all(real_rc_components$publication_flag=="derived RC candidate"),
+  any(grepl("inosine",real_rc_components$sequence_derivation_note,fixed=TRUE)),identical(serialize(snapshot,NULL),before))
+history_variants <- fungal_orientation_catalog(v1)
+history_rc <- history_variants[history_variants$parent_primer_name=="ITS3",]
+stopifnot(inherits(try(fungal_combination_catalog(v1,catalog=real_variants),silent=TRUE),"try-error"),
+  nrow(fungal_combination_builder(v1,f[1L],history_rc$catalog_id,"FN812768.2",catalog=history_rc)$selected_pairs)==1L)
+
+# Cross-collection parent identities may retain the NCBI component provenance;
+# sparse binding evidence still belongs exclusively to the frozen UNITE panel.
+rc_its3 <- real_variants[real_variants$parent_primer_name=="ITS3",]
+missing_parent_id <- setdiff(broad$metadata$record_id,broad$sites$record_id[broad$sites$catalog_id==rc_its3$parent_catalog_id])[1L]
+rc_subset_ids <- c(head(setdiff(subset_ids,missing_parent_id),11L),missing_parent_id)
+broad_rc <- fungal_combination_builder(broad,f[1L],rc_its3$catalog_id,rc_subset_ids[1L],accessions=rc_subset_ids,catalog=rc_its3,max_new_site_searches=0L)
+stopifnot(nrow(broad_rc$pair_sequences)==12L,broad_rc$selected_pairs$has_derived_reverse_complement,
+  identical(broad_rc$working_snapshot$search_manifest,broad$search_manifest),
+  identical(broad_rc$working_snapshot$frozen_component_sites,broad$sites),
+  any(broad_rc$sites$site_evidence_origin=="derived_reverse_complement_parent_sparse_no_hit"))
 message("Fungal Cartesian25/25, missing crosses, filters, source identity, historical and sparse-proof fixtures passed.")

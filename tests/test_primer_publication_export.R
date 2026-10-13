@@ -3,6 +3,7 @@
 source('R/functions.R');source('R/data_layer.R');source('R/fungal_explorer.R');source('R/fungal_versions.R')
 source('R/fungal_alignment.R');source('R/fungal_ui.R');source('R/fungal_primer_overview.R')
 source('R/primer_overview.R');source('R/unite_reference.R');source('R/unite_reference_ui.R');source('R/fungal_combination_builder.R');source('R/primer_publication_export.R')
+source('R/fungal_primer_orientation.R')
 
 snapshot<-fungal_read_snapshot('v3-c6fa87f256e1',remote=FALSE)
 original<-serialize(snapshot,NULL)
@@ -119,6 +120,87 @@ stopifnot(nrow(all25$table)==25L,identical(all25$table$pair_id,crosses$selected_
   !any(all25$table$combination_status[startsWith(all25$table$pair_id,'FUNGAL_COMB_')]=='documented_pair'),
   identical(serialize(snapshot,NULL),original))
 
+# Opposite-role oligos are new, explicitly derived candidates. A reversedITS2
+# oligo occupies2090..2109 as a forward primer and yields391bp with ITS4,
+# while preserving the cited reverse-role parent's exact sequence and identity.
+parent<-snapshot$catalog[snapshot$catalog$primer_name=='ITS2' & snapshot$catalog$direction=='reverse',,drop=FALSE]
+partner<-snapshot$catalog$catalog_id[snapshot$catalog$primer_name=='ITS4' & snapshot$catalog$direction=='reverse']
+variant<-fungal_orientation_resolve(snapshot,parent$catalog_id,'forward')
+derived_pairs<-fungal_combination_builder(snapshot,variant$catalog_id,partner,'PZ962702.1',catalog=variant)
+derived_context<-fungal_publication_context(derived_pairs$working_snapshot,derived_pairs$selected_pairs$pair_id,
+  'PZ962702.1',filters=list(figure_pair_ids=derived_pairs$map_pair_rows$pair_id),citation_lookup=lookup)
+derived_export<-primer_publication_export(derived_context)
+stopifnot(nrow(derived_export$table)==1L,derived_export$table$forward_orientation_derived,
+  derived_export$table$forward_orientation_origin=='derived_reverse_complement',
+  derived_export$table$forward_catalog_id==variant$catalog_id,
+  derived_export$table$forward_effective_direction=='forward',
+  derived_export$table$forward_parent_catalog_id==parent$catalog_id,
+  derived_export$table$forward_parent_primer_name==parent$primer_name,
+  derived_export$table$forward_parent_sequence==parent$sequence,
+  derived_export$table$forward_parent_direction=='reverse',
+  derived_export$table$forward_oligo_5to3==reverse_complement(parent$sequence),
+  derived_export$table$forward_derivation_rule=='reverse_complement_opposite_role_v1',
+  derived_export$table$forward_raw_query_equivalence,
+  derived_export$table$forward_parent_source_version==snapshot$manifest$id,
+  derived_export$table$forward_reference_status=='derived_reverse_complement',
+  derived_export$table$forward_parent_primary_reference_status=='publication_cited',
+  derived_export$table$forward_orientation_citation_scope=='parent_primer_only',
+  derived_export$table$combination_status=='candidate_incomplete_provenance',
+  derived_export$table$product_including_primers_bp==391L,derived_export$table$product_excluding_primers_bp==351L,
+  derived_export$table$forward_start==2090L,derived_export$table$forward_end==2109L,
+  grepl('derived_component_orientation',derived_export$svg,fixed=TRUE),
+  grepl(parent$sequence,derived_export$caption,fixed=TRUE),grepl(variant$sequence,derived_export$caption,fixed=TRUE),
+  grepl('Original citations, where available, describe parent primers only',derived_export$caption,fixed=TRUE),
+  grepl('Derived reverse complement; parent ITS2',derived_export$html,fixed=TRUE),
+  grepl('Original citation, where available, applies to the parent only',derived_export$html,fixed=TRUE),
+  derived_export$table$forward_doi=='10.1016/b978-0-12-372180-8.50042-1')
+
+# The generic adapter can also retain complete side-prefixed pair metadata
+# when no supplemental component catalog is supplied.
+pair_provenance<-derived_context$overview
+for(field in .pub_orientation_fields) if(field %in% names(variant)) pair_provenance$pair_meta[[paste0('forward_',field)]]<-variant[[field]]
+pair_provenance$component_catalog<-NULL
+pair_export<-primer_publication_export(primer_publication_context(pair_provenance,derived_pairs$selected_pairs$pair_id,
+  snapshot$sequences[['PZ962702.1']],citation_lookup=lookup))
+stopifnot(identical(pair_export$table$forward_parent_sequence,derived_export$table$forward_parent_sequence),
+  identical(pair_export$table$forward_catalog_id,derived_export$table$forward_catalog_id))
+for(status in c('documented_pair','candidate_published_components')) {
+  bad<-derived_context$overview;bad$pair_meta$evidence_status<-status
+  stopifnot(inherits(try(primer_publication_context(bad,reference_sequence=snapshot$sequences[['PZ962702.1']]),silent=TRUE),'try-error'))
+}
+bad<-derived_context$overview;bad$primers$primary_reference_status[bad$primers$direction=='forward']<-'publication_cited'
+stopifnot(inherits(try(primer_publication_context(bad,reference_sequence=snapshot$sequences[['PZ962702.1']]),silent=TRUE),'try-error'))
+bad<-derived_context$overview;bad$pair_meta$forward_parent_sequence<-'ACGT'
+stopifnot(inherits(try(primer_publication_context(bad,reference_sequence=snapshot$sequences[['PZ962702.1']]),silent=TRUE),'try-error'))
+bad<-derived_context$overview;bad$component_catalog$orientation_derived[bad$component_catalog$catalog_id==variant$catalog_id]<-FALSE
+stopifnot(inherits(try(primer_publication_context(bad,reference_sequence=snapshot$sequences[['PZ962702.1']]),silent=TRUE),'try-error'))
+bad<-derived_context$overview;bad$component_catalog$raw_query_equivalence[bad$component_catalog$catalog_id==variant$catalog_id]<-FALSE
+stopifnot(inherits(try(primer_publication_context(bad,reference_sequence=snapshot$sequences[['PZ962702.1']]),silent=TRUE),'try-error'))
+
+# FF700 contains inosine. Its computational RC usesN, retainsI in the parent,
+# and explains the chemical limitation in the table and figure caption.
+inosine_parent<-snapshot$catalog[snapshot$catalog$primer_name=='FF700',,drop=FALSE]
+inosine<-fungal_orientation_resolve(snapshot,inosine_parent$catalog_id,'reverse')
+upstream<-snapshot$catalog$catalog_id[snapshot$catalog$primer_name=='ITS1' & snapshot$catalog$direction=='forward']
+inosine_pairs<-fungal_combination_builder(snapshot,upstream,inosine$catalog_id,'PZ962702.1',catalog=inosine)
+inosine_export<-primer_publication_export(fungal_publication_context(inosine_pairs$working_snapshot,inosine_pairs$selected_pairs$pair_id,
+  'PZ962702.1',filters=list(figure_pair_ids=inosine_pairs$map_pair_rows$pair_id),citation_lookup=lookup))
+stopifnot(grepl('I',inosine_export$table$reverse_parent_sequence,fixed=TRUE),
+  !grepl('I',inosine_export$table$reverse_oligo_5to3,fixed=TRUE),grepl('N',inosine_export$table$reverse_oligo_5to3,fixed=TRUE),
+  inosine_export$table$reverse_parent_noncanonical_symbols=='I',
+  grepl('not chemically identical to inosine',inosine_export$table$reverse_sequence_derivation_note,fixed=TRUE),
+  grepl('not chemically identical to inosine',inosine_export$caption,fixed=TRUE),
+  grepl('not chemically identical to inosine',inosine_export$html,fixed=TRUE),
+  identical(serialize(snapshot,NULL),original))
+
+# With no orientation fields, the normal scientific exports stay byte-identical.
+unrelated<-snapshot;unrelated$catalog$extra_note<-'unrelated catalog metadata'
+normal_again<-primer_publication_export(fungal_publication_context(unrelated,ids,'PZ962702.1',broad_evidence=broad,
+  filters=list(min_bp=300,max_bp=340,platform='ALL',figure_pair_ids=ids[1L],region='ITS'),citation_lookup=lookup,
+  title='Primers & "controls" <RNA>'))
+stopifnot(identical(normal_again$svg,export$svg),identical(normal_again$table,export$table),
+  !'forward_orientation_derived' %in% names(export$table))
+
 scratch<-tempfile('primer-publication-');dir.create(scratch)
 for(format in c('svg','csv','html','caption','methods','citations','landmarks')) {
   path<-file.path(scratch,paste0('export.',format));primer_publication_write(export,path,format)
@@ -128,12 +210,23 @@ roundtrip<-read.csv(file.path(scratch,'export.csv'),stringsAsFactors=FALSE)
 stopifnot(nrow(roundtrip)==nrow(export$table),identical(roundtrip$pair_id,ids),
   identical(roundtrip$product_including_primers_bp,as.integer(export$table$product_including_primers_bp)),
   identical(roundtrip$forward_full_reference,export$table$forward_full_reference))
+primer_publication_write(derived_export,file.path(scratch,'derived.csv'),'csv')
+derived_roundtrip<-read.csv(file.path(scratch,'derived.csv'),stringsAsFactors=FALSE)
+stopifnot(identical(derived_roundtrip$forward_parent_catalog_id,derived_export$table$forward_parent_catalog_id),
+  identical(derived_roundtrip$forward_parent_sequence,derived_export$table$forward_parent_sequence),
+  identical(derived_roundtrip$forward_oligo_5to3,derived_export$table$forward_oligo_5to3),derived_roundtrip$forward_orientation_derived)
 if(requireNamespace('xml2',quietly=TRUE)) {
   document<-xml2::read_xml(export$svg)
   metadata<-jsonlite::fromJSON(xml2::xml_text(xml2::xml_find_first(document,'.//*[local-name()="metadata"]')))
   stopifnot(xml2::xml_name(document)=='svg',length(xml2::xml_find_all(document,'.//*[local-name()="g" and @class="primer-overview-row"]'))==1L,
     metadata$reference_accession=='PZ962702.1',metadata$ncbi_version==snapshot$manifest$id,
     metadata$unite_version==unite$manifest$id)
+  derived_document<-xml2::read_xml(derived_export$svg)
+  derived_metadata<-jsonlite::fromJSON(xml2::xml_text(xml2::xml_find_first(derived_document,'.//*[local-name()="metadata"]')))
+  stopifnot(derived_metadata$derived_component_orientation$orientation_derived,
+    derived_metadata$derived_component_orientation$parent_sequence==parent$sequence,
+    derived_metadata$derived_component_orientation$effective_oligo_5to3==variant$sequence,
+    derived_metadata$derived_component_orientation$parent_source_version==snapshot$manifest$id)
   xml2::read_html(export$html)
 }
 if(primer_publication_png_available()) {

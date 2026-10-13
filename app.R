@@ -31,6 +31,7 @@ source("R/unite_reference_ui.R")
 source("R/primer_overview.R")
 source("R/fungal_primer_overview.R")
 source("R/fungal_primer_atlas.R")
+source("R/fungal_primer_orientation.R")
 source("R/fungal_combination_builder.R")
 source("R/unite_candidate_pairs.R")
 source("R/primer_publication_export.R")
@@ -2489,7 +2490,7 @@ server <- function(input, output, session) {
     request <- fungal_overview_evidence()
     if(is.list(request) && is.data.frame(request$row) && !request$pair %in% candidates$pair_id)
       candidates <- bind_rows(candidates,request$row)
-    unite_reference_with_candidates(broad,candidates)$data
+    unite_reference_with_candidates(broad,candidates,catalog=fungal_orientation_catalog(fungal_workspace$snapshot()))$data
   }
   fungal_overview_broad_selection <- reactive({
     request <- fungal_overview_evidence()
@@ -2539,19 +2540,25 @@ server <- function(input, output, session) {
     defaults
   })
   fungal_builder_forward <- reactive({
-    if(is.null(fungal_builder_state$version)) return(fungal_builder_defaults()$forward_ids)
-    intersect(fungal_builder_state$forward,fungal_workspace$snapshot()$catalog$catalog_id)
+    if(is.null(fungal_builder_state$version)) return(character())
+    intersect(fungal_builder_state$forward,fungal_builder_catalog()$catalog_id[fungal_builder_catalog()$direction=="forward"])
   })
   fungal_builder_reverse <- reactive({
-    if(is.null(fungal_builder_state$version)) return(fungal_builder_defaults()$reverse_ids)
-    intersect(fungal_builder_state$reverse,fungal_workspace$snapshot()$catalog$catalog_id)
+    if(is.null(fungal_builder_state$version)) return(character())
+    intersect(fungal_builder_state$reverse,fungal_builder_catalog()$catalog_id[fungal_builder_catalog()$direction=="reverse"])
   })
+  fungal_builder_variants <- reactive(fungal_orientation_catalog(fungal_workspace$snapshot()))
+  fungal_builder_catalog <- reactive(fungal_combination_catalog(fungal_workspace$snapshot(),catalog=fungal_builder_variants()))
+  fungal_builder_parent_ids <- function(ids) {
+    variants <- fungal_builder_variants()
+    parent <- variants$parent_catalog_id[match(ids,variants$catalog_id)]
+    ifelse(is.na(parent),ids,parent)
+  }
   observeEvent(fungal_workspace$snapshot()$manifest$id,{
-    defaults <- fungal_builder_defaults()
     fungal_builder_ack$forward <- fungal_builder_ack$reverse <- NULL
     fungal_builder_state$version <- fungal_workspace$snapshot()$manifest$id
-    fungal_builder_state$forward <- defaults$forward_ids
-    fungal_builder_state$reverse <- defaults$reverse_ids
+    fungal_builder_state$forward <- character()
+    fungal_builder_state$reverse <- character()
   },priority=100)
   observeEvent(input$fungal_builder_forward,{
     selected <- input$fungal_builder_forward %||% character()
@@ -2561,6 +2568,13 @@ server <- function(input, output, session) {
       fungal_builder_ack$forward <- NULL
     }
     fungal_builder_state$forward <- selected
+    conflicting <- fungal_builder_parent_ids(isolate(fungal_builder_state$reverse)) %in% fungal_builder_parent_ids(selected)
+    if(any(conflicting)) {
+      retained <- isolate(fungal_builder_state$reverse)[!conflicting]
+      fungal_builder_state$reverse <- retained
+      fungal_builder_ack$reverse <- retained
+      updateSelectizeInput(session,"fungal_builder_reverse",selected=retained)
+    }
   },ignoreInit=TRUE,ignoreNULL=FALSE)
   observeEvent(input$fungal_builder_reverse,{
     selected <- input$fungal_builder_reverse %||% character()
@@ -2570,6 +2584,13 @@ server <- function(input, output, session) {
       fungal_builder_ack$reverse <- NULL
     }
     fungal_builder_state$reverse <- selected
+    conflicting <- fungal_builder_parent_ids(isolate(fungal_builder_state$forward)) %in% fungal_builder_parent_ids(selected)
+    if(any(conflicting)) {
+      retained <- isolate(fungal_builder_state$forward)[!conflicting]
+      fungal_builder_state$forward <- retained
+      fungal_builder_ack$forward <- retained
+      updateSelectizeInput(session,"fungal_builder_forward",selected=retained)
+    }
   },ignoreInit=TRUE,ignoreNULL=FALSE)
   fungal_atlas_data <- reactive({
     region <- input$primer_overview_region %||% "ALL"
@@ -2578,7 +2599,7 @@ server <- function(input, output, session) {
   output$fungal_primer_atlas <- renderUI({
     req(identical(input$map_marker,"ITS_FUNGAL"))
     fungal_primer_atlas(fungal_atlas_data(),selected_forward=fungal_builder_forward(),
-      selected_reverse=fungal_builder_reverse())
+      selected_reverse=fungal_builder_reverse(),variant_catalog=fungal_builder_variants())
   })
   output$fungal_atlas_selection <- renderUI({
     forward <- length(fungal_builder_forward()); reverse <- length(fungal_builder_reverse())
@@ -2587,7 +2608,8 @@ server <- function(input, output, session) {
       if(!forward || !reverse) span("Choose at least one primer in each direction."),
       actionButton("fungal_builder_clear","Clear primers",class="btn-outline-secondary btn-sm"),
       if((input$fungal_overview_mode %||% "atlas")=="atlas")
-        actionButton("fungal_atlas_show_amplicons","View selected amplicons",class="btn-primary btn-sm"))
+        actionButton("fungal_atlas_show_amplicons","View detailed primer map",class="btn-primary btn-sm",
+          disabled=!forward || !reverse))
   })
   observeEvent(input$fungal_atlas_show_amplicons,{
     updateRadioButtons(session,"fungal_overview_mode",selected="amplicons")
@@ -2601,21 +2623,35 @@ server <- function(input, output, session) {
     component <- catalog[catalog$catalog_id==click$catalog_id & catalog$direction==click$direction,,drop=FALSE]
     if(nrow(component)!=1L || !identical(click$version,fungal_workspace$snapshot()$manifest$id) ||
         !identical(click$accession,fungal_overview_reference())) return()
-    current <- isolate(if(click$direction=="forward") fungal_builder_forward() else fungal_builder_reverse())
-    if(click$catalog_id %in% current) selected <- setdiff(current,click$catalog_id)
-    else if(length(current)<5L) selected <- c(current,click$catalog_id)
-    else {
-      showNotification("Choose up to five primers in each direction. Remove one before adding another.",type="message",duration=4)
-      return()
+    forwards <- isolate(fungal_builder_forward()); reverses <- isolate(fungal_builder_reverse())
+    before <- list(forward=forwards,reverse=reverses)
+    variant <- fungal_orientation_resolve(fungal_workspace$snapshot(),click$catalog_id,
+      if(click$direction=="forward") "reverse" else "forward")
+    parent_selected <- click$catalog_id %in% c(forwards,reverses)
+    variant_selected <- variant$catalog_id %in% c(forwards,reverses)
+    next_id <- if(variant_selected) NULL else if(parent_selected) variant$catalog_id else click$catalog_id
+    next_role <- if(parent_selected) variant$direction else click$direction
+    removed <- c(click$catalog_id,variant$catalog_id)
+    forwards <- setdiff(forwards,removed);reverses <- setdiff(reverses,removed)
+    if(length(next_id)) {
+      current <- if(next_role=="forward") forwards else reverses
+      if(length(current)>=5L) {
+        showNotification("Choose up to five primers in each direction. Remove one before changing this primer's direction.",type="message",duration=4)
+        return()
+      }
+      if(next_role=="forward") forwards <- c(forwards,next_id) else reverses <- c(reverses,next_id)
     }
     # Atlas clicks precede any queued selector echo. Accept the new selection's
     # acknowledgment before later direct dropdown edits can become authoritative.
-    fungal_builder_ack[[click$direction]] <- selected
-    fungal_builder_state[[click$direction]] <- selected
-    updateSelectizeInput(session,paste0("fungal_builder_",click$direction),selected=selected)
+    fungal_builder_state$forward <- forwards;fungal_builder_state$reverse <- reverses
+    after <- list(forward=forwards,reverse=reverses)
+    for(role in c("forward","reverse")) if(!setequal(before[[role]],after[[role]])) {
+      fungal_builder_ack[[role]] <- after[[role]]
+      updateSelectizeInput(session,paste0("fungal_builder_",role),selected=after[[role]])
+    }
   },ignoreInit=TRUE)
   output$fungal_builder_controls <- renderUI({
-    catalog <- fungal_combination_catalog(fungal_workspace$snapshot())
+    catalog <- fungal_builder_catalog()
     choices <- function(direction) {
       rows <- catalog[catalog$direction==direction,,drop=FALSE]
       setNames(rows$catalog_id,paste0(rows$primer_name," · ",rows$gene_locus))
@@ -2656,7 +2692,7 @@ server <- function(input, output, session) {
   })
   fungal_builder_result <- reactive(fungal_combination_builder(fungal_workspace$snapshot(),
       forward_ids=fungal_builder_forward(),reverse_ids=fungal_builder_reverse(),accession=fungal_overview_reference(),
-      platform=input$primer_overview_platform %||% "ALL",length_range=fungal_builder_length_range(),max_per_direction=5L))
+      catalog=fungal_builder_variants(),platform=input$primer_overview_platform %||% "ALL",length_range=fungal_builder_length_range(),max_per_direction=5L))
   observeEvent(list(fungal_builder_result()$selected_pairs$pair_id,fungal_workspace$snapshot()$manifest$id),{
     ids <- fungal_builder_result()$selected_pairs$pair_id
     previous <- fungal_overview_evidence()
@@ -2867,16 +2903,28 @@ server <- function(input, output, session) {
     div(class="fungal-oligo-evidence",lapply(c("forward","reverse"),function(direction) {
       row <- .fungal_overview_component(snapshot,definition,direction)
       if(is.null(row)) return(div("Component source evidence unavailable."))
-      reference <- .fungal_overview_text(row,"reference","Original citation unavailable")
+      derived <- identical(.fungal_overview_text(row,"orientation_origin"),"derived_reverse_complement")
+      source_row <- row
+      if(derived) {
+        parent <- snapshot$frozen_component_catalog[snapshot$frozen_component_catalog$catalog_id==.fungal_overview_text(row,"parent_catalog_id"),,drop=FALSE]
+        if(nrow(parent)==1L) source_row <- parent
+      }
+      reference <- .fungal_overview_text(source_row,"reference","Original citation unavailable")
       url <- .fungal_overview_text(row,"primary_reference_url",.fungal_overview_text(row,"source_url"))
       bibliography <- primer_publication_citations[primer_publication_citations$primary_reference_key==
         .fungal_overview_text(row,"primary_reference_key"),,drop=FALSE]
       if(nrow(bibliography)==1L) url <- bibliography$url
       div(strong(if(direction=="forward") "Forward · " else "Reverse · ",row$primer_name),
         p(tags$code(row$sequence)," · 5′→3′"),
-        p("Catalog target note: ",.fungal_overview_text(row,"target","Not reported")),
-        if(nzchar(.fungal_overview_text(row,"remarks"))) p(.fungal_overview_text(row,"remarks")),
-        if(nzchar(url)) tags$a(href=url,target="_blank",rel="noopener",reference) else p(reference))
+        if(derived)
+          p("Derived reverse complement of ",.fungal_overview_text(row,"parent_primer_name"),
+            " (",.fungal_overview_text(row,"parent_direction"),
+            "). The cited paper describes the original primer. This reversed variant is a computational candidate."),
+        if(derived) p("Original oligo: ",tags$code(.fungal_overview_text(row,"parent_sequence"))," · 5′→3′"),
+        if(nzchar(.fungal_overview_text(row,"parent_noncanonical_symbols"))) p(.fungal_overview_text(row,"sequence_derivation_note")),
+        p(if(derived) "Parent catalog target note: " else "Catalog target note: ",.fungal_overview_text(source_row,"target","Not reported")),
+        if(nzchar(.fungal_overview_text(source_row,"remarks"))) p(.fungal_overview_text(source_row,"remarks")),
+        if(nzchar(url)) tags$a(href=url,target="_blank",rel="noopener",if(derived) "Parent source: " else "",reference) else p(reference))
     }))
   })
   observeEvent(input$fungal_builder_open_fit,{

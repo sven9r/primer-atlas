@@ -2,14 +2,14 @@
 # oligo selections authoritative and computes their Cartesian product.
 fungalPrimerAtlasNavigatorUI <- function() {
   shiny::tagList(
-    shiny::tags$script(shiny::HTML("if(!window.fungalAtlasSelection){window.fungalAtlasSelection=true;function pick(b){if(b&&window.Shiny)Shiny.setInputValue(b.dataset.primerInput,{catalog_id:b.dataset.catalogId,direction:b.dataset.direction,version:b.dataset.versionId,accession:b.dataset.accession,nonce:Date.now()},{priority:'event'});}document.addEventListener('click',function(e){pick(e.target.closest('.fungal-atlas-primer[data-primer-input]'));});document.addEventListener('keydown',function(e){var b=e.target.closest('.fungal-atlas-primer[data-primer-input]');if(b&&(e.key==='Enter'||e.key===' ')){e.preventDefault();pick(b);}});}")),
+    shiny::tags$script(shiny::HTML("if(!window.fungalAtlasSelection){window.fungalAtlasSelection=true;function pick(b){if(b&&window.Shiny)Shiny.setInputValue(b.dataset.primerInput,{catalog_id:b.dataset.catalogId,direction:b.dataset.catalogDirection||b.dataset.direction,intent:'cycle',version:b.dataset.versionId,accession:b.dataset.accession,nonce:Date.now()},{priority:'event'});}document.addEventListener('click',function(e){pick(e.target.closest('.fungal-atlas-primer[data-primer-input]'));});document.addEventListener('keydown',function(e){var b=e.target.closest('.fungal-atlas-primer[data-primer-input]');if(b&&!e.repeat&&(e.key==='Enter'||e.key===' ')){e.preventDefault();pick(b);}});}")),
     shiny::tags$style(shiny::HTML(".fungal-atlas-intro{font-size:.88rem;color:#526176;margin:0 0 10px}.fungal-atlas-selection{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin:12px 0 16px;padding:12px 16px;border:1px solid #dbe3ee;border-radius:10px;background:#fff;font-size:.85rem}.fungal-atlas-selection>span{color:#64748b}")),
     shiny::div(class="atlas-segmented fungal-atlas-mode",
       shiny::radioButtons("fungal_overview_mode",NULL,
         c("Primer atlas"="atlas","Selected amplicons"="amplicons"),"atlas",inline=TRUE)),
     shiny::uiOutput("fungal_atlas_selection"),
     shiny::conditionalPanel(condition="input.fungal_overview_mode == 'atlas'",
-      shiny::p(class="fungal-atlas-intro","Choose primers on the gene map. Forward primers sit above the regions; reverse primers sit below. Click again to remove a primer."),
+      shiny::p(class="fungal-atlas-intro","Click a primer to select it. Click again to reverse its direction; a third click removes it. Blue arrows are forward, red arrows reverse. Reversed variants use reverse-complemented sequences."),
       shiny::uiOutput("fungal_primer_atlas")))
 }
 

@@ -48,6 +48,7 @@ jobs:
             tests/test_primer_overview.R \
             tests/test_fungal_primer_overview.R \
             tests/test_fungal_primer_atlas.R \
+            tests/test_fungal_primer_orientation.R \
             tests/test_fungal_combination_builder.R \
             tests/test_fungal_builder_navigation.R \
             tests/test_primer_publication_export.R \

@@ -2755,7 +2755,7 @@
   },
   "files": {
     "app.R": {
-      "checksum": "5f86fa473617bb1cb78dd67bd90adf02"
+      "checksum": "c6a7d3d20c83ed35eb2e77da8ddb3e8d"
     },
     "data/catalog/claims.csv": {
       "checksum": "7e287c602b958d2d647bbee4089c0b39"
@@ -9796,10 +9796,10 @@
       "checksum": "2763ceaab3886056fb60dede0c1084ac"
     },
     "R/fungal_builder_ui.R": {
-      "checksum": "3f07481ab9038e1abb4a7f6724feda37"
+      "checksum": "54cec0478341a37345175ae8eb906d3f"
     },
     "R/fungal_combination_builder.R": {
-      "checksum": "05efd11a6fa5cb4eea2723e58c247cf6"
+      "checksum": "f14beb007b2bb8bd71148dc30e5d94a8"
     },
     "R/fungal_explorer.R": {
       "checksum": "82db3b79ee091af118b486177645460c"
@@ -9811,7 +9811,10 @@
       "checksum": "77e6441dc909672f779f3ee8ddcf47ce"
     },
     "R/fungal_primer_atlas.R": {
-      "checksum": "fbcf16eb444ad5df06ae582a48b7bac8"
+      "checksum": "4d23f65b720d1732e5be581f6df4c209"
+    },
+    "R/fungal_primer_orientation.R": {
+      "checksum": "97f3f6765a7e2768e86da1646252cdf3"
     },
     "R/fungal_primer_overview.R": {
       "checksum": "da90c732826a27a8663f6dedfb65bd5e"
@@ -9826,7 +9829,7 @@
       "checksum": "91330b4bd94e536e4dfbe640e6d2c48e"
     },
     "R/primer_publication_export.R": {
-      "checksum": "bece593741170f62d2bd13b7243b8dcd"
+      "checksum": "ab27ced8fff78f24ed1aa675b755617b"
     },
     "R/primerminer_runtime.R": {
       "checksum": "7544e593f3fc8aa3bbd50882ad87b480"
@@ -9850,10 +9853,10 @@
       "checksum": "fc935cd571e18642b94b10d6811ed7fc"
     },
     "R/unite_candidate_pairs.R": {
-      "checksum": "96cfb06fa1c10e668171cc80e0cb33eb"
+      "checksum": "0d6453359aeeb71ff9062c163e6c1fdc"
     },
     "R/unite_reference_ui.R": {
-      "checksum": "a4636f9e0ee5fb755a9bed85903f4b5f"
+      "checksum": "646d1ca5c702d91888ae5aed505cbed5"
     },
     "R/unite_reference.R": {
       "checksum": "2ef2f257fc93d96b4e9ce0e5acee3e36"

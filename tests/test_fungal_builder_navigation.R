@@ -24,14 +24,14 @@ shiny::testServer(env$server,{
     "fungal-version"=v3,"fungal-platform"="ALL","fungal-illumina_max"=500,
     "fungal-pacbio_max"=2000,"fungal-nanopore_max"=3500)
   session$flushReact()
-  defaults <- fungal_builder_result()
-  stopifnot(length(fungal_builder_forward())==5L,length(fungal_builder_reverse())==5L,
-    nrow(defaults$selected_pairs)==25L,any(!defaults$selected_pairs$pair_id %in% snapshot$pairs$pair_id),
-    nrow(overview_inspector_rows())==25L,
-    grepl("25[[:space:]]+requested combinations",output$primer_overview_context$html))
+  initial <- fungal_builder_result()
+  stopifnot(length(fungal_builder_forward())==0L,length(fungal_builder_reverse())==0L,
+    nrow(initial$selected_pairs)==0L,nrow(overview_inspector_rows())==0L,
+    is.null(fungal_overview_evidence()))
 
-  # The first view is an individual-primer atlas, independent of selected
-  # amplicons. The actual renderer exposes both directions and exact click IDs.
+  # The first view is an individual-primer atlas with an empty selection.
+  # Every glyph keeps its original catalog ID and original role for subsequent
+  # events; effective assignment and state change independently when reversed.
   atlas_ui <- as.character(fungalPrimerAtlasNavigatorUI())
   atlas <- fungal_atlas_data()
   atlas_html <- output$fungal_primer_atlas$html
@@ -39,74 +39,150 @@ shiny::testServer(env$server,{
     is.data.frame(atlas$rows),nrow(atlas$rows)>0L,
     all(c('catalog_id','direction') %in% names(atlas$rows)),
     grepl('class="fungal-atlas-primer',atlas_html,fixed=TRUE),
-    grepl('data-direction="forward"',atlas_html,fixed=TRUE),
-    grepl('data-direction="reverse"',atlas_html,fixed=TRUE),
+    grepl('data-catalog-direction="forward"',atlas_html,fixed=TRUE),
+    grepl('data-catalog-direction="reverse"',atlas_html,fixed=TRUE),
+    grepl('data-selection-state="unselected"',atlas_html,fixed=TRUE),
     grepl('data-primer-input="fungal_atlas_primer_click"',atlas_html,fixed=TRUE),
     grepl(paste0('data-version-id="',v3,'"'),atlas_html,fixed=TRUE),
     grepl('data-accession="PZ962702.1"',atlas_html,fixed=TRUE),
     grepl('role="button"',atlas_html,fixed=TRUE),grepl('aria-pressed=',atlas_html,fixed=TRUE))
-  baseline_forward <- fungal_builder_forward()
-  baseline_reverse <- fungal_builder_reverse()
   atlas_nonce <- 100L
   builder_echo <- function(direction,selected=NULL) {
     if(is.null(selected)) selected <- if(direction=="forward") fungal_builder_forward() else fungal_builder_reverse()
     do.call(session$setInputs,setNames(list(selected),paste0("fungal_builder_",direction)))
     session$flushReact()
   }
+  echo_pending <- function() {
+    for(role in c("forward","reverse")) {
+      expected <- isolate(fungal_builder_ack[[role]])
+      if(!is.null(expected)) builder_echo(role,expected)
+    }
+  }
   click_primer <- function(id,direction,version=v3,accession="PZ962702.1",echo=TRUE) {
     atlas_nonce <<- atlas_nonce+1L
-    session$setInputs(fungal_atlas_primer_click=list(catalog_id=id,direction=direction,
-      version=version,accession=accession,nonce=atlas_nonce))
+    session$setInputs(fungal_atlas_primer_click=list(catalog_id=id,parent_catalog_id=id,
+      direction=direction,intent="cycle",version=version,accession=accession,nonce=atlas_nonce))
     session$flushReact()
-    # A successful atlas event updates the widget asynchronously. Simulate its
-    # normal browser acknowledgment; rejected clicks have no expected echo.
-    if(echo && !is.null(isolate(fungal_builder_ack[[direction]]))) builder_echo(direction)
+    # A direction switch updates BOTH widgets. Echo every changed role,
+    # including an empty selected vector, rather than only the clicked role.
+    if(echo) echo_pending()
+  }
+  clear_selection <- function(nonce) {
+    session$setInputs(fungal_builder_clear=nonce);session$flushReact()
+    builder_echo("forward");builder_echo("reverse")
+  }
+  check_glyph <- function(parent,state,assigned,direction) {
+    nodes <- xml2::xml_find_all(xml2::read_html(output$fungal_primer_atlas$html),
+      paste0('.//*[@data-catalog-id="',parent,'"]'))
+    source <- snapshot$catalog[snapshot$catalog$catalog_id==parent,,drop=FALSE]
+    stopifnot(length(nodes)>0L,nrow(source)==1L,
+      all(xml2::xml_attr(nodes,"data-assigned-catalog-id")==assigned),
+      all(xml2::xml_attr(nodes,"data-direction")==direction),
+      all(xml2::xml_attr(nodes,"data-catalog-direction")==source$direction),
+      all(xml2::xml_attr(nodes,"data-selection-state")==state),
+      all(xml2::xml_attr(nodes,"aria-pressed")==if(state=="unselected") "false" else "true"))
   }
   chosen_forward <- component("ITS1","forward")
   chosen_reverse <- component("ITS2","reverse")
+  forward_variant <- fungal_orientation_resolve(snapshot,chosen_forward,"reverse")
+  reverse_variant <- fungal_orientation_resolve(snapshot,chosen_reverse,"forward")
   stopifnot(chosen_forward %in% atlas$rows$catalog_id,chosen_reverse %in% atlas$rows$catalog_id)
-  click_primer(chosen_forward,"forward")
-  stopifnot(!chosen_forward %in% fungal_builder_forward(),length(fungal_builder_forward())==4L,
-    identical(fungal_builder_reverse(),baseline_reverse),nrow(fungal_builder_result()$selected_pairs)==20L)
-  if(requireNamespace("xml2",quietly=TRUE)) {
-    nodes <- xml2::xml_find_all(xml2::read_html(output$fungal_primer_atlas$html),
-      paste0('.//*[@data-catalog-id="',chosen_forward,'"]'))
-    stopifnot(length(nodes)>0L,all(xml2::xml_attr(nodes,"aria-pressed")=="false"))
+  for(parent in list(list(id=chosen_forward,role="forward",variant=forward_variant),
+                     list(id=chosen_reverse,role="reverse",variant=reverse_variant))) {
+    check_glyph(parent$id,"unselected",parent$id,parent$role)
+    click_primer(parent$id,parent$role)
+    selected <- if(parent$role=="forward") fungal_builder_forward() else fungal_builder_reverse()
+    stopifnot(identical(selected,parent$id),nrow(fungal_builder_result()$selected_pairs)==0L)
+    check_glyph(parent$id,"catalog",parent$id,parent$role)
+    click_primer(parent$id,parent$role)
+    opposite <- if(parent$variant$direction=="forward") fungal_builder_forward() else fungal_builder_reverse()
+    stopifnot(identical(opposite,parent$variant$catalog_id),!parent$id %in% c(fungal_builder_forward(),fungal_builder_reverse()),
+      nrow(fungal_builder_result()$selected_pairs)==0L,
+      parent$variant$sequence==reverse_complement(snapshot$catalog$sequence[match(parent$id,snapshot$catalog$catalog_id)]))
+    check_glyph(parent$id,"reversed",parent$variant$catalog_id,parent$variant$direction)
+    click_primer(parent$id,parent$role)
+    stopifnot(length(fungal_builder_forward())==0L,length(fungal_builder_reverse())==0L,
+      nrow(fungal_builder_result()$selected_pairs)==0L,
+      is.null(fungal_builder_ack$forward),is.null(fungal_builder_ack$reverse))
+    check_glyph(parent$id,"unselected",parent$id,parent$role)
   }
-  click_primer(chosen_forward,"forward")
-  stopifnot(setequal(fungal_builder_forward(),baseline_forward),nrow(fungal_builder_result()$selected_pairs)==25L)
-  click_primer(chosen_reverse,"reverse")
-  stopifnot(!chosen_reverse %in% fungal_builder_reverse(),length(fungal_builder_reverse())==4L,
-    nrow(fungal_builder_result()$selected_pairs)==20L)
-  click_primer(chosen_reverse,"reverse")
-  stopifnot(setequal(fungal_builder_reverse(),baseline_reverse),nrow(fungal_builder_result()$selected_pairs)==25L)
 
-  # Two clicks can finish before either widget acknowledgment arrives. A
-  # delayed four-primer echo must not overwrite the latest five-primer state;
-  # the latest echo releases the guard so an ordinary dropdown edit works.
+  # A real opposite-role oligo maps at the same raw site but makes a different
+  # inward-facing product. ITS2 [RC] forward plus ITS4 reverse is 391 bp; it must
+  # never inherit the documented ITS3+ITS4 name or publication support.
+  its4 <- component("ITS4","reverse")
+  click_primer(chosen_reverse,"reverse")
+  click_primer(chosen_reverse,"reverse")
+  click_primer(its4,"reverse")
+  derived <- fungal_builder_result()
+  stopifnot(nrow(derived$selected_pairs)==1L,derived$selected_pairs$has_derived_reverse_complement,
+    derived$selected_pairs$evidence_status=="candidate_incomplete_provenance",
+    derived$selected_pairs$forward_catalog_id==reverse_variant$catalog_id,
+    derived$selected_pairs$forward_parent_catalog_id==chosen_reverse,
+    derived$selected_pairs$forward_sequence==reverse_complement(reverse_variant$parent_sequence),
+    nrow(overview_rows())==1L,overview_rows()$aligned_amplicon_bp==391L,
+    overview_rows()$forward_start==2090L,overview_rows()$reverse_end==2480L,
+    all(derived$pair_sequences$forward_site_origin=="derived_reverse_complement_parent_frozen_sites"))
+  session$setInputs(primer_overview_pair_click=list(pair=derived$selected_pairs$pair_id,nonce=901L),
+    fungal_publication_rank="class",fungal_publication_taxon="ALL",fungal_publication_title="Reversed primer candidate")
+  session$flushReact()
+  derived_support <- unite_explorer_workspace$support()
+  stopifnot(fungal_overview_broad_selection()$available,
+    unite_explorer_workspace$pair()==derived$selected_pairs$pair_id,
+    sum(derived_support$summary$n_selected)==15402L,nrow(derived_support$details)==15402L,
+    all(derived_support$details$version_id=="u1-afd349e6cdcd"))
+  derived_export <- fungal_publication_build()
+  stopifnot(nrow(derived_export$table)==1L,derived_export$table$forward_orientation_derived,
+    derived_export$table$forward_parent_catalog_id==chosen_reverse,
+    derived_export$table$forward_parent_sequence==reverse_variant$parent_sequence,
+    derived_export$table$forward_parent_direction=="reverse",
+    derived_export$table$forward_effective_direction=="forward",
+    derived_export$table$forward_oligo_5to3==reverse_variant$sequence,
+    derived_export$table$forward_reference_status=="derived_reverse_complement",
+    derived_export$table$forward_parent_source_version==v3,
+    derived_export$table$product_including_primers_bp==391L,
+    derived_export$table$unite_selected_references==15402L,
+    derived_export$table$combination_status=="candidate_incomplete_provenance")
+  clear_selection(110L)
+
+  # Three clicks can precede either widget acknowledgment. Stale original-F
+  # and reversed-R echoes must not restore either assignment after removal.
   click_primer(chosen_forward,"forward",echo=FALSE)
-  old_echo <- fungal_builder_forward()
-  stopifnot(length(old_echo)==4L,setequal(fungal_builder_ack$forward,old_echo))
+  old_forward_echo <- fungal_builder_forward()
   click_primer(chosen_forward,"forward",echo=FALSE)
-  latest_echo <- fungal_builder_forward()
-  stopifnot(length(latest_echo)==5L,setequal(fungal_builder_ack$forward,latest_echo))
-  builder_echo("forward",old_echo)
-  stopifnot(identical(fungal_builder_forward(),latest_echo),setequal(fungal_builder_ack$forward,latest_echo),
-    nrow(fungal_builder_result()$selected_pairs)==25L)
-  builder_echo("forward",latest_echo)
-  stopifnot(is.null(fungal_builder_ack$forward),identical(fungal_builder_forward(),latest_echo))
-  builder_echo("forward",old_echo)
-  stopifnot(is.null(fungal_builder_ack$forward),identical(fungal_builder_forward(),old_echo),
-    nrow(fungal_builder_result()$selected_pairs)==20L)
+  old_reverse_echo <- fungal_builder_reverse()
+  click_primer(chosen_forward,"forward",echo=FALSE)
+  latest_forward <- fungal_builder_forward();latest_reverse <- fungal_builder_reverse()
+  stopifnot(length(old_forward_echo)==1L,length(old_reverse_echo)==1L,
+    length(latest_forward)==0L,length(latest_reverse)==0L,
+    setequal(fungal_builder_ack$forward,latest_forward),setequal(fungal_builder_ack$reverse,latest_reverse))
+  builder_echo("forward",old_forward_echo);builder_echo("reverse",old_reverse_echo)
+  stopifnot(identical(fungal_builder_forward(),latest_forward),identical(fungal_builder_reverse(),latest_reverse),
+    setequal(fungal_builder_ack$forward,latest_forward),setequal(fungal_builder_ack$reverse,latest_reverse))
+  builder_echo("forward",latest_forward);builder_echo("reverse",latest_reverse)
+  stopifnot(is.null(fungal_builder_ack$forward),is.null(fungal_builder_ack$reverse))
+  # Ordinary dropdown edits become authoritative after the latest echoes. A
+  # direct assignment to the other role removes the same parent's prior role.
+  builder_echo("forward",old_forward_echo)
+  stopifnot(identical(fungal_builder_forward(),old_forward_echo),length(fungal_builder_reverse())==0L)
+  builder_echo("reverse",old_reverse_echo);echo_pending()
+  stopifnot(length(fungal_builder_forward())==0L,identical(fungal_builder_reverse(),old_reverse_echo),
+    is.null(fungal_builder_ack$forward),is.null(fungal_builder_ack$reverse))
+  builder_echo("forward",old_forward_echo);echo_pending()
+  stopifnot(identical(fungal_builder_forward(),old_forward_echo),length(fungal_builder_reverse())==0L)
+
+  # The teaching panel is now an explicit action, not the initial selection.
   session$setInputs(fungal_builder_examples=101L);session$flushReact()
   builder_echo("forward");builder_echo("reverse")
-  stopifnot(nrow(fungal_builder_result()$selected_pairs)==25L,
+  defaults <- fungal_builder_result()
+  stopifnot(length(fungal_builder_forward())==5L,length(fungal_builder_reverse())==5L,
+    nrow(defaults$selected_pairs)==25L,any(!defaults$selected_pairs$pair_id %in% snapshot$pairs$pair_id),
+    nrow(overview_inspector_rows())==25L,
+    grepl("25[[:space:]]+requested combinations",output$primer_overview_context$html),
     is.null(fungal_builder_ack$forward),is.null(fungal_builder_ack$reverse))
 
-  # Delayed events from another snapshot or template, an incorrect direction,
-  # and an unknown identity cannot alter the current catalog selection.
-  retained_forward <- fungal_builder_forward()
-  retained_reverse <- fungal_builder_reverse()
+  # Stale/foreign events and incorrect original roles cannot alter selections.
+  retained_forward <- fungal_builder_forward();retained_reverse <- fungal_builder_reverse()
   other_version <- versions$id[versions$id!=v3][1L]
   click_primer(chosen_forward,"forward",version=other_version)
   click_primer(chosen_forward,"forward",accession="FN812768.2")
@@ -116,11 +192,12 @@ shiny::testServer(env$server,{
   extra_forward <- setdiff(atlas$rows$catalog_id[atlas$rows$direction=="forward"],retained_forward)[1L]
   extra_reverse <- setdiff(atlas$rows$catalog_id[atlas$rows$direction=="reverse"],retained_reverse)[1L]
   stopifnot(!is.na(extra_forward),!is.na(extra_reverse))
-  click_primer(extra_forward,"forward")
-  click_primer(extra_reverse,"reverse")
+  click_primer(extra_forward,"forward");click_primer(extra_reverse,"reverse")
+  # Reversing a selected oligo into a full destination is rejected atomically;
+  # its original assignment must survive the attempted direction switch.
+  click_primer(chosen_forward,"forward");click_primer(chosen_reverse,"reverse")
   stopifnot(identical(fungal_builder_forward(),retained_forward),identical(fungal_builder_reverse(),retained_reverse))
 
-  # Changing views preserves the chosen oligos and requested pair identities.
   pair_ids <- fungal_builder_result()$selected_pairs$pair_id
   session$setInputs(fungal_overview_mode="amplicons");session$flushReact()
   stopifnot(identical(fungal_builder_forward(),retained_forward),identical(fungal_builder_reverse(),retained_reverse),
@@ -129,24 +206,23 @@ shiny::testServer(env$server,{
   stopifnot(identical(fungal_builder_forward(),retained_forward),identical(fungal_builder_reverse(),retained_reverse),
     identical(fungal_builder_result()$selected_pairs$pair_id,pair_ids))
 
-  # Clearing selections leaves the atlas available. Selecting one forward and
-  # one reverse there creates exactly one candidate, and removing the last
-  # forward stays empty instead of bringing back the teaching defaults.
-  session$setInputs(fungal_builder_clear=100L);session$flushReact()
+  clear_selection(100L)
   stopifnot(nrow(fungal_builder_result()$selected_pairs)==0L,nrow(fungal_atlas_data()$rows)==nrow(atlas$rows),
     grepl('data-primer-input="fungal_atlas_primer_click"',output$fungal_primer_atlas$html,fixed=TRUE))
-  click_primer(chosen_forward,"forward")
-  stopifnot(identical(fungal_builder_forward(),chosen_forward),length(fungal_builder_reverse())==0L,
-    nrow(fungal_builder_result()$selected_pairs)==0L)
-  click_primer(chosen_reverse,"reverse")
+  click_primer(chosen_forward,"forward");click_primer(chosen_reverse,"reverse")
   stopifnot(nrow(fungal_builder_result()$selected_pairs)==1L,
     fungal_builder_result()$selected_pairs$pair_label=="ITS1 + ITS2")
   click_primer(chosen_forward,"forward")
+  stopifnot(length(fungal_builder_forward())==0L,length(fungal_builder_reverse())==2L,
+    nrow(fungal_builder_result()$selected_pairs)==0L)
+  click_primer(chosen_forward,"forward")
   session$setInputs(fungal_overview_mode="amplicons");session$flushReact()
   session$setInputs(fungal_overview_mode="atlas");session$flushReact()
-  stopifnot(length(fungal_builder_forward())==0L,nrow(fungal_builder_result()$selected_pairs)==0L)
+  stopifnot(length(fungal_builder_forward())==0L,length(fungal_builder_reverse())==1L,
+    nrow(fungal_builder_result()$selected_pairs)==0L)
   session$setInputs(fungal_builder_examples=100L,fungal_overview_mode="amplicons",primer_overview_region="ITS")
   session$flushReact()
+  builder_echo("forward");builder_echo("reverse")
   stopifnot(nrow(fungal_builder_result()$selected_pairs)==25L)
 
   # F1 × R1/R2/R3 produces exactly three choices, not a documented-pair subset.
@@ -282,8 +358,10 @@ shiny::testServer(env$server,{
     primer_overview_reference="FN812768.2")
   session$flushReact()
   stopifnot(fungal_builder_state$version==historical_id,
+    length(fungal_builder_forward())==1L,length(fungal_builder_reverse())==1L,
     forwards[chosen] %in% fungal_builder_forward(),reverses[chosen] %in% fungal_builder_reverse(),
+    nrow(fungal_builder_result()$selected_pairs)==1L,
     old_pair %in% fungal_builder_result()$selected_pairs$pair_id,
     old_pair %in% overview_inspector_rows()$pair_id)
 })
-message("Independent fungal oligo selection, Cartesian counts, raw length filters, missing-map taxon handoff, clear/reset and publication downloads passed.")
+message("Empty initial selection, three-click primer orientation cycles, guarded selector acknowledgments, Cartesian counts, raw length filters, missing-map taxon handoff, clear/history reset and publication downloads passed.")

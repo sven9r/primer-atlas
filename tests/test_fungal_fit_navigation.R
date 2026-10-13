@@ -97,6 +97,9 @@ shiny::testServer(env$server, {
   session$setInputs(map_marker="ITS_FUNGAL",primer_overview_region="ITS",
       primer_overview_reference="PZ962702.1",primer_overview_platform="ALL")
   session$flushReact()
+  stopifnot(nrow(fungal_builder_result()$selected_pairs)==0L,nrow(fungal_atlas_data()$rows)>0L)
+  session$setInputs(fungal_builder_examples=1L,fungal_overview_mode="amplicons")
+  session$flushReact()
   overview <- fungal_overview_data()
   stopifnot(nrow(overview$pair_meta)>=10L,length(unique(overview$pair_meta$accession))==1L,
       all(overview$pair_meta$aligned_amplicon_bp==overview$pair_meta$reverse_end-overview$pair_meta$forward_start+1L),

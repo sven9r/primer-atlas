@@ -2,6 +2,7 @@
 source("R/functions.R")
 source("R/data_layer.R")
 source("R/unite_reference.R")
+source("R/fungal_primer_orientation.R")
 source("R/unite_candidate_pairs.R")
 
 # This combination was withheld from the 21-template pair catalog. Its two
@@ -91,7 +92,7 @@ stopifnot(identical(unite_reference_with_candidates(data, data.frame())$data, da
 fixture <- function(version, reverse_sequence) {
   catalog <- data.frame(catalog_id = c("F|forward|ACGTAC", paste0("R|reverse|", reverse_sequence)),
     primer_name = c("F", "R"), sequence = c("ACGTAC", reverse_sequence),
-    direction = c("forward", "reverse"), primary_reference_status = "publication_cited", stringsAsFactors = FALSE)
+    direction = c("forward", "reverse"), gene_locus="ITS", primary_reference_status = "publication_cited", stringsAsFactors = FALSE)
   meta <- data.frame(record_id = c("fixture1", "fixture2"), accession = c("fixture1.1", "fixture2.1"),
     organism = "Synthetic fixture", class_group_id = "fixture-class", stringsAsFactors = FALSE)
   sites <- data.frame(record_id = "fixture1", catalog_id = catalog$catalog_id,
@@ -194,4 +195,109 @@ shiny::testServer(uniteReferenceServer,args=list(id="candidate-history",dataset=
   stopifnot(pair()==request$pair_id,nrow(support()$details)==2L,
     all(support()$details$version_id=="synthetic-history-1"))
 })
+
+# A computational reverse-role ITS3 oligo has the parent's exact genomic query.
+# Reuse all sparse parent states on this actual 15,402-record cohort; missing
+# sparse rows remain no-hits under the ORIGINAL112 completion proof.
+source("R/fungal_explorer.R")
+source("R/fungal_versions.R")
+ncbi <- fungal_read_snapshot("v3-c6fa87f256e1",remote=FALSE)
+supplements <- fungal_orientation_catalog(ncbi)
+rc_its3 <- supplements[supplements$parent_primer_name=="ITS3",,drop=FALSE]
+rc_request <- candidate
+rc_request$pair_id <- "FUNGAL_COMB_TEST_ITS1_ITS3_RC"
+rc_request$pair_label <- "ITS1 + ITS3 [RC]"
+rc_request$reverse_primer <- rc_its3$primer_name
+rc_request$reverse_sequence <- rc_its3$sequence
+rc_request$reverse_catalog_id <- rc_its3$catalog_id
+saved_search <- .fungal_exact_site
+.fungal_exact_site <- function(...) stop("UNITE derived components must never rescan templates")
+rc_result <- unite_reference_with_candidates(data,rc_request,catalog=supplements)
+rc_fit <- unite_reference_pair_fit(rc_result$data,rc_request$pair_id)
+.fungal_exact_site <- saved_search
+stopifnot(nrow(rc_result$available_pairs)==1L,nrow(rc_result$unavailable_pairs)==0L,
+  rc_result$available_pairs$candidate_origin=="on_demand_reverse_complement_combination",
+  rc_result$available_pairs$has_derived_reverse_complement,
+  rc_result$available_pairs$evidence_status=="candidate_incomplete_provenance",
+  rc_result$available_pairs$reverse_parent_catalog_id==rc_its3$parent_catalog_id,
+  nrow(rc_result$data$catalog)==113L,length(rc_result$data$on_demand_derived_component_ids)==1L,
+  identical(rc_result$data$frozen_component_catalog,data$catalog),
+  identical(rc_result$data$frozen_component_sites,data$sites),
+  identical(serialize(rc_result$data$manifest,NULL),serialize(data$manifest,NULL)),
+  identical(serialize(rc_result$data$search_manifest,NULL),serialize(data$search_manifest,NULL)),
+  rc_result$data$search_manifest$n_catalog==112L,
+  rc_result$data$search_manifest$n_sparse_rows==nrow(data$sites),
+  rc_result$data$catalog$parent_source_version[rc_result$data$catalog$catalog_id==rc_its3$catalog_id]==ncbi$manifest$id,
+  all(rc_fit$details$version_id==data$manifest$id),nrow(rc_fit$details)==15402L,
+  sum(rc_fit$summary$n_selected)==15402L,all(rowSums(rc_fit$summary[states])==rc_fit$summary$n_selected),
+  sum(rc_fit$summary$n_exact_products)>0L,identical(serialize(data,NULL),before))
+for (name in c("catalog","sites","pairs")) {
+  for (column in names(data[[name]])) stopifnot(identical(
+    serialize(rc_result$data[[name]][[column]][seq_len(nrow(data[[name]]))],NULL),serialize(data[[name]][[column]],NULL)))
+}
+parent <- data$sites[data$sites$catalog_id==rc_its3$parent_catalog_id,,drop=FALSE]
+mirrored <- rc_result$data$sites[rc_result$data$sites$catalog_id==rc_its3$catalog_id,,drop=FALSE]
+stopifnot(nrow(mirrored)==nrow(parent),nrow(rc_result$data$sites)==nrow(data$sites)+nrow(parent))
+for (field in c("record_id","start","end","status","n_matches")) if (field %in% names(parent)) stopifnot(identical(mirrored[[field]],parent[[field]]))
+parent_positions <- match(paste(data$metadata$record_id,rc_its3$parent_catalog_id,sep="\n"),data$site_keys)
+expected_reverse_status <- data$sites$status[parent_positions]
+expected_reverse_status[is.na(parent_positions)] <- "no_exact_binding_site"
+stopifnot(identical(rc_fit$details$reverse_status,expected_reverse_status),
+  all(is.na(rc_fit$details$amplicon_bp[rc_fit$details$fit_state!="exact_product"])))
+again_rc <- unite_reference_with_candidates(rc_result$data,rc_request,catalog=supplements)
+stopifnot(identical(again_rc$data$catalog,rc_result$data$catalog),identical(again_rc$data$sites,rc_result$data$sites),
+  identical(again_rc$data$pairs,rc_result$data$pairs),
+  again_rc$available_pairs$candidate_origin=="on_demand_reverse_complement_combination")
+
+# Caller-supplied provenance and changed-role sequences are verified, never
+# trusted merely because an ID uses the RC prefix or names the parent.
+for (field in c("parent_catalog_id","parent_sequence","parent_direction","parent_reference","sequence","source_version","derivation_rule")) {
+  forged <- rc_its3;forged[[field]] <- paste0(forged[[field]],"_forged")
+  withheld <- unite_reference_with_candidates(data,rc_request,catalog=forged)
+  stopifnot(nrow(withheld$available_pairs)==0L,nrow(withheld$unavailable_pairs)==1L,
+    identical(withheld$data$catalog,data$catalog),identical(withheld$data$sites,data$sites),
+    identical(withheld$data$pairs,data$pairs))
+}
+same_oligo <- rc_its3;same_oligo$sequence <- same_oligo$parent_sequence
+stopifnot(nrow(unite_reference_with_candidates(data,rc_request,catalog=same_oligo)$available_pairs)==0L)
+bad_proof <- data;bad_proof$search_manifest$complete <- FALSE
+stopifnot(inherits(try(unite_reference_with_candidates(bad_proof,rc_request,catalog=supplements),silent=TRUE),"try-error"))
+bad_site <- data
+hit <- which(bad_site$sites$catalog_id==rc_its3$parent_catalog_id & bad_site$sites$status=="exact_compatible_site")[1L]
+bad_site$sites$start[hit] <- bad_site$sites$start[hit]+1L
+stopifnot(inherits(try(unite_reference_with_candidates(bad_site,rc_request,catalog=supplements),silent=TRUE),"try-error"))
+truncated_working <- rc_result$data
+truncated_working$sites <- truncated_working$sites[-which(truncated_working$sites$catalog_id==rc_its3$catalog_id)[1L],]
+truncated_working$site_keys <- paste(truncated_working$sites$record_id,truncated_working$sites$catalog_id,sep="\n")
+stopifnot(inherits(try(unite_reference_with_candidates(truncated_working,rc_request),silent=TRUE),"try-error"))
+changed_working_bases <- rc_result$data
+changed_working_bases$sequences[[parent$record_id[which(parent$status=="exact_compatible_site")[1L]]]] <- strrep("N",nchar(changed_working_bases$sequences[[parent$record_id[which(parent$status=="exact_compatible_site")[1L]]]]))
+stopifnot(inherits(try(unite_reference_with_candidates(changed_working_bases,rc_request),silent=TRUE),"try-error"))
+
+# The same RC source variant cannot borrow parent sites from a later history
+# where the original name now denotes a different oligo. Opposite-role sites
+# may also be overlapping: cache reuse establishes sites, not a valid product.
+history_rc <- fungal_orientation_catalog(v1)
+history_rc <- history_rc[history_rc$parent_primer_name=="F",,drop=FALSE]
+history_request <- request
+history_request$pair_id <- "FUNGAL_COMB_HISTORY_RC_TEST"
+history_request$pair_label <- "F + F [RC]"
+history_request$reverse_primer <- history_rc$primer_name
+history_request$reverse_sequence <- history_rc$sequence
+history_request$reverse_catalog_id <- history_rc$catalog_id
+history_accepted <- unite_reference_with_candidates(v1,history_request,catalog=history_rc)
+history_fit <- unite_reference_pair_fit(history_accepted$data,history_request$pair_id)
+stopifnot(sum(history_fit$summary$n_withheld)==1L,sum(history_fit$summary$n_no_exact_sites)==1L,
+  sum(history_fit$summary$n_exact_products)==0L,all(is.na(history_fit$details$amplicon_bp)))
+different_parent <- v2
+different_parent$catalog$sequence[1L] <- "ACGTAT"
+different_parent$catalog$catalog_id[1L] <- "F|forward|ACGTAT"
+different_parent$sites$catalog_id[different_parent$sites$catalog_id==v1$catalog$catalog_id[1L]] <- "F|forward|ACGTAT"
+different_parent$site_keys <- paste(different_parent$sites$record_id,different_parent$sites$catalog_id,sep="\n")
+history_rejected <- unite_reference_with_candidates(different_parent,history_request,catalog=history_rc)
+stopifnot(nrow(history_rejected$available_pairs)==0L,nrow(history_rejected$unavailable_pairs)==1L,
+  identical(history_rejected$data$catalog,different_parent$catalog),identical(history_rejected$data$sites,different_parent$sites))
+existing_with_supplements <- unite_reference_with_candidates(data,existing,catalog=supplements)
+stopifnot(identical(existing_with_supplements$data$catalog,data$catalog),identical(existing_with_supplements$data$sites,data$sites),
+  identical(existing_with_supplements$data$pairs,data$pairs),existing_with_supplements$available_pairs$candidate_origin=="frozen_pair")
 cat("UNITE on-demand exact-component combinations, real 15,402-reference evidence, frozen immutability, historical ownership and completed-search guards passed.\n")

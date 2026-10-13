@@ -39,6 +39,63 @@
   rows <- lapply(rows,function(row) {for(name in setdiff(names,names(row))) row[[name]] <- NA;row[,names,drop=FALSE]})
   result <- do.call(rbind,rows);rownames(result)<-NULL;result
 }
+.pub_orientation_fields <- c("parent_catalog_id","parent_primer_name","parent_sequence","parent_direction",
+  "parent_source_direction","parent_primary_reference_status","parent_primary_reference_key","parent_primary_reference_url",
+  "parent_reference","parent_source_url","parent_reported_position","parent_source_version","source_version",
+  "orientation_derived","orientation_origin","derivation_rule","raw_query_equivalence","sequence_derivation_note","parent_noncanonical_symbols")
+.pub_orientation_bool <- function(value) {
+  text<-tolower(.pub_text(value))
+  if(!nzchar(text)) return(NA)
+  if(!text %in% c("true","false","1","0")) stop("Orientation provenance has an invalid boolean.")
+  text %in% c("true","1")
+}
+.pub_component_orientation <- function(primer,pair,side,catalog) {
+  id<-.pub_field(primer,"catalog_id",.pub_field(pair,paste0(side,"_catalog_id")))
+  original<-if(nrow(catalog) && "catalog_id" %in% names(catalog)) catalog[catalog$catalog_id==id,,drop=FALSE] else data.frame()
+  if(nrow(original)>1L) stop("Orientation component catalog identity repeats.")
+  fields<-.pub_orientation_fields[vapply(.pub_orientation_fields,function(field)
+    field %in% names(primer) || field %in% names(original) || paste0(side,"_",field) %in% names(pair),logical(1))]
+  if(!length(setdiff(fields,"source_version")) && !startsWith(id,"FUNGAL_RC_")) return(NULL)
+  values<-lapply(fields,function(field) {
+    candidates<-c(.pub_field(primer,field),.pub_field(original,field),.pub_field(pair,paste0(side,"_",field)))
+    candidates<-unique(candidates[nzchar(candidates)])
+    if(length(candidates)>1L) stop("Orientation metadata differs between catalog, component and pair.")
+    if(length(candidates)) candidates else ""
+  });names(values)<-fields
+  derived<-.pub_orientation_bool(values$orientation_derived)
+  origin<-.pub_text(values$orientation_origin)
+  if(startsWith(id,"FUNGAL_RC_") || identical(origin,"derived_reverse_complement")) {
+    if(!isTRUE(derived)) stop("Derived orientation identity needs an explicit derivation flag.")
+  }
+  if(isTRUE(derived)) {
+    required<-c("parent_catalog_id","parent_primer_name","parent_sequence","parent_direction","parent_source_version")
+    if(any(!vapply(required,function(field) nzchar(.pub_text(values[[field]])),logical(1))) ||
+       !identical(origin,"derived_reverse_complement") || !identical(.pub_text(values$derivation_rule),"reverse_complement_opposite_role_v1") ||
+       !isTRUE(.pub_orientation_bool(values$raw_query_equivalence))) stop("Derived orientation provenance is incomplete.")
+    parent<-toupper(.pub_text(values$parent_sequence));effective<-toupper(.pub_field(primer,"sequence",.pub_field(pair,paste0(side,"_sequence"))))
+    expected<-if(exists("reverse_complement",mode="function")) reverse_complement(parent) else .pub_rc(gsub("I","N",parent,fixed=TRUE))
+    parent_role<-.pub_text(values$parent_direction)
+    if(!grepl("^[ACGTURYSWKMBDHVNI]+$",parent) || !parent_role %in% c("forward","reverse") || parent_role==side ||
+       !identical(effective,expected) || !startsWith(id,"FUNGAL_RC_")) stop("Derived oligo must be the declared parent's reverse complement in the opposite role.")
+    if(nrow(original)==1L && (!identical(.pub_field(original,"sequence"),effective) || !identical(.pub_field(original,"direction"),side)))
+      stop("Derived effective oligo or role disagrees with its catalog row.")
+    parent_row<-if(nrow(catalog)) catalog[catalog$catalog_id==.pub_text(values$parent_catalog_id),,drop=FALSE] else data.frame()
+    if(nrow(parent_row)>1L || (nrow(parent_row)==1L &&
+       (!identical(.pub_field(parent_row,"sequence"),parent) || !identical(.pub_field(parent_row,"direction"),parent_role) ||
+        !identical(.pub_field(parent_row,"primer_name"),.pub_text(values$parent_primer_name))))) stop("Derived parent metadata disagrees with its exact catalog row.")
+    status<-.pub_field(primer,"primary_reference_status",.pub_field(original,"primary_reference_status"))
+    if(status!="derived_reverse_complement" || .pub_field(pair,"evidence_status") %in% c("documented_pair","candidate_published_components"))
+      stop("A derived orientation cannot inherit publication support for its oligo or pair.")
+    if(grepl("I",parent,fixed=TRUE) && (!nzchar(.pub_text(values$sequence_derivation_note)) || !grepl("I",.pub_text(values$parent_noncanonical_symbols),fixed=TRUE)))
+      stop("Inosine normalization requires an explicit source-symbol and derivation note.")
+    values$orientation_citation_scope<-"parent_primer_only"
+    values$orientation_citation_caveat<-"Original references, where available, describe the parent primer only; this derived reverse-complement oligo and combination have no publication or PCR validation."
+  }
+  values$orientation_derived<-derived
+  if("raw_query_equivalence" %in% names(values)) values$raw_query_equivalence<-.pub_orientation_bool(values$raw_query_equivalence)
+  values$catalog_id<-id;values$effective_direction<-side
+  values
+}
 
 primer_publication_context <- function(overview, selected_pair_ids=NULL, reference_sequence=NULL,
   broad_evidence=NULL, broad_manifest=NULL, filters=list(), domain=NULL, title="Primer combinations",citation_lookup=NULL) {
@@ -58,6 +115,7 @@ primer_publication_context <- function(overview, selected_pair_ids=NULL, referen
        !grepl("^[ACGTURYSWKMBDHVNI]+$",reference_sequence)) stop("Publication raw template is invalid or gapped.")
   }
   primers <- .pub_frame(overview$primers)
+  component_catalog <- .pub_frame(overview$component_catalog)
   figure_ids <- if(is.null(filters$figure_pair_ids)) ids[ids %in% mapped$pair_id] else as.character(filters$figure_pair_ids)
   if(anyNA(figure_ids) || anyDuplicated(figure_ids) || any(!figure_ids %in% ids) || any(!figure_ids %in% mapped$pair_id)) stop("Figure pairs must be selected and have measured template products.")
   if(is.null(domain)) domain <- .pub_or(overview$domain,c(1,size))
@@ -87,6 +145,8 @@ primer_publication_context <- function(overview, selected_pair_ids=NULL, referen
     if(nrow(f)>1L || nrow(r)>1L) stop("Publication pair components repeat.")
     oligo <- function(primer,side) .pub_field(primer,"sequence",.pub_field(row,paste0(side,"_sequence")))
     fseq<-oligo(f,"forward");rseq<-oligo(r,"reverse")
+    f_orientation<-.pub_component_orientation(f,row,"forward",component_catalog)
+    r_orientation<-.pub_component_orientation(r,row,"reverse",component_catalog)
     fref<-.pub_field(f,"reference","Citation unavailable");rref<-.pub_field(r,"reference","Citation unavailable")
     furl<-.pub_field(f,"primary_reference_url",.pub_field(f,"source_url"));rurl<-.pub_field(r,"primary_reference_url",.pub_field(r,"source_url"))
     fkey<-.pub_field(f,"primary_reference_key");rkey<-.pub_field(r,"primary_reference_key")
@@ -139,6 +199,10 @@ primer_publication_context <- function(overview, selected_pair_ids=NULL, referen
       included_in_figure=included,exclusion_reason=reason,
       window_state=if(!exact) "unmapped" else if(end<domain[1L] || start>domain[2L]) "outside" else if(start<domain[1L] || end>domain[2L]) "clipped" else "full",
       stringsAsFactors=FALSE)
+    for(side in c("forward","reverse")) {
+      orientation<-if(side=="forward") f_orientation else r_orientation
+      if(!is.null(orientation)) for(field in names(orientation)) geometry_rows[[i]][[paste0(side,"_",field)]]<-orientation[[field]]
+    }
     for(component in list(f,r)) if(nrow(component)) {
       component$source_key<-if(component$direction[1L]=="forward") fcite else rcite
       primer_rows[[length(primer_rows)+1L]]<-component
@@ -213,6 +277,9 @@ fungal_publication_context <- function(snapshot,pair_ids=NULL,accession=NULL,bro
   if(is.null(pair_rows)) pair_rows<-snapshot$pairs[match(pair_ids,snapshot$pairs$pair_id),,drop=FALSE]
   # All requested rows enter the table. Figure filtering is separate and explicit.
   overview<-fungal_primer_overview_data(snapshot,pair_rows,accession,region="ALL",max_rows=length(pair_ids))
+  # The shared geometry adapter retains effective primer identity; the exact
+  # catalog supplies optional original/derived orientation provenance.
+  overview$component_catalog<-snapshot$catalog
   if(is.null(filters$region)) filters$region<-region
   figure_ids<-if(is.null(filters$figure_pair_ids)) overview$pair_meta$pair_id else filters$figure_pair_ids
   figure_rows<-pair_rows[pair_rows$pair_id %in% figure_ids,,drop=FALSE]
@@ -258,6 +325,21 @@ fungal_publication_context <- function(snapshot,pair_ids=NULL,accession=NULL,bro
     table
   }
   context$citations<-citations;context$table<-enrich(context$table);context$geometry_table<-enrich(context$geometry_table);context
+}
+.pub_derived_components <- function(geometry) {
+  rows<-list()
+  fields<-c(.pub_orientation_fields,"catalog_id","effective_direction","orientation_citation_scope","orientation_citation_caveat")
+  for(side in c("forward","reverse")) {
+    flag<-paste0(side,"_orientation_derived")
+    if(!flag %in% names(geometry)) next
+    for(i in which(geometry[[flag]] %in% TRUE)) {
+      row<-geometry[i,c("selection_row","figure_row","pair_id","pair_label"),drop=FALSE]
+      row$direction<-side;row$effective_oligo_5to3<-geometry[[paste0(side,"_oligo_5to3")]][i]
+      for(field in fields) if(paste0(side,"_",field) %in% names(geometry)) row[[field]]<-geometry[[paste0(side,"_",field)]][i]
+      rows[[length(rows)+1L]]<-row
+    }
+  }
+  .pub_bind(rows)
 }
 
 .pub_find_svg <- function(node) {
@@ -312,6 +394,7 @@ primer_publication_export <- function(context) {
   context<-.pub_verified_context(context)
   mapped<-context$overview$pair_meta[match(context$figure_pair_ids,context$overview$pair_meta$pair_id),,drop=FALSE]
   geometry<-context$geometry_table;annotations<-context$landmarks
+  orientation<-.pub_derived_components(geometry)
   annotation_text<-if(nrow(annotations)) paste(paste0(annotations$label," (",annotations$boundary_status,")"),collapse=", ") else "No gene/domain coordinates are available for this reference."
   products<-geometry[geometry$included_in_figure,,drop=FALSE]
   lengths<-if(nrow(products)) paste0("Figure product spans range from ",min(products$product_including_primers_bp)," to ",max(products$product_including_primers_bp)," encoded bp including primers.") else "No exact-supported product is displayed."
@@ -335,6 +418,19 @@ primer_publication_export <- function(context) {
     "NCBI geometry and UNITE taxonomic support retain independent source versions and denominators. Missing or filtered combinations remain in the table with their inclusion flag and exclusion reason.",
     "Gene boundaries retain their source completeness; mapped LSU domains retain comparative-projection status.",
     "Full bibliography supplements are matched by exact frozen primary-reference key; missing supplements retain the original short citation and an explicit unavailable-full-reference status.",.pub_filters_text(context$filters))
+  if(nrow(orientation)) {
+    components<-orientation[!duplicated(orientation$catalog_id),,drop=FALSE]
+    descriptions<-vapply(seq_len(nrow(components)),function(i) {
+      row<-components[i,,drop=FALSE]
+      paste0(row$parent_primer_name," (parent ",row$parent_direction," 5′–3′ ",row$parent_sequence,
+        ") → derived ",row$effective_direction," 5′–3′ ",row$effective_oligo_5to3,
+        if(nzchar(.pub_field(row,"sequence_derivation_note"))) paste0("; ",row$sequence_derivation_note) else "")
+    },character(1))
+    caption<-paste(caption,"Derived orientation:",paste(descriptions,collapse=". "),
+      "Original citations, where available, describe parent primers only; derived oligos and their combinations are unvalidated computational candidates.")
+    methods<-paste(methods,"The derived oligo is the parent's reverse complement in the opposite effective role; original IDs, roles, sequences and source versions are retained.",
+      "Raw-query equivalence concerns the nucleotide-set matching model. Inosine-to-N normalization, when present, is computational and does not assert chemical identity or PCR performance.")
+  }
   svg<-NULL
   if(nrow(mapped)) {
     if(!exists("primer_overview_map",mode="function")) stop("Source R/primer_overview.R before scientific figure export.")
@@ -347,6 +443,7 @@ primer_publication_export <- function(context) {
   metadata<-list(reference_accession=context$reference_accession,ncbi_version=context$version_id,unite_version=context$broad_version_id,
     raw_reference_sha256=context$reference_sequence_sha256,coordinate_basis="raw-template encoded bp;1-based inclusive",selected_pair_ids=context$selected_pair_ids,
     figure_pair_ids=context$figure_pair_ids,filters=context$filters)
+  if(nrow(orientation)) metadata$derived_component_orientation<-orientation
   result<-list(svg=.pub_svg_document(svg,context$title,caption,methods,context$citations,metadata),table=context$table,
     geometry_table=context$geometry_table,caption=caption,methods=methods,citations=context$citations,landmarks=context$landmarks,context=context)
   result$html<-primer_publication_html(result)
@@ -358,9 +455,17 @@ primer_publication_html <- function(export) {
   number<-function(x) if(length(x)!=1L || is.na(x)) "—" else .pub_count(x)
   rows<-vapply(seq_len(nrow(table)),function(i) {
     row<-table[i,,drop=FALSE]
+    oligo_cell<-function(side) {
+      content<-paste0(escape(row[[paste0(side,"_primer")]]),"<br><span class=\"oligo\">",escape(row[[paste0(side,"_oligo_5to3")]]),"</span>")
+      if(isTRUE(.pub_orientation_bool(row[[paste0(side,"_orientation_derived")]]))) {
+        content<-paste0(content,"<br><small>Derived reverse complement; parent ",escape(.pub_field(row,paste0(side,"_parent_primer_name"))),
+          " (",escape(.pub_field(row,paste0(side,"_parent_direction"))),") 5′–3′: <span class=\"oligo\">",escape(.pub_field(row,paste0(side,"_parent_sequence"))),
+          "</span>. Original citation, where available, applies to the parent only. ",escape(.pub_field(row,paste0(side,"_sequence_derivation_note"))),"</small>")
+      }
+      content
+    }
     cells<-c(paste0(if(is.na(row$figure_row)) "—" else row$figure_row," · ",escape(row$pair_label)),
-      paste0(escape(row$forward_primer),"<br><span class=\"oligo\">",escape(row$forward_oligo_5to3),"</span>"),
-      paste0(escape(row$reverse_primer),"<br><span class=\"oligo\">",escape(row$reverse_oligo_5to3),"</span>"),
+      oligo_cell("forward"),oligo_cell("reverse"),
       paste0(number(row$product_including_primers_bp)," / ",number(row$product_excluding_primers_bp)),
       paste0(escape(row$reference_accession),"<br><small>",escape(row$ncbi_snapshot_id),"</small>"),
       paste0(escape(row$taxon),"<br><small>",escape(row$taxonomic_rank)," · ",escape(row$parent_path),"</small>"),

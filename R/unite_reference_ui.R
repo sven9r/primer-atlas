@@ -37,7 +37,7 @@
     `aria-label`=paste("UNITE",region,"regional alignment; columns",window$start,"to",window$end),
     viewBox=paste(0,0,figure_width,figure_height),width=figure_width,height=figure_height,
     `data-region`=region,`data-start-column`=window$start,`data-end-column`=window$end,
-    htmltools::tags$text(x=0,y=18,fill="#475569",`font-size`=11,"Organism / accession"),
+    htmltools::tags$text(x=0,y=18,fill="#475569",`font-size`=11,"Reference sequence"),
     htmltools::tags$text(x=label_width,y=18,fill="#475569",`font-size`=11,"Alignment columns (gaps included)"))
   ticks <- unique(c(window$start,seq.int(window$start,window$end)[seq.int(window$start,window$end)%%10L==0L],window$end))
   for(column in ticks) svg <- htmltools::tagAppendChild(svg,htmltools::tags$text(
@@ -48,15 +48,17 @@
     metadata <- window$metadata[i,,drop=FALSE]
     organism <- if("organism" %in% names(metadata)) as.character(metadata$organism) else ""
     organism[is.na(organism)] <- ""
-    label <- record
-    for(column in c("accession","species_hypothesis")) if(column %in% names(metadata) &&
-        !is.na(metadata[[column]]) && nzchar(as.character(metadata[[column]]))) label <- as.character(metadata[[column]])
-    primary <- if(nzchar(organism)) organism else label
+    identities <- vapply(c("accession","species_hypothesis"),function(column) {
+      if(!column %in% names(metadata) || is.na(metadata[[column]])) return("")
+      as.character(metadata[[column]])
+    },character(1L))
+    identities <- identities[nzchar(identities)]
+    secondary <- if(length(identities)) paste(identities,collapse=" · ") else record
+    primary <- if(nzchar(organism)) organism else if(length(identities)) identities[1L] else record
     primary_display <- if(nchar(primary)>28L) paste0(substr(primary,1L,27L),"…") else primary
-    secondary <- if("accession" %in% names(metadata) && !is.na(metadata$accession)) metadata$accession else label
     y <- top+(i-1L)*row_height
     row <- htmltools::tags$g(class="unite-alignment-row",`data-record-id`=record,
-      htmltools::tags$title(paste(label,organism,"· record",record)),
+      htmltools::tags$title(paste(organism,secondary,"· record",record)),
       htmltools::tags$text(x=0,y=y+11,fill="#172033",`font-size`=11,primary_display),
       htmltools::tags$text(x=0,y=y+24,fill="#64748b",`font-size`=9,secondary))
     bases <- strsplit(window$alignment[i],"",fixed=TRUE)[[1L]]
@@ -105,7 +107,7 @@ uniteReferenceUI <- function(id,initial_mode="alignment") {
         shiny::downloadButton(ns("download_breadth"),"Group counts (CSV)",class="btn-outline-secondary btn-sm"))),
     shiny::conditionalPanel(condition="input.mode == 'alignment'",ns=ns,
       shiny::div(class="unite-pane",
-        shiny::div(class="unite-controls",shiny::selectInput(ns("alignment_rank"),"Taxonomic rank",c("Orders"="order","Classes"="class"),"order"),
+        shiny::div(class="unite-controls",shiny::selectInput(ns("alignment_rank"),"Group sequences by",c("Orders"="order","Classes"="class"),"order"),
           shiny::selectInput(ns("alignment_group"),"Reference group",choices=NULL),
           shiny::div(class="atlas-segmented unite-region-select",shiny::radioButtons(ns("region"),"Region",
             c("ITS1"="ITS1","5.8S"="5.8S","ITS2"="ITS2"),"ITS1",inline=TRUE))),
@@ -347,6 +349,8 @@ uniteReferenceServer <- function(id,dataset=unite_reference_read,pair_provider=N
       result <- alignment()
       shiny::div(class="unite-context",strong(region()," · "),length(result$alignment)," displayed of ",result$n_aligned,
         " regional alignment exemplars · ",.unite_reference_ui_count(result$n_columns)," alignment columns",
+        shiny::p("Each row is one UNITE reference DNA sequence. Order or class selects the comparison group. ",
+          "Organism names can repeat; the accession and SH (species hypothesis) identify each reference."),
         if(!is.null(result$n_regions)) shiny::p(result$n_regions," selected references have complete region boundaries of ",result$n_total,
           " in this group",if(!is.null(result$n_missing_boundaries)) paste0(" · ",result$n_missing_boundaries," missing / incomplete boundaries"))
         else shiny::p(result$n_total," selected references in this group; regional boundary counts are unavailable in this alignment result."),

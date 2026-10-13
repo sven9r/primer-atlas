@@ -237,6 +237,7 @@ uniteReferenceServer <- function(id,dataset=unite_reference_read,pair_provider=N
     window <- shiny::reactive(.unite_reference_ui_alignment_window(alignment(),
       start=.unite_reference_ui_value(input$window_start,1L),width=window_width()))
     pair_catalog <- shiny::reactive(data()$pairs)
+    pair_choices <- shiny::reactive(setNames(pair_catalog()$pair_id,pair_catalog()$pair_label))
     requested_pair <- shiny::reactiveVal(NULL)
     default_pair <- shiny::reactive({
       ids <- pair_catalog()$pair_id
@@ -253,13 +254,13 @@ uniteReferenceServer <- function(id,dataset=unite_reference_read,pair_provider=N
       default_pair()
     })
     shiny::observeEvent(pair_catalog(),shiny::updateSelectizeInput(session,"pair",
-      choices=setNames(pair_catalog()$pair_id,pair_catalog()$pair_label),selected=pair(),server=TRUE))
+      choices=pair_choices(),selected=pair(),server=TRUE))
     if(!is.null(pair_provider)) shiny::observeEvent(pair_provider(),{
       provided <- pair_provider()
       if(is.list(provided)) provided <- .unite_reference_ui_value(provided$pair_id,provided$pair)
       if(length(provided)==1L && provided %in% pair_catalog()$pair_id) {
         requested_pair(provided)
-        shiny::updateSelectizeInput(session,"pair",selected=provided,server=TRUE)
+        shiny::updateSelectizeInput(session,"pair",choices=pair_choices(),selected=provided,server=TRUE)
       }
     },ignoreNULL=TRUE)
     shiny::observeEvent(input$pair,{
@@ -284,7 +285,7 @@ uniteReferenceServer <- function(id,dataset=unite_reference_read,pair_provider=N
       chosen_site_group(NULL)
       shiny::updateSelectInput(session,"alignment_rank",selected=rank)
       shiny::updateSelectInput(session,"alignment_group",selected=group)
-      shiny::updateSelectizeInput(session,"pair",selected=default_pair(),server=TRUE)
+      shiny::updateSelectizeInput(session,"pair",choices=pair_choices(),selected=default_pair(),server=TRUE)
     },ignoreNULL=TRUE,priority=10L)
     shiny::observeEvent(list(pair(),sites_rank(),data()$manifest$id),chosen_site_group(NULL),priority=10L)
     shiny::observeEvent(input$site_summary_rows_selected,{

@@ -97,8 +97,15 @@ primer_inputs <- regmatches(primer_ui,gregexpr("<input[^>]*>",primer_ui))[[1L]]
 stopifnot(any(grepl('value="primers"',primer_inputs,fixed=TRUE) & grepl('checked',primer_inputs,fixed=TRUE)))
 
 messages <- new.env(parent=emptyenv())
+registered_choices <- new.env(parent=emptyenv())
+registered_filters <- new.env(parent=emptyenv())
 mock <- shiny::MockShinySession$new()
 mock$sendInputMessage <- function(inputId,message) messages[[inputId]] <- message
+mock$registerDataObj <- function(name,data,filterFunc) {
+  registered_choices[[name]] <- data
+  registered_filters[[name]] <- filterFunc
+  paste0("/fixture-data/",name)
+}
 provider <- reactiveVal(NULL)
 shiny::testServer(uniteReferenceServer,args=list(id="unite",dataset=function() fixture,pair_provider=provider),session=mock,{
   session$setInputs(breadth_rank="class",breadth_search="",alignment_rank="class",alignment_group="c-A",
@@ -200,6 +207,17 @@ shiny::testServer(uniteReferenceServer,args=list(id="unite",dataset=function() f
   stopifnot(pair()=="F_ABSENT",nrow(site_details())==0L,sum(support()$summary$n_exact_products)==0L,
     grepl("Candidate combination",output$site_tally$html,fixed=TRUE),
     grepl("independent validation",output$site_tally$html,fixed=TRUE))
+  # Selection-only server updates must not overwrite the AJAX catalog with
+  # a zero-column frame; later searches still need the original labels/IDs.
+  keys <- grep("(^|-)pair$",ls(registered_choices),value=TRUE)
+  stopifnot(length(keys)==1L)
+  choices <- registered_choices[[keys]]
+  stopifnot(is.data.frame(choices),all(c("label","value") %in% names(choices)),
+    nrow(choices)==nrow(pairs),setequal(choices$value,pairs$pair_id))
+  response <- registered_filters[[keys]](choices,list(QUERY_STRING=
+    "query=&field=%5B%22label%22%5D&value=value&conju=and&maxop=2"))
+  returned <- jsonlite::fromJSON(response$content)
+  stopifnot(response$status==200L,setequal(returned$value,pairs$pair_id))
   session$setInputs(pair="F_ABSENT")
   session$flushReact()
   session$setInputs(pair="F_R",sites_rank="order")

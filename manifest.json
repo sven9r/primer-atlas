@@ -2725,7 +2725,7 @@
   },
   "files": {
     "app.R": {
-      "checksum": "905798eecffd9e7ba7c5cbc23ba711a2"
+      "checksum": "6f181fce83b573cb458849c1049db156"
     },
     "data/catalog/claims.csv": {
       "checksum": "7e287c602b958d2d647bbee4089c0b39"
@@ -9771,11 +9771,17 @@
     "R/fungal_fit.R": {
       "checksum": "77e6441dc909672f779f3ee8ddcf47ce"
     },
+    "R/fungal_primer_overview.R": {
+      "checksum": "da90c732826a27a8663f6dedfb65bd5e"
+    },
     "R/fungal_ui.R": {
       "checksum": "5f92777fda15abebaba637673cc02cbb"
     },
     "R/fungal_versions.R": {
       "checksum": "90d16ccaedf4a943c9f95a62dd8ff249"
+    },
+    "R/primer_overview.R": {
+      "checksum": "91330b4bd94e536e4dfbe640e6d2c48e"
     },
     "R/primerminer_runtime.R": {
       "checksum": "7544e593f3fc8aa3bbd50882ad87b480"
@@ -9799,7 +9805,7 @@
       "checksum": "fc935cd571e18642b94b10d6811ed7fc"
     },
     "R/unite_reference_ui.R": {
-      "checksum": "044f87127c7956ded4bc69f748c02f57"
+      "checksum": "9b7008feac2f2ed71929529a4c360570"
     },
     "R/unite_reference.R": {
       "checksum": "2ef2f257fc93d96b4e9ce0e5acee3e36"

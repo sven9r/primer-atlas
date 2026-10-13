@@ -45,6 +45,8 @@ jobs:
             tests/test_fungal_fit.R \
             tests/test_fungal_fit_ui.R \
             tests/test_fungal_fit_navigation.R \
+            tests/test_primer_overview.R \
+            tests/test_fungal_primer_overview.R \
             tests/test_unite_reference.R \
             tests/test_unite_reference_ui.R \
             tests/test_fungal_explorer_ui.R \

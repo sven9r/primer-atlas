@@ -28,6 +28,8 @@ source("R/fungal_fit.R")
 source("R/fungal_fit_ui.R")
 source("R/unite_reference.R")
 source("R/unite_reference_ui.R")
+source("R/primer_overview.R")
+source("R/fungal_primer_overview.R")
 
 coi_release_state <- tryCatch(atlas_read_manifest("COI"), error = function(e) NULL)
 coi_reference_panel <- coi_reference_load(coi_release_state)
@@ -1593,7 +1595,7 @@ ui <- page_navbar(
                 actionButton("go_fit", "Check taxonomic fit", class = "btn-outline-secondary"))),
         div(class = "start-card atlas-marker-card",
             span(class = "atlas-status-chip", "Fungal marker"), h3("Fungal rDNA"),
-                p("Compare fungal ITS regions across clades, or inspect 18S and 28S primer maps."),
+                p("Explore fungal primer combinations across 18S, ITS and 28S, then inspect their reference evidence."),
             div(class = "atlas-card-actions",
                 actionButton("go_fungal_explore", "Explore primers →", class = "btn-primary"),
                 actionButton("go_fungal_fit", "Check taxonomic fit", class = "btn-outline-secondary"))),
@@ -1628,9 +1630,8 @@ ui <- page_navbar(
       div(class = "atlas-page-tools",
           actionButton("go_coi_map", "Animal COI", class = "btn btn-outline-primary btn-sm"),
           actionButton("go_fungal_map", "Fungal rDNA", class = "btn btn-outline-primary btn-sm"),
-          actionButton("go_18s", "Open 18S primers", class = "btn btn-outline-primary btn-sm"),
-          conditionalPanel(condition = "input.map_marker != 'ITS_FUNGAL' || input.fungal_explore_source != 'UNITE'",
-              span(class = "tiny", "More filters are available beside the map."))),
+          actionButton("go_18s", "Eukaryotic 18S", class = "btn btn-outline-primary btn-sm"),
+          span(class = "tiny", "More filters are available beside the map.")),
       layout_sidebar(
         sidebar = sidebar(
           width = 340,
@@ -1659,8 +1660,8 @@ ui <- page_navbar(
             condition = "input.map_marker == 'ITS_FUNGAL'",
             div(
               class = "marker-guidance",
-              strong("Explore fungal combinations in the workspace. "),
-              "Choose a reference version, sequencing platform, and primer combination there. Length and lineage evidence belong to the selected snapshot."
+              strong("Use the shared primer overview. "),
+              "Choose a region, reference and platform above the map. Open Inspect evidence for reference support and nucleotide alignments."
             )
           ),
           conditionalPanel(
@@ -1799,34 +1800,39 @@ ui <- page_navbar(
           id = "primer-map-card",
           full_screen = TRUE,
           card_header(uiOutput("map_card_title", inline = TRUE)),
-          conditionalPanel(
-            condition = "input.map_marker == 'ITS_FUNGAL'",
-            div(class = "atlas-segmented atlas-fungal-collection",
-                radioButtons("fungal_explore_source", "Reference collection",
-                    c("ITS alignments · UNITE" = "UNITE", "18S / 28S maps · NCBI" = "NCBI"), "UNITE", inline = TRUE)),
-            conditionalPanel(condition = "input.fungal_explore_source == 'UNITE'", uniteReferenceUI("unite_explorer", initial_mode = "alignment")),
-            conditionalPanel(condition = "input.fungal_explore_source == 'NCBI'", fungalExplorerUI("fungal"))
-          ),
-          conditionalPanel(
-            condition = "input.map_marker != 'ITS_FUNGAL'",
-            tags$details(class = "atlas-detail", tags$summary("Browse primer combinations"), uiOutput("combination_browser_ui")),
-            div(
-              class = "map-legend",
-              span(
-                span(class = "legend-number", "1"),
-                "Dynamic row number"
-              ),
-              span(span(class = "legend-line legend-forward"), "Forward primer"),
-              span(span(class = "legend-line legend-informative"), "Amplicon − primers (informative)"),
-              span(span(class = "legend-line legend-reverse"), "Reverse primer")
-            ),
-            p(class = "map-scroll-hint tiny", "Swipe horizontally across the map to see later positions and source columns."),
-            uiOutput("primer_map"),
-            tags$details(class = "atlas-detail", tags$summary("Selection summary and catalog"),
-                uiOutput("overview_metrics"), uiOutput("its_map_catalog_ui")),
-            uiOutput("custom_diagnostic_selector"),
-            uiOutput("custom_location_detail")
-          )
+          uiOutput("primer_overview_controls"),
+          div(class="atlas-segmented",
+              radioButtons("primer_overview_platform", "Sequencing platform",
+                  c("All platforms"="ALL", "Illumina"="ILLUMINA", "PacBio"="PACBIO", "Nanopore"="NANOPORE"),
+                  "ALL", inline=TRUE)),
+          tags$details(class="atlas-detail", tags$summary("Browse primer combinations"),
+              conditionalPanel(condition="input.map_marker == 'ITS_FUNGAL'",
+                  checkboxInput("fungal_overview_starters", "Show 20 starter examples", TRUE),
+                  uiOutput("fungal_overview_choices")),
+              conditionalPanel(condition="input.map_marker != 'ITS_FUNGAL'", uiOutput("combination_browser_ui"))),
+          uiOutput("primer_overview_context"),
+          div(class="map-legend",
+              span(span(class="legend-number", "1"), "Dynamic row number"),
+              span(span(class="legend-line legend-forward"), "Forward primer"),
+              span(span(class="legend-line legend-informative"), "Amplicon − primers (informative)"),
+              span(span(class="legend-line legend-reverse"), "Reverse primer")),
+          p(class="map-scroll-hint tiny", "Swipe horizontally across the map to see later positions and source columns."),
+          uiOutput("primer_map"),
+          uiOutput("primer_overview_paging"),
+          tags$script(HTML("(function(){function bind(){Shiny.addCustomMessageHandler('primer-overview-inspect',function(message){var d=document.getElementById('primer-evidence-inspector');if(d){d.open=true;d.scrollIntoView({behavior:'smooth',block:'start'});}});var d=document.getElementById('primer-evidence-inspector');if(d)d.addEventListener('toggle',function(){if(d.open)Shiny.setInputValue('primer_overview_inspector_open',{nonce:Date.now()},{priority:'event'});});}$(bind);})();")),
+          tags$details(id="primer-evidence-inspector", class="atlas-detail",
+              tags$summary("Inspect evidence and alignments"),
+              uiOutput("primer_overview_inspector_controls"),
+              conditionalPanel(condition="input.map_marker == 'ITS_FUNGAL'",
+                  uiOutput("primer_overview_evidence_status"),
+                  conditionalPanel(condition="output.primer_overview_broad_available", uniteReferenceUI("unite_explorer", initial_mode="primers")),
+                  tags$details(class="atlas-detail", tags$summary("Mapped-template details and historical versions"),
+                      fungalExplorerUI("fungal"))),
+              conditionalPanel(condition="input.map_marker != 'ITS_FUNGAL'",
+                  uiOutput("overview_metrics"), uiOutput("its_map_catalog_ui"),
+                  conditionalPanel(condition="input.map_marker == 'COI'",
+                      actionButton("overview_open_fit", "Check taxonomic fit", class="btn-primary")),
+                  uiOutput("custom_diagnostic_selector"), uiOutput("custom_location_detail")))
         )
       )
     )
@@ -2438,10 +2444,15 @@ ui <- page_navbar(
 server <- function(input, output, session) {
   fungal_fit_context <- reactiveVal(NULL)
   fungal_explorer_context <- reactiveVal(NULL)
+  fungal_overview_evidence <- reactiveVal(NULL)
+  overview_clicked_pair <- reactiveVal(NULL)
+  overview_page <- reactiveVal(1L)
   fungal_workspace <- fungalExplorerServer("fungal", selection = fungal_explorer_context)
   fungal_fit_workspace <- fungalFitServer("fungal_fit", selection = fungal_fit_context)
-  unite_explorer_workspace <- uniteReferenceServer("unite_explorer", initial_mode = "alignment")
-  unite_fit_workspace <- uniteReferenceServer("unite_fit", initial_mode = "primers")
+  unite_explorer_workspace <- uniteReferenceServer("unite_explorer", initial_mode = "primers",
+      pair_provider=reactive(fungal_overview_broad_selection()$pair))
+  unite_fit_workspace <- uniteReferenceServer("unite_fit", initial_mode = "primers",
+      pair_provider=reactive(fungal_overview_broad_selection()$pair))
   unite_library_workspace <- uniteReferenceServer("unite_library", initial_mode = "coverage")
   coi_refresh <- coiReferenceRefreshServer("coi_refresh", initial = coi_reference_panel)
   coi_reference_current <- coi_refresh$reference
@@ -2449,6 +2460,206 @@ server <- function(input, output, session) {
   current_pair_template_scores <- reactive({
     reference <- coi_reference_current()
     if (!is.null(reference$pair_templates)) as_tibble(reference$pair_templates) else pair_template_scores
+  })
+  set_fungal_overview_evidence <- function(pair,nonce) {
+    data <- fungal_workspace$snapshot()
+    row <- data$pairs[data$pairs$pair_id==pair,,drop=FALSE]
+    if(nrow(row)!=1L) return(invisible(NULL))
+    fungal_overview_evidence(list(pair=pair,version=data$manifest$id,
+        forward_sequence=row$forward_sequence,reverse_sequence=row$reverse_sequence,nonce=nonce))
+  }
+  fungal_overview_broad_selection <- reactive({
+    request <- fungal_overview_evidence()
+    if(is.null(request)) return(list(available=TRUE,pair=NULL))
+    broad <- unite_reference_read()
+    rows <- if(!is.null(broad)) broad$pairs[broad$pairs$pair_id==request$pair,,drop=FALSE] else data.frame()
+    valid <- nrow(rows)==1L && identical(toupper(rows$forward_sequence),toupper(request$forward_sequence)) &&
+        identical(toupper(rows$reverse_sequence),toupper(request$reverse_sequence))
+    list(available=valid,pair=if(valid) request$pair else NULL,request=request,
+        reason=if(!valid) "This mapped combination has no matching forward and reverse oligos in the broad UNITE snapshot. Its NCBI selection is retained.")
+  })
+  output$primer_overview_broad_available <- reactive(isTRUE(fungal_overview_broad_selection()$available))
+  outputOptions(output,"primer_overview_broad_available",suspendWhenHidden=FALSE)
+  output$primer_overview_evidence_status <- renderUI({
+    selection <- fungal_overview_broad_selection()
+    if(!isTRUE(selection$available)) return(div(class="callout",selection$reason))
+    if(is.null(selection$request)) return(p(class="tiny","Choose a mapped combination to follow it into the broad UNITE ITS evidence."))
+    p(class="atlas-context-line","Mapped geometry: ",selection$request$version,
+        " · broad primer evidence: separate UNITE ITS snapshot. The two reference counts describe different collections.")
+  })
+  fungal_overview_reference <- reactive({
+    data <- fungal_workspace$snapshot()
+    selected <- input$primer_overview_reference
+    if(length(selected)==1L && selected %in% names(data$sequences)) return(selected)
+    pinned <- data$manifest$reference_accession
+    if(length(pinned)==1L && pinned %in% names(data$sequences)) return(pinned)
+    fungal_primer_overview_default_accession(data, fungal_workspace$candidates())
+  })
+  fungal_overview_data <- reactive({
+    rows <- fungal_workspace$candidates()
+    chosen <- input$fungal_overview_pairs
+    if(!is.null(chosen)) rows <- rows[rows$pair_id %in% chosen,,drop=FALSE]
+    region <- input$primer_overview_region
+    if(is.null(region) || !region %in% c("ALL","SSU","ITS","LSU") && !startsWith(region,"landmark:")) region <- "ITS"
+    fungal_primer_overview_data(fungal_workspace$snapshot(), rows, fungal_overview_reference(), region=region,
+        max_rows=max(20L,nrow(rows)))
+  })
+  observeEvent(input$fungal_overview_starters,
+      updateCheckboxInput(session,"fungal-examples_only",value=isTRUE(input$fungal_overview_starters)),ignoreInit=TRUE)
+  observeEvent(input$primer_overview_version, {
+    if(identical(input$map_marker,"ITS_FUNGAL") && input$primer_overview_version %in% fungal_read_index()$id)
+      updateSelectInput(session,"fungal-version",selected=input$primer_overview_version)
+  },ignoreInit=TRUE)
+  output$fungal_overview_choices <- renderUI({
+    rows <- fungal_workspace$candidates()
+    current <- isolate(input$fungal_overview_pairs)
+    if(is.null(current)) current <- rows$pair_id
+    checkboxGroupInput("fungal_overview_pairs", "Primer combinations",
+        choices=setNames(rows$pair_id, paste0(rows$pair_label," · ",fungal_evidence_label(rows$evidence_status))),
+        selected=intersect(current,rows$pair_id))
+  })
+  observeEvent(fungal_workspace$snapshot()$manifest$id, {
+    rows <- fungal_workspace$candidates()
+    updateCheckboxGroupInput(session,"fungal_overview_pairs",selected=rows$pair_id)
+  },ignoreInit=TRUE)
+  observeEvent(list(fungal_workspace$candidates()$pair_id,fungal_explorer_context()), {
+    request <- fungal_explorer_context()
+    if(is.list(request) && identical(request$version,fungal_workspace$snapshot()$manifest$id) &&
+        request$pair %in% fungal_workspace$candidates()$pair_id)
+      updateCheckboxGroupInput(session,"fungal_overview_pairs",selected=unique(c(isolate(input$fungal_overview_pairs),request$pair)))
+  },ignoreInit=TRUE)
+  output$primer_overview_controls <- renderUI({
+    req(input$map_marker)
+    if(identical(input$map_marker,"ITS_FUNGAL")) {
+      data <- fungal_workspace$snapshot()
+      accession <- isolate(fungal_overview_reference())
+      taxonomy <- data$taxonomy
+      labels <- paste0(taxonomy$accession," · ",taxonomy$organism)
+      versions <- fungal_read_index()
+      own <- data$landmarks[data$landmarks$accession==accession,,drop=FALSE]
+      landmark_labels <- own$label
+      if("boundary_status" %in% names(own)) landmark_labels <- paste0(landmark_labels,
+          ifelse(!is.na(own$boundary_status) & nzchar(own$boundary_status),paste0(" · ",own$boundary_status),""))
+      regions <- c("All rDNA"="ALL", "18S / SSU"="SSU", "ITS1 / 5.8S / ITS2"="ITS", "28S / LSU"="LSU",
+          setNames(paste0("landmark:",own$landmark_id),landmark_labels))
+      current <- isolate(input$primer_overview_region)
+      if(is.null(current) || !current %in% regions) current <- "ITS"
+      return(layout_columns(col_widths=c(4,5,3),
+          selectInput("primer_overview_region","Region",regions,selected=current),
+          selectizeInput("primer_overview_reference","Coordinate reference",setNames(taxonomy$accession,labels),selected=accession),
+          selectInput("primer_overview_version","Reference version",setNames(versions$id,versions$label),selected=data$manifest$id)))
+    }
+    marker <- marker_registry[marker_registry$marker_id==input$map_marker,,drop=FALSE]
+    own <- marker_landmarks[marker_landmarks$marker_id==input$map_marker,,drop=FALSE]
+    choices <- c("Full marker"="ALL",setNames(paste0("landmark:",own$landmark_id),own$label))
+    current <- isolate(input$primer_overview_region)
+    if(is.null(current) || !current %in% choices) current <- "ALL"
+    layout_columns(col_widths=c(4,5,3),
+        selectInput("primer_overview_region","Region",choices,selected=current),
+        selectInput("primer_overview_reference","Coordinate reference",marker$coordinate_reference,selected=marker$coordinate_reference),
+        selectInput("primer_overview_version","Reference version",marker$reference_version,selected=marker$reference_version))
+  })
+  observeEvent(input$map_marker, {
+    overview_clicked_pair(NULL)
+    updateSelectInput(session,"primer_overview_region",selected=if(identical(input$map_marker,"ITS_FUNGAL")) "ITS" else "ALL")
+  },ignoreInit=TRUE)
+  observeEvent(input$primer_overview_reference, {
+    if(!identical(input$map_marker,"ITS_FUNGAL")) return()
+    data <- fungal_workspace$snapshot()
+    accession <- input$primer_overview_reference
+    if(!accession %in% names(data$sequences)) return()
+    own <- data$landmarks[data$landmarks$accession==accession,,drop=FALSE]
+    labels <- own$label
+    if("boundary_status" %in% names(own)) labels <- paste0(labels,
+        ifelse(!is.na(own$boundary_status) & nzchar(own$boundary_status),paste0(" · ",own$boundary_status),""))
+    choices <- c("All rDNA"="ALL","18S / SSU"="SSU","ITS1 / 5.8S / ITS2"="ITS","28S / LSU"="LSU",
+        setNames(paste0("landmark:",own$landmark_id),labels))
+    selected <- isolate(input$primer_overview_region)
+    if(is.null(selected) || !selected %in% choices) selected <- "ITS"
+    updateSelectInput(session,"primer_overview_region",choices=choices,selected=selected)
+  },ignoreInit=TRUE)
+  overview_rows <- reactive({
+    rows <- if(identical(input$map_marker,"ITS_FUNGAL")) fungal_overview_data()$pair_meta else sorted_filtered_pairs()
+    platform <- input$primer_overview_platform %||% "ALL"
+    ceiling <- switch(platform,ILLUMINA=500,PACBIO=2000,NANOPORE=3500,Inf)
+    rows <- rows[is.finite(rows$aligned_amplicon_bp) & rows$aligned_amplicon_bp<=ceiling,,drop=FALSE]
+    if(identical(input$map_marker,"ITS_FUNGAL")) rows <- sort_primer_map_rows(rows,input$map_sort %||% "binding_site")
+    rows
+  })
+  overview_visible_rows <- reactive({
+    rows <- overview_rows()
+    pages <- max(1L,ceiling(nrow(rows)/10L))
+    page <- max(1L,min(overview_page(),pages))
+    rows[seq_len(nrow(rows))>(page-1L)*10L & seq_len(nrow(rows))<=page*10L,,drop=FALSE]
+  })
+  observeEvent(overview_rows()$pair_id,overview_page(1L),ignoreInit=TRUE)
+  observeEvent(input$overview_previous,overview_page(max(1L,overview_page()-1L)))
+  observeEvent(input$overview_next,overview_page(min(max(1L,ceiling(nrow(overview_rows())/10L)),overview_page()+1L)))
+  output$primer_overview_paging <- renderUI({
+    count <- nrow(overview_rows())
+    if(count<=10L) return(NULL)
+    pages <- ceiling(count/10L)
+    page <- min(overview_page(),pages)
+    div(class="atlas-pagination",
+        actionButton("overview_previous","Previous",class="btn-outline-secondary btn-sm",disabled=if(page==1L) "disabled" else NULL),
+        span(paste0("Page ",page," of ",pages," · ",count," mapped combinations")),
+        actionButton("overview_next","Next",class="btn-outline-secondary btn-sm",disabled=if(page==pages) "disabled" else NULL))
+  })
+  overview_selected_pair <- reactive({
+    ids <- overview_rows()$pair_id
+    current <- overview_clicked_pair() %||% input$overview_evidence_pair
+    if(length(current)==1L && current %in% ids) current else if(length(ids)) ids[1L] else NULL
+  })
+  output$primer_overview_context <- renderUI({
+    rows <- overview_rows()
+    if(identical(input$map_marker,"ITS_FUNGAL")) {
+      data <- fungal_overview_data()
+      return(p(class="atlas-context-line", strong(nrow(rows)," mapped combinations"),
+          " · raw template bases on ",data$accession," · ",length(fungal_workspace$snapshot()$sequences)," NCBI long-rDNA references",
+          if(nrow(data$missing_pairs)) paste0(" · ",nrow(data$missing_pairs)," selected combinations lack a verified product on this template"),
+          ". Broad UNITE ITS evidence is available under Inspect evidence."))
+    }
+    p(class="atlas-context-line",strong(nrow(rows)," mapped combinations"),
+        " · reference bases; product lengths include both primers.")
+  })
+  output$primer_overview_inspector_controls <- renderUI({
+    rows <- overview_rows()
+    if(!nrow(rows)) return(p("Select a mapped primer combination to inspect its evidence."))
+    selectizeInput("overview_evidence_pair","Primer combination",setNames(rows$pair_id,rows$pair_label),selected=isolate(overview_selected_pair()))
+  })
+  observeEvent(input$primer_overview_pair_click, {
+    pair <- input$primer_overview_pair_click$pair
+    if(length(pair)==1L && pair %in% overview_rows()$pair_id) {
+      overview_clicked_pair(pair)
+      updateSelectizeInput(session,"overview_evidence_pair",selected=pair)
+      session$sendCustomMessage("primer-overview-inspect",list(pair=pair))
+      if(identical(input$map_marker,"ITS_FUNGAL")) {
+        set_fungal_overview_evidence(pair,input$primer_overview_pair_click$nonce)
+        fungal_explorer_context(list(pair=pair,version=fungal_workspace$snapshot()$manifest$id,
+            nonce=input$primer_overview_pair_click$nonce))
+      }
+    }
+  })
+  observeEvent(input$overview_evidence_pair, {
+    pair <- input$overview_evidence_pair
+    if(length(pair)==1L && pair %in% overview_rows()$pair_id) {
+      overview_clicked_pair(pair)
+      if(identical(input$map_marker,"ITS_FUNGAL"))
+        set_fungal_overview_evidence(pair,pair)
+    }
+  },ignoreInit=TRUE)
+  observeEvent(input$primer_overview_inspector_open, {
+    pair <- overview_selected_pair()
+    if(identical(input$map_marker,"ITS_FUNGAL") && length(pair)==1L)
+      set_fungal_overview_evidence(pair,input$primer_overview_inspector_open$nonce)
+  })
+  observeEvent(input$overview_open_fit, {
+    pair <- overview_selected_pair()
+    if(identical(input$map_marker,"COI") && length(pair)==1L) {
+      updateSelectInput(session,"detail_pair",selected=pair)
+      updateRadioButtons(session,"fit_marker",selected="COI")
+      updateNavbarPage(session,"main_nav",selected="fit")
+    }
   })
   read_order_position_scores <- function(pair_id) coi_read_order_position_scores(pair_id, coi_reference_current())
   read_pair_sequence_evidence <- function(pair_id) coi_read_pair_sequence_evidence(pair_id, coi_reference_current())
@@ -2530,7 +2741,6 @@ server <- function(input, output, session) {
   observeEvent(input[["fungal_fit-open_explorer"]], {
     fungal_explorer_context(list(version = fungal_fit_workspace$snapshot()$manifest$id,
       pair = fungal_fit_workspace$selected_pair(), nonce = input[["fungal_fit-open_explorer"]]))
-    updateRadioButtons(session, "fungal_explore_source", selected = "NCBI")
     open_explorer_marker("ITS_FUNGAL", "FUNGI")
   })
   navigate_from("go_regions", "regions")
@@ -2663,7 +2873,6 @@ server <- function(input, output, session) {
   observeEvent(input$go_coi_explore, open_explorer_marker("COI"))
   observeEvent(input$go_coi_map, open_explorer_marker("COI"))
   observeEvent(input$go_fungal_explore, {
-    updateRadioButtons(session, "fungal_explore_source", selected = "UNITE")
     open_explorer_marker("ITS_FUNGAL", "FUNGI")
   })
   observeEvent(input$go_fungal_map, open_explorer_marker("ITS_FUNGAL", "FUNGI"))
@@ -2838,8 +3047,7 @@ server <- function(input, output, session) {
   }, ignoreInit = FALSE)
 
   output$map_card_title <- renderUI({
-    if (identical(input$map_marker, "ITS_FUNGAL") && identical(input$fungal_explore_source, "UNITE"))
-      "Regional alignments and fungal reference evidence" else "Primer combinations and binding sites"
+    "Primer combinations and binding sites"
   })
 
   its_member_choices <- function(direction) {
@@ -3895,379 +4103,42 @@ server <- function(input, output, session) {
   })
 
   output$primer_map <- renderUI({
-    x <- sorted_filtered_pairs()
-    if (!nrow(x)) return(div(
-      class = "callout",
-      "No primer pairs match the current filters. ",
-      if (length(input$application_filter) || length(input$environment_filter) ||
-          length(input$intent_filter)) {
-        tagList(
-          "The application, environment, or design filter may not apply to this marker. ",
-          actionButton("reset_map_facets", "Clear these filters", class = "btn-outline-secondary btn-sm")
-        )
-      }
-    ))
-    map_primers <- displayed_primers()
-    sodium_mM <- if (is.null(input$sodium)) 50 else input$sodium
-    ta_offset_c <- if (is.null(input$ta_offset)) 4 else input$ta_offset
-    thermal_rows <- pair_thermal_summary(
-      map_primers |> filter(pair_id %in% x$pair_id),
-      sodium_mM, ta_offset_c
-    )
-    marker <- marker_registry |> filter(marker_id == input$map_marker) |> slice(1)
-    landmarks <- marker_landmarks |> filter(marker_id == input$map_marker) |> arrange(display_order)
-    reference_length <- marker$reference_length
-    focus <- if (input$map_marker == "COI") {
-      list(start = folmer_region$start, end = folmer_region$end)
-    } else {
-      list(start = min(landmarks$start), end = max(landmarks$end))
+    rows <- overview_visible_rows()
+    if(!nrow(rows)) return(div(class="callout",
+        "No verified primer products match this reference, region and platform. Adjust the selection or inspect the missing-site evidence."))
+    sodium <- input$sodium %||% 50
+    offset <- input$ta_offset %||% 4
+    active <- overview_selected_pair()
+    if(identical(input$map_marker,"ITS_FUNGAL")) {
+      data <- fungal_overview_data()
+      if(length(data$domain)!=2L || any(!is.finite(data$domain)))
+        return(div(class="callout","This region has no verified coordinates on the selected template. Choose another region or inspect its annotation evidence."))
+      components <- data$primers[data$primers$pair_id %in% rows$pair_id,,drop=FALSE]
+      thermal <- pair_thermal_summary(components,sodium,offset)
+      annotations <- bind_rows(data$landmarks,data$domains)
+      return(primer_overview_map(rows,components,data$marker,landmarks=annotations,
+          focus=data$focus,domain=data$domain,thermal_rows=thermal,sodium_mM=sodium,ta_offset_c=offset,
+          citations=data$citations,active_pair_id=active,pair_click_input="primer_overview_pair_click"))
     }
-    width <- 1680
-    left <- 112
-    right <- 1000
-    axis_domain <- primer_map_domain(
-      x,
-      folmer_start = focus$start,
-      folmer_end = focus$end,
-      tick_bp = 100,
-      reference_length = reference_length
-    )
-    axis_min <- unname(axis_domain["min"])
-    axis_max <- unname(axis_domain["max"])
-    scale_x <- function(bp) {
-      bounded <- pmin(pmax(bp, axis_min), axis_max)
-      left + (bounded - axis_min) / (axis_max - axis_min) * (right - left)
-    }
-    row_h <- 58
-    first_row_y <- 88
-    last_row_y <- first_row_y + (nrow(x) - 1) * row_h
-    folmer_y <- last_row_y + 54
-    coi_y <- folmer_y + 40
-    height <- coi_y + 42
-    start_col <- 1090
-    end_col <- 1160
-    inclusive_col <- 1250
-    informative_col <- 1350
-    citation_col <- 1440
-    number_x <- 16
-    forward_color <- "#2563eb"
-    informative_color <- "#9aa6b2"
-    reverse_color <- "#dc2626"
-    shared_source_color <- "#7c3aed"
-    source_link <- function(source_row, x, y, color, prefix = "") {
-      if (!nrow(source_row) || is.na(source_row$url[1]) ||
-        !nzchar(source_row$url[1])) {
-        return(tags$text(
-          x = x, y = y, fill = "#6b746f", `font-size` = 10.5,
-          paste0(prefix, "source unavailable")
-        ))
-      }
-      tags$a(
-        href = source_row$url[1],
-        target = "_blank",
-        rel = "noopener noreferrer",
-        style = "cursor:pointer",
-        tags$text(
-          x = x, y = y, fill = color, `font-size` = 10.5,
-          `text-decoration` = "underline",
-          paste0(prefix, source_row$short_citation[1]),
-          tags$title(source_row$title[1])
-        )
-      )
-    }
-    children <- list(
-      tags$text(
-        x = start_col, y = 20, `text-anchor` = "middle",
-        fill = "#48554e", `font-size` = 11, `font-weight` = 700, "Start bp"
-      ),
-      tags$text(
-        x = end_col, y = 20, `text-anchor` = "middle",
-        fill = "#48554e", `font-size` = 11, `font-weight` = 700, "End bp"
-      ),
-      tags$text(
-        x = inclusive_col, y = 20, `text-anchor` = "middle",
-        fill = "#48554e", `font-size` = 11, `font-weight` = 700, "+ primers"
-      ),
-      tags$text(
-        x = informative_col, y = 20, `text-anchor` = "middle",
-        fill = "#48554e", `font-size` = 11, `font-weight` = 700, "− primers"
-      ),
-      tags$text(
-        x = citation_col, y = 20,
-        fill = "#48554e", `font-size` = 11, `font-weight` = 700, "Citation(s)"
-      ),
-      tags$text(
-        x = right, y = 20, `text-anchor` = "end",
-        fill = "#48554e", `font-size` = 11, `font-weight` = 700,
-        paste0("View ", axis_min, "–", axis_max, " bp")
-      ),
-      tags$line(
-        x1 = left, y1 = 52, x2 = right, y2 = 52,
-        stroke = "#6d756f", `stroke-width` = 1.5
-      )
-    )
-    ticks <- seq(axis_min, axis_max, 100)
-    for (tick in ticks) {
-      tx <- scale_x(tick)
-      children <- append(children, list(
-        tags$line(
-          x1 = tx, y1 = 46, x2 = tx, y2 = last_row_y + 25,
-          stroke = "#dedbd2", `stroke-width` = 1
-        ),
-        tags$text(
-          x = tx, y = 40, `text-anchor` = "middle",
-          fill = "#68736c", `font-size` = 11, tick
-        )
-      ))
-    }
-    children <- append(children, list(
-      tags$rect(
-        x = scale_x(focus$start), y = 55,
-        width = scale_x(focus$end) - scale_x(focus$start),
-        height = last_row_y - 30, fill = "#f5df73", opacity = .15
-      )
-    ))
-    for (i in seq_len(nrow(x))) {
-      row <- x[i, ]
-      y <- first_row_y + (i - 1) * row_h
-      f <- map_primers |> filter(pair_id == row$pair_id, direction == "forward") |> slice(1)
-      r <- map_primers |> filter(pair_id == row$pair_id, direction == "reverse") |> slice(1)
-      f1 <- scale_x(row$forward_start)
-      f2 <- scale_x(row$forward_end)
-      r1 <- scale_x(row$reverse_start)
-      r2 <- scale_x(row$reverse_end)
-      forward_source <- citations |> filter(key == f$source_key[1]) |> slice(1)
-      reverse_source <- citations |> filter(key == r$source_key[1]) |> slice(1)
-      application_values <- primer_facets$facet_value[
-        primer_facets$pair_id == row$pair_id &
-          primer_facets$facet_type == "application"
-      ]
-      application_labels <- c(
-        barcoding = "DNA barcoding", bulk_community = "bulk community",
-        edna = "environmental DNA", diet = "dietary metabarcoding"
-      )
-      use_tags <- if (length(application_values)) {
-        unname(application_labels[application_values])
-      } else {
-        primer_use_tags(row$use_case, row$target)
-      }
-      diet <- diet_uses |> filter(pair_id == row$pair_id)
-      diet_detail <- if (nrow(diet)) paste(paste0(
-        "\nDocumented study use: ", diet$study_use,
-        "; predator: ", diet$predator,
-        "; sample: ", diet$sample_material,
-        "; amplified target: ", diet$amplified_role,
-        "\nDiet evidence status: ", diet$evidence_status,
-        "; source: ", diet$source_key,
-        "\nUse note: ", diet$note
-      ), collapse = "\n") else ""
-      pair_temperatures <- thermal_rows |>
-        filter(pair_id == row$pair_id) |>
-        arrange(match(direction, c("forward", "reverse")))
-      tm_detail <- if (nrow(pair_temperatures)) {
-        paste0(
-          "\nEstimated primer Tm (", sodium_mM, " mM salt): ",
-          paste(sprintf(
-            "%s %.1f–%.1f °C",
-            pair_temperatures$primer_name,
-            pair_temperatures$tm_min,
-            pair_temperatures$tm_max
-          ), collapse = "; "),
-          "\nSuggested pair Ta (starting estimate): ",
-          sprintf("%.1f–%.1f °C", pair_temperatures$ta_low[1], pair_temperatures$ta_high[1]),
-          "\nReported Ta: ",
-          if (all(is.na(pair_temperatures$reported_ta_c))) {
-            "not reported"
-          } else {
-            paste0(
-              paste(unique(na.omit(pair_temperatures$reported_ta_c)), collapse = ", "),
-              " °C"
-            )
-          }
-        )
-      } else "\nTemperatures: unavailable for this pair"
-      tooltip <- paste0(
-        "Map row ", i, ": ", row$pair_label,
-        "\nTags: ", paste(use_tags, collapse = " · "),
-        "\nIntended target: ", row$target,
-        diet_detail,
-        if (row$pair_id %in% arthropod_off_target_ids) {
-          "\nArthropod reference: off-target binding check only; target coverage not established here"
-        } else "",
-        "\nPrimers: ", f$primer_name, " + ", r$primer_name,
-        tm_detail,
-        "\nGene coordinates: ", row$pair_start, "–", row$pair_end,
-        "\nAmplicon + primers: ", row$aligned_amplicon_bp, " bp",
-        "\nAmplicon − primers (informative): ", row$targeted_region_bp, " bp",
-        if (input$map_marker == "COI") paste0("\nInformative bp inside Folmer: ", row$folmer_overlap_bp) else "",
-        "\nCoordinates derived from ", marker$coordinate_reference,
-        if (!is.na(row$placement_status) && row$placement_status != "sequence_aligned") {
-          paste0(
-            if (input$map_marker == "18S") "\nPlacement provenance: " else "\nPlacement warning: ",
-            row$placement_status
-          )
-        } else ""
-      )
-      number_tooltip <- paste0(
-        "Map row ", i, "\nPair: ", row$pair_label,
-        "\nOligos: ", f$primer_name, " + ", r$primer_name,
-        "\nSorting and filtering recalculate this number."
-      )
-      row_children <- list(
-        tags$circle(
-          cx = number_x, cy = y, r = 13,
-          fill = "#17241d",
-          class = "primer-tooltip-target",
-          `data-tooltip` = tooltip,
-          `aria-label` = paste0("Show map-row details for ", row$pair_label),
-          tabindex = "0",
-          tags$title(number_tooltip)
-        ),
-        tags$text(
-          x = number_x, y = y + 4,
-          `text-anchor` = "middle",
-          fill = "#fffdf8", `font-size` = 11, `font-weight` = 800,
-          class = "primer-tooltip-target",
-          `data-tooltip` = tooltip,
-          `aria-label` = paste0("Show map-row details for ", row$pair_label),
-          tabindex = "0",
-          i,
-          tags$title(number_tooltip)
-        ),
-        tags$line(
-          x1 = left, y1 = y + row_h / 2 - 2,
-          x2 = width - 12, y2 = y + row_h / 2 - 2,
-          stroke = "#e5e2d9", `stroke-width` = 1
-        ),
-        tags$line(
-          x1 = f2, y1 = y, x2 = r1, y2 = y,
-          class = "primer-tooltip-target",
-          `data-tooltip` = tooltip,
-          `aria-label` = paste0("Show map-row details for ", row$pair_label),
-          tabindex = "0",
-          stroke = informative_color, `stroke-width` = 5, `stroke-linecap` = "round",
-          `pointer-events` = "stroke"
-        ),
-        tags$line(
-          x1 = f1, y1 = y, x2 = f2, y2 = y,
-          class = "primer-tooltip-target",
-          `data-tooltip` = tooltip,
-          `aria-label` = paste0("Show map-row details for ", row$pair_label),
-          tabindex = "0",
-          stroke = forward_color, `stroke-width` = 7, `stroke-linecap` = "round"
-        ),
-        tags$polygon(
-          points = paste(f2, y, f2 - 8, y - 6, f2 - 8, y + 6),
-          fill = forward_color,
-          class = "primer-tooltip-target",
-          `data-tooltip` = tooltip,
-          `aria-label` = paste0("Show map-row details for ", row$pair_label),
-          tabindex = "0"
-        ),
-        tags$text(
-          x = f1 - 7, y = y + 4, `text-anchor` = "end",
-          class = "primer-tooltip-target",
-          `data-tooltip` = tooltip,
-          `aria-label` = paste0("Show map-row details for ", row$pair_label),
-          tabindex = "0",
-          fill = forward_color, `font-size` = 12, `font-weight` = 700,
-          f$primer_name
-        ),
-        tags$line(
-          x1 = r1, y1 = y, x2 = r2, y2 = y,
-          class = "primer-tooltip-target",
-          `data-tooltip` = tooltip,
-          `aria-label` = paste0("Show map-row details for ", row$pair_label),
-          tabindex = "0",
-          stroke = reverse_color, `stroke-width` = 7, `stroke-linecap` = "round"
-        ),
-        tags$polygon(
-          points = paste(r1, y, r1 + 8, y - 6, r1 + 8, y + 6),
-          fill = reverse_color,
-          class = "primer-tooltip-target",
-          `data-tooltip` = tooltip,
-          `aria-label` = paste0("Show map-row details for ", row$pair_label),
-          tabindex = "0"
-        ),
-        tags$text(
-          x = r2 + 7, y = y + 4, `text-anchor` = "start",
-          class = "primer-tooltip-target",
-          `data-tooltip` = tooltip,
-          `aria-label` = paste0("Show map-row details for ", row$pair_label),
-          tabindex = "0",
-          fill = reverse_color, `font-size` = 12, `font-weight` = 700,
-          r$primer_name
-        ),
-        tags$text(
-          x = start_col, y = y + 4, `text-anchor` = "middle",
-          fill = "#34423a", `font-size` = 11, row$pair_start
-        ),
-        tags$text(
-          x = end_col, y = y + 4, `text-anchor` = "middle",
-          fill = "#34423a", `font-size` = 11, row$pair_end
-        ),
-        tags$text(
-          x = inclusive_col, y = y + 4, `text-anchor` = "middle",
-          fill = "#34423a", `font-size` = 11,
-          paste0(row$aligned_amplicon_bp, " bp")
-        ),
-        tags$text(
-          x = informative_col, y = y + 4, `text-anchor` = "middle",
-          fill = "#34423a", `font-size` = 11,
-          paste0(row$targeted_region_bp, " bp")
-        )
-      )
-      if (identical(f$source_key[1], "custom") ||
-        identical(r$source_key[1], "custom")) {
-        row_children <- append(row_children, list(tags$text(
-          x = citation_col, y = y + 4, fill = "#6b746f", `font-size` = 10.5,
-          "Session input · not saved"
-        )))
-      } else if (identical(f$source_key[1], r$source_key[1])) {
-        row_children <- append(row_children, list(
-          source_link(forward_source, citation_col, y + 4, shared_source_color)
-        ))
-      } else {
-        row_children <- append(row_children, list(
-          source_link(forward_source, citation_col, y - 5, forward_color, "F: "),
-          source_link(reverse_source, citation_col, y + 11, reverse_color, "R: ")
-        ))
-      }
-      children <- append(children, row_children)
-    }
-    if (input$map_marker == "COI") {
-      children <- append(children, list(
-        tags$text(x = left - 14, y = folmer_y + 4, `text-anchor` = "end", fill = "#6b5720", `font-size` = 12, `font-weight` = 700, "Folmer region"),
-        tags$line(x1 = scale_x(folmer_region$start), y1 = folmer_y, x2 = scale_x(folmer_region$end), y2 = folmer_y, stroke = "#d7a62b", `stroke-width` = 10, `stroke-linecap` = "round"),
-        tags$text(x = scale_x(folmer_region$end) + 10, y = folmer_y + 4, fill = "#6b5720", `font-size` = 11, paste0(folmer_region$start, "–", folmer_region$end, " · ", folmer_region$length_bp, " bp"))
-      ))
-    } else {
-      for (j in seq_len(nrow(landmarks))) {
-        lm <- landmarks[j, ]
-        children <- append(children, list(
-          tags$rect(x = scale_x(lm$start), y = folmer_y - 9, width = max(2, scale_x(lm$end) - scale_x(lm$start)), height = 18, fill = if (j %% 2) "#9aa6a0" else "#d7dad7"),
-          tags$text(x = (scale_x(lm$start) + scale_x(lm$end)) / 2, y = folmer_y + 4, `text-anchor` = "middle", fill = "#17241d", `font-size` = 10, `font-weight` = 700, lm$label)
-        ))
+    marker <- marker_registry |> filter(marker_id==input$map_marker) |> slice(1)
+    landmarks <- marker_landmarks |> filter(marker_id==input$map_marker) |> arrange(display_order)
+    focus <- if(identical(input$map_marker,"COI")) list(start=folmer_region$start,end=folmer_region$end)
+      else list(start=min(landmarks$start),end=max(landmarks$end))
+    domain <- NULL
+    region <- input$primer_overview_region %||% "ALL"
+    if(startsWith(region,"landmark:")) {
+      selected <- landmarks[landmarks$landmark_id==sub("^landmark:","",region),,drop=FALSE]
+      if(nrow(selected)==1L) {
+        focus <- list(start=selected$start,end=selected$end)
+        domain <- c(max(1L,selected$start-1000L),min(marker$reference_length,selected$end+2000L))
       }
     }
-    children <- append(children, list(
-      tags$text(x = left - 14, y = coi_y + 4, `text-anchor` = "end", fill = "#17241d", `font-size` = 12, `font-weight` = 700, marker$display_name),
-      tags$line(x1 = left, y1 = coi_y, x2 = right, y2 = coi_y, stroke = "#17241d", `stroke-width` = 8, `stroke-linecap` = "round"),
-      tags$text(x = right + 10, y = coi_y + 4, fill = "#48554e", `font-size` = 11, paste0(axis_min, "–", min(axis_max, reference_length), " shown · ", marker$reference_version, " is ", format(reference_length, big.mark = ","), " bp"))
-    ))
-    div(
-      class = "primer-map-wrap",
-      tags$svg(
-        class = "primer-map", viewBox = paste(0, 0, width, height),
-        role = "img",
-        `aria-label` = paste0(
-          "Interactive ", marker$display_name, " primer binding map showing base pairs ",
-          axis_min, " through ", axis_max,
-          ". Rows are numbered in their current displayed order."
-        ),
-        children
-      )
-    )
+    components <- displayed_primers() |> filter(pair_id %in% rows$pair_id)
+    thermal <- pair_thermal_summary(components,sodium,offset)
+    primer_overview_map(rows,components,marker,landmarks=landmarks,focus=focus,domain=domain,
+        thermal_rows=thermal,sodium_mM=sodium,ta_offset_c=offset,citations=citations,
+        primer_facets=primer_facets,diet_uses=diet_uses,arthropod_off_target_ids=arthropod_off_target_ids,
+        folmer_region=folmer_region,active_pair_id=active,pair_click_input="primer_overview_pair_click")
   })
 
   output$its_map_catalog_ui <- renderUI({

@@ -13,7 +13,12 @@ env$downloadHandler <- function(filename, content, ...) {
 }
 ui <- as.character(env$ui)
 stopifnot(grepl("Taxonomic fit", ui, fixed = TRUE),
-          !grepl("Check taxonomic fit · COI", ui, fixed = TRUE))
+          !grepl("Check taxonomic fit · COI", ui, fixed = TRUE),
+          !grepl('id="fungal_explore_source"',ui,fixed=TRUE),
+          grepl('id="primer-evidence-inspector"',ui,fixed=TRUE),
+          grepl('id="primer_overview_controls"',ui,fixed=TRUE))
+stopifnot(length(regmatches(ui,gregexpr('id="primer_map"',ui,fixed=TRUE))[[1L]])==1L,
+          !grepl('<details[^>]*id="primer-evidence-inspector"[^>]* open',ui))
 for (route in c("start", "find", "fit", "taxa", "regions", "thermal", "sources")) {
   stopifnot(grepl(paste0('data-value="', route, '"'), ui, fixed = TRUE))
 }
@@ -79,13 +84,41 @@ shiny::testServer(env$server, {
   session$setInputs(go_fungal_explore = 1L)
   session$flushReact()
   stopifnot(sent$main_nav$value == "find", sent$map_marker$value == "ITS_FUNGAL",
-            sent$map_organism$value == "FUNGI", sent$fungal_explore_source$value == "UNITE")
+            sent$map_organism$value == "FUNGI")
   session$setInputs(go_coi_explore = 1L)
   session$flushReact()
   stopifnot(sent$main_nav$value == "find", sent$map_marker$value == "COI")
   session$setInputs(go_find = 1L)
   session$flushReact()
   stopifnot(sent$main_nav$value == "find")
+
+  # All markers use the same primer overview. The broad DNA alignment is a
+  # closed evidence inspector, with a deliberate pair+oligo handoff.
+  session$setInputs(map_marker="ITS_FUNGAL",primer_overview_region="ITS",
+      primer_overview_reference="PZ962702.1",primer_overview_platform="ALL")
+  session$flushReact()
+  overview <- fungal_overview_data()
+  stopifnot(nrow(overview$pair_meta)>=10L,length(unique(overview$pair_meta$accession))==1L,
+      all(overview$pair_meta$aligned_amplicon_bp==overview$pair_meta$reverse_end-overview$pair_meta$forward_start+1L),
+      nrow(overview_visible_rows())<=10L,
+      grepl('class="primer-map"',output$primer_map$html,fixed=TRUE),
+      !grepl('unite-alignment-row',output$primer_map$html,fixed=TRUE))
+  session$setInputs(primer_overview_pair_click=list(pair=pair,nonce=91L))
+  session$flushReact()
+  stopifnot(overview_selected_pair()==pair,fungal_overview_broad_selection()$available,
+      fungal_overview_broad_selection()$pair==pair,unite_explorer_workspace$pair()==pair,
+      fungal_workspace$snapshot()$manifest$id==v3_id)
+  request <- fungal_overview_evidence()
+  request$forward_sequence <- "AAAA"
+  fungal_overview_evidence(request)
+  session$flushReact()
+  stopifnot(!fungal_overview_broad_selection()$available,
+      grepl("no matching forward and reverse oligos",output$primer_overview_evidence_status$html,fixed=TRUE),
+      fungal_workspace$snapshot()$manifest$id==v3_id)
+  set_fungal_overview_evidence(pair,92L)
+  session$setInputs(map_marker="COI")
+  session$flushReact()
+  stopifnot(grepl('class="primer-map"',output$primer_map$html,fixed=TRUE))
 
   # Explorer→fit transfers exactly one snapshot/pair, not a current catalog
   # selection assembled independently by the destination module.

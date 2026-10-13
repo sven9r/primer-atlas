@@ -10,24 +10,73 @@ jobs:
       - uses: actions/checkout@v4
       - uses: r-lib/actions/setup-r@v2
       - uses: r-lib/actions/setup-renv@v2
+      - name: Parse application and build entry points
+        run: Rscript -e 'paths <- c("app.R", list.files(c("R", "scripts"), pattern="[.]R$", recursive=TRUE, full.names=TRUE)); invisible(lapply(paths, function(path) parse(file=path))); message("Parsed ", length(paths), " R sources")'
+      - name: Install pinned custom-primer scorer
+        run: Rscript scripts/install_primerminer.R
+      - name: Install COI alignment tools for clean-worker tests
+        run: sudo apt-get update && sudo apt-get install -y mafft vsearch
       - name: Run regression tests
         run: |
           for test in \
             tests/test_18s_catalog_ui.R \
+            tests/test_app_assets.R \
             tests/test_bundle_size.R \
             tests/test_catalog_and_geography.R \
             tests/test_claimed_primer_reference.R \
+            tests/test_coi_scoring_inputs.R \
+            tests/test_coi_retention.R \
+            tests/test_coi_bootstrap_provenance.R \
+            tests/test_coi_hosted_retention.R \
+            tests/test_coi_promotion.R \
+            tests/test_coi_reference_runtime.R \
+            tests/test_coi_restore_cli.R \
+            tests/test_coi_refresh.R \
+            tests/test_coi_panel_install.R \
             tests/test_custom_primer_gate.R \
             tests/test_its_primer_navigator.R \
+            tests/test_fungal_explorer.R \
+            tests/test_fungal_alignment.R \
+            tests/test_fungal_alignment_regions.R \
+            tests/test_fungal_amplicon_bp_view.R \
+            tests/test_fungal_domain_ui.R \
+            tests/test_fungal_domain_snapshot.R \
+            tests/test_fungal_restore_selection.R \
+            tests/test_fungal_fit.R \
+            tests/test_fungal_fit_ui.R \
+            tests/test_fungal_fit_navigation.R \
+            tests/test_primer_overview.R \
+            tests/test_fungal_primer_overview.R \
+            tests/test_fungal_primer_atlas.R \
+            tests/test_fungal_primer_orientation.R \
+            tests/test_fungal_combination_builder.R \
+            tests/test_fungal_builder_navigation.R \
+            tests/test_primer_publication_export.R \
+            tests/test_unite_candidate_pairs.R \
+            tests/test_unite_reference.R \
+            tests/test_unite_reference_ui.R \
+            tests/test_fungal_explorer_ui.R \
+            tests/test_fungal_versions.R \
+            tests/test_fungal_workspace.R \
             tests/test_marker_runtime.R \
             tests/test_order_lens_interaction.R \
             tests/test_primer_map_domain.R \
             tests/test_primer_map_details.R \
+            tests/test_primerminer_runtime.R \
             tests/test_region_comparison.R \
             tests/test_reference_panel_policy.R \
+            tests/test_reference_alignment_choice.R \
             tests/test_release_layer.R \
             tests/test_runtime_custom_order_scoring.R \
             tests/test_sequence_drilldown.R \
             tests/test_universal_sequence_drilldown.R; do Rscript "$test"; done
       - name: Check deployable bundle size
         run: Rscript tests/test_bundle_size.R
+      - name: Verify fungal acquisition boundary rules
+        run: python3 -m unittest discover -s tests -p test_fungal_reference_panel.py
+      - name: Verify fungal domain projection boundaries
+        run: python3 -m unittest discover -s tests -p test_fungal_domain_mapping.py
+      - name: Verify UNITE import, region and snapshot boundaries
+        run: python3 -m unittest discover -s tests -p 'test_unite_*.py'
+      - name: Verify COI acquisition and retention boundaries
+        run: python3 -m unittest discover -s tests -p 'test_coi_*.py'

@@ -2,6 +2,7 @@
 
 project_root <- normalizePath(getwd(), mustWork = TRUE)
 source(file.path(project_root, "R", "functions.R"))
+source(file.path(project_root, "R", "primer_overview.R"))
 
 pairs <- read.csv(
   file.path(project_root, "data", "derived", "pair_geometry.csv"),
@@ -20,7 +21,7 @@ bindings <- read.csv(
 )
 
 inside <- pairs[pairs$pair_id %in% c("NOSPID", "NOSPI2_LAURELIN", "NOPLANT"), ]
-inside_domain <- primer_map_domain(inside, folmer$start, folmer$end)
+inside_domain <- .primer_overview_domain(inside, folmer$start, folmer$end)
 stopifnot(
   identical(unname(inside_domain), c(0, 700))
 )
@@ -29,7 +30,7 @@ default_ids <- c(
   "MCO", "LERAY_XT", "ZBJ_ART", "FWH2", "BF2_BR2", "ANML",
   "BEEPRIME", "NOSPID", "NOSPI2_LAURELIN"
 )
-default_domain <- primer_map_domain(
+default_domain <- .primer_overview_domain(
   pairs[pairs$pair_id %in% default_ids, ],
   folmer$start,
   folmer$end
@@ -58,14 +59,38 @@ late_pair <- data.frame(
   reverse_start = 1276,
   reverse_end = 1300
 )
-late_domain <- primer_map_domain(late_pair, folmer$start, folmer$end)
+late_domain <- .primer_overview_domain(late_pair, folmer$start, folmer$end)
 stopifnot(
   identical(unname(late_domain), c(0, 1300))
 )
+# The extracted renderer uses the same range calculation as the legacy helper.
+# Exercise both on real inside/default placements and a synthetic late site.
+for (fixture in list(inside, pairs[pairs$pair_id %in% default_ids, ], late_pair)) {
+  stopifnot(identical(
+    .primer_overview_domain(fixture, folmer$start, folmer$end),
+    primer_map_domain(fixture, folmer$start, folmer$end)
+  ))
+}
 
 app_source <- paste(
   readLines(file.path(project_root, "app.R"), warn = FALSE),
   collapse = "\n"
+)
+renderer_source <- paste(
+  readLines(file.path(project_root, "R", "primer_overview.R"), warn = FALSE),
+  collapse = "\n"
+)
+default_rows <- pairs[pairs$pair_id %in% default_ids, , drop = FALSE]
+markers <- read.csv(file.path(project_root, "data", "catalog", "markers.csv"), stringsAsFactors = FALSE)
+rendered_default <- paste(as.character(primer_overview_map(
+  default_rows,
+  read.csv(file.path(project_root, "data", "primers.csv"), stringsAsFactors = FALSE),
+  markers[markers$marker_id == "COI", , drop = FALSE],
+  folmer_region = folmer
+)), collapse = "\n")
+stopifnot(
+  length(regmatches(rendered_default, gregexpr('<circle cx="16"', rendered_default, fixed = TRUE))[[1L]]) == nrow(default_rows),
+  grepl("View 0–800 bp", rendered_default, fixed = TRUE)
 )
 positions <- c(
   marker = regexpr('"map_marker", "Marker"', app_source, fixed = TRUE)[1],
@@ -86,8 +111,10 @@ stopifnot(
   positions["map_sort"] < positions["select_all"],
   positions["select_all"] < positions["amplicon_range"],
   positions["amplicon_range"] < positions["pair_select"],
-  grepl("primer_map_domain(", app_source, fixed = TRUE),
-  grepl('paste0("View ", axis_min, "–", axis_max, " bp")', app_source, fixed = TRUE),
+  grepl('source("R/primer_overview.R")', app_source, fixed = TRUE),
+  grepl("primer_overview_map(", app_source, fixed = TRUE),
+  grepl(".primer_overview_domain(", paste(deparse(body(primer_overview_map)), collapse = "\n"), fixed = TRUE),
+  grepl('paste0("View ", axis_min, "–", axis_max, " bp")', renderer_source, fixed = TRUE),
   grepl("sorted_filtered_pairs <- reactive({", app_source, fixed = TRUE),
   grepl("sorted_pair_choices <- reactive({", app_source, fixed = TRUE),
   grepl(
@@ -97,16 +124,15 @@ stopifnot(
   ),
   grepl("number_primer_choice_labels(", app_source, fixed = TRUE),
   grepl('updateCheckboxGroupInput(', app_source, fixed = TRUE),
-  grepl("number_x <- 16", app_source, fixed = TRUE),
-  grepl("left <- 112", app_source, fixed = TRUE),
+  grepl("number_x <- 16", renderer_source, fixed = TRUE),
+  grepl("left <- 112", renderer_source, fixed = TRUE),
   grepl("primer-hover-tooltip", app_source, fixed = TRUE),
   grepl("pinnedPrimerTooltipTarget", app_source, fixed = TRUE),
-  grepl('class = "primer-tooltip-target"', app_source, fixed = TRUE),
-  grepl('`data-tooltip` = tooltip', app_source, fixed = TRUE),
-  grepl('"\\nTags: "', app_source, fixed = TRUE),
-  grepl('"Map row ", i', app_source, fixed = TRUE),
-  grepl("Sorting and filtering recalculate this number.", app_source, fixed = TRUE),
-  grepl('class = "legend-number"', app_source, fixed = TRUE)
+  grepl('class = "primer-tooltip-target"', renderer_source, fixed = TRUE),
+  grepl('`data-tooltip` = tooltip', renderer_source, fixed = TRUE),
+  grepl('"\\nTags: "', renderer_source, fixed = TRUE),
+  grepl('"Map row ", i', renderer_source, fixed = TRUE),
+  grepl("Sorting and filtering recalculate this number.", renderer_source, fixed = TRUE)
 )
 
 sorting_fixture <- data.frame(
@@ -180,4 +206,4 @@ stopifnot(
   identical(unname(alphabetical_choices), c("C", "A", "B"))
 )
 
-message("Dynamic primer-map domain and control-order checks passed.")
+message("Shared primer-map domain, legacy-range parity and control-order checks passed.")

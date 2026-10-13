@@ -10,10 +10,37 @@ library(dplyr)
 library(stringr)
 library(DT)
 
+source("R/app_assets.R")
+atlas_register_assets("www")
 source("R/functions.R")
 source("R/data_layer.R")
+source("R/coi_retention.R")
+source("R/coi_scoring.R")
+source("R/coi_reference.R")
+source("R/coi_refresh.R")
+source("R/reference_panels.R")
+source("R/fungal_explorer.R")
+source("R/fungal_versions.R")
+source("R/fungal_alignment.R")
+source("R/fungal_alignment_ui.R")
+source("R/fungal_ui.R")
+source("R/fungal_fit.R")
+source("R/fungal_fit_ui.R")
+source("R/unite_reference.R")
+source("R/unite_reference_ui.R")
+source("R/primer_overview.R")
+source("R/fungal_primer_overview.R")
+source("R/fungal_primer_atlas.R")
+source("R/fungal_primer_orientation.R")
+source("R/fungal_combination_builder.R")
+source("R/unite_candidate_pairs.R")
+source("R/primer_publication_export.R")
+source("R/fungal_builder_ui.R")
+primer_publication_citations <- read.csv("data/catalog/primer_publication_citations.csv",stringsAsFactors=FALSE)
 
 coi_release_state <- tryCatch(atlas_read_manifest("COI"), error = function(e) NULL)
+coi_reference_panel <- coi_reference_load(coi_release_state)
+coi_release_state <- coi_reference_panel$state
 release_table <- function(name, fallback, col_types = NULL) {
   artifact <- if (!is.null(coi_release_state)) coi_release_state$manifest$artifacts[[name]] else NULL
   if (!is.null(artifact)) {
@@ -350,36 +377,24 @@ its_reference <- clean_sequence(
 )
 
 full_alignment_dir <- "data/primerminer/full_aligned_reference"
-alignment_dir <- if (dir.exists(full_alignment_dir) && length(list.files(full_alignment_dir, pattern = "_COX1_full_reference_aligned\\.fasta$"))) full_alignment_dir else "data/primerminer/aligned_reference"
-alignment_files <- list.files(
-  alignment_dir,
-  pattern = "_COX1(_full)?_reference_aligned\\.fasta$",
-  full.names = TRUE
-)
-alignment_orders <- sub(
-  "_COX1(_full)?_reference_aligned\\.fasta$",
-  "",
-  basename(alignment_files)
-)
-order_alignment_templates <- setNames(
-  lapply(alignment_files, function(path) {
-    sequences <- parse_fasta(path)
-    sequences[!grepl("^NC_001322\\.1_COX1_reference", names(sequences))]
-  }),
-  alignment_orders
-)
-order_scores <- read_csv("data/derived/order_pair_summary.csv", show_col_types = FALSE)
-pair_template_scores <- release_table(
+alignment_dir <- if (coi_reference_panel$alignment_mode == "full") full_alignment_dir else "data/primerminer/aligned_reference"
+alignment_files <- unname(coi_reference_panel$paths)
+alignment_orders <- names(coi_reference_panel$alignments)
+order_alignment_templates <- coi_reference_panel$alignments
+order_scores <- as_tibble(coi_reference_panel$overview)
+pair_template_scores <- if (!is.null(coi_reference_panel$pair_templates)) as_tibble(coi_reference_panel$pair_templates) else release_table(
   "pair_templates", "data/derived/pair_template_scores.csv",
   col_types = cols(template = col_character())
 )
-delayedAssign("primer_position_scores", {
-  release_table(
-    "primer_positions", "data/derived/primer_position_scores.csv",
-    col_types = cols(template = col_character())
-  ) |>
-    mutate(unavailable_reason = coalesce(unavailable_reason, ""))
-})
+read_order_position_scores <- function(pair_id, reference = coi_reference_panel) {
+  value <- tryCatch(coi_reference_pair_positions(reference, pair_id), error = identity)
+  if (inherits(value, "error")) {
+    empty <- as_tibble(.coi_reference_empty_positions())
+    attr(empty, "position_issue") <- paste("The selected release's position trace could not be verified:", conditionMessage(value))
+    return(empty)
+  }
+  as_tibble(value)
+}
 
 beeprime_reference_manifest <- read_csv(
   "data/derived/beeprime_reference_manifest.csv",
@@ -499,13 +514,19 @@ pair_sequence_evidence_spec <- function(pair_id) {
   )
 }
 
-read_pair_sequence_evidence <- function(pair_id) {
+read_pair_sequence_evidence <- function(pair_id, reference = coi_reference_panel) {
   spec <- pair_sequence_evidence_spec(pair_id)
-  if (file.exists(spec$path)) return(read_csv(spec$path, show_col_types = FALSE))
-  artifact <- if (!is.null(coi_release_state)) coi_release_state$manifest$artifacts[[spec$artifact]] else NULL
-  if (is.null(artifact)) return(tibble())
-  tryCatch(as_tibble(atlas_read_artifact(artifact)), error = function(e) tibble())
+  if (identical(pair_id, "BEEPRIME") && file.exists(spec$path)) return(read_csv(spec$path, show_col_types = FALSE))
+  value <- tryCatch(as_tibble(coi_reference_pair_sequences(reference, pair_id)), error = identity)
+  if (inherits(value, "error")) {
+    empty <- tibble()
+    attr(empty, "pair_issue") <- paste("The selected release's sequence partition could not be verified:", conditionMessage(value))
+    return(empty)
+  }
+  value
 }
+coi_read_order_position_scores <- read_order_position_scores
+coi_read_pair_sequence_evidence <- read_pair_sequence_evidence
 targeted_zbj_manifest <- read_csv(
   "data/external/targeted_zbj/targeted_complete_cox1_manifest.csv",
   show_col_types = FALSE
@@ -548,101 +569,192 @@ citation_link <- function(row, label = NULL) {
 
 atlas_theme <- bs_theme(
   version = 5,
-  bg = "#f4f2ec",
-  fg = "#17241d",
-  primary = "#16664b",
-  secondary = "#d8e7df",
+  bg = "#f8fafc",
+  fg = "#172033",
+  primary = "#4338ca",
+  secondary = "#e0e7ff",
   base_font = font_google("Manrope"),
-  heading_font = font_google("DM Serif Display")
+  heading_font = font_google("Manrope")
 )
 
 app_css <- "
-:root { --ink:#17241d; --green:#16664b; --mint:#dcebe3; --paper:#f4f2ec;
-  --coral:#de6b4f; --gold:#d7a62b; --line:#d5d3ca; }
-body { letter-spacing:-.01em; }
-.navbar { border-bottom:1px solid var(--line); background:rgba(244,242,236,.96)!important; }
-.navbar > .container-fluid { flex-wrap:nowrap; }
-.navbar-nav { flex-wrap:nowrap; overflow-x:auto; }
-.navbar-brand { font-family:'DM Serif Display',serif; font-size:1.08rem; white-space:nowrap; }
-.start-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(225px,1fr)); gap:14px; margin:12px 0 20px; }
-.start-card { background:#fffdf8; border:1px solid var(--line); border-radius:16px; padding:17px; }
+:root { --ink:#172033; --green:#4338ca; --mint:#eef2ff; --paper:#f8fafc;
+  --coral:#de6b4f; --gold:#d7a62b; --line:#dbe3ee; }
+body { letter-spacing:-.01em; line-height:1.5; }
+:root { --accent:#4338ca; --surface:#ffffff; --muted:#475569;
+  --illumina:#2563eb; --pacbio:#7c3aed; --nanopore:#0f766e; --unresolved:#64748b; }
+*, *::before, *::after { box-sizing:border-box; }
+.container-fluid { min-width:0; max-width:1760px; }
+.tab-content, .tab-pane, .bslib-grid, .bslib-sidebar-layout, .bslib-card,
+.bslib-card > .card-body, .html-widget-output { min-width:0; max-width:100%; }
+.tab-pane > .container-fluid { padding:16px clamp(16px,2vw,32px) 32px; }
+a { text-underline-offset:3px; }
+a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible,
+textarea:focus-visible, summary:focus-visible, [role=button]:focus-visible {
+  outline:3px solid #4338ca; outline-offset:3px;
+}
+.btn { font-weight:700; border-radius:9px; }
+.btn-outline-secondary {
+  --bs-btn-color:#475569; --bs-btn-border-color:#94a3b8;
+  --bs-btn-hover-color:#172033; --bs-btn-hover-bg:#e2e8f0; --bs-btn-hover-border-color:#64748b;
+  --bs-btn-active-color:#172033; --bs-btn-active-bg:#e2e8f0; --bs-btn-active-border-color:#64748b;
+  color:#475569; border-color:#94a3b8; background:#ffffff;
+}
+.btn-outline-secondary:hover, .btn-outline-secondary:focus-visible {
+  color:#172033; border-color:#64748b; background:#e2e8f0;
+}
+a.shiny-download-link.btn {
+  --bs-btn-color:#4338ca; --bs-btn-bg:#eef2ff; --bs-btn-border-color:#4338ca;
+  --bs-btn-hover-color:#ffffff; --bs-btn-hover-bg:#4338ca; --bs-btn-hover-border-color:#4338ca;
+  --bs-btn-active-color:#ffffff; --bs-btn-active-bg:#3730a3; --bs-btn-active-border-color:#3730a3;
+  --bs-btn-disabled-color:#64748b; --bs-btn-disabled-bg:#f1f5f9; --bs-btn-disabled-border-color:#cbd5e1;
+  --bs-btn-disabled-opacity:.65;
+}
+a.shiny-download-link.btn:not(.disabled):not([aria-disabled='true']) {
+  color:#4338ca; border-color:#4338ca; background:#eef2ff; opacity:1;
+}
+a.shiny-download-link.btn:not(.disabled):not([aria-disabled='true']):hover,
+a.shiny-download-link.btn:not(.disabled):not([aria-disabled='true']):focus-visible {
+  color:#ffffff; border-color:#4338ca; background:#4338ca;
+}
+a.shiny-download-link.btn:not(.disabled):not([aria-disabled='true']):active {
+  color:#ffffff; border-color:#3730a3; background:#3730a3;
+}
+a.shiny-download-link.btn.disabled, a.shiny-download-link.btn[aria-disabled='true'] {
+  color:#64748b; border-color:#cbd5e1; background:#f1f5f9; opacity:.65;
+}
+.form-control, .form-select, .selectize-input { border-radius:8px; border-color:var(--line); }
+.btn-outline-success { color:var(--accent); border-color:var(--accent); }
+.btn-outline-success:hover { background:var(--accent); border-color:var(--accent); color:#fff; }
+.shiny-input-container { min-width:0; max-width:100%; }
+.bslib-card .bslib-card { box-shadow:none; border-radius:10px; }
+
+.navbar { border-bottom:1px solid var(--line); background:#ffffff!important; padding:8px 12px; }
+.navbar > .container-fluid { flex-wrap:wrap; gap:6px; min-width:0; }
+.navbar-nav { flex-wrap:nowrap; overflow-x:auto; max-width:100%; gap:3px; }
+.navbar-nav .nav-link { border-radius:8px; font-size:.86rem; font-weight:700; padding:9px 12px; }
+.navbar-nav .nav-link.active { background:var(--mint); color:var(--accent)!important; }
+.navbar-brand { font-weight:850; font-size:1.08rem; letter-spacing:-.03em; white-space:nowrap; }
+.start-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr)); gap:16px; margin:20px 0 28px; }
+.start-card { background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:22px; display:flex; flex-direction:column; align-items:flex-start; gap:4px; }
+.start-card .btn { margin-top:auto; }
 .start-card h3 { font-size:1.18rem; margin:0 0 8px; }
-.start-card p { min-height:4.5em; color:#536159; font-size:.9rem; }
+.start-card p { color:var(--muted); font-size:.94rem; line-height:1.6; margin-bottom:18px; }
 .readiness-list { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px; margin-top:12px; }
-.readiness-list > div { border-left:4px solid var(--green); background:#fffdf8; padding:10px 13px; }
+.readiness-list > div { border-left:4px solid var(--green); background:#ffffff; padding:10px 13px; }
 .readiness-list strong { display:block; }
-.readiness-list span { display:block; color:#536159; font-size:.88rem; }
+.readiness-list span { display:block; color:#475569; font-size:.88rem; }
 .map-scroll-hint { display:none; }
+.sidebar-toggle-label { display:none; }
+/* Match bslib's native mobile overlay and its JS window-size signal. The
+   default 576px breakpoint leaves too little main space in embedded panes. */
+@media (max-width:991.98px) {
+  .bslib-sidebar-layout { --bslib-sidebar-js-window-size:mobile; }
+  .bslib-sidebar-layout .bslib-sidebar-resize-handle { display:none!important; }
+  .bslib-sidebar-layout[data-collapsible-mobile='true'] {
+    grid-template-rows:calc(var(--_icon-button-size) + var(--_padding)) 1fr;
+    grid-template-columns:100% 0;
+    background-color:var(--_main-bg);
+  }
+  .bslib-sidebar-layout[data-collapsible-mobile='true'].sidebar-collapsed { grid-template-columns:0 100%; }
+  .bslib-sidebar-layout[data-collapsible-mobile='true'] > .main {
+    grid-column:1 / 3; grid-row:2 / 3;
+    padding-top:1px; padding-left:var(--_padding); padding-right:var(--_padding);
+    opacity:var(--_main-mobile-expanded-opacity);
+    transition:opacity var(--_transition-easing-x) var(--_transition-duration);
+  }
+  .bslib-sidebar-layout[data-collapsible-mobile='true'].sidebar-collapsed > .main { opacity:1; }
+  .bslib-sidebar-layout[data-collapsible-mobile='true'] > .sidebar {
+    grid-row:1 / 3; margin:0; margin-right:auto; padding-top:var(--_padding-icon);
+    border:0!important; opacity:var(--_sidebar-mobile-opacity,1);
+    max-width:var(--_sidebar-mobile-max-width,100%); box-shadow:var(--_sidebar-mobile-box-shadow);
+  }
+  .bslib-sidebar-layout[data-collapsible-mobile='true'] > .sidebar > .sidebar-content {
+    padding-top:0; height:100%; overflow-y:auto;
+  }
+  .bslib-sidebar-layout[data-collapsible-mobile='true'] > .collapse-toggle {
+    grid-row:1 / 2; top:unset; position:relative; align-self:center;
+    left:var(--_icon-size); right:unset; justify-self:left;
+    width:auto; min-width:108px; padding:6px 10px; gap:8px;
+    border:1px solid var(--line); background:#ffffff; font-weight:700;
+  }
+  .bslib-sidebar-layout[data-collapsible-mobile='true'] .sidebar-toggle-label { display:inline; }
+  .bslib-sidebar-layout[data-collapsible-mobile='true']:not(.sidebar-collapsed) > .sidebar,
+  .bslib-sidebar-layout[data-collapsible-mobile='true']:not(.sidebar-collapsed) > .collapse-toggle,
+  .bslib-sidebar-layout[data-collapsible-mobile='true'].transitioning > .sidebar,
+  .bslib-sidebar-layout[data-collapsible-mobile='true'].transitioning > .collapse-toggle { z-index:1045; }
+}
 @media (max-width: 850px) {
-  .primer-map-page > .bslib-sidebar-layout { grid-template-columns:minmax(0,1fr)!important; }
-  .primer-map-page > .bslib-sidebar-layout > .sidebar {
-    grid-column:1!important; grid-row:1!important; width:auto!important;
-    border-right:0!important; border-bottom:1px solid var(--line)!important;
-  }
-  .primer-map-page > .bslib-sidebar-layout > .main {
-    grid-column:1!important; grid-row:2!important; min-width:0;
-  }
-  .primer-map-page .collapse-toggle,
-  .primer-map-page .bslib-sidebar-resize-handle { display:none!important; }
   .primer-map-page #pair_select { max-height:300px; overflow-y:auto; }
   .primer-map-page .metric-row { grid-template-columns:repeat(2,minmax(0,1fr))!important; }
   .primer-map-page .map-scroll-hint { display:block; }
 }
 .institution-banner { display:flex; align-items:center; justify-content:space-between;
-  gap:24px; padding:9px 24px; background:#fffdf8; border-bottom:1px solid var(--line); }
-.banner-home { display:flex; align-items:center; gap:14px; min-width:250px; }
-.banner-home img { width:108px; height:68px; object-fit:contain; }
-.banner-home strong { display:block; font-family:'DM Serif Display',serif;
-  font-size:1.2rem; line-height:1.05; }
-.banner-home span { display:block; margin-top:3px; color:#65716a; font-size:.72rem; }
+  gap:24px; padding:10px clamp(16px,2vw,32px); background:#ffffff; border-bottom:1px solid var(--line); }
+.coi-refresh-bar { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between;
+  gap:8px 20px; padding:8px clamp(16px,2vw,32px); background:#f8fafc; border-bottom:1px solid var(--line);
+  font-size:.8rem; color:#334155; }
+.coi-refresh-bar > .shiny-html-output { min-width:0; flex:1 1 300px; overflow-wrap:anywhere; }
+.coi-refresh-bar .tiny { color:#526176; font-size:.72rem; }
+.coi-refresh-bar .text-warning-emphasis { color:#854d0e!important; }
+.coi-refresh-bar .btn { flex:0 0 auto; }
+.banner-home { display:flex; align-items:center; gap:12px; min-width:0; }
+.banner-home img { width:78px; height:48px; object-fit:contain; flex:0 0 auto; }
+.banner-home strong { display:block; font-size:.96rem; font-weight:800; line-height:1.3; }
+.banner-home span { display:block; margin-top:3px; color:#526176; font-size:.72rem; }
 .banner-support { display:flex; align-items:center; justify-content:flex-end;
-  gap:20px; min-width:0; }
-.banner-support-label { color:#65716a; font-size:.68rem; text-transform:uppercase;
+  gap:16px; min-width:0; }
+.banner-support-label { color:#526176; font-size:.68rem; text-transform:uppercase;
   letter-spacing:.1em; white-space:nowrap; }
 .banner-logo { object-fit:contain; display:block; }
-.banner-logo.fulbright { width:112px; height:48px; }
-.banner-logo.walter { width:128px; height:58px; }
-.banner-logo.berkeley { width:66px; height:66px; }
-.hero { padding:.85rem 0 .6rem; }
+.banner-logo.fulbright { width:96px; height:38px; }
+.banner-logo.walter { width:112px; height:42px; }
+.banner-logo.berkeley { width:44px; height:44px; }
+.hero { padding:26px 0 20px; max-width:1100px; }
 .eyebrow { color:var(--green); text-transform:uppercase; letter-spacing:.13em;
   font-weight:800; font-size:.72rem; }
-.hero h1 { font-size:clamp(2rem,3.2vw,3.15rem); line-height:1; max-width:none;
-  white-space:nowrap; margin-bottom:.35rem; }
-.hero p { max-width:820px; font-size:.96rem; color:#536159; margin-bottom:.25rem; }
-.bslib-card { border:1px solid var(--line); box-shadow:none; border-radius:18px; overflow:hidden; }
-.card-header { background:#fbfaf6; border-bottom:1px solid var(--line); font-weight:800; }
-.sidebar { background:#eceae2!important; border-right:1px solid var(--line)!important;
+.hero h1 { font-size:clamp(2rem,3.2vw,3rem); line-height:1.12; font-weight:850;
+  letter-spacing:-.04em; margin:8px 0 12px; overflow-wrap:break-word; }
+.hero p { max-width:820px; font-size:1rem; line-height:1.65; color:var(--muted); margin-bottom:.25rem; }
+.workspace-heading { padding:8px 0 18px; }
+.workspace-heading h1 { margin:0 0 5px; font-size:clamp(1.45rem,2.3vw,1.9rem); letter-spacing:-.03em; font-weight:850; }
+.workspace-heading p { max-width:920px; margin:0; font-size:.92rem; color:var(--muted); }
+.bslib-card { border:1px solid var(--line); box-shadow:none; border-radius:14px; overflow:hidden; }
+.card-header { background:#ffffff; border-bottom:1px solid var(--line); font-weight:800; padding:14px 18px; }
+.bslib-card > .card-body { padding:18px; }
+.sidebar { background:#f1f5f9!important; border-right:1px solid var(--line)!important;
   position:relative; z-index:3; }
 .bslib-sidebar-layout > .main { min-width:0; overflow:hidden; }
 .metric-row { display:grid; grid-template-columns:repeat(auto-fit,minmax(145px,1fr)); gap:12px; margin-bottom:16px; }
-.metric { background:#fffdf8; border:1px solid var(--line); border-radius:16px; padding:14px 16px; }
-.metric b { display:block; font-family:'DM Serif Display'; font-size:2rem; line-height:1; }
-.metric span { font-size:.75rem; text-transform:uppercase; letter-spacing:.08em; color:#68736c; }
-.primer-map-wrap { overflow-x:auto; max-width:100%; padding:8px 2px 16px;
-  position:relative; z-index:1; }
-.primer-map { min-width:1350px; width:100%; }
+.metric { background:#ffffff; border:1px solid var(--line); border-radius:10px; padding:12px 15px; }
+.metric b { display:block; font-weight:800; font-size:1.7rem; line-height:1.2; font-variant-numeric:tabular-nums; }
+.metric span { font-size:.75rem; text-transform:uppercase; letter-spacing:.08em; color:#526176; }
+.primer-map-wrap { overflow-x:auto; width:100%; min-width:0; max-width:100%; padding:8px 2px 16px;
+  position:relative; z-index:1; overscroll-behavior-x:contain; scrollbar-gutter:stable; }
+.primer-map { min-width:0; width:100%; display:block; }
+.primer-map-wrap > .primer-map { width:max(100%,1350px); max-width:none; }
 .primer-tooltip-target { cursor:pointer; }
 .primer-tooltip-target:focus-visible {
-  outline:3px solid rgba(22,102,75,.55); outline-offset:4px;
+  outline:3px solid rgba(67,56,202,.65); outline-offset:4px;
 }
 .primer-hover-tooltip {
   display:none; position:fixed; z-index:10000;
   width:min(440px,calc(100vw - 28px)); max-height:min(420px,calc(100vh - 28px));
   overflow:auto; padding:15px 17px 12px;
-  border:2px solid #6f7b74; border-radius:14px;
-  background:#fffdf8; color:#17241d;
-  box-shadow:0 14px 38px rgba(23,36,29,.24);
+  border:2px solid #64748b; border-radius:14px;
+  background:#ffffff; color:#172033;
+  box-shadow:0 14px 38px rgba(23,32,51,.15);
   font-size:.9rem; line-height:1.48; font-weight:600;
   white-space:pre-line; pointer-events:none;
 }
 .primer-hover-tooltip.visible { display:block; }
 .primer-hover-tooltip.pinned {
-  border-color:var(--green); box-shadow:0 16px 42px rgba(22,102,75,.28);
+  border-color:var(--green); box-shadow:0 16px 42px rgba(67,56,202,.18);
 }
 .primer-hover-tooltip::after {
   content:'Hover preview · click primer name or amplicon to pin';
   display:block; margin-top:10px; padding-top:8px;
-  border-top:1px solid var(--line); color:#65716a;
+  border-top:1px solid var(--line); color:#526176;
   font-size:.7rem; font-weight:700; white-space:normal;
 }
 .primer-hover-tooltip.pinned::after {
@@ -650,7 +762,7 @@ body { letter-spacing:-.01em; }
   color:var(--green);
 }
 .map-legend { display:flex; flex-wrap:wrap; gap:14px; align-items:center;
-  padding:2px 2px 10px; font-size:.75rem; color:#59655e; }
+  padding:2px 2px 10px; font-size:.75rem; color:#475569; }
 .legend-line { display:inline-block; width:28px; height:5px; border-radius:999px;
   margin-right:6px; vertical-align:middle; }
 .legend-forward { background:#2563eb; }
@@ -659,7 +771,7 @@ body { letter-spacing:-.01em; }
 .legend-number {
   display:inline-flex; width:24px; height:24px; border-radius:50%;
   align-items:center; justify-content:center; margin-right:6px;
-  background:#17241d; color:#fffdf8; font-size:.7rem; font-weight:800;
+  background:#172033; color:#ffffff; font-size:.7rem; font-weight:800;
   vertical-align:middle;
 }
 .pair-card { display:grid; grid-template-columns:1.2fr 1fr auto; gap:14px; align-items:center;
@@ -681,33 +793,33 @@ body { letter-spacing:-.01em; }
 .heatmap-scroll-top-inner { height:1px; }
 .heatmap { display:grid; gap:4px; align-items:stretch; min-width:100%; overflow:visible; }
 .heat-cell { min-width:82px; border:0; border-radius:8px; padding:10px 6px; text-align:center;
-  color:#183027; font-weight:800; cursor:pointer; font-family:inherit; }
-.heat-cell:hover { box-shadow:inset 0 0 0 2px rgba(22,102,75,.55); }
-.heat-cell:focus-visible { outline:3px solid rgba(22,102,75,.55); outline-offset:1px; }
+  color:#172033; font-weight:800; cursor:pointer; font-family:inherit; }
+.heat-cell:hover { box-shadow:inset 0 0 0 2px rgba(67,56,202,.65); }
+.heat-cell:focus-visible { outline:3px solid rgba(67,56,202,.65); outline-offset:1px; }
 .heat-cell-static { cursor:default; }
 .heat-head { font-size:.68rem; writing-mode:vertical-rl; transform:rotate(180deg);
   min-height:104px; display:flex; justify-content:flex-start; align-items:center; padding:6px; }
 .order-label { font-weight:800; padding:10px 8px; white-space:nowrap; }
-.risk-na { background:repeating-linear-gradient(135deg,#e5e3dc,#e5e3dc 7px,#d7d4cb 7px,#d7d4cb 14px); }
+.risk-na { background:repeating-linear-gradient(135deg,#e2e8f0,#e2e8f0 7px,#cbd5e1 7px,#cbd5e1 14px); }
 .heatmap-reading-guide { display:grid; grid-template-columns:minmax(0,1.2fr) minmax(300px,.8fr);
   gap:16px; margin:0 0 18px; padding:16px; border:1px solid var(--line);
-  border-radius:14px; background:#fffdf8; }
+  border-radius:14px; background:#ffffff; }
 .heatmap-reading-guide h5 { margin:0 0 8px; }
-.heatmap-reading-guide p { margin:0 0 7px; font-size:.82rem; color:#48554e; }
+.heatmap-reading-guide p { margin:0 0 7px; font-size:.82rem; color:#475569; }
 .heatmap-legend-grid { display:grid; grid-template-columns:repeat(4,minmax(115px,1fr));
   gap:9px; margin-top:10px; }
 .heatmap-legend-item { display:flex; align-items:center; gap:8px; min-width:0;
-  font-size:.75rem; color:#48554e; }
+  font-size:.75rem; color:#475569; }
 .heatmap-swatch { width:34px; height:25px; flex:0 0 34px; border-radius:6px;
   border:1px solid rgba(23,36,29,.12); }
 .heatmap-swatch.low { background:#b9ddc9; }
 .heatmap-swatch.mid { background:#efd787; }
 .heatmap-swatch.high { background:#efaa90; }
 .heatmap-swatch.missing {
-  background:repeating-linear-gradient(135deg,#e5e3dc,#e5e3dc 7px,#d7d4cb 7px,#d7d4cb 14px);
+  background:repeating-linear-gradient(135deg,#e2e8f0,#e2e8f0 7px,#cbd5e1 7px,#cbd5e1 14px);
 }
 .investigation-tip { border-left:4px solid var(--green); padding-left:13px; }
-.investigation-tip ol { margin:7px 0 0; padding-left:20px; color:#48554e; font-size:.8rem; }
+.investigation-tip ol { margin:7px 0 0; padding-left:20px; color:#475569; font-size:.8rem; }
 .investigation-tip li { margin-bottom:5px; }
 .order-heatmap-card { overflow:visible; }
 .order-heatmap-card > .card-header { border-radius:17px 17px 0 0; }
@@ -732,7 +844,7 @@ body { letter-spacing:-.01em; }
 }
 .order-inspector-card .selectize-dropdown {
   z-index:70; min-width:100%!important;
-  box-shadow:0 10px 28px rgba(23,36,29,.18);
+  box-shadow:0 10px 28px rgba(23,32,51,.12);
 }
 .order-inspector-card .selectize-dropdown-content {
   max-height:360px!important; overflow-y:auto!important;
@@ -759,7 +871,7 @@ body.detail-switching .comparison-trace-shell::before {
   content:'Loading selected comparison…';
   position:absolute; z-index:5; top:12px; left:12px;
   border-radius:999px; padding:7px 11px;
-  background:#fffdf8; border:1px solid var(--line);
+  background:#ffffff; border:1px solid var(--line);
   color:var(--green); font-size:.75rem; font-weight:800;
   box-shadow:0 3px 10px rgba(23,36,29,.08);
 }
@@ -778,38 +890,38 @@ body.detail-switching .deep-detail-card {
 .deep-detail-card .dataTables_scroll { width:100%; max-width:100%; }
 .deep-detail-card .dataTables_scrollBody { overflow:auto!important; }
 .sequence-strip { display:flex; flex-wrap:wrap; gap:3px; margin:10px 0 18px; }
-.base { width:28px; height:42px; border-radius:6px; background:#e6e4dc; text-align:center;
+.base { width:28px; height:42px; border-radius:6px; background:#e2e8f0; text-align:center;
   font-family:ui-monospace,monospace; font-weight:800; padding-top:4px; position:relative; }
 .base.mismatch { background:#f1b09b; color:#7c2516; }
-.base.unavailable { background:#d8d6d0; color:#59615c; }
-.base small { display:block; font-size:.55rem; color:#65716a; margin-top:2px; }
+.base.unavailable { background:#e2e8f0; color:#475569; }
+.base small { display:block; font-size:.55rem; color:#526176; margin-top:2px; }
 .table-atlas { width:100%; border-collapse:separate; border-spacing:0; font-size:.84rem; }
-.table-atlas th { position:sticky; top:0; background:#eae8e0; text-align:left; padding:9px; }
+.table-atlas th { position:sticky; top:0; background:#f1f5f9; text-align:left; padding:9px; }
 .table-atlas td { padding:9px; border-top:1px solid var(--line); vertical-align:top; }
 .cite-card { border-top:1px solid var(--line); padding:15px 2px; }
 .cite-card:first-child { border-top:0; }
-.callout { border-left:4px solid var(--gold); background:#fbf4da; padding:12px 15px;
-  border-radius:0 12px 12px 0; }
+.callout { border-left:3px solid var(--gold); background:#fffbeb; padding:12px 15px;
+  border-radius:0 8px 8px 0; }
 .taxon-info { border-left-color:#2563eb; background:#eef5ff; }
 .taxon-alert { border-left-color:#dc2626; background:#fff0ed; }
 .deep-dive-controls { display:grid; grid-template-columns:minmax(220px,1fr) minmax(180px,.7fr);
   gap:12px; align-items:end; margin:4px 0 12px; }
 .evidence-badge { display:inline-block; border-radius:999px; padding:2px 7px;
-  background:#e7e5de; color:#58635c; font-size:.68rem; font-weight:800; white-space:nowrap; }
+  background:#e2e8f0; color:#475569; font-size:.68rem; font-weight:800; white-space:nowrap; }
 .evidence-badge.small-n { background:#fbefd0; color:#8a5a00; }
-.evidence-badge.empirical { background:#dcebe3; color:#16664b; }
+.evidence-badge.empirical { background:#eef2ff; color:#4338ca; }
 .scroll-table { overflow:auto; max-height:620px; border:1px solid var(--line);
   border-radius:12px; }
 .dataTables_wrapper { font-size:.8rem; }
 .dataTables_wrapper .dataTables_filter input,
 .dataTables_wrapper .dataTables_length select,
 .dataTables_wrapper thead input {
-  border:1px solid var(--line); border-radius:7px; background:#fffdf8;
+  border:1px solid var(--line); border-radius:7px; background:#ffffff;
   color:var(--ink); padding:5px 7px;
 }
 .dataTables_wrapper thead input { width:100%!important; min-width:76px; }
 .dataTables_wrapper table.dataTable tbody tr.selected > * {
-  box-shadow:inset 0 0 0 9999px rgba(22,102,75,.13)!important;
+  box-shadow:inset 0 0 0 9999px rgba(67,56,202,.10)!important;
   color:var(--ink)!important;
 }
 .sequence-source-table table.dataTable tbody tr { cursor:pointer; }
@@ -824,43 +936,43 @@ body.detail-switching .deep-detail-card {
   margin:8px 0 12px; }
 .map-clear-btn { color:var(--green)!important; border-color:var(--green)!important;
   background:transparent!important; }
-.map-clear-btn:hover { color:#fffdf8!important; background:var(--green)!important; }
+.map-clear-btn:hover { color:#ffffff!important; background:var(--green)!important; }
 .custom-panel { border-top:1px solid var(--line); border-bottom:1px solid var(--line);
   padding:10px 0; margin:10px 0; }
 .custom-panel summary { cursor:pointer; color:var(--green); font-weight:800; margin-bottom:8px; }
 .custom-panel textarea { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:.78rem; }
-.combination-browser { margin:4px 0 16px; border:1px solid var(--line);
-  border-radius:14px; background:#fffdf8; overflow:visible; }
+.combination-browser { margin:4px 0 18px; border:1px solid var(--line);
+  border-radius:10px; background:#ffffff; overflow:visible; }
 .combination-browser > summary { cursor:pointer; padding:13px 16px;
   color:var(--green); font-weight:850; }
 .combination-browser[open] > summary { border-bottom:1px solid var(--line); }
 .combination-browser-body { padding:14px 16px 16px; }
 .pair-list-show { border:1px solid var(--green); border-radius:999px;
-  padding:4px 9px; color:var(--green); background:#fffdf8; font-weight:800;
+  padding:4px 9px; color:var(--green); background:#ffffff; font-weight:800;
   white-space:nowrap; cursor:pointer; }
-.pair-list-show:hover { color:#fffdf8; background:var(--green); }
-.tiny { font-size:.75rem; color:#65716a; }
+.pair-list-show:hover { color:#ffffff; background:var(--green); }
+.tiny { font-size:.82rem; line-height:1.55; color:#526176; }
 .organism-picker .shiny-options-group { display:flex; flex-wrap:wrap; gap:7px; }
 .organism-picker .radio-inline { margin:0!important; padding:7px 10px 7px 30px;
-  border:1px solid var(--line); border-radius:999px; background:#fffdf8;
+  border:1px solid var(--line); border-radius:999px; background:#ffffff;
   font-size:.75rem; font-weight:750; }
 .organism-picker .radio-inline:has(input:checked) { border-color:var(--green);
   background:var(--mint); color:var(--green); box-shadow:inset 0 0 0 1px var(--green); }
 .marker-guidance { margin:8px 0 12px; padding:10px 12px; border-radius:12px;
-  background:#fffdf8; border:1px solid var(--line); font-size:.75rem; }
+  background:#ffffff; border:1px solid var(--line); font-size:.75rem; }
 .marker-guidance-row { display:flex; justify-content:space-between; gap:8px;
-  padding:4px 0; border-top:1px solid #ebe8df; }
+  padding:4px 0; border-top:1px solid #e2e8f0; }
 .marker-guidance-row:first-child { border-top:0; }
-.status-chip { border-radius:999px; padding:2px 7px; font-size:.64rem;
-  font-weight:800; white-space:nowrap; background:#e7e5de; color:#58635c; }
-.status-chip.active { background:#dcebe3; color:#16664b; }
+.status-chip { border-radius:999px; padding:2px 7px; font-size:.75rem;
+  font-weight:800; white-space:nowrap; background:#e2e8f0; color:#475569; }
+.status-chip.active { background:#eef2ff; color:#4338ca; }
 .status-chip.pilot { background:#fbefd0; color:#8a5a00; }
 .region-position-diff { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; }
 .region-globe-card { display:grid; grid-template-columns:minmax(360px,1.25fr) minmax(240px,.75fr);
   gap:18px; align-items:center; margin:0 0 18px; padding:16px;
-  border:1px solid var(--line); border-radius:18px; background:#fffdf8; }
+  border:1px solid var(--line); border-radius:18px; background:#ffffff; }
 .region-globe-stage { min-height:390px; display:flex; align-items:center; justify-content:center;
-  overflow:hidden; border-radius:16px; background:radial-gradient(circle at 48% 42%,#edf7f2 0,#dcebe3 46%,#c9ddd3 70%,#b9d2c6 100%); }
+  overflow:hidden; border-radius:16px; background:radial-gradient(circle at 48% 42%,#f8fafc 0,#eef2ff 46%,#e0e7ff 70%,#c7d2fe 100%); }
 #region_globe_canvas { width:100%; max-width:620px; height:390px; cursor:grab; touch-action:none; }
 #region_globe_canvas:active { cursor:grabbing; }
 .region-globe-copy h4 { margin-bottom:7px; }
@@ -870,8 +982,151 @@ body.detail-switching .deep-detail-card {
 .region-globe-dot.a { background:#2563eb; box-shadow:0 0 0 4px rgba(37,99,235,.18); }
 .region-globe-dot.b { background:#de6b4f; box-shadow:0 0 0 4px rgba(222,107,79,.18); }
 .reference-policy-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:12px; margin:14px 0; }
-.reference-policy-card { padding:13px 15px; border:1px solid var(--line); border-radius:14px; background:#fffdf8; }
+.reference-policy-card { padding:13px 15px; border:1px solid var(--line); border-radius:14px; background:#ffffff; }
 .reference-policy-card b { display:block; margin-bottom:4px; }
+.fungal-workspace { min-width:0; display:flex; flex-direction:column; gap:18px; color:var(--ink); container-type:inline-size; }
+.fungal-workspace > * { min-width:0; max-width:100%; }
+.fungal-workspace > .shiny-input-container { width:100%!important; }
+.fungal-controls { display:block; padding:18px; border:1px solid var(--line);
+  border-radius:12px; background:#f8fafc; }
+.fungal-controls > * + * { margin-top:16px; }
+.fungal-controls .bslib-grid { grid-template-columns:repeat(3,minmax(0,1fr))!important; gap:14px; }
+.fungal-controls .bslib-grid-item { min-width:0; grid-column:auto!important; }
+.fungal-controls .shiny-input-container { width:100%!important; margin-bottom:0; }
+.fungal-controls label { font-size:.85rem; font-weight:750; color:var(--ink); }
+.fungal-controls > .d-flex { align-items:center; }
+.fungal-controls > .d-flex > .shiny-input-container { width:auto!important; flex:0 1 auto; }
+.fungal-controls .radio-inline { margin:4px 14px 4px 0; }
+.fungal-controls details { border:1px solid var(--line); border-radius:8px; padding:10px 12px; background:#ffffff; }
+.fungal-controls summary { cursor:pointer; color:var(--accent); font-size:.84rem; font-weight:750; }
+.fungal-controls details[open] summary { margin-bottom:16px; }
+.fungal-platform-legend { display:flex; flex-wrap:wrap; gap:8px; }
+.fungal-version-bar { display:grid; grid-template-columns:minmax(280px,320px) minmax(0,1fr) auto; align-items:center;
+  gap:12px 18px; border-bottom:1px solid var(--line); padding:0 0 14px; }
+.fungal-version-bar .shiny-input-container { width:100%!important; min-width:0; margin:0; }
+.fungal-version-bar > .shiny-html-output { min-width:0; width:auto; max-width:100%; overflow-wrap:anywhere; }
+.fungal-version-bar > .btn { white-space:nowrap; justify-self:end; }
+.fungal-version-bar .historical, .fungal-version-bar .version-historical {
+  border:1px solid #c4b5fd; background:#f5f3ff; color:#5b21b6; border-radius:8px; padding:7px 10px; }
+.fungal-pair-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr)); gap:12px; }
+.fungal-pair-card { min-width:0; border:1px solid var(--line); border-radius:12px; background:#ffffff;
+  padding:16px; display:flex; flex-direction:column; gap:8px; box-shadow:0 1px 2px rgba(23,32,51,.03); }
+.fungal-pair-card h4, .fungal-pair-card h5 { font-size:1rem; line-height:1.4; margin:0; font-weight:800; }
+.fungal-pair-card p { color:var(--muted); margin:0; font-size:.88rem; }
+.fungal-pair-card .mono { overflow-wrap:anywhere; }
+.fungal-pair-card:hover { border-color:#a5b4fc; }
+.fungal-pair-card.is-selected, .fungal-pair-card.selected { border:2px solid var(--accent); padding:15px; background:#f8faff; }
+.fungal-pair-card .btn { margin-top:auto; align-self:flex-start; }
+.fungal-pair-choice { display:inline-block; border:0; border-radius:6px; padding:4px 6px;
+  color:var(--accent); background:transparent; font:inherit; font-weight:750; text-align:left;
+  text-decoration:underline; text-underline-offset:3px; cursor:pointer; }
+.fungal-pair-choice:hover { color:#312e81; background:#eef2ff; }
+.fungal-pair-choice:focus-visible { outline:3px solid var(--accent); outline-offset:2px; background:#eef2ff; }
+.fungal-matrix .fungal-pair-choice { white-space:nowrap; }
+.fungal-platform-badge { display:inline-flex; align-items:center; gap:5px; font-size:.78rem;
+  font-weight:800; border-radius:6px; padding:4px 8px; line-height:1.4; border:1px solid transparent; }
+.fungal-platform-badge.illumina, .fungal-platform-badge[data-platform=illumina], .platform-illumina {
+  color:#1d4ed8; background:#eff6ff; border-color:#bfdbfe; }
+.fungal-platform-badge.pacbio, .fungal-platform-badge[data-platform=pacbio], .platform-pacbio {
+  color:#6d28d9; background:#f5f3ff; border-color:#ddd6fe; }
+.fungal-platform-badge.nanopore, .fungal-platform-badge[data-platform=nanopore], .platform-nanopore {
+  color:#0f766e; background:#f0fdfa; border-color:#99f6e4; }
+.fungal-platform-badge.unresolved, .fungal-platform-badge[data-platform=unresolved], .platform-unresolved {
+  color:#475569; background:#f1f5f9; border-color:#cbd5e1; }
+.fungal-matrix { min-width:0; max-width:100%; overflow-x:auto; border:1px solid var(--line); border-radius:10px; }
+.fungal-matrix table { width:100%; border-collapse:collapse; font-size:.85rem; }
+.fungal-matrix th, .fungal-matrix td { padding:10px 12px; border-bottom:1px solid var(--line); text-align:left; }
+.fungal-matrix th { background:#f8fafc; font-weight:800; position:sticky; top:0; }
+.fungal-matrix button { border-radius:7px; }
+.fungal-evidence { min-width:0; padding:18px; background:#f8fafc; border:1px solid var(--line);
+  border-radius:12px; font-size:.88rem; line-height:1.6; }
+.fungal-evidence h4 { font-size:1.05rem; font-weight:800; margin:0 0 10px; }
+.fungal-evidence pre, .fungal-evidence .mono { overflow:auto; overflow-wrap:anywhere; }
+.fungal-map { min-width:0; max-width:100%; overflow-x:auto; background:#ffffff; border:1px solid var(--line);
+  border-radius:12px; padding:12px; overscroll-behavior-x:contain; }
+.fungal-map svg { display:block; width:100%; height:auto; min-width:0; max-width:none; }
+.fungal-map svg + svg { margin-top:8px; border-top:1px solid var(--line); padding-top:8px; }
+.fungal-workspace .dataTables_wrapper { min-width:0; max-width:100%; overflow-x:auto; }
+.fungal-workspace .callout { font-size:.85rem; }
+.fungal-alignment-workspace { min-width:0; padding:18px; background:#fff; border:1px solid var(--line); border-radius:12px; }
+.fungal-alignment-workspace h3 { font-size:1.2rem; margin:0 0 8px; font-weight:800; }
+.fungal-alignment-controls .shiny-input-container { width:100%!important; }
+.fungal-alignment-controls .radio-inline { margin:4px 16px 4px 0; }
+.fungal-alignment-detail { margin-top:18px; border-top:1px solid var(--line); padding-top:14px; }
+.fungal-region-guide { margin:12px 0 16px; padding:14px; background:#f8fafc; border:1px solid var(--line); border-radius:10px; }
+.fungal-region-guide h4 { margin:0 0 8px; font-size:1rem; }
+.fungal-region-choices { display:flex; flex-wrap:wrap; gap:8px; margin:10px 0; }
+.fungal-region-choice { border:1px solid #64748b; border-radius:7px; background:#e2e8f0; color:#334155; padding:6px 10px; font-size:13px; font-weight:700; }
+.fungal-region-choice.spacer { border-color:#a16207; background:#fef3c7; color:#854d0e; }
+.fungal-region-choice:disabled { color:#64748b; background:#fff; border:1px dashed #94a3b8; font-weight:500; cursor:default; }
+.fungal-region-choice:hover:not(:disabled),.fungal-region-choice:focus-visible { outline:2px solid #475569; outline-offset:2px; }
+.fungal-alignment-region-row th,.fungal-alignment-region-cell { font:600 11px 'Manrope',sans-serif; color:#475569; border-bottom:1px solid #cbd5e1; white-space:nowrap; }
+.fungal-alignment-window-regions { display:flex; flex-wrap:wrap; gap:6px; margin:10px 0; }
+.fungal-alignment-window-regions > p { flex-basis:100%; margin:0; }
+.fungal-alignment-window-region { display:inline-block; padding:5px 8px; border-radius:6px; color:#334155; background:#e2e8f0; font-size:13px; }
+.fungal-alignment-window-region.spacer { color:#854d0e; background:#fef3c7; }
+.fungal-alignment-pan-hint { display:none; }
+@container(max-width:1020px) { .fungal-alignment-pan-hint { display:block; } }
+.fungal-bp-accounting { border:1px solid #cbd5e1; border-radius:9px; padding:12px 14px; margin:14px 0; background:#f8fafc; }
+.fungal-bp-accounting h4 { font-size:1rem; margin:0 0 8px; }
+.fungal-bp-accounting p { margin:0 0 7px; }
+.fungal-bp-accounting p:last-child { margin-bottom:0; }
+.fungal-template-bp-window-regions { display:flex; flex-wrap:wrap; gap:6px; margin:10px 0; }
+.fungal-template-bp-window-regions > p { flex-basis:100%; margin:0; }
+.fungal-template-bp-window-region { padding:5px 8px; border-radius:6px; color:#334155; background:#e2e8f0; font-size:13px; }
+.fungal-template-bp-window-region[data-landmark-id^=ITS] { color:#854d0e; background:#fef3c7; }
+.fungal-template-bp-accounting { margin:14px 0; }
+.fungal-template-bp-accounting ul { list-style:none; padding:0; margin:0; max-height:320px; overflow:auto; border:1px solid var(--line); border-radius:8px; }
+.fungal-template-bp-accounting-row { padding:8px 10px; border-bottom:1px solid var(--line); font-size:13px; }
+.fungal-template-bp-accounting-row:last-child { border-bottom:0; }
+.fungal-alignment-detail > summary { font-weight:750; color:var(--accent); cursor:pointer; }
+.fungal-alignment-base-controls { display:grid; grid-template-columns:minmax(150px,1fr) minmax(170px,1fr); align-items:center; gap:12px; margin:14px 0; }
+.fungal-alignment-base-controls > .d-flex { grid-column:1 / -1; }
+.fungal-alignment-base-controls .shiny-input-container { width:100%!important; margin:0; }
+.fungal-alignment-scroll { max-width:100%; max-height:780px; overflow:auto; overscroll-behavior:contain; }
+.fungal-alignment-scroll svg { display:block; width:100%; height:auto; min-width:980px; }
+.fungal-alignment-base-scroll { max-width:100%; max-height:520px; overflow:auto; overscroll-behavior:contain; }
+.fungal-alignment-bases thead th { position:sticky; top:0; background:#f8fafc; z-index:3; }
+.fungal-alignment-bases table { width:max-content; border-collapse:collapse; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:12px; }
+.fungal-alignment-bases td,.fungal-alignment-bases th { padding:3px 0; text-align:center; min-width:15px; }
+.fungal-alignment-bases .fungal-alignment-label { position:sticky; left:0; background:#fff; z-index:2; text-align:left; min-width:210px; max-width:250px; padding-right:12px; font-family:'Manrope',sans-serif; }
+.fungal-alignment-bases .gap { color:#64748b; }
+.fungal-alignment-bases .forward,.fungal-alignment-bases .reverse { font-weight:800; }
+@container(max-width:760px) {
+  .fungal-version-bar { grid-template-columns:minmax(260px,1fr) auto; }
+  .fungal-version-bar > .shiny-html-output { grid-column:1 / -1; grid-row:2; }
+  .fungal-version-bar > .btn { grid-column:2; grid-row:1; }
+}
+@container(max-width:620px) {
+  .fungal-controls .bslib-grid { grid-template-columns:1fr!important; }
+  .fungal-controls > .d-flex { align-items:flex-start; }
+  .fungal-map svg { min-width:680px; }
+  .fungal-alignment-base-controls { grid-template-columns:1fr; }
+  .fungal-alignment-workspace { padding:12px; }
+  .fungal-alignment-bases .fungal-alignment-label { min-width:150px; max-width:170px; }
+}
+@container(max-width:480px) {
+  .fungal-version-bar { grid-template-columns:minmax(0,1fr); }
+  .fungal-version-bar > .shiny-html-output { grid-column:1; grid-row:2; }
+  .fungal-version-bar > .btn { grid-column:1; grid-row:3; justify-self:start; }
+}
+@media(max-width:1100px) {
+  .navbar > .container-fluid { align-items:flex-start; }
+  .institution-banner { gap:14px; }
+  .banner-support-label { display:none; }
+}
+@media(max-width:700px) {
+  .tab-pane > .container-fluid { padding:12px 12px 24px; }
+  .hero { padding:20px 0 14px; }
+  .hero h1 { font-size:2rem; }
+  .workspace-heading { padding:6px 0 14px; }
+  .bslib-card > .card-body { padding:14px; }
+  .fungal-controls { padding:14px; }
+  .fungal-pair-grid { grid-template-columns:1fr; }
+  .fungal-version-bar { align-items:flex-start; }
+  .banner-home span { font-size:.72rem; }
+}
+
 @media(max-width:900px){
   .institution-banner { align-items:flex-start; padding:8px 14px; gap:10px; }
   .banner-support { gap:8px; flex-wrap:wrap; }
@@ -895,6 +1150,22 @@ body.detail-switching .deep-detail-card {
 
 app_js <- "
 (function() {
+  function labelSidebarToggles() {
+    document.querySelectorAll('.bslib-sidebar-layout > .collapse-toggle').forEach(function(toggle) {
+      toggle.setAttribute('title', 'Toggle filters');
+      toggle.setAttribute('aria-label', 'Toggle filters');
+      if (!toggle.querySelector('.sidebar-toggle-label')) {
+        var label = document.createElement('span');
+        label.className = 'sidebar-toggle-label';
+        label.textContent = 'Filters';
+        toggle.appendChild(label);
+      }
+    });
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', labelSidebarToggles, {once:true});
+  } else labelSidebarToggles();
+  document.addEventListener('shiny:connected', labelSidebarToggles);
   var primerTooltip = null;
   var pinnedPrimerTooltipTarget = null;
 
@@ -1158,6 +1429,8 @@ app_js <- "
     }, {priority: 'event'});
     var detail = document.querySelector('.order-detail-layout');
     if (detail) {
+      var disclosure = detail.closest('details');
+      if (disclosure) disclosure.open = true;
       detail.scrollIntoView({behavior:'smooth', block:'start'});
       window.setTimeout(function() {
         detail.scrollIntoView({behavior:'smooth', block:'start'});
@@ -1196,6 +1469,9 @@ app_js <- "
   });
 
   document.addEventListener('shiny:connected', wireHeatmapScrollers);
+  document.addEventListener('shown.bs.tab', function(event) {
+    if (event.target && event.target.closest('#main_nav')) window.scrollTo({top:0, behavior:'auto'});
+  });
   document.addEventListener('shiny:value', function() {
     window.requestAnimationFrame(wireHeatmapScrollers);
   });
@@ -1219,7 +1495,11 @@ app_js <- "
     Shiny.addCustomMessageHandler('scroll_order_detail', function(message) {
       window.setTimeout(function() {
         var detail = document.querySelector('.order-detail-layout');
-        if (detail) detail.scrollIntoView({behavior:'smooth', block:'start'});
+        if (detail) {
+          var disclosure = detail.closest('details');
+          if (disclosure) disclosure.open = true;
+          detail.scrollIntoView({behavior:'smooth', block:'start'});
+        }
       }, 180);
     });
   } else {
@@ -1235,10 +1515,14 @@ app_js <- "
         if (message.center && Number.isFinite(Number(message.center.latitude))) regionGlobeState.lat0 = Number(message.center.latitude);
         window.requestAnimationFrame(wireRegionGlobe);
       });
-      Shiny.addCustomMessageHandler('scroll_order_detail', function(message) {
-        window.setTimeout(function() {
-          var detail = document.querySelector('.order-detail-layout');
-          if (detail) detail.scrollIntoView({behavior:'smooth', block:'start'});
+        Shiny.addCustomMessageHandler('scroll_order_detail', function(message) {
+          window.setTimeout(function() {
+            var detail = document.querySelector('.order-detail-layout');
+            if (detail) {
+              var disclosure = detail.closest('details');
+              if (disclosure) disclosure.open = true;
+              detail.scrollIntoView({behavior:'smooth', block:'start'});
+            }
         }, 180);
       });
     }, {once:true});
@@ -1251,7 +1535,7 @@ institution_banner <- div(
   div(
     class = "banner-home",
     tags$img(
-      src = "evolab-berkeley.png",
+      src = atlas_asset_url("evolab-berkeley.png"),
       alt = "EvoLab UC Berkeley"
     ),
     div(
@@ -1264,17 +1548,17 @@ institution_banner <- div(
     span(class = "banner-support-label", "Research home & support"),
     tags$img(
       class = "banner-logo fulbright",
-      src = "fulbright.png",
+      src = atlas_asset_url("fulbright.png"),
       alt = "Fulbright"
     ),
     tags$img(
       class = "banner-logo walter",
-      src = "walter-benjamin-dfg.png",
+      src = atlas_asset_url("walter-benjamin-dfg.png"),
       alt = "DFG Walter Benjamin Programme"
     ),
     tags$img(
       class = "banner-logo berkeley",
-      src = "uc-berkeley.png",
+      src = atlas_asset_url("uc-berkeley.png"),
       alt = "University of California, Berkeley"
     )
   )
@@ -1283,12 +1567,16 @@ institution_banner <- div(
 hero <- div(
   class = "hero",
   div(class = "eyebrow", "Multi-marker primer decision support"),
-  h1("See the gap before it becomes bias."),
+  h1("Choose a marker. Explore its evidence."),
   p(
-    "Compare binding geometry, thermal compatibility, and lineage-level mismatch ",
-    "risk without collapsing them into a single overconfident score."
+    "Find primer combinations, check their reference support, ",
+    "and follow a result to the sequences behind it."
   )
 )
+
+workspace_heading <- function(title, description) {
+  div(class = "workspace-heading", h1(title), p(description))
+}
 
 ui <- page_navbar(
   id = "main_nav",
@@ -1297,52 +1585,64 @@ ui <- page_navbar(
   header = tagList(
     tags$style(HTML(app_css)),
     tags$script(HTML(app_js)),
-    institution_banner,
-    uiOutput("data_status")
+    tags$link(rel = "stylesheet", href = atlas_asset_url("atlas-workspace.css"))
   ),
   nav_panel(
     "Start here", value = "start",
     div(
-      class = "container-fluid",
+      class = "container-fluid atlas-home",
       hero,
-      p("Choose what you want to investigate. Each view keeps its own filters and shows the evidence behind its results."),
       div(
-        class = "start-grid",
-        div(class = "start-card", h3("Find primers"),
-            p("Choose an organism group and marker, then browse documented primer pairs and where they bind."),
-            actionButton("go_find", "Find primers", class = "btn-primary btn-sm")),
-        div(class = "start-card", h3("Check COI reference fit"),
-            p("Compare COI reference fit and binding-site availability across animal groups. Open a group to inspect its sequences when available."),
-            actionButton("go_fit", "Check COI reference fit", class = "btn-primary btn-sm")),
-        div(class = "start-card", h3("Compare regions"),
-            p("Compare COI reference sequences from two reported source geographies, with sample sizes and missing locations visible."),
-            actionButton("go_regions", "Compare reference regions", class = "btn-primary btn-sm")),
-        div(class = "start-card", h3("Inspect evidence"),
-            p("Filter taxa and accessions, review original sources, and download the records behind a result."),
-            actionButton("go_taxa", "Inspect taxa and sequences", class = "btn-primary btn-sm"),
-            actionButton("go_sources", "Read sources and methods", class = "btn-outline-secondary btn-sm mt-2"))
+        class = "start-grid atlas-marker-grid",
+        div(class = "start-card atlas-marker-card",
+            span(class = "atlas-status-chip", "Animal marker"), h3("COI"),
+            p("Explore animal primer products and binding-site fit across the retained reference groups."),
+            div(class = "atlas-card-actions",
+                actionButton("go_coi_explore", "Explore primers →", class = "btn-primary"),
+                actionButton("go_fit", "Check taxonomic fit", class = "btn-outline-secondary"))),
+        div(class = "start-card atlas-marker-card",
+            span(class = "atlas-status-chip", "Fungal marker"), h3("Fungal rDNA"),
+                p("Explore fungal primer combinations across 18S, ITS and 28S, then inspect their reference evidence."),
+            div(class = "atlas-card-actions",
+                actionButton("go_fungal_explore", "Explore primers →", class = "btn-primary"),
+                actionButton("go_fungal_fit", "Check taxonomic fit", class = "btn-outline-secondary"))),
+        div(class = "start-card atlas-marker-card atlas-18s-entry",
+            span(class = "atlas-status-chip", "Eukaryotic marker"), h3("18S"),
+            p("Browse documented SSU combinations and their regions in the PR2 primer catalog."),
+            div(class = "atlas-card-actions",
+                actionButton("go_18s_start", "18S primers →", class = "btn-primary")))
       ),
-      card(
-        card_header("What is ready to explore?"),
+      div(class = "atlas-home-links",
+          actionButton("go_find", "Return to primer explorer", class = "btn-outline-secondary btn-sm"),
+          actionButton("go_taxa", "Open reference library", class = "btn-outline-secondary btn-sm"),
+          actionButton("go_sources", "Sources and methods", class = "btn-outline-secondary btn-sm")),
+      tags$details(class = "atlas-detail atlas-home-status",
+        tags$summary("Reference status and available evidence"),
         div(class = "readiness-list",
-            div(strong("Animal COI · active"), span("Primer map, reference fit, taxon detail, and reference-region comparison. Results depend on the selected reference panel.")),
-            div(strong("Fungal ITS · pilot"), span("121 catalog primers and eight documented pairs. The app map uses one coordinate reference; a separate 48-sequence scoring pilot is documented in the repository and is not shown here.")),
+            div(strong("Animal COI · active"), uiOutput("coi_start_reference_status")),
+            div(strong("Fungal rDNA · versioned panel"), span("Primer products, gene/domain tracks and taxonomic reference support use the selected immutable snapshot. This small panel does not establish broad fungal amplification performance.")),
             div(strong("Eukaryotic 18S · pilot"), span("321 catalog primers and 123 documented sets. Ninety-three sets have drawable geometry; this is not broad taxonomic performance evidence.")),
-            div(strong("12S, 16S, 28S · planned"), span("Marker targets are documented, but these markers have no interactive evidence view yet."))
+            div(strong("Additional 12S, 16S and broad 28S panels · planned"), span("Fungal 28S is available within the rDNA explorer. Other marker reference panels remain planned."))
         ),
         p(class = "tiny mt-3 mb-0", "Reference fit and sampling describe available sequences. They do not predict PCR success or establish a species' geographic range. The Hawaiʻi–Madagascar audit is separate research documented in the repository and is not loaded into this app."),
-        p(class = "tiny mt-3 mb-0", "App version 2026.10.02 · Organism and dietary-use metadata")
+        p(class = "tiny mt-3 mb-0", "App version 2026.10.11 · Growing COI references and versioned fungal combinations")
       )
     )
   ),
   nav_panel(
-    "Find primers", value = "find",
+    "Primer explorer", value = "find",
     div(
       class = "container-fluid primer-map-page",
-      hero,
+      workspace_heading("Primer explorer", "Choose a marker, then inspect its regions and primer products."),
+      div(class = "atlas-page-tools",
+          actionButton("go_coi_map", "Animal COI", class = "btn btn-outline-primary btn-sm"),
+          actionButton("go_fungal_map", "Fungal rDNA", class = "btn btn-outline-primary btn-sm"),
+          actionButton("go_18s", "Eukaryotic 18S", class = "btn btn-outline-primary btn-sm"),
+          span(class = "tiny", "More filters are available beside the map.")),
       layout_sidebar(
         sidebar = sidebar(
           width = 340,
+          open = list(desktop = "closed", mobile = "closed"),
           h4("Build the view"),
           tags$a(href = "#primer-map-card", class = "btn btn-outline-success btn-sm mb-3", "Jump to primer map"),
           div(
@@ -1363,177 +1663,214 @@ ui <- page_navbar(
             ),
             selected = "COI"
           ),
-          selectInput(
-            "application_filter", "Applications",
-            choices = c(
-              "DNA barcoding" = "barcoding",
-              "Bulk community" = "bulk_community",
-              "Environmental DNA" = "edna",
-              "Dietary metabarcoding" = "diet"
-            ),
-            multiple = TRUE
-          ),
-          div(class = "tiny mb-2", "Dietary use is linked to a study, predator, sample material, and amplified target. See the map details or download the catalog."),
-          selectInput(
-            "environment_filter", "Environments",
-            choices = c("freshwater", "marine", "terrestrial", "host_associated"),
-            multiple = TRUE
-          ),
-          selectInput(
-            "intent_filter", "Design intents",
-            choices = c("broad", "target_enriched", "exclusion_blocking"),
-            multiple = TRUE
-          ),
-          selectInput(
-            "map_sort", "Order rows by",
-            choices = c(
-              "Binding site along marker (5′→3′)" = "binding_site",
-              "Primer-pair name (A–Z)" = "alphabetical",
-              "Folmer overlap (most bp first)" = "folmer_overlap",
-              "Amplicon length (shortest first)" = "amplicon_length"
-            ),
-            selected = "folmer_overlap"
-          ),
-          fluidRow(
-            column(
-              6,
-              actionButton(
-                "select_all", "Select all",
-                class = "btn-primary btn-sm w-100"
-              )
-            ),
-            column(
-              6,
-              actionButton(
-                "clear_all", "Clear",
-                class = "map-clear-btn btn-sm w-100"
-              )
-            )
-          ),
-          sliderInput(
-            "amplicon_range", "Amplicon + primers (bp)",
-            min = 100, max = 750, value = c(100, 750), step = 10
-          ),
-          uiOutput("pair_selector_ui"),
           conditionalPanel(
             condition = "input.map_marker == 'ITS_FUNGAL'",
-            tags$details(
-              class = "custom-panel",
-              tags$summary("Advanced: test an unpaired rDNA combination"),
-              div(
-                class = "callout tiny mb-2",
-                strong("This is exploratory. "),
-                "Choose individual oligos only when the exact combination is not already documented. The result is labelled as a session combination, never as a published pair."
-              ),
-              selectizeInput(
-                "its_catalog_forward", "Forward oligo",
-                choices = its_forward_choices,
-                selected = unname(its_forward_choices[grepl("^ITS1F ", names(its_forward_choices))][1]),
-                options = list(placeholder = "Search forward primers, targets, or citations")
-              ),
-              selectizeInput(
-                "its_catalog_reverse", "Reverse oligo",
-                choices = its_reverse_choices,
-                selected = unname(its_reverse_choices[grepl("^ITS4 ", names(its_reverse_choices))][1]),
-                options = list(placeholder = "Search reverse primers, targets, or citations")
-              ),
-              actionButton(
-                "its_add_catalog_pair", "Add selected combination to map",
-                class = "btn-primary btn-sm w-100"
-              ),
-              div(class = "tiny mt-2", "The atlas labels this as a session combination unless the exact pair has its own source-supported catalog entry.")
+            div(
+              class = "marker-guidance",
+              strong("Use the shared primer overview. "),
+              "Choose a region, reference and platform above the map. Open Inspect evidence for reference support and nucleotide alignments."
             )
           ),
-          tags$details(
-            class = "custom-panel",
-            tags$summary("Add a custom primer pair"),
+          conditionalPanel(
+            condition = "input.map_marker != 'ITS_FUNGAL'",
             selectInput(
-              "custom_marker", "Marker for this pair",
-              choices = setNames(
-                marker_registry$marker_id[marker_registry$marker_id %in% c("COI", "ITS_FUNGAL")],
-                marker_registry$display_name[marker_registry$marker_id %in% c("COI", "ITS_FUNGAL")]
-              ), selected = "COI"
+              "application_filter", "Applications",
+              choices = c(
+                "DNA barcoding" = "barcoding",
+                "Bulk community" = "bulk_community",
+                "Environmental DNA" = "edna",
+                "Dietary metabarcoding" = "diet"
+              ),
+              multiple = TRUE
             ),
-            textInput("custom_pair_name", "Pair name", value = "My primer pair"),
-            textAreaInput(
-              "custom_forward", "Forward primer (5′→3′)",
-              value = "", rows = 2,
-              placeholder = "IUPAC sequence, e.g. GCHCCHGAYATRGCHTTYCC"
+            div(class = "tiny mb-2", "Dietary use is linked to a study, predator, sample material, and amplified target. See the map details or download the catalog."),
+            selectInput(
+              "environment_filter", "Environments",
+              choices = c("freshwater", "marine", "terrestrial", "host_associated"),
+              multiple = TRUE
             ),
-            textAreaInput(
-              "custom_reverse", "Reverse primer (5′→3′)",
-              value = "", rows = 2,
-              placeholder = "IUPAC sequence, e.g. TCDGGRTGNCCRAARAAYCA"
+            selectInput(
+              "intent_filter", "Design intents",
+              choices = c("broad", "target_enriched", "exclusion_blocking"),
+              multiple = TRUE
             ),
-            conditionalPanel(
-              condition = "input.custom_marker == 'COI'",
-              selectInput(
-                "custom_target_order",
-                "Expected target group (optional)",
-                choices = c("Not specified" = "__NONE__", alignment_orders),
-                selected = "__NONE__"
+            selectInput(
+              "map_sort", "Order rows by",
+              choices = c(
+                "Binding site along marker (5′→3′)" = "binding_site",
+                "Primer-pair name (A–Z)" = "alphabetical",
+                "Folmer overlap (most bp first)" = "folmer_overlap",
+                "Amplicon length (shortest first)" = "amplicon_length"
+              ),
+              selected = "folmer_overlap"
+            ),
+            fluidRow(
+              column(
+                6,
+                actionButton(
+                  "select_all", "Select all",
+                  class = "btn-primary btn-sm w-100"
+                )
+              ),
+              column(
+                6,
+                actionButton(
+                  "clear_all", "Clear",
+                  class = "map-clear-btn btn-sm w-100"
+                )
               )
             ),
-            textInput(
-              "custom_expected_amplicon", "Expected amplicon + primers (optional)",
-              value = "", placeholder = "e.g. 461"
+            sliderInput(
+              "amplicon_range", "Amplicon + primers (bp)",
+              min = 100, max = 750, value = c(100, 750), step = 10
             ),
-            actionButton(
-              "locate_custom", "Add pair to map",
-              class = "btn-primary btn-sm w-100"
+            uiOutput("pair_selector_ui"),
+            conditionalPanel(
+              condition = "input.map_marker == 'ITS_FUNGAL'",
+              tags$details(
+                class = "custom-panel",
+                tags$summary("Advanced: test an unpaired rDNA combination"),
+                div(
+                  class = "callout tiny mb-2",
+                  strong("This is exploratory. "),
+                  "Choose individual oligos only when the exact combination is not already documented. The result is labelled as a session combination, never as a published pair."
+                ),
+                selectizeInput(
+                  "its_catalog_forward", "Forward oligo",
+                  choices = its_forward_choices,
+                  selected = unname(its_forward_choices[grepl("^ITS1F ", names(its_forward_choices))][1]),
+                  options = list(placeholder = "Search forward primers, targets, or citations")
+                ),
+                selectizeInput(
+                  "its_catalog_reverse", "Reverse oligo",
+                  choices = its_reverse_choices,
+                  selected = unname(its_reverse_choices[grepl("^ITS4 ", names(its_reverse_choices))][1]),
+                  options = list(placeholder = "Search reverse primers, targets, or citations")
+                ),
+                actionButton(
+                  "its_add_catalog_pair", "Add selected combination to map",
+                  class = "btn-primary btn-sm w-100"
+                ),
+                div(class = "tiny mt-2", "The atlas labels this as a session combination unless the exact pair has its own source-supported catalog entry.")
+              )
             ),
-            checkboxInput("show_custom", "Show added custom pairs", value = TRUE),
-            uiOutput("custom_location_status"),
-            uiOutput("custom_pair_queue"),
-            actionButton(
-              "clear_custom", "Clear custom pairs",
-              class = "btn-outline-secondary btn-sm w-100"
-            )
-          ),
-          uiOutput("marker_coordinate_note")
+            tags$details(
+              class = "custom-panel",
+              tags$summary("Add a custom primer pair"),
+              selectInput(
+                "custom_marker", "Marker for this pair",
+                choices = setNames(
+                  marker_registry$marker_id[marker_registry$marker_id %in% c("COI", "ITS_FUNGAL")],
+                  marker_registry$display_name[marker_registry$marker_id %in% c("COI", "ITS_FUNGAL")]
+                ), selected = "COI"
+              ),
+              textInput("custom_pair_name", "Pair name", value = "My primer pair"),
+              textAreaInput(
+                "custom_forward", "Forward primer (5′→3′)",
+                value = "", rows = 2,
+                placeholder = "IUPAC sequence, e.g. GCHCCHGAYATRGCHTTYCC"
+              ),
+              textAreaInput(
+                "custom_reverse", "Reverse primer (5′→3′)",
+                value = "", rows = 2,
+                placeholder = "IUPAC sequence, e.g. TCDGGRTGNCCRAARAAYCA"
+              ),
+              conditionalPanel(
+                condition = "input.custom_marker == 'COI'",
+                selectInput(
+                  "custom_target_order",
+                  "Expected target group (optional)",
+                  choices = c("Not specified" = "__NONE__", alignment_orders),
+                  selected = "__NONE__"
+                )
+              ),
+              textInput(
+                "custom_expected_amplicon", "Expected amplicon + primers (optional)",
+                value = "", placeholder = "e.g. 461"
+              ),
+              actionButton(
+                "locate_custom", "Add pair to map",
+                class = "btn-primary btn-sm w-100"
+              ),
+              checkboxInput("show_custom", "Show added custom pairs", value = TRUE),
+              uiOutput("custom_location_status"),
+              uiOutput("custom_pair_queue"),
+              actionButton(
+                "clear_custom", "Clear custom pairs",
+                class = "btn-outline-secondary btn-sm w-100"
+              )
+            ),
+            uiOutput("marker_coordinate_note")
+          )
         ),
         card(
           id = "primer-map-card",
           full_screen = TRUE,
           card_header(uiOutput("map_card_title", inline = TRUE)),
-          uiOutput("combination_browser_ui"),
-          uiOutput("overview_metrics"),
-          div(
-            class = "map-legend",
-            span(
-              span(class = "legend-number", "1"),
-              "Dynamic row number"
-            ),
-            span(span(class = "legend-line legend-forward"), "Forward primer"),
-            span(span(class = "legend-line legend-informative"), "Amplicon − primers (informative)"),
-            span(span(class = "legend-line legend-reverse"), "Reverse primer")
-          ),
-          p(class = "map-scroll-hint tiny", "Swipe horizontally across the map to see later positions and source columns."),
+          uiOutput("primer_overview_controls"),
+          conditionalPanel(condition="input.map_marker == 'ITS_FUNGAL'",fungalPrimerAtlasNavigatorUI()),
+          conditionalPanel(condition="input.map_marker == 'ITS_FUNGAL'",fungalCombinationBuilderUI()),
+          conditionalPanel(condition="input.map_marker != 'ITS_FUNGAL' || input.fungal_overview_mode == 'amplicons'",
+          div(class="atlas-segmented",
+              radioButtons("primer_overview_platform", "Sequencing platform",
+                  c("All platforms"="ALL", "Illumina"="ILLUMINA", "PacBio"="PACBIO", "Nanopore"="NANOPORE"),
+                  "ALL", inline=TRUE)),
+          conditionalPanel(condition="input.map_marker != 'ITS_FUNGAL'",
+              tags$details(class="atlas-detail", tags$summary("Browse primer combinations"),uiOutput("combination_browser_ui"))),
+          uiOutput("primer_overview_context"),
+          div(class="map-legend",
+              span(span(class="legend-number", "1"), "Dynamic row number"),
+              span(span(class="legend-line legend-forward"), "Forward primer"),
+              span(span(class="legend-line legend-informative"), "Amplicon − primers (informative)"),
+              span(span(class="legend-line legend-reverse"), "Reverse primer")),
+          p(class="map-scroll-hint tiny", "Swipe horizontally across the map to see later positions and source columns."),
           uiOutput("primer_map"),
-          uiOutput("its_map_catalog_ui"),
-          uiOutput("custom_diagnostic_selector"),
-          uiOutput("custom_location_detail")
+          uiOutput("primer_overview_paging")),
+          tags$script(HTML("(function(){function bind(){Shiny.addCustomMessageHandler('primer-overview-inspect',function(message){var d=document.getElementById('primer-evidence-inspector');if(d){d.open=true;d.scrollIntoView({behavior:'smooth',block:'start'});}});var d=document.getElementById('primer-evidence-inspector');if(d)d.addEventListener('toggle',function(){if(d.open)Shiny.setInputValue('primer_overview_inspector_open',{nonce:Date.now()},{priority:'event'});});}$(bind);})();")),
+          tags$details(id="primer-evidence-inspector", class="atlas-detail",
+              tags$summary("Inspect evidence and alignments"),
+              uiOutput("primer_overview_inspector_controls"),
+              conditionalPanel(condition="input.map_marker == 'ITS_FUNGAL'",
+                  h3("2 · Check taxonomic evidence"),
+                  uiOutput("fungal_builder_oligo_evidence"),
+                  actionButton("fungal_builder_open_fit","Open taxonomic fit",class="btn-primary btn-sm"),
+                  uiOutput("primer_overview_evidence_status"),
+                  conditionalPanel(condition="output.primer_overview_broad_available", uniteReferenceUI("unite_explorer", initial_mode="primers")),
+                  conditionalPanel(condition="output.primer_overview_historical_pair",
+                    tags$details(class="atlas-detail", tags$summary("Mapped-template details and historical versions"),fungalExplorerUI("fungal"))),
+                  fungalPublicationUI()),
+              conditionalPanel(condition="input.map_marker != 'ITS_FUNGAL'",
+                  uiOutput("overview_metrics"), uiOutput("its_map_catalog_ui"),
+                  conditionalPanel(condition="input.map_marker == 'COI'",
+                      actionButton("overview_open_fit", "Check taxonomic fit", class="btn-primary")),
+                  uiOutput("custom_diagnostic_selector"), uiOutput("custom_location_detail")))
         )
       )
     )
   ),
   nav_panel(
-    "Check taxonomic fit · COI", value = "fit",
+    "Taxonomic fit", value = "fit",
     div(
       class = "container-fluid",
-      hero,
+      workspace_heading("Taxonomic fit", "Choose a marker and investigate the reference evidence behind a primer combination."),
+      div(class = "atlas-segmented atlas-fit-marker",
+          radioButtons("fit_marker", "Marker", c("Animal COI" = "COI", "Fungal rDNA" = "ITS_FUNGAL"), "COI", inline = TRUE)),
+      conditionalPanel(condition = "input.fit_marker == 'ITS_FUNGAL'",
+          div(class = "atlas-segmented atlas-fungal-collection",
+              radioButtons("fungal_fit_source", "Reference collection",
+                  c("Broad ITS · UNITE" = "UNITE", "Long rDNA · NCBI" = "NCBI"), "UNITE", inline = TRUE)),
+          conditionalPanel(condition = "input.fungal_fit_source == 'UNITE'", uniteReferenceUI("unite_fit", initial_mode = "primers")),
+          conditionalPanel(condition = "input.fungal_fit_source == 'NCBI'", fungalFitUI("fungal_fit"))),
+      conditionalPanel(condition = "input.fit_marker == 'COI'",
+      div(class = "callout tiny", strong("Active COI reference: "), uiOutput("coi_fit_reference_status")),
       card(
         fill = FALSE,
         class = "order-heatmap-card",
         card_header("Which orders are at risk — and why?"),
-        div(
-          class = "callout",
-          strong("Use this heatmap for triage, not as a PCR verdict. "),
-          "Mismatch fit and reference-site availability are shown separately. ",
-          "Neither number is an amplification probability or a universal pass/fail score."
-        ),
-        br(),
-        div(
+        p(class = "atlas-context-line", "Compare mismatch penalties and binding-site availability. Click a cell to inspect its evidence."),
+        tags$details(class = "atlas-detail",
+          tags$summary("How to read the COI evidence"),
+          div(
           class = "heatmap-reading-guide",
           div(
             h5("How to read each cell"),
@@ -1594,12 +1931,12 @@ ui <- page_navbar(
               )
             )
           )
-        ),
+        )),
         selectizeInput(
           "order_pair_select",
           "Primer pairs shown",
           choices = setNames(pair_meta$pair_id[pair_meta$marker_id == "COI"], pair_meta$pair_label[pair_meta$marker_id == "COI"]),
-          selected = pair_meta$pair_id[pair_meta$marker_id == "COI"],
+          selected = intersect(c("MCO", "LERAY_XT", "ANML", "BF2_BR2", "FWH2"), pair_meta$pair_id[pair_meta$marker_id == "COI"]),
           multiple = TRUE,
           width = "100%",
           options = list(
@@ -1623,7 +1960,9 @@ ui <- page_navbar(
         uiOutput("order_matrix")
       ),
       br(),
-      layout_columns(
+      tags$details(class = "atlas-detail atlas-coi-inspector",
+        tags$summary("Inspect a COI comparison and binding-site trace"),
+        layout_columns(
         col_widths = c(12, 12),
         fill = FALSE,
         fillable = FALSE,
@@ -1685,23 +2024,22 @@ ui <- page_navbar(
             uiOutput("mismatch_detail")
           )
         )
-      ),
+      )),
       br(),
-      conditionalPanel(
+      tags$details(class = "atlas-detail",
+        tags$summary("Study validation and exact sequence drill-down"),
+        conditionalPanel(
         condition = "input.detail_order == 'Hymenoptera' && input.detail_pair == 'BEEPRIME'",
         card(
           fill = FALSE,
           class = "deep-detail-card",
-          card_header("BeePrime taxonomic validation · expanded author reference"),
+          card_header("BeePrime taxonomic validation"),
+          radioButtons("beeprime_reference_mode", "Reference alignment",
+                       choices = beeprime_reference_choices, selected = "publication"),
+          uiOutput("beeprime_reference_status"),
           uiOutput("beeprime_deep_metrics"),
           uiOutput("beeprime_interpretation"),
-          div(
-            class = "callout taxon-info",
-            strong("Use this panel for BeePrime interpretation. "),
-            "It scores the authors’ 99.5%-clustered COI reference and retains family, ",
-            "subfamily, and genus labels. The older 50-record order panel above remains ",
-            "available only as a reproducibility trace."
-          ),
+
           div(
             class = "deep-dive-controls",
             selectInput(
@@ -1785,15 +2123,7 @@ ui <- page_navbar(
           uiOutput("claimed_primer_metrics"),
           uiOutput("claimed_primer_interpretation"),
           uiOutput("claimed_phylogeny_group_table"),
-          div(
-            class = "callout taxon-info",
-            strong("Every mapped primer pair opens the same evidence path. "),
-            "This panel audits whether the selected primer sites are present in the ",
-            "67,352-centroid alignment, then resolves the selected order through ",
-            "family or genus to exact accessions and binding sequences. Incomplete ",
-            "binding regions remain visible but are blocked from biological penalty ",
-            "interpretation."
-          ),
+          uiOutput("claimed_reference_intro"),
           div(
             class = "deep-dive-controls",
             selectInput(
@@ -1855,23 +2185,28 @@ ui <- page_navbar(
             )
           )
         )
+      ))
       )
     )
   ),
   nav_panel(
-    "Inspect taxa & sequences", value = "taxa",
+    "Reference library", value = "taxa",
     div(
       class = "container-fluid",
-      hero,
-      div(
+      workspace_heading("Inspect taxa and sequences", "Follow a result to its reference records, taxonomy, and source evidence."),
+      div(class = "atlas-page-tools",
+          actionButton("go_coi_library", "Animal COI", class = "btn-outline-primary btn-sm"),
+          actionButton("go_fungal_library", "Fungal rDNA", class = "btn-outline-primary btn-sm")),
+      tags$details(class = "atlas-detail", tags$summary("What the reference library supports"), div(
         class = "callout",
         strong("Reference evidence, not regional amplification probability. "),
         "Geography frequently proxies taxonomy and sampling bias. Every geographic view reports located/all eligible sequences, missing locations, and taxonomic composition."
-      ),
+      )),
       br(),
       layout_sidebar(
         sidebar = sidebar(
           width = 330,
+          open = list(desktop = "open", mobile = "closed"),
           h4("Filter evidence"),
           div(
             class = "organism-picker",
@@ -1889,7 +2224,16 @@ ui <- page_navbar(
               marker_registry$display_name[marker_registry$status %in% c("active", "pilot")]
             ), selected = "COI"
           ),
+          conditionalPanel(condition = "input.lineage_marker == 'ITS_FUNGAL'",
+              p(class = "atlas-context-line", "The fungal library shows the full frozen panel selected in Taxonomic fit.")),
+          conditionalPanel(condition = "input.lineage_marker != 'ITS_FUNGAL'",
           selectizeInput("lineage_pair", "Primer pair", choices = NULL),
+          conditionalPanel(
+            condition = "input.lineage_marker == 'COI' && input.lineage_pair == 'BEEPRIME'",
+            radioButtons("lineage_reference_mode", "Reference alignment",
+                         choices = beeprime_reference_choices, selected = "publication")
+          ),
+          uiOutput("lineage_reference_status"),
           selectizeInput("lineage_target", "Target group", choices = "All", selected = "All"),
           selectizeInput("lineage_country", "Reference country / territory", choices = "All", selected = "All"),
           selectizeInput("lineage_locality", "Reference locality", choices = "All", selected = "All"),
@@ -1898,9 +2242,19 @@ ui <- page_navbar(
             id = "propose_primer_link", class = "btn btn-primary btn-sm w-100",
             href = "https://github.com/sven9r/primer-atlas/issues/new?template=propose-primer.yml",
             target = "_blank", "Propose this primer"
-          )
+          ))
         ),
-        navset_card_tab(
+        conditionalPanel(condition = "input.lineage_marker == 'ITS_FUNGAL'",
+          div(class = "atlas-segmented atlas-fungal-collection",
+              radioButtons("fungal_library_source", "Reference collection",
+                  c("Broad ITS · UNITE" = "UNITE", "Long rDNA · NCBI" = "NCBI"), "UNITE", inline = TRUE)),
+          conditionalPanel(condition = "input.fungal_library_source == 'UNITE'", uniteReferenceUI("unite_library", initial_mode = "coverage")),
+          conditionalPanel(condition = "input.fungal_library_source == 'NCBI'", div(class = "atlas-panel", uiOutput("fungal_library_context"),
+              div(class = "atlas-card-actions",
+                  actionButton("go_fungal_fit_library", "Check this panel's taxonomic fit →", class = "btn-outline-primary btn-sm"),
+                  downloadButton("download_fungal_library", "Reference metadata (CSV)", class = "btn-outline-secondary btn-sm")),
+              DTOutput("fungal_library_records")))),
+        conditionalPanel(condition = "input.lineage_marker != 'ITS_FUNGAL'", navset_card_tab(
           id = "lineage_tabs",
           nav_panel("Overview", uiOutput("lineage_overview")),
           nav_panel("Families", DTOutput("lineage_families")),
@@ -1908,24 +2262,26 @@ ui <- page_navbar(
           nav_panel("Genera", uiOutput("lineage_genera_ui")),
           nav_panel("Sequences", uiOutput("lineage_sequence_note"), DTOutput("lineage_sequences")),
           nav_panel("Sources and downloads", uiOutput("lineage_sources"))
-        )
+        ))
       )
     )
   ),
+  nav_menu("More",
   nav_panel(
     "Compare regions · COI", value = "regions",
     div(
       class = "container-fluid",
-      hero,
-      div(
+      workspace_heading("Compare reference regions", "Explore differences between COI reference subsets with sampling and missing locations in view."),
+      tags$details(class = "atlas-detail", tags$summary("How to interpret location comparisons"), div(
         class = "callout",
         strong("Compare reference sequences—not regional amplification probability. "),
         "This view tests whether primer-binding sequences represented in two reference-geography subsets differ. Geography can proxy taxonomy, collection effort, and database bias, so the order-stratified table and located/all denominators remain visible."
-      ),
+      )),
       br(),
       layout_sidebar(
         sidebar = sidebar(
           width = 340,
+          open = list(desktop = "open", mobile = "closed"),
           h4("Choose two reference subsets"),
           selectInput(
             "region_marker", "Marker",
@@ -1945,6 +2301,12 @@ ui <- page_navbar(
           selectizeInput(
             "region_b", "Reference region B",
             choices = region_country_choices, selected = region_default_b
+          ),
+          conditionalPanel(
+            condition = "input.region_pair == 'BEEPRIME'",
+            radioButtons("region_reference_mode", "Reference alignment",
+                         choices = beeprime_reference_choices, selected = "publication"),
+            uiOutput("region_reference_status")
           ),
           selectizeInput("region_order", "Taxonomic stratum", choices = "All", selected = "All"),
           uiOutput("region_denominator_note"),
@@ -2010,10 +2372,11 @@ ui <- page_navbar(
     "Check temperatures", value = "thermal",
     div(
       class = "container-fluid",
-      hero,
+      workspace_heading("Check primer temperatures", "Inspect thermal intervals and a starting range for gradient PCR."),
       layout_sidebar(
         sidebar = sidebar(
           width = 290,
+          open = list(desktop = "open", mobile = "closed"),
           numericInput("sodium", "Monovalent salt (mM)", value = 50, min = 1, max = 500),
           sliderInput("ta_offset", "Ta below limiting Tm (°C)", min = 2, max = 8, value = 4, step = 0.5),
           div(
@@ -2035,8 +2398,11 @@ ui <- page_navbar(
     "Sources & methods", value = "sources",
     div(
       class = "container-fluid",
-      hero,
-      layout_columns(
+      workspace_heading("Sources and methods", "Review the provenance, assumptions, and downloadable records behind the atlas."),
+      tags$details(class = "atlas-detail", tags$summary("Reference updates and application status"),
+          coiReferenceRefreshUI("coi_refresh"), uiOutput("data_status")),
+      tags$details(class = "atlas-detail", tags$summary("Research home and support"), institution_banner),
+      tags$details(class = "atlas-detail atlas-panel", tags$summary("Publications, citations and downloads"), layout_columns(
         col_widths = c(7, 5),
         card(
           card_header("Published evidence and reference data"),
@@ -2048,14 +2414,11 @@ ui <- page_navbar(
         card(
           card_header("What each source supports"),
           h4("Reference alignments"),
-          p(
-            "The repository currently bundles ", length(alignment_files),
-            " compact COX1 preview alignments. They remain useful for placement and UI regression tests, but they are not the production scoring denominator. "
-            , "Production releases retain and score full NC_001322.1-coordinate alignments for the 20 listed arthropod orders plus the Acari and Collembola composite target groups."
-          ),
+          uiOutput("coi_method_reference_status"),
+          p("Production releases retain and score full NC_001322.1-coordinate alignments for the 20 listed arthropod orders plus the Acari and Collembola composite target groups."),
           div(
             class = "reference-policy-grid",
-            div(class = "reference-policy-card", tags$b("Initial order baseline"), "At least 1,000 retained, quality-filtered sequences per arthropod target group; all available records are reported when the database cannot supply 1,000."),
+            div(class = "reference-policy-card", tags$b("Initial reference target"), "At least 10,000 marker-verified COI records in total and at least 100 per arthropod target group. Preserved historical records with unresolved or failed current marker QC are reported separately. Any unmet group minimum is explicit."),
             div(class = "reference-policy-card", tags$b("Monthly growth"), "Append unseen accessions only. The next target is ceiling(previous retained count × 1.01); existing accessions are never replaced by a fresh random sample."),
             div(class = "reference-policy-card", tags$b("Scoring denominator"), "General primers use every retained sequence in the full order alignment. A clustered preview may never be reported as the production denominator."),
             div(class = "reference-policy-card", tags$b("BeePrime exception"), "The Gurten et al. 99.5% centroids remain a named, study-specific evidence layer for BeePrime and are not reused as universal evidence for unrelated primers.")
@@ -2074,32 +2437,684 @@ ui <- page_navbar(
           p("The current estimator is deliberately transparent and fast. A production release should add a full nearest-neighbor engine with Mg²⁺, primer concentration, and chemistry-specific corrections."),
           div(class = "callout", "Open-source principle: every number should reveal its data source, assumptions, and uncertainty.")
         )
-      ),
+      )),
       br(),
-      card(
+      tags$details(class = "atlas-detail atlas-panel", tags$summary("Fungal primer catalog and original references"), card(
         card_header("UNITE fungal rDNA primer catalog · original citations retained"),
         div(
           class = "callout tiny mb-3",
           strong(format(nrow(unite_catalog), big.mark = ","), " sequence-valid primer records are available in the pilot catalog. "),
-          "UNITE is recorded as the compilation provenance. The Reference column names the original paper or explicitly says unpublished/not reported; it is never replaced by a generic UNITE citation. Curated primer pairs remain a smaller, source-supported subset because the atlas does not invent pairings from individual oligos."
+          "UNITE is recorded as the compilation provenance. The Reference column names the original paper or explicitly says unpublished/not reported. Documented pairs and candidate combinations of individual primers are labelled separately; candidate combinations need independent validation."
         ),
         DTOutput("unite_primer_catalog")
-      )
+      ))
     )
-  )
+  ))
 )
 
 server <- function(input, output, session) {
+  fungal_fit_context <- reactiveVal(NULL)
+  fungal_explorer_context <- reactiveVal(NULL)
+  fungal_overview_evidence <- reactiveVal(NULL)
+  overview_clicked_pair <- reactiveVal(NULL)
+  overview_page <- reactiveVal(1L)
+  fungal_builder_state <- reactiveValues(version=NULL,forward=character(),reverse=character())
+  fungal_builder_ack <- reactiveValues(forward=NULL,reverse=NULL)
+  fungal_workspace <- fungalExplorerServer("fungal", selection = fungal_explorer_context)
+  fungal_fit_workspace <- fungalFitServer("fungal_fit", selection = fungal_fit_context)
+  unite_explorer_workspace <- uniteReferenceServer("unite_explorer", initial_mode = "primers",
+      dataset=function(version_id=NULL) fungal_builder_broad_data(version_id %||% input[["unite_explorer-version"]]),
+      pair_provider=reactive(fungal_overview_evidence()$pair))
+  unite_fit_workspace <- uniteReferenceServer("unite_fit", initial_mode = "primers",
+      dataset=function(version_id=NULL) fungal_builder_broad_data(version_id %||% input[["unite_fit-version"]]),
+      pair_provider=reactive(fungal_overview_evidence()$pair))
+  unite_library_workspace <- uniteReferenceServer("unite_library", initial_mode = "coverage")
+  coi_refresh <- coiReferenceRefreshServer("coi_refresh", initial = coi_reference_panel)
+  coi_reference_current <- coi_refresh$reference
+  current_order_scores <- reactive(as_tibble(coi_reference_current()$overview))
+  current_pair_template_scores <- reactive({
+    reference <- coi_reference_current()
+    if (!is.null(reference$pair_templates)) as_tibble(reference$pair_templates) else pair_template_scores
+  })
+  set_fungal_overview_evidence <- function(pair,nonce) {
+    data <- fungal_builder_result()$working_snapshot
+    row <- data$pairs[data$pairs$pair_id==pair,,drop=FALSE]
+    if(nrow(row)!=1L) return(invisible(NULL))
+    fungal_overview_evidence(list(pair=pair,version=data$manifest$id,
+        forward_sequence=row$forward_sequence,reverse_sequence=row$reverse_sequence,row=row,nonce=nonce))
+  }
+  fungal_builder_broad_data <- function(version_id=NULL) {
+    broad <- unite_reference_read(version_id=version_id)
+    if(is.null(broad)) return(NULL)
+    candidates <- fungal_builder_result()$selected_pairs
+    request <- fungal_overview_evidence()
+    if(is.list(request) && is.data.frame(request$row) && !request$pair %in% candidates$pair_id)
+      candidates <- bind_rows(candidates,request$row)
+    unite_reference_with_candidates(broad,candidates,catalog=fungal_orientation_catalog(fungal_workspace$snapshot()))$data
+  }
+  fungal_overview_broad_selection <- reactive({
+    request <- fungal_overview_evidence()
+    if(is.null(request)) return(list(available=FALSE,pair=NULL,request=NULL,
+      reason="Choose a forward and a reverse primer to inspect a requested combination."))
+    version <- if(identical(input$main_nav,"fit")) input[["unite_fit-version"]] else input[["unite_explorer-version"]]
+    broad <- fungal_builder_broad_data(version)
+    rows <- if(!is.null(broad)) broad$pairs[broad$pairs$pair_id==request$pair,,drop=FALSE] else data.frame()
+    valid <- nrow(rows)==1L && identical(toupper(rows$forward_sequence),toupper(request$forward_sequence)) &&
+        identical(toupper(rows$reverse_sequence),toupper(request$reverse_sequence))
+    list(available=valid,pair=if(valid) request$pair else NULL,request=request,
+        reason=if(!valid) "These exact forward and reverse oligos are not both covered by the broad UNITE snapshot's completed site searches. The requested combination is retained; broad evidence is unavailable.")
+  })
+  output$primer_overview_broad_available <- reactive(isTRUE(fungal_overview_broad_selection()$available))
+  outputOptions(output,"primer_overview_broad_available",suspendWhenHidden=FALSE)
+  output$primer_overview_historical_pair <- reactive({
+    pair <- overview_selected_pair()
+    length(pair)==1L && pair %in% fungal_workspace$snapshot()$pairs$pair_id
+  })
+  outputOptions(output,"primer_overview_historical_pair",suspendWhenHidden=FALSE)
+  output$primer_overview_evidence_status <- renderUI({
+    selection <- fungal_overview_broad_selection()
+    if(!isTRUE(selection$available)) return(div(class="callout",selection$reason))
+    p(class="atlas-context-line","Mapped geometry: ",selection$request$version,
+        " · broad primer evidence: separate UNITE ITS snapshot. The two reference counts describe different collections.")
+  })
+  fungal_overview_reference <- reactive({
+    data <- fungal_workspace$snapshot()
+    selected <- input$primer_overview_reference
+    if(length(selected)==1L && selected %in% names(data$sequences)) return(selected)
+    pinned <- data$manifest$reference_accession
+    if(length(pinned)==1L && pinned %in% names(data$sequences)) return(pinned)
+    fungal_primer_overview_default_accession(data)
+  })
+  fungal_builder_defaults <- reactive({
+    snapshot <- fungal_workspace$snapshot()
+    defaults <- fungal_combination_defaults(snapshot,accession=fungal_overview_reference(),region="ITS",n_forward=5L,n_reverse=5L)
+    # A consistent published-component teaching set makes the initial 5 × 5
+    # comparison reproducible; missing products remain part of the exercise.
+    choose <- function(names,direction,fallback) {
+      rows <- snapshot$catalog[snapshot$catalog$direction==direction,,drop=FALSE]
+      ids <- lapply(names,function(name) rows$catalog_id[rows$primer_name==name])
+      if(all(lengths(ids)==1L)) unlist(ids,use.names=FALSE) else fallback
+    }
+    defaults$forward_ids <- choose(c("ITS1","ITS1F","ITS5","ITS3","fITS7"),"forward",defaults$forward_ids)
+    defaults$reverse_ids <- choose(c("ITS2","ITS4","ITS4B","LR21","LR3"),"reverse",defaults$reverse_ids)
+    defaults
+  })
+  fungal_builder_forward <- reactive({
+    if(is.null(fungal_builder_state$version)) return(character())
+    intersect(fungal_builder_state$forward,fungal_builder_catalog()$catalog_id[fungal_builder_catalog()$direction=="forward"])
+  })
+  fungal_builder_reverse <- reactive({
+    if(is.null(fungal_builder_state$version)) return(character())
+    intersect(fungal_builder_state$reverse,fungal_builder_catalog()$catalog_id[fungal_builder_catalog()$direction=="reverse"])
+  })
+  fungal_builder_variants <- reactive(fungal_orientation_catalog(fungal_workspace$snapshot()))
+  fungal_builder_catalog <- reactive(fungal_combination_catalog(fungal_workspace$snapshot(),catalog=fungal_builder_variants()))
+  fungal_builder_parent_ids <- function(ids) {
+    variants <- fungal_builder_variants()
+    parent <- variants$parent_catalog_id[match(ids,variants$catalog_id)]
+    ifelse(is.na(parent),ids,parent)
+  }
+  observeEvent(fungal_workspace$snapshot()$manifest$id,{
+    fungal_builder_ack$forward <- fungal_builder_ack$reverse <- NULL
+    fungal_builder_state$version <- fungal_workspace$snapshot()$manifest$id
+    fungal_builder_state$forward <- character()
+    fungal_builder_state$reverse <- character()
+  },priority=100)
+  observeEvent(input$fungal_builder_forward,{
+    selected <- input$fungal_builder_forward %||% character()
+    expected <- isolate(fungal_builder_ack$forward)
+    if(!is.null(expected)) {
+      if(!setequal(selected,expected)) return()
+      fungal_builder_ack$forward <- NULL
+    }
+    fungal_builder_state$forward <- selected
+    conflicting <- fungal_builder_parent_ids(isolate(fungal_builder_state$reverse)) %in% fungal_builder_parent_ids(selected)
+    if(any(conflicting)) {
+      retained <- isolate(fungal_builder_state$reverse)[!conflicting]
+      fungal_builder_state$reverse <- retained
+      fungal_builder_ack$reverse <- retained
+      updateSelectizeInput(session,"fungal_builder_reverse",selected=retained)
+    }
+  },ignoreInit=TRUE,ignoreNULL=FALSE)
+  observeEvent(input$fungal_builder_reverse,{
+    selected <- input$fungal_builder_reverse %||% character()
+    expected <- isolate(fungal_builder_ack$reverse)
+    if(!is.null(expected)) {
+      if(!setequal(selected,expected)) return()
+      fungal_builder_ack$reverse <- NULL
+    }
+    fungal_builder_state$reverse <- selected
+    conflicting <- fungal_builder_parent_ids(isolate(fungal_builder_state$forward)) %in% fungal_builder_parent_ids(selected)
+    if(any(conflicting)) {
+      retained <- isolate(fungal_builder_state$forward)[!conflicting]
+      fungal_builder_state$forward <- retained
+      fungal_builder_ack$forward <- retained
+      updateSelectizeInput(session,"fungal_builder_forward",selected=retained)
+    }
+  },ignoreInit=TRUE,ignoreNULL=FALSE)
+  fungal_atlas_data <- reactive({
+    region <- input$primer_overview_region %||% "ALL"
+    fungal_primer_atlas_data(fungal_workspace$snapshot(),fungal_overview_reference(),region=region)
+  })
+  output$fungal_primer_atlas <- renderUI({
+    req(identical(input$map_marker,"ITS_FUNGAL"))
+    fungal_primer_atlas(fungal_atlas_data(),selected_forward=fungal_builder_forward(),
+      selected_reverse=fungal_builder_reverse(),variant_catalog=fungal_builder_variants())
+  })
+  output$fungal_atlas_selection <- renderUI({
+    forward <- length(fungal_builder_forward()); reverse <- length(fungal_builder_reverse())
+    div(class="fungal-atlas-selection",
+      strong(forward," forward × ",reverse," reverse = ",forward*reverse," requested combinations"),
+      if(!forward || !reverse) span("Choose at least one primer in each direction."),
+      actionButton("fungal_builder_clear","Clear primers",class="btn-outline-secondary btn-sm"),
+      if((input$fungal_overview_mode %||% "atlas")=="atlas")
+        actionButton("fungal_atlas_show_amplicons","View detailed primer map",class="btn-primary btn-sm",
+          disabled=!forward || !reverse))
+  })
+  observeEvent(input$fungal_atlas_show_amplicons,{
+    updateRadioButtons(session,"fungal_overview_mode",selected="amplicons")
+  })
+  observeEvent(input$fungal_atlas_primer_click,{
+    req(identical(input$map_marker,"ITS_FUNGAL"))
+    click <- input$fungal_atlas_primer_click
+    if(!is.list(click) || length(click$catalog_id)!=1L || length(click$direction)!=1L ||
+        !click$direction %in% c("forward","reverse")) return()
+    catalog <- fungal_workspace$snapshot()$catalog
+    component <- catalog[catalog$catalog_id==click$catalog_id & catalog$direction==click$direction,,drop=FALSE]
+    if(nrow(component)!=1L || !identical(click$version,fungal_workspace$snapshot()$manifest$id) ||
+        !identical(click$accession,fungal_overview_reference())) return()
+    forwards <- isolate(fungal_builder_forward()); reverses <- isolate(fungal_builder_reverse())
+    before <- list(forward=forwards,reverse=reverses)
+    variant <- fungal_orientation_resolve(fungal_workspace$snapshot(),click$catalog_id,
+      if(click$direction=="forward") "reverse" else "forward")
+    parent_selected <- click$catalog_id %in% c(forwards,reverses)
+    variant_selected <- variant$catalog_id %in% c(forwards,reverses)
+    next_id <- if(variant_selected) NULL else if(parent_selected) variant$catalog_id else click$catalog_id
+    next_role <- if(parent_selected) variant$direction else click$direction
+    removed <- c(click$catalog_id,variant$catalog_id)
+    forwards <- setdiff(forwards,removed);reverses <- setdiff(reverses,removed)
+    if(length(next_id)) {
+      current <- if(next_role=="forward") forwards else reverses
+      if(length(current)>=5L) {
+        showNotification("Choose up to five primers in each direction. Remove one before changing this primer's direction.",type="message",duration=4)
+        return()
+      }
+      if(next_role=="forward") forwards <- c(forwards,next_id) else reverses <- c(reverses,next_id)
+    }
+    # Atlas clicks precede any queued selector echo. Accept the new selection's
+    # acknowledgment before later direct dropdown edits can become authoritative.
+    fungal_builder_state$forward <- forwards;fungal_builder_state$reverse <- reverses
+    after <- list(forward=forwards,reverse=reverses)
+    for(role in c("forward","reverse")) if(!setequal(before[[role]],after[[role]])) {
+      fungal_builder_ack[[role]] <- after[[role]]
+      updateSelectizeInput(session,paste0("fungal_builder_",role),selected=after[[role]])
+    }
+  },ignoreInit=TRUE)
+  output$fungal_builder_controls <- renderUI({
+    catalog <- fungal_builder_catalog()
+    choices <- function(direction) {
+      rows <- catalog[catalog$direction==direction,,drop=FALSE]
+      setNames(rows$catalog_id,paste0(rows$primer_name," · ",rows$gene_locus))
+    }
+    div(class="fungal-builder-fields",
+      selectizeInput("fungal_builder_forward","Forward primers →",choices("forward"),
+        selected=isolate(fungal_builder_forward()),multiple=TRUE,
+        options=list(maxItems=5,plugins=list("remove_button"),placeholder="Search a forward primer or locus")),
+      selectizeInput("fungal_builder_reverse","← Reverse primers",choices("reverse"),
+        selected=isolate(fungal_builder_reverse()),multiple=TRUE,
+        options=list(maxItems=5,plugins=list("remove_button"),placeholder="Search a reverse primer or locus")))
+  })
+  observeEvent(input$fungal_builder_examples,{
+    defaults <- fungal_builder_defaults()
+    fungal_builder_ack$forward <- fungal_builder_ack$reverse <- NULL
+    fungal_builder_state$forward <- defaults$forward_ids
+    fungal_builder_state$reverse <- defaults$reverse_ids
+    updateSelectizeInput(session,"fungal_builder_forward",selected=defaults$forward_ids)
+    updateSelectizeInput(session,"fungal_builder_reverse",selected=defaults$reverse_ids)
+    updateNumericInput(session,"fungal_builder_min_bp",value=100)
+    updateNumericInput(session,"fungal_builder_max_bp",value=3500)
+    updateSelectInput(session,"fungal_builder_evidence",selected="ALL")
+    updateRadioButtons(session,"primer_overview_platform",selected="ALL")
+  })
+  observeEvent(input$fungal_builder_clear,{
+    fungal_builder_ack$forward <- fungal_builder_ack$reverse <- NULL
+    fungal_builder_state$forward <- fungal_builder_state$reverse <- character()
+    overview_clicked_pair(NULL)
+    fungal_overview_evidence(NULL)
+    updateSelectizeInput(session,"fungal_builder_forward",selected=character())
+    updateSelectizeInput(session,"fungal_builder_reverse",selected=character())
+  })
+  fungal_builder_length_range <- reactive({
+    limits <- c(input$fungal_builder_min_bp %||% 100,input$fungal_builder_max_bp %||% 3500)
+    validate(need(length(limits)==2L && all(is.finite(limits)) && limits[1L]>=100L && limits[2L]>=limits[1L],
+      "Use a minimum of 100 bp or more, and a maximum at least as large as the minimum."))
+    limits
+  })
+  fungal_builder_result <- reactive(fungal_combination_builder(fungal_workspace$snapshot(),
+      forward_ids=fungal_builder_forward(),reverse_ids=fungal_builder_reverse(),accession=fungal_overview_reference(),
+      catalog=fungal_builder_variants(),platform=input$primer_overview_platform %||% "ALL",length_range=fungal_builder_length_range(),max_per_direction=5L))
+  observeEvent(list(fungal_builder_result()$selected_pairs$pair_id,fungal_workspace$snapshot()$manifest$id),{
+    ids <- fungal_builder_result()$selected_pairs$pair_id
+    previous <- fungal_overview_evidence()
+    if(!length(ids)) {
+      overview_clicked_pair(NULL)
+      fungal_overview_evidence(NULL)
+    } else if(is.null(previous) || !previous$pair %in% ids || !identical(previous$version,fungal_workspace$snapshot()$manifest$id)) {
+      overview_clicked_pair(NULL)
+      set_fungal_overview_evidence(ids[1L],paste(ids,collapse="|"))
+    }
+  })
+  fungal_overview_data <- reactive({
+    result <- fungal_builder_result()
+    rows <- result$selected_pairs
+    region <- input$primer_overview_region
+    if(is.null(region) || !region %in% c("ALL","SSU","ITS","LSU") && !startsWith(region,"landmark:")) region <- "ITS"
+    fungal_primer_overview_data(result$working_snapshot, rows, fungal_overview_reference(), region=region,
+        max_rows=max(25L,nrow(rows)))
+  })
+  observeEvent(input$primer_overview_version, {
+    if(identical(input$map_marker,"ITS_FUNGAL") && input$primer_overview_version %in% fungal_read_index()$id)
+      updateSelectInput(session,"fungal-version",selected=input$primer_overview_version)
+  },ignoreInit=TRUE)
+  observeEvent(list(fungal_explorer_context(),fungal_workspace$snapshot()$manifest$id), {
+    request <- fungal_explorer_context()
+    if(is.list(request) && identical(request$version,fungal_workspace$snapshot()$manifest$id) &&
+        request$pair %in% fungal_workspace$snapshot()$pairs$pair_id) {
+      pair <- fungal_workspace$snapshot()$pairs[fungal_workspace$snapshot()$pairs$pair_id==request$pair,,drop=FALSE]
+      catalog <- fungal_workspace$snapshot()$catalog
+      f <- catalog$catalog_id[catalog$primer_name==pair$forward_primer & catalog$sequence==pair$forward_sequence & catalog$direction=="forward"]
+      r <- catalog$catalog_id[catalog$primer_name==pair$reverse_primer & catalog$sequence==pair$reverse_sequence & catalog$direction=="reverse"]
+      current_forward <- isolate(fungal_builder_forward())
+      current_reverse <- isolate(fungal_builder_reverse())
+      fungal_builder_ack$forward <- fungal_builder_ack$reverse <- NULL
+      if(length(f)==1L && !f %in% current_forward) fungal_builder_state$forward <- c(f,head(current_forward,4L))
+      if(length(r)==1L && !r %in% current_reverse) fungal_builder_state$reverse <- c(r,head(current_reverse,4L))
+      updateSelectizeInput(session,"fungal_builder_forward",selected=fungal_builder_state$forward)
+      updateSelectizeInput(session,"fungal_builder_reverse",selected=fungal_builder_state$reverse)
+    }
+  },ignoreInit=TRUE)
+  output$primer_overview_controls <- renderUI({
+    req(input$map_marker)
+    if(identical(input$map_marker,"ITS_FUNGAL")) {
+      data <- fungal_workspace$snapshot()
+      accession <- isolate(fungal_overview_reference())
+      taxonomy <- data$taxonomy
+      labels <- paste0(taxonomy$accession," · ",taxonomy$organism)
+      versions <- fungal_read_index()
+      own <- data$landmarks
+      if(!"accession" %in% names(own)) own$accession <- rep(data$manifest$reference_accession %||% "",nrow(own))
+      own <- own[!is.na(own$accession) & own$accession==accession,,drop=FALSE]
+      landmark_labels <- own$label
+      if("boundary_status" %in% names(own)) landmark_labels <- paste0(landmark_labels,
+          ifelse(!is.na(own$boundary_status) & nzchar(own$boundary_status),paste0(" · ",own$boundary_status),""))
+      regions <- c("All rDNA"="ALL", "18S / SSU"="SSU", "ITS1 / 5.8S / ITS2"="ITS", "28S / LSU"="LSU",
+          setNames(paste0("landmark:",own$landmark_id),landmark_labels))
+      current <- isolate(input$primer_overview_region)
+      if(is.null(current) || !current %in% regions) current <- "ALL"
+      return(layout_columns(col_widths=c(4,5,3),
+          selectInput("primer_overview_region","Region",regions,selected=current),
+          selectizeInput("primer_overview_reference","Coordinate reference",setNames(taxonomy$accession,labels),selected=accession),
+          selectInput("primer_overview_version","Reference version",setNames(versions$id,versions$label),selected=data$manifest$id)))
+    }
+    marker <- marker_registry[marker_registry$marker_id==input$map_marker,,drop=FALSE]
+    own <- marker_landmarks[marker_landmarks$marker_id==input$map_marker,,drop=FALSE]
+    choices <- c("Full marker"="ALL",setNames(paste0("landmark:",own$landmark_id),own$label))
+    current <- isolate(input$primer_overview_region)
+    if(is.null(current) || !current %in% choices) current <- "ALL"
+    layout_columns(col_widths=c(4,5,3),
+        selectInput("primer_overview_region","Region",choices,selected=current),
+        selectInput("primer_overview_reference","Coordinate reference",marker$coordinate_reference,selected=marker$coordinate_reference),
+        selectInput("primer_overview_version","Reference version",marker$reference_version,selected=marker$reference_version))
+  })
+  observeEvent(input$map_marker, {
+    overview_clicked_pair(NULL)
+    updateSelectInput(session,"primer_overview_region",selected="ALL")
+  },ignoreInit=TRUE)
+  observeEvent(input$primer_overview_reference, {
+    if(!identical(input$map_marker,"ITS_FUNGAL")) return()
+    data <- fungal_workspace$snapshot()
+    accession <- input$primer_overview_reference
+    if(!accession %in% names(data$sequences)) return()
+    own <- data$landmarks
+    if(!"accession" %in% names(own)) own$accession <- rep(data$manifest$reference_accession %||% "",nrow(own))
+    own <- own[!is.na(own$accession) & own$accession==accession,,drop=FALSE]
+    labels <- own$label
+    if("boundary_status" %in% names(own)) labels <- paste0(labels,
+        ifelse(!is.na(own$boundary_status) & nzchar(own$boundary_status),paste0(" · ",own$boundary_status),""))
+    choices <- c("All rDNA"="ALL","18S / SSU"="SSU","ITS1 / 5.8S / ITS2"="ITS","28S / LSU"="LSU",
+        setNames(paste0("landmark:",own$landmark_id),labels))
+    selected <- isolate(input$primer_overview_region)
+    if(is.null(selected) || !selected %in% choices) selected <- "ALL"
+    updateSelectInput(session,"primer_overview_region",choices=choices,selected=selected)
+  },ignoreInit=TRUE)
+  overview_rows <- reactive({
+    rows <- if(identical(input$map_marker,"ITS_FUNGAL")) fungal_overview_data()$pair_meta else sorted_filtered_pairs()
+    platform <- input$primer_overview_platform %||% "ALL"
+    ceiling <- switch(platform,ILLUMINA=500,PACBIO=2000,NANOPORE=3500,Inf)
+    rows <- rows[is.finite(rows$aligned_amplicon_bp) & rows$aligned_amplicon_bp<=ceiling,,drop=FALSE]
+    if(identical(input$map_marker,"ITS_FUNGAL")) {
+      limits <- fungal_builder_length_range()
+      rows <- rows[rows$aligned_amplicon_bp>=limits[1L] & rows$aligned_amplicon_bp<=limits[2L],,drop=FALSE]
+      evidence <- input$fungal_builder_evidence %||% "ALL"
+      if(evidence=="DOCUMENTED") rows <- rows[rows$evidence_status=="documented_pair",,drop=FALSE]
+      if(evidence=="PUBLISHED") rows <- rows[rows$evidence_status %in% c("documented_pair","candidate_published_components"),,drop=FALSE]
+      rows <- sort_primer_map_rows(rows,input$map_sort %||% "binding_site")
+    }
+    rows
+  })
+  overview_visible_rows <- reactive({
+    rows <- overview_rows()
+    pages <- max(1L,ceiling(nrow(rows)/10L))
+    page <- max(1L,min(overview_page(),pages))
+    rows[seq_len(nrow(rows))>(page-1L)*10L & seq_len(nrow(rows))<=page*10L,,drop=FALSE]
+  })
+  observeEvent(overview_rows()$pair_id,overview_page(1L),ignoreInit=TRUE)
+  observeEvent(input$overview_previous,overview_page(max(1L,overview_page()-1L)))
+  observeEvent(input$overview_next,overview_page(min(max(1L,ceiling(nrow(overview_rows())/10L)),overview_page()+1L)))
+  output$primer_overview_paging <- renderUI({
+    count <- nrow(overview_rows())
+    if(count<=10L) return(NULL)
+    pages <- ceiling(count/10L)
+    page <- min(overview_page(),pages)
+    div(class="atlas-pagination",
+        actionButton("overview_previous","Previous",class="btn-outline-secondary btn-sm",disabled=if(page==1L) "disabled" else NULL),
+        span(paste0("Page ",page," of ",pages," · ",count," mapped combinations")),
+        actionButton("overview_next","Next",class="btn-outline-secondary btn-sm",disabled=if(page==pages) "disabled" else NULL))
+  })
+  overview_selected_pair <- reactive({
+    ids <- overview_inspector_rows()$pair_id
+    current <- overview_clicked_pair() %||% input$overview_evidence_pair
+    if(length(current)==1L && current %in% ids) current else if(length(ids)) ids[1L] else NULL
+  })
+  overview_inspector_rows <- reactive({
+    if(identical(input$map_marker,"ITS_FUNGAL")) fungal_builder_result()$selected_pairs else overview_rows()
+  })
+  output$primer_overview_context <- renderUI({
+    rows <- overview_rows()
+    if(identical(input$map_marker,"ITS_FUNGAL")) {
+      data <- fungal_overview_data()
+      result <- fungal_builder_result()
+      filtered_count <- max(0L,nrow(result$selected_pairs)-nrow(rows)-nrow(result$unmapped_pairs))
+      return(p(class="atlas-context-line",strong(length(fungal_builder_forward())," forward × ",length(fungal_builder_reverse()),
+          " reverse = ",nrow(result$selected_pairs)," requested combinations"),
+          " · ",nrow(rows)," mapped · ",filtered_count," outside current filters · ",nrow(result$unmapped_pairs)," without a verified product on this reference.",
+          br(),"Map positions: ",data$accession," · raw bp including primers. Click a lane, or inspect any requested combination in Refine evidence."))
+    }
+    p(class="atlas-context-line",strong(nrow(rows)," mapped combinations"),
+        " · reference bases; product lengths include both primers.")
+  })
+  output$primer_overview_inspector_controls <- renderUI({
+    rows <- overview_inspector_rows()
+    if(!nrow(rows)) return(p("Choose at least one forward and one reverse primer to inspect their combinations."))
+    selectizeInput("overview_evidence_pair","Primer combination",setNames(rows$pair_id,rows$pair_label),selected=isolate(overview_selected_pair()))
+  })
+  observeEvent(input$primer_overview_pair_click, {
+    pair <- input$primer_overview_pair_click$pair
+    if(length(pair)==1L && pair %in% overview_inspector_rows()$pair_id) {
+      overview_clicked_pair(pair)
+      updateSelectizeInput(session,"overview_evidence_pair",selected=pair)
+      session$sendCustomMessage("primer-overview-inspect",list(pair=pair))
+      if(identical(input$map_marker,"ITS_FUNGAL")) {
+        set_fungal_overview_evidence(pair,input$primer_overview_pair_click$nonce)
+        if(pair %in% fungal_workspace$snapshot()$pairs$pair_id)
+          fungal_explorer_context(list(pair=pair,version=fungal_workspace$snapshot()$manifest$id,
+              nonce=input$primer_overview_pair_click$nonce))
+      }
+    }
+  })
+  observeEvent(input$overview_evidence_pair, {
+    pair <- input$overview_evidence_pair
+    if(length(pair)==1L && pair %in% overview_inspector_rows()$pair_id) {
+      overview_clicked_pair(pair)
+      if(identical(input$map_marker,"ITS_FUNGAL"))
+        set_fungal_overview_evidence(pair,pair)
+    }
+  },ignoreInit=TRUE)
+  observeEvent(input$primer_overview_inspector_open, {
+    pair <- overview_selected_pair()
+    if(identical(input$map_marker,"ITS_FUNGAL") && length(pair)==1L)
+      set_fungal_overview_evidence(pair,input$primer_overview_inspector_open$nonce)
+  })
+  output$fungal_builder_combination_table <- renderUI({
+    result <- fungal_builder_result()
+    rows <- result$selected_pairs
+    if(!nrow(rows)) return(p(class="fungal-builder-summary","Choose a forward and a reverse primer. Their combinations will appear here."))
+    observed <- result$pair_sequences[result$pair_sequences$accession==fungal_overview_reference(),,drop=FALSE]
+    current <- match(rows$pair_id,observed$pair_id)
+    bp <- observed$amplicon_bp[current]
+    status <- observed$status[current]
+    included <- rows$pair_id %in% overview_rows()$pair_id
+    div(class="fungal-builder-table-wrap",tags$table(class="fungal-builder-table",
+      tags$thead(tags$tr(tags$th("Combination"),tags$th("Product bp"),tags$th("Map status"),tags$th("Publication evidence"))),
+      tags$tbody(lapply(seq_len(nrow(rows)),function(i) tags$tr(
+        tags$td(tags$button(type="button",class="pair-inspect",`data-pair-input`="primer_overview_pair_click",`data-pair-id`=rows$pair_id[i],rows$pair_label[i])),
+        tags$td(if(is.finite(bp[i])) format(bp[i],trim=TRUE) else "Unresolved"),
+        tags$td(if(included[i]) "In the map" else if(identical(status[i],"scorable")) "Outside current filters" else gsub("_"," ",status[i] %||% "Evidence unavailable",fixed=TRUE)),
+        tags$td(fungal_evidence_label(rows$evidence_status[i])))))))
+  })
+  output$fungal_builder_oligo_evidence <- renderUI({
+    pair <- overview_selected_pair()
+    rows <- fungal_overview_data()$primers
+    # The focused map may exclude this pair. Resolve its source identities from
+    # the complete selected combination's working catalog instead.
+    snapshot <- fungal_builder_result()$working_snapshot
+    definition <- snapshot$pairs[snapshot$pairs$pair_id==pair,,drop=FALSE]
+    if(nrow(definition)!=1L) return(NULL)
+    div(class="fungal-oligo-evidence",lapply(c("forward","reverse"),function(direction) {
+      row <- .fungal_overview_component(snapshot,definition,direction)
+      if(is.null(row)) return(div("Component source evidence unavailable."))
+      derived <- identical(.fungal_overview_text(row,"orientation_origin"),"derived_reverse_complement")
+      source_row <- row
+      if(derived) {
+        parent <- snapshot$frozen_component_catalog[snapshot$frozen_component_catalog$catalog_id==.fungal_overview_text(row,"parent_catalog_id"),,drop=FALSE]
+        if(nrow(parent)==1L) source_row <- parent
+      }
+      reference <- .fungal_overview_text(source_row,"reference","Original citation unavailable")
+      url <- .fungal_overview_text(row,"primary_reference_url",.fungal_overview_text(row,"source_url"))
+      bibliography <- primer_publication_citations[primer_publication_citations$primary_reference_key==
+        .fungal_overview_text(row,"primary_reference_key"),,drop=FALSE]
+      if(nrow(bibliography)==1L) url <- bibliography$url
+      div(strong(if(direction=="forward") "Forward · " else "Reverse · ",row$primer_name),
+        p(tags$code(row$sequence)," · 5′→3′"),
+        if(derived)
+          p("Derived reverse complement of ",.fungal_overview_text(row,"parent_primer_name"),
+            " (",.fungal_overview_text(row,"parent_direction"),
+            "). The cited paper describes the original primer. This reversed variant is a computational candidate."),
+        if(derived) p("Original oligo: ",tags$code(.fungal_overview_text(row,"parent_sequence"))," · 5′→3′"),
+        if(nzchar(.fungal_overview_text(row,"parent_noncanonical_symbols"))) p(.fungal_overview_text(row,"sequence_derivation_note")),
+        p(if(derived) "Parent catalog target note: " else "Catalog target note: ",.fungal_overview_text(source_row,"target","Not reported")),
+        if(nzchar(.fungal_overview_text(source_row,"remarks"))) p(.fungal_overview_text(source_row,"remarks")),
+        if(nzchar(url)) tags$a(href=url,target="_blank",rel="noopener",if(derived) "Parent source: " else "",reference) else p(reference))
+    }))
+  })
+  observeEvent(input$fungal_builder_open_fit,{
+    pair <- overview_selected_pair()
+    if(length(pair)!=1L) return()
+    set_fungal_overview_evidence(pair,input$fungal_builder_open_fit)
+    updateRadioButtons(session,"fit_marker",selected="ITS_FUNGAL")
+    updateRadioButtons(session,"fungal_fit_source",selected="UNITE")
+    updateNavbarPage(session,"main_nav",selected="fit")
+  })
+  output$fungal_publication_taxon_control <- renderUI({
+    data <- fungal_builder_broad_data(input[["unite_explorer-version"]])
+    if(is.null(data)) return(p("Broad taxonomic reference evidence is unavailable."))
+    rank <- input$fungal_publication_rank %||% "class"
+    groups <- unite_reference_groups(data,rank=rank)
+    choices <- c("All retained UNITE references"="ALL",setNames(groups$group_id,paste0(groups$taxon," · ",groups$n_selected," references")))
+    selected <- isolate(input$fungal_publication_taxon)
+    if(is.null(selected) || !selected %in% choices) selected <- "ALL"
+    selectizeInput("fungal_publication_taxon","Evidence scope for the table",choices,selected=selected)
+  })
+  output$fungal_publication_png_control <- renderUI({
+    if(requireNamespace("rsvg",quietly=TRUE)) downloadButton("fungal_download_png","Primer figure (PNG)",class="btn-outline-secondary btn-sm")
+  })
+  fungal_publication_build <- function() {
+    result <- fungal_builder_result()
+    req(nrow(result$selected_pairs)>0L)
+    broad <- fungal_builder_broad_data(input[["unite_explorer-version"]])
+    rank <- input$fungal_publication_rank %||% "class"
+    group <- input$fungal_publication_taxon %||% "ALL"
+    broad_evidence <- NULL
+    if(!is.null(broad)) {
+      summaries <- lapply(result$selected_pairs$pair_id,function(id) {
+        if(!id %in% broad$pairs$pair_id) return(NULL)
+        fit <- unite_reference_pair_fit(broad,id,rank=rank)
+        rows <- fit$summary
+        if(group!="ALL") rows <- rows[rows$group_id==group,,drop=FALSE]
+        if(!nrow(rows)) return(NULL)
+        if(group=="ALL") {
+          counts <- c("n_selected","n_exact_products","n_single_sites","n_no_exact_sites","n_unresolved","n_unavailable","n_withheld")
+          rows <- as.data.frame(lapply(rows[counts],sum),stringsAsFactors=FALSE)
+          rows$group_id <- "ALL"; rows$taxon <- "All retained UNITE references"
+        }
+        rows$pair_id <- id; rows$version_id <- broad$manifest$id; rows$rank <- rank
+        rows
+      })
+      summary <- bind_rows(summaries)
+      broad_evidence <- list(summary=summary,details=NULL,
+        metadata=list(version_id=broad$manifest$id,rank=rank,group_id=group,
+          source_doi=broad$manifest$source_doi,n_selected=if(nrow(summary)) summary$n_selected[1L] else NA_integer_))
+    }
+    context <- fungal_publication_context(result$working_snapshot,pair_ids=result$selected_pairs$pair_id,
+      accession=fungal_overview_reference(),broad_evidence=broad_evidence,
+      filters=list(minbp=fungal_builder_length_range()[1L],maxbp=fungal_builder_length_range()[2L],
+        platform=input$primer_overview_platform %||% "ALL",evidence=input$fungal_builder_evidence %||% "ALL",
+        figure_pair_ids=overview_rows()$pair_id,region=input$primer_overview_region %||% "ITS"),
+      region=input$primer_overview_region %||% "ITS",domain=fungal_overview_data()$domain,
+      title=input$fungal_publication_title %||% "Fungal primer combinations",citation_lookup=primer_publication_citations)
+    primer_publication_export(context)
+  }
+  fungal_publication_filename <- function(extension) paste0(fungal_workspace$snapshot()$manifest$id,"-primer-combinations.",extension)
+  output$fungal_download_figure <- downloadHandler(filename=function() fungal_publication_filename("svg"),
+    content=function(file) primer_publication_write(fungal_publication_build(),file,"svg"),contentType="image/svg+xml")
+  output$fungal_download_png <- downloadHandler(filename=function() fungal_publication_filename("png"),
+    content=function(file) primer_publication_write(fungal_publication_build(),file,"png"),contentType="image/png")
+  output$fungal_download_table <- downloadHandler(filename=function() fungal_publication_filename("csv"),
+    content=function(file) primer_publication_write(fungal_publication_build(),file,"csv"),contentType="text/csv")
+  output$fungal_download_print_table <- downloadHandler(filename=function() fungal_publication_filename("html"),
+    content=function(file) primer_publication_write(fungal_publication_build(),file,"html"),contentType="text/html")
+  output$fungal_download_package <- downloadHandler(filename=function() fungal_publication_filename("zip"),
+    content=function(file) {
+      exported <- fungal_publication_build()
+      staging <- tempfile("primer-publication-"); dir.create(staging)
+      on.exit(unlink(staging,recursive=TRUE),add=TRUE)
+      for(format in c("svg","csv","html","caption","methods","citations")) {
+        extension <- if(format %in% c("caption","methods","citations")) "txt" else format
+        filename <- if(format %in% c("caption","methods","citations")) paste0(format,".txt") else paste0("primer-combinations.",extension)
+        primer_publication_write(exported,file.path(staging,filename),format)
+      }
+      if(requireNamespace("rsvg",quietly=TRUE)) primer_publication_write(exported,file.path(staging,"primer-combinations.png"),"png")
+      write.csv(fungal_builder_result()$selected_pairs,file.path(staging,"requested-pairs.csv"),row.names=FALSE,na="")
+      write.csv(fungal_builder_result()$pair_sequences,file.path(staging,"long-rDNA-template-evidence.csv"),row.names=FALSE,na="")
+      if(unite_explorer_workspace$available() && unite_explorer_workspace$mode()=="alignment") {
+        alignment <- unite_explorer_workspace$alignment()
+        if(length(alignment$alignment)) {
+          writeLines(unlist(lapply(seq_along(alignment$alignment),function(i) c(paste0(">",names(alignment$alignment)[i]),alignment$alignment[i])),use.names=FALSE),
+            file.path(staging,"displayed-regional-alignment.fasta"))
+          figure <- primer_publication_alignment_export(unite_explorer_workspace$window(),
+            region=input[["unite_explorer-region"]] %||% "ITS1",group=unite_explorer_workspace$alignment_group(),
+            version=unite_explorer_workspace$data()$manifest$id,source_doi=unite_explorer_workspace$data()$manifest$source_doi,
+            pair=overview_selected_pair())
+          writeLines(figure$svg,file.path(staging,"regional-alignment.svg"))
+          writeLines(figure$caption,file.path(staging,"regional-alignment-caption.txt"))
+        }
+      }
+      zip::zipr(file,files=list.files(staging,full.names=TRUE),root=staging,include_directories=FALSE)
+    },contentType="application/zip")
+  observeEvent(input$overview_open_fit, {
+    pair <- overview_selected_pair()
+    if(identical(input$map_marker,"COI") && length(pair)==1L) {
+      updateSelectInput(session,"detail_pair",selected=pair)
+      updateRadioButtons(session,"fit_marker",selected="COI")
+      updateNavbarPage(session,"main_nav",selected="fit")
+    }
+  })
+  read_order_position_scores <- function(pair_id) coi_read_order_position_scores(pair_id, coi_reference_current())
+  read_pair_sequence_evidence <- function(pair_id) coi_read_pair_sequence_evidence(pair_id, coi_reference_current())
+  output$coi_start_reference_status <- renderUI(span(coi_reference_status(coi_reference_current())))
+  output$coi_fit_reference_status <- renderUI(span(coi_reference_status(coi_reference_current())))
+  output$coi_method_reference_status <- renderUI(p(coi_reference_status(coi_reference_current())))
+  observeEvent(coi_reference_current(), {
+    reference <- coi_reference_current()
+    target <- isolate(input$custom_target_order)
+    choices <- c("Not specified" = "__NONE__", names(reference$alignments))
+    updateSelectInput(session, "custom_target_order", choices = choices,
+      selected = if (!is.null(target) && target %in% choices) target else "__NONE__")
+    order <- isolate(input$detail_order)
+    choices <- sort(unique(c(reference$overview$order, "Acari", "Collembola")))
+    updateSelectInput(session, "detail_order", choices = choices,
+      selected = if (!is.null(order) && order %in% choices) order else choices[1L])
+  }, ignoreInit = FALSE)
   navigate_from <- function(button, destination) {
     observeEvent(input[[button]], {
       updateNavbarPage(session, "main_nav", selected = destination)
     })
   }
   navigate_from("go_find", "find")
-  navigate_from("go_fit", "fit")
+  observeEvent(input$go_fit, {
+    updateRadioButtons(session, "fit_marker", selected = "COI")
+    updateNavbarPage(session, "main_nav", selected = "fit")
+  })
+  observeEvent(input$go_fungal_fit, {
+    updateRadioButtons(session, "fit_marker", selected = "ITS_FUNGAL")
+    updateRadioButtons(session, "fungal_fit_source", selected = "UNITE")
+    updateNavbarPage(session, "main_nav", selected = "fit")
+  })
+  observeEvent(input$go_fungal_fit_library, {
+    updateRadioButtons(session, "fit_marker", selected = "ITS_FUNGAL")
+    updateRadioButtons(session, "fungal_fit_source", selected = "NCBI")
+    updateNavbarPage(session, "main_nav", selected = "fit")
+  })
+  observeEvent(input$go_fungal_library, {
+    updateRadioButtons(session, "lineage_organism", selected = "FUNGI")
+    updateSelectInput(session, "lineage_marker", selected = "ITS_FUNGAL")
+  })
+  observeEvent(input$go_coi_library, {
+    updateRadioButtons(session, "lineage_organism", selected = "ALL")
+    updateSelectInput(session, "lineage_marker", selected = "COI")
+  })
+  output$fungal_library_context <- renderUI({
+    data <- fungal_fit_workspace$snapshot()
+    tagList(h3("Fungal reference records"), p(class = "atlas-context-line",
+        paste(length(data$sequences), "retained templates ·", data$manifest$label)))
+  })
+  output$fungal_library_records <- renderDT({
+    data <- fungal_fit_workspace$snapshot()$taxonomy
+    columns <- intersect(c("accession", "organism", "phylum", "class", "order", "family", "length_bp"), names(data))
+    data <- data[, columns, drop = FALSE]
+    labels <- c(accession = "Accession", organism = "Organism", phylum = "Phylum", class = "Class",
+        order = "Order", family = "Family", length_bp = "Encoded reference length (bp)")
+    names(data) <- unname(labels[names(data)])
+    datatable(data, rownames = FALSE, escape = TRUE, options = list(pageLength = 10, scrollX = TRUE), class = "compact stripe nowrap")
+  })
+  output$download_fungal_library <- downloadHandler(filename = function() paste0(fungal_fit_workspace$snapshot()$manifest$id, "-reference-metadata.csv"),
+      content = function(file) {
+        data <- fungal_fit_workspace$snapshot()
+        rows <- data$taxonomy
+        rows$snapshot_id <- data$manifest$id
+        write.csv(rows, file, row.names = FALSE, na = "")
+      })
+  observeEvent(input[["fungal-open_fit"]], {
+    pair <- fungal_workspace$active_pair()
+    if (nrow(pair) != 1L || is.na(pair$pair_id) || !nzchar(pair$pair_id)) {
+      showNotification("Choose a primer combination before checking its taxonomic fit.", type = "message", id = "fungal-fit-selection")
+      return(invisible(NULL))
+    }
+    fungal_fit_context(list(version = fungal_workspace$snapshot()$manifest$id,
+      pair = pair$pair_id, nonce = input[["fungal-open_fit"]]))
+    updateRadioButtons(session, "fit_marker", selected = "ITS_FUNGAL")
+    updateRadioButtons(session, "fungal_fit_source", selected = "NCBI")
+    updateNavbarPage(session, "main_nav", selected = "fit")
+  })
+  observeEvent(input[["fungal_fit-open_explorer"]], {
+    fungal_explorer_context(list(version = fungal_fit_workspace$snapshot()$manifest$id,
+      pair = fungal_fit_workspace$selected_pair(), nonce = input[["fungal_fit-open_explorer"]]))
+    open_explorer_marker("ITS_FUNGAL", "FUNGI")
+  })
   navigate_from("go_regions", "regions")
   navigate_from("go_taxa", "taxa")
   navigate_from("go_sources", "sources")
+  map_navigation_marker <- reactiveVal(NULL)
   marker_choice_labels <- function(rows) {
     setNames(
       rows$marker_id,
@@ -2187,6 +3202,48 @@ server <- function(input, output, session) {
       )
     }
   }
+  open_18s_pilot <- function() {
+    # Keep the requested marker through the asynchronous organism-input update.
+    # A previous arthropod scope otherwise supplies only COI marker choices.
+    map_navigation_marker(if (identical(input$map_organism, "ALL")) NULL else "18S")
+    updateRadioButtons(session, "map_organism", selected = "ALL")
+    updateSelectInput(session, "map_marker", choices = marker_choice_labels(released_marker_rows), selected = "18S")
+    updateSelectInput(session, "application_filter", selected = character())
+    updateSelectInput(session, "environment_filter", selected = character())
+    updateSelectInput(session, "intent_filter", selected = character())
+    updateSelectInput(session, "map_sort", selected = "binding_site")
+    choices <- pair_choices_for_marker("18S", "ALL", apply_filters = FALSE)
+    update_pair_selector("18S", choices, intersect(default_map_pairs("18S"), unname(choices)))
+    bp <- range(pair_meta$aligned_amplicon_bp[pair_meta$marker_id == "18S"], na.rm = TRUE)
+    limits <- c(max(20, floor(bp[1] / 10) * 10), ceiling(bp[2] / 10) * 10)
+    updateSliderInput(session, "amplicon_range", min = limits[1], max = limits[2], value = limits)
+    updateNavbarPage(session, "main_nav", selected = "find")
+  }
+  navigate_to_18s_from <- function(button) {
+    observeEvent(input[[button]], open_18s_pilot())
+  }
+  navigate_to_18s_from("go_18s")
+  navigate_to_18s_from("go_18s_start")
+  open_explorer_marker <- function(marker, group = "ALL") {
+    map_navigation_marker(if (identical(input$map_organism, group)) NULL else marker)
+    updateRadioButtons(session, "map_organism", selected = group)
+    rows <- marker_rows_for_organism(group, released_only = TRUE)
+    updateSelectInput(session, "map_marker", choices = marker_choice_labels(rows), selected = marker)
+    for (id in c("application_filter", "environment_filter", "intent_filter")) {
+      updateSelectInput(session, id, selected = character())
+    }
+    if (identical(marker, "COI")) {
+      choices <- pair_choices_for_marker(marker, group, apply_filters = FALSE)
+      update_pair_selector(marker, choices, intersect(default_map_pairs(marker), unname(choices)))
+    }
+    updateNavbarPage(session, "main_nav", selected = "find")
+  }
+  observeEvent(input$go_coi_explore, open_explorer_marker("COI"))
+  observeEvent(input$go_coi_map, open_explorer_marker("COI"))
+  observeEvent(input$go_fungal_explore, {
+    open_explorer_marker("ITS_FUNGAL", "FUNGI")
+  })
+  observeEvent(input$go_fungal_map, open_explorer_marker("ITS_FUNGAL", "FUNGI"))
   output$pair_selector_ui <- renderUI({
     tagList(
       conditionalPanel(
@@ -2218,6 +3275,8 @@ server <- function(input, output, session) {
       )
     )
   })
+  # These inputs drive the visible map even while its filter sidebar is closed.
+  outputOptions(output, "pair_selector_ui", suspendWhenHidden = FALSE)
   selected_map_pairs <- reactive({
     if (identical(input$map_marker, "ITS_FUNGAL")) {
       its_filtered_pair_ids()
@@ -2228,7 +3287,7 @@ server <- function(input, output, session) {
     }
   })
   output$data_status <- renderUI({
-    if (!is.null(coi_release_state) && isTRUE(coi_release_state$stale)) {
+    if (isTRUE(coi_reference_current()$state$stale)) {
       div(class = "callout tiny m-2", strong("Stale-data notice: "), "R2 was unavailable, so the repository-pinned successful release is active.")
     }
   })
@@ -2237,7 +3296,10 @@ server <- function(input, output, session) {
   observeEvent(input$map_organism, {
     rows <- marker_rows_for_organism(input$map_organism, released_only = TRUE)
     if (!nrow(rows)) rows <- released_marker_rows
-    selected <- if (!is.null(input$map_marker) && input$map_marker %in% rows$marker_id) {
+    requested <- isolate(map_navigation_marker())
+    selected <- if (!is.null(requested) && requested %in% rows$marker_id) {
+      requested
+    } else if (!is.null(input$map_marker) && input$map_marker %in% rows$marker_id) {
       input$map_marker
     } else {
       rows$marker_id[1]
@@ -2246,9 +3308,15 @@ server <- function(input, output, session) {
       session, "map_marker",
       choices = marker_choice_labels(rows), selected = selected
     )
+    if (identical(selected, requested) && (identical(input$map_organism, "ALL") ||
+        (identical(requested, "ITS_FUNGAL") && identical(input$map_organism, "FUNGI")))) map_navigation_marker(NULL)
     if (selected %in% c("COI", "18S")) {
-      choices <- pair_choices_for_marker(selected, input$map_organism)
-      update_pair_selector(selected, choices, unname(choices))
+      opening_18s <- identical(requested, "18S") && identical(input$map_organism, "ALL")
+      choices <- pair_choices_for_marker(selected, input$map_organism, apply_filters = !opening_18s)
+      pair_selection <- if (opening_18s) {
+        intersect(default_map_pairs("18S"), unname(choices))
+      } else unname(choices)
+      update_pair_selector(selected, choices, pair_selection)
     }
   }, ignoreInit = FALSE)
   observeEvent(input$lineage_organism, {
@@ -2296,6 +3364,23 @@ server <- function(input, output, session) {
   custom_pair_counter <- reactiveVal(0L)
   selected_custom_id <- reactiveVal(NULL)
   its_catalog_pending <- reactiveVal(NULL)
+  archived_coi_custom_pairs <- reactiveVal(list())
+  custom_cohort_version <- reactiveVal(isolate(coi_reference_current()$version))
+  coi_custom_refresh_observer <- observeEvent(coi_reference_current()$version, {
+    version <- coi_reference_current()$version
+    if (identical(isolate(custom_cohort_version()), version)) return()
+    collection <- isolate(custom_pair_collection())
+    old_coi <- vapply(collection, function(pair) identical(pair$marker_id, "COI"), logical(1))
+    if (any(old_coi)) {
+      archived_coi_custom_pairs(c(isolate(archived_coi_custom_pairs()), collection[old_coi]))
+      custom_pair_collection(collection[!old_coi])
+      if (isTRUE(isolate(selected_custom_id()) %in% names(collection)[old_coi])) selected_custom_id(NULL)
+      location <- isolate(custom_location())
+      if (!is.null(location) && identical(location$marker_id, "COI")) custom_location(NULL)
+      showNotification("COI references were updated. Add your custom COI pair again to score it against the new cohort; your primer inputs are preserved.", duration = 12)
+    }
+    custom_cohort_version(version)
+  }, ignoreInit = FALSE, priority = 1000)
   observeEvent(input$map_marker, {
     marker_id <- input$map_marker
     marker_pairs <- pair_meta |> filter(marker_id == !!marker_id)
@@ -2330,8 +3415,7 @@ server <- function(input, output, session) {
   }, ignoreInit = FALSE)
 
   output$map_card_title <- renderUI({
-    marker <- marker_registry |> filter(marker_id == input$map_marker) |> slice(1)
-    paste0("Interactive ", marker$display_name, " binding-site overview")
+    "Primer combinations and binding sites"
   })
 
   its_member_choices <- function(direction) {
@@ -2708,7 +3792,7 @@ server <- function(input, output, session) {
       identical(reverse_sequence, pending_catalog$reverse$sequence[[1]])
 
     selected_reference <- if (selected_marker == "COI") coi_reference else its_reference
-    selected_templates <- if (selected_marker == "COI") order_alignment_templates else NULL
+    selected_templates <- if (selected_marker == "COI") coi_reference_current()$alignments else NULL
     located <- tryCatch(
       locate_primer_pair(
         reference_sequence = selected_reference,
@@ -2828,7 +3912,7 @@ server <- function(input, output, session) {
     order_detail <- if (selected_marker == "COI") tryCatch(
       withProgress(
         expr = score_primer_pair_primerminer(
-          alignment_files = alignment_files,
+          alignment_files = unname(coi_reference_current()$paths),
           primer_rows = custom_primers,
           geometry = geometry
         ),
@@ -2894,6 +3978,7 @@ server <- function(input, output, session) {
         error = NULL,
         pair_name = pair_name,
         marker_id = selected_marker,
+        coi_reference_version = if (selected_marker == "COI") coi_reference_current()$version else NULL,
         expected_amplicon = expected_amplicon,
         target_order = target_order,
         order_preference = order_preference,
@@ -2931,7 +4016,7 @@ server <- function(input, output, session) {
   })
 
   session$onSessionEnded(function() {
-    collection <- isolate(custom_pair_collection())
+    collection <- c(isolate(custom_pair_collection()), isolate(archived_coi_custom_pairs()))
     paths <- vapply(
       collection,
       function(x) {
@@ -3214,28 +4299,31 @@ server <- function(input, output, session) {
 
   order_lens_scores <- reactive({
     collection <- custom_pair_collection()
-    if (!length(collection)) return(order_scores)
+    if (!length(collection)) return(current_order_scores())
     bind_rows(
-      order_scores,
+      current_order_scores(),
       bind_rows(lapply(collection, `[[`, "order_scores"))
     )
   })
 
   order_lens_template_scores <- reactive({
     collection <- custom_pair_collection()
-    if (!length(collection)) return(pair_template_scores)
+    if (!length(collection)) return(current_pair_template_scores())
     bind_rows(
-      pair_template_scores,
+      current_pair_template_scores(),
       bind_rows(lapply(collection, `[[`, "pair_template_scores"))
     )
   })
 
   order_lens_position_scores <- reactive({
+    req(input$detail_pair)
+    positions <- read_order_position_scores(input$detail_pair)
     collection <- custom_pair_collection()
-    if (!length(collection)) return(primer_position_scores)
+    if (!length(collection)) return(positions)
     bind_rows(
-      primer_position_scores,
-      bind_rows(lapply(collection, `[[`, "primer_position_scores"))
+      positions,
+      bind_rows(lapply(collection, `[[`, "primer_position_scores")) |>
+        filter(pair_id == input$detail_pair)
     ) |>
       mutate(unavailable_reason = coalesce(unavailable_reason, ""))
   })
@@ -3383,379 +4471,44 @@ server <- function(input, output, session) {
   })
 
   output$primer_map <- renderUI({
-    x <- sorted_filtered_pairs()
-    if (!nrow(x)) return(div(
-      class = "callout",
-      "No primer pairs match the current filters. ",
-      if (length(input$application_filter) || length(input$environment_filter) ||
-          length(input$intent_filter)) {
-        tagList(
-          "The application, environment, or design filter may not apply to this marker. ",
-          actionButton("reset_map_facets", "Clear these filters", class = "btn-outline-secondary btn-sm")
-        )
-      }
-    ))
-    map_primers <- displayed_primers()
-    sodium_mM <- if (is.null(input$sodium)) 50 else input$sodium
-    ta_offset_c <- if (is.null(input$ta_offset)) 4 else input$ta_offset
-    thermal_rows <- pair_thermal_summary(
-      map_primers |> filter(pair_id %in% x$pair_id),
-      sodium_mM, ta_offset_c
-    )
-    marker <- marker_registry |> filter(marker_id == input$map_marker) |> slice(1)
-    landmarks <- marker_landmarks |> filter(marker_id == input$map_marker) |> arrange(display_order)
-    reference_length <- marker$reference_length
-    focus <- if (input$map_marker == "COI") {
-      list(start = folmer_region$start, end = folmer_region$end)
-    } else {
-      list(start = min(landmarks$start), end = max(landmarks$end))
+    rows <- overview_visible_rows()
+    if(!nrow(rows) && identical(input$map_marker,"ITS_FUNGAL") && !nrow(fungal_builder_result()$selected_pairs))
+      return(div(class="callout","Choose at least one forward and one reverse primer. The map will compare all their combinations."))
+    if(!nrow(rows)) return(div(class="callout",
+        "No verified primer products match this reference, region and platform. Adjust the selection or inspect the missing-site evidence."))
+    sodium <- input$sodium %||% 50
+    offset <- input$ta_offset %||% 4
+    active <- overview_selected_pair()
+    if(identical(input$map_marker,"ITS_FUNGAL")) {
+      data <- fungal_overview_data()
+      if(length(data$domain)!=2L || any(!is.finite(data$domain)))
+        return(div(class="callout","This region has no verified coordinates on the selected template. Choose another region or inspect its annotation evidence."))
+      components <- data$primers[data$primers$pair_id %in% rows$pair_id,,drop=FALSE]
+      thermal <- pair_thermal_summary(components,sodium,offset)
+      annotations <- bind_rows(data$landmarks,data$domains)
+      return(primer_overview_map(rows,components,data$marker,landmarks=annotations,
+          focus=data$focus,domain=data$domain,thermal_rows=thermal,sodium_mM=sodium,ta_offset_c=offset,
+          citations=data$citations,active_pair_id=active,pair_click_input="primer_overview_pair_click"))
     }
-    width <- 1680
-    left <- 112
-    right <- 1000
-    axis_domain <- primer_map_domain(
-      x,
-      folmer_start = focus$start,
-      folmer_end = focus$end,
-      tick_bp = 100,
-      reference_length = reference_length
-    )
-    axis_min <- unname(axis_domain["min"])
-    axis_max <- unname(axis_domain["max"])
-    scale_x <- function(bp) {
-      bounded <- pmin(pmax(bp, axis_min), axis_max)
-      left + (bounded - axis_min) / (axis_max - axis_min) * (right - left)
-    }
-    row_h <- 58
-    first_row_y <- 88
-    last_row_y <- first_row_y + (nrow(x) - 1) * row_h
-    folmer_y <- last_row_y + 54
-    coi_y <- folmer_y + 40
-    height <- coi_y + 42
-    start_col <- 1090
-    end_col <- 1160
-    inclusive_col <- 1250
-    informative_col <- 1350
-    citation_col <- 1440
-    number_x <- 16
-    forward_color <- "#2563eb"
-    informative_color <- "#9aa6b2"
-    reverse_color <- "#dc2626"
-    shared_source_color <- "#7c3aed"
-    source_link <- function(source_row, x, y, color, prefix = "") {
-      if (!nrow(source_row) || is.na(source_row$url[1]) ||
-        !nzchar(source_row$url[1])) {
-        return(tags$text(
-          x = x, y = y, fill = "#6b746f", `font-size` = 10.5,
-          paste0(prefix, "source unavailable")
-        ))
-      }
-      tags$a(
-        href = source_row$url[1],
-        target = "_blank",
-        rel = "noopener noreferrer",
-        style = "cursor:pointer",
-        tags$text(
-          x = x, y = y, fill = color, `font-size` = 10.5,
-          `text-decoration` = "underline",
-          paste0(prefix, source_row$short_citation[1]),
-          tags$title(source_row$title[1])
-        )
-      )
-    }
-    children <- list(
-      tags$text(
-        x = start_col, y = 20, `text-anchor` = "middle",
-        fill = "#48554e", `font-size` = 11, `font-weight` = 700, "Start bp"
-      ),
-      tags$text(
-        x = end_col, y = 20, `text-anchor` = "middle",
-        fill = "#48554e", `font-size` = 11, `font-weight` = 700, "End bp"
-      ),
-      tags$text(
-        x = inclusive_col, y = 20, `text-anchor` = "middle",
-        fill = "#48554e", `font-size` = 11, `font-weight` = 700, "+ primers"
-      ),
-      tags$text(
-        x = informative_col, y = 20, `text-anchor` = "middle",
-        fill = "#48554e", `font-size` = 11, `font-weight` = 700, "− primers"
-      ),
-      tags$text(
-        x = citation_col, y = 20,
-        fill = "#48554e", `font-size` = 11, `font-weight` = 700, "Citation(s)"
-      ),
-      tags$text(
-        x = right, y = 20, `text-anchor` = "end",
-        fill = "#48554e", `font-size` = 11, `font-weight` = 700,
-        paste0("View ", axis_min, "–", axis_max, " bp")
-      ),
-      tags$line(
-        x1 = left, y1 = 52, x2 = right, y2 = 52,
-        stroke = "#6d756f", `stroke-width` = 1.5
-      )
-    )
-    ticks <- seq(axis_min, axis_max, 100)
-    for (tick in ticks) {
-      tx <- scale_x(tick)
-      children <- append(children, list(
-        tags$line(
-          x1 = tx, y1 = 46, x2 = tx, y2 = last_row_y + 25,
-          stroke = "#dedbd2", `stroke-width` = 1
-        ),
-        tags$text(
-          x = tx, y = 40, `text-anchor` = "middle",
-          fill = "#68736c", `font-size` = 11, tick
-        )
-      ))
-    }
-    children <- append(children, list(
-      tags$rect(
-        x = scale_x(focus$start), y = 55,
-        width = scale_x(focus$end) - scale_x(focus$start),
-        height = last_row_y - 30, fill = "#f5df73", opacity = .15
-      )
-    ))
-    for (i in seq_len(nrow(x))) {
-      row <- x[i, ]
-      y <- first_row_y + (i - 1) * row_h
-      f <- map_primers |> filter(pair_id == row$pair_id, direction == "forward") |> slice(1)
-      r <- map_primers |> filter(pair_id == row$pair_id, direction == "reverse") |> slice(1)
-      f1 <- scale_x(row$forward_start)
-      f2 <- scale_x(row$forward_end)
-      r1 <- scale_x(row$reverse_start)
-      r2 <- scale_x(row$reverse_end)
-      forward_source <- citations |> filter(key == f$source_key[1]) |> slice(1)
-      reverse_source <- citations |> filter(key == r$source_key[1]) |> slice(1)
-      application_values <- primer_facets$facet_value[
-        primer_facets$pair_id == row$pair_id &
-          primer_facets$facet_type == "application"
-      ]
-      application_labels <- c(
-        barcoding = "DNA barcoding", bulk_community = "bulk community",
-        edna = "environmental DNA", diet = "dietary metabarcoding"
-      )
-      use_tags <- if (length(application_values)) {
-        unname(application_labels[application_values])
-      } else {
-        primer_use_tags(row$use_case, row$target)
-      }
-      diet <- diet_uses |> filter(pair_id == row$pair_id)
-      diet_detail <- if (nrow(diet)) paste(paste0(
-        "\nDocumented study use: ", diet$study_use,
-        "; predator: ", diet$predator,
-        "; sample: ", diet$sample_material,
-        "; amplified target: ", diet$amplified_role,
-        "\nDiet evidence status: ", diet$evidence_status,
-        "; source: ", diet$source_key,
-        "\nUse note: ", diet$note
-      ), collapse = "\n") else ""
-      pair_temperatures <- thermal_rows |>
-        filter(pair_id == row$pair_id) |>
-        arrange(match(direction, c("forward", "reverse")))
-      tm_detail <- if (nrow(pair_temperatures)) {
-        paste0(
-          "\nEstimated primer Tm (", sodium_mM, " mM salt): ",
-          paste(sprintf(
-            "%s %.1f–%.1f °C",
-            pair_temperatures$primer_name,
-            pair_temperatures$tm_min,
-            pair_temperatures$tm_max
-          ), collapse = "; "),
-          "\nSuggested pair Ta (starting estimate): ",
-          sprintf("%.1f–%.1f °C", pair_temperatures$ta_low[1], pair_temperatures$ta_high[1]),
-          "\nReported Ta: ",
-          if (all(is.na(pair_temperatures$reported_ta_c))) {
-            "not reported"
-          } else {
-            paste0(
-              paste(unique(na.omit(pair_temperatures$reported_ta_c)), collapse = ", "),
-              " °C"
-            )
-          }
-        )
-      } else "\nTemperatures: unavailable for this pair"
-      tooltip <- paste0(
-        "Map row ", i, ": ", row$pair_label,
-        "\nTags: ", paste(use_tags, collapse = " · "),
-        "\nIntended target: ", row$target,
-        diet_detail,
-        if (row$pair_id %in% arthropod_off_target_ids) {
-          "\nArthropod reference: off-target binding check only; target coverage not established here"
-        } else "",
-        "\nPrimers: ", f$primer_name, " + ", r$primer_name,
-        tm_detail,
-        "\nGene coordinates: ", row$pair_start, "–", row$pair_end,
-        "\nAmplicon + primers: ", row$aligned_amplicon_bp, " bp",
-        "\nAmplicon − primers (informative): ", row$targeted_region_bp, " bp",
-        if (input$map_marker == "COI") paste0("\nInformative bp inside Folmer: ", row$folmer_overlap_bp) else "",
-        "\nCoordinates derived from ", marker$coordinate_reference,
-        if (!is.na(row$placement_status) && row$placement_status != "sequence_aligned") {
-          paste0(
-            if (input$map_marker == "18S") "\nPlacement provenance: " else "\nPlacement warning: ",
-            row$placement_status
-          )
-        } else ""
-      )
-      number_tooltip <- paste0(
-        "Map row ", i, "\nPair: ", row$pair_label,
-        "\nOligos: ", f$primer_name, " + ", r$primer_name,
-        "\nSorting and filtering recalculate this number."
-      )
-      row_children <- list(
-        tags$circle(
-          cx = number_x, cy = y, r = 13,
-          fill = "#17241d",
-          class = "primer-tooltip-target",
-          `data-tooltip` = tooltip,
-          `aria-label` = paste0("Show map-row details for ", row$pair_label),
-          tabindex = "0",
-          tags$title(number_tooltip)
-        ),
-        tags$text(
-          x = number_x, y = y + 4,
-          `text-anchor` = "middle",
-          fill = "#fffdf8", `font-size` = 11, `font-weight` = 800,
-          class = "primer-tooltip-target",
-          `data-tooltip` = tooltip,
-          `aria-label` = paste0("Show map-row details for ", row$pair_label),
-          tabindex = "0",
-          i,
-          tags$title(number_tooltip)
-        ),
-        tags$line(
-          x1 = left, y1 = y + row_h / 2 - 2,
-          x2 = width - 12, y2 = y + row_h / 2 - 2,
-          stroke = "#e5e2d9", `stroke-width` = 1
-        ),
-        tags$line(
-          x1 = f2, y1 = y, x2 = r1, y2 = y,
-          class = "primer-tooltip-target",
-          `data-tooltip` = tooltip,
-          `aria-label` = paste0("Show map-row details for ", row$pair_label),
-          tabindex = "0",
-          stroke = informative_color, `stroke-width` = 5, `stroke-linecap` = "round",
-          `pointer-events` = "stroke"
-        ),
-        tags$line(
-          x1 = f1, y1 = y, x2 = f2, y2 = y,
-          class = "primer-tooltip-target",
-          `data-tooltip` = tooltip,
-          `aria-label` = paste0("Show map-row details for ", row$pair_label),
-          tabindex = "0",
-          stroke = forward_color, `stroke-width` = 7, `stroke-linecap` = "round"
-        ),
-        tags$polygon(
-          points = paste(f2, y, f2 - 8, y - 6, f2 - 8, y + 6),
-          fill = forward_color,
-          class = "primer-tooltip-target",
-          `data-tooltip` = tooltip,
-          `aria-label` = paste0("Show map-row details for ", row$pair_label),
-          tabindex = "0"
-        ),
-        tags$text(
-          x = f1 - 7, y = y + 4, `text-anchor` = "end",
-          class = "primer-tooltip-target",
-          `data-tooltip` = tooltip,
-          `aria-label` = paste0("Show map-row details for ", row$pair_label),
-          tabindex = "0",
-          fill = forward_color, `font-size` = 12, `font-weight` = 700,
-          f$primer_name
-        ),
-        tags$line(
-          x1 = r1, y1 = y, x2 = r2, y2 = y,
-          class = "primer-tooltip-target",
-          `data-tooltip` = tooltip,
-          `aria-label` = paste0("Show map-row details for ", row$pair_label),
-          tabindex = "0",
-          stroke = reverse_color, `stroke-width` = 7, `stroke-linecap` = "round"
-        ),
-        tags$polygon(
-          points = paste(r1, y, r1 + 8, y - 6, r1 + 8, y + 6),
-          fill = reverse_color,
-          class = "primer-tooltip-target",
-          `data-tooltip` = tooltip,
-          `aria-label` = paste0("Show map-row details for ", row$pair_label),
-          tabindex = "0"
-        ),
-        tags$text(
-          x = r2 + 7, y = y + 4, `text-anchor` = "start",
-          class = "primer-tooltip-target",
-          `data-tooltip` = tooltip,
-          `aria-label` = paste0("Show map-row details for ", row$pair_label),
-          tabindex = "0",
-          fill = reverse_color, `font-size` = 12, `font-weight` = 700,
-          r$primer_name
-        ),
-        tags$text(
-          x = start_col, y = y + 4, `text-anchor` = "middle",
-          fill = "#34423a", `font-size` = 11, row$pair_start
-        ),
-        tags$text(
-          x = end_col, y = y + 4, `text-anchor` = "middle",
-          fill = "#34423a", `font-size` = 11, row$pair_end
-        ),
-        tags$text(
-          x = inclusive_col, y = y + 4, `text-anchor` = "middle",
-          fill = "#34423a", `font-size` = 11,
-          paste0(row$aligned_amplicon_bp, " bp")
-        ),
-        tags$text(
-          x = informative_col, y = y + 4, `text-anchor` = "middle",
-          fill = "#34423a", `font-size` = 11,
-          paste0(row$targeted_region_bp, " bp")
-        )
-      )
-      if (identical(f$source_key[1], "custom") ||
-        identical(r$source_key[1], "custom")) {
-        row_children <- append(row_children, list(tags$text(
-          x = citation_col, y = y + 4, fill = "#6b746f", `font-size` = 10.5,
-          "Session input · not saved"
-        )))
-      } else if (identical(f$source_key[1], r$source_key[1])) {
-        row_children <- append(row_children, list(
-          source_link(forward_source, citation_col, y + 4, shared_source_color)
-        ))
-      } else {
-        row_children <- append(row_children, list(
-          source_link(forward_source, citation_col, y - 5, forward_color, "F: "),
-          source_link(reverse_source, citation_col, y + 11, reverse_color, "R: ")
-        ))
-      }
-      children <- append(children, row_children)
-    }
-    if (input$map_marker == "COI") {
-      children <- append(children, list(
-        tags$text(x = left - 14, y = folmer_y + 4, `text-anchor` = "end", fill = "#6b5720", `font-size` = 12, `font-weight` = 700, "Folmer region"),
-        tags$line(x1 = scale_x(folmer_region$start), y1 = folmer_y, x2 = scale_x(folmer_region$end), y2 = folmer_y, stroke = "#d7a62b", `stroke-width` = 10, `stroke-linecap` = "round"),
-        tags$text(x = scale_x(folmer_region$end) + 10, y = folmer_y + 4, fill = "#6b5720", `font-size` = 11, paste0(folmer_region$start, "–", folmer_region$end, " · ", folmer_region$length_bp, " bp"))
-      ))
-    } else {
-      for (j in seq_len(nrow(landmarks))) {
-        lm <- landmarks[j, ]
-        children <- append(children, list(
-          tags$rect(x = scale_x(lm$start), y = folmer_y - 9, width = max(2, scale_x(lm$end) - scale_x(lm$start)), height = 18, fill = if (j %% 2) "#9aa6a0" else "#d7dad7"),
-          tags$text(x = (scale_x(lm$start) + scale_x(lm$end)) / 2, y = folmer_y + 4, `text-anchor` = "middle", fill = "#17241d", `font-size` = 10, `font-weight` = 700, lm$label)
-        ))
+    marker <- marker_registry |> filter(marker_id==input$map_marker) |> slice(1)
+    landmarks <- marker_landmarks |> filter(marker_id==input$map_marker) |> arrange(display_order)
+    focus <- if(identical(input$map_marker,"COI")) list(start=folmer_region$start,end=folmer_region$end)
+      else list(start=min(landmarks$start),end=max(landmarks$end))
+    domain <- NULL
+    region <- input$primer_overview_region %||% "ALL"
+    if(startsWith(region,"landmark:")) {
+      selected <- landmarks[landmarks$landmark_id==sub("^landmark:","",region),,drop=FALSE]
+      if(nrow(selected)==1L) {
+        focus <- list(start=selected$start,end=selected$end)
+        domain <- c(max(1L,selected$start-1000L),min(marker$reference_length,selected$end+2000L))
       }
     }
-    children <- append(children, list(
-      tags$text(x = left - 14, y = coi_y + 4, `text-anchor` = "end", fill = "#17241d", `font-size` = 12, `font-weight` = 700, marker$display_name),
-      tags$line(x1 = left, y1 = coi_y, x2 = right, y2 = coi_y, stroke = "#17241d", `stroke-width` = 8, `stroke-linecap` = "round"),
-      tags$text(x = right + 10, y = coi_y + 4, fill = "#48554e", `font-size` = 11, paste0(axis_min, "–", min(axis_max, reference_length), " shown · ", marker$reference_version, " is ", format(reference_length, big.mark = ","), " bp"))
-    ))
-    div(
-      class = "primer-map-wrap",
-      tags$svg(
-        class = "primer-map", viewBox = paste(0, 0, width, height),
-        role = "img",
-        `aria-label` = paste0(
-          "Interactive ", marker$display_name, " primer binding map showing base pairs ",
-          axis_min, " through ", axis_max,
-          ". Rows are numbered in their current displayed order."
-        ),
-        children
-      )
-    )
+    components <- displayed_primers() |> filter(pair_id %in% rows$pair_id)
+    thermal <- pair_thermal_summary(components,sodium,offset)
+    primer_overview_map(rows,components,marker,landmarks=landmarks,focus=focus,domain=domain,
+        thermal_rows=thermal,sodium_mM=sodium,ta_offset_c=offset,citations=citations,
+        primer_facets=primer_facets,diet_uses=diet_uses,arthropod_off_target_ids=arthropod_off_target_ids,
+        folmer_region=folmer_region,active_pair_id=active,pair_click_input="primer_overview_pair_click")
   })
 
   output$its_map_catalog_ui <- renderUI({
@@ -4127,7 +4880,7 @@ server <- function(input, output, session) {
               ),
               title = paste0(
                 "No pair-scorable templates; ", row$n_templates,
-                " consensus templates inspected. Click for details."
+                " reference templates inspected. Click for details."
               ),
               div("NA"), tags$small("0% available")
             )
@@ -4254,7 +5007,10 @@ server <- function(input, output, session) {
       detail <- selected_positions |>
         filter(primer_name == primer_row$primer_name, direction == !!direction) |>
         arrange(primer_position_5_to_3)
-      if (!nrow(detail)) return(div(class = "callout", "No position records."))
+      if (!nrow(detail)) {
+        issue <- attr(order_lens_position_scores(), "position_issue")
+        return(div(class = "callout", if (is.null(issue)) "No position records for this reference template." else issue))
+      }
       div(
         h5(primer_row$primer_name, span(class = "pill", direction)),
         div(
@@ -4316,9 +5072,36 @@ server <- function(input, output, session) {
           class = "callout taxon-info mb-3",
           strong("Session custom pair: "),
           "these PrimerMiner penalties and position-level components were ",
-          "calculated on demand against the installed order alignments. The ",
-          "expanded panel below independently scores the same pair on 67,352 ",
-          "taxonomically annotated COI centroids."
+          "calculated on demand for ", input$detail_order, " using ",
+          format(summary_row$n_templates, big.mark = ","),
+          if (identical(coi_reference_current()$alignment_mode, "full")) {
+            " retained sequence references"
+          } else {
+            " legacy centroid preview templates"
+          },
+          ". Reference version: ", coi_reference_current()$version, ".",
+          {
+            custom_record <- custom_pair_collection()[[input$detail_pair]]
+            expanded_count <- custom_record$expanded_overall$n_centroids
+            if (length(expanded_count) == 1L && is.finite(expanded_count) &&
+                length(custom_record$expanded_scores_path) == 1L &&
+                file.exists(custom_record$expanded_scores_path)) {
+              paste0(" A separate Gurten study-centroid evaluation below contains ",
+                     format(expanded_count, big.mark = ","),
+                     " scored representatives; it has its own denominator.")
+            }
+          }
+        )
+      } else if (identical(coi_reference_current()$alignment_mode, "full")) {
+        div(
+          class = "callout tiny mb-3",
+          strong("Full retained COI reference: "),
+          "these metrics describe retained sequences in the selected group's ",
+          "alignment. Position traces are checked against this reference. Version: ",
+          coi_reference_current()$version, ".",
+          if (identical(input$detail_pair, "BEEPRIME")) {
+            " BeePrime's publication evidence below keeps its separate study denominator."
+          }
         )
       } else if (identical(input$detail_order, "Hymenoptera") &&
           identical(input$detail_pair, "BEEPRIME")) {
@@ -4342,7 +5125,9 @@ server <- function(input, output, session) {
       div(
         class = "metric-row",
         div(class = "metric", tags$b(summary_row$n_templates), span(
-          if (identical(input$detail_order, "Hymenoptera") &&
+          if (identical(coi_reference_current()$alignment_mode, "full")) {
+            "retained sequence references"
+          } else if (identical(input$detail_order, "Hymenoptera") &&
               identical(input$detail_pair, "BEEPRIME")) {
             "legacy consensus templates"
           } else {
@@ -4371,7 +5156,55 @@ server <- function(input, output, session) {
   })
   outputOptions(output, "mismatch_detail", suspendWhenHidden = FALSE)
 
+  beeprime_reference_mode <- reactiveVal("publication")
+  reference_input_ids <- c("beeprime_reference_mode", "lineage_reference_mode", "region_reference_mode")
+  lapply(reference_input_ids, function(id) {
+    observeEvent(input[[id]], {
+      mode <- input[[id]]
+      if (mode %in% unname(beeprime_reference_choices) &&
+          !identical(mode, beeprime_reference_mode())) beeprime_reference_mode(mode)
+    }, ignoreInit = TRUE)
+  })
+  observe({
+    mode <- beeprime_reference_mode()
+    for (id in reference_input_ids) {
+      if (!identical(isolate(input[[id]]), mode)) updateRadioButtons(session, id, selected = mode)
+    }
+  })
+  beeprime_reference <- reactive({
+    if (identical(beeprime_reference_mode(), "publication")) return(list(
+      available = TRUE, mode = "publication", version = "gurten2026_suppl5",
+      label = "Original publication alignment", reason = NULL,
+      scores = beeprime_hymenoptera_scores,
+      tables = list(bee_family = beeprime_bee_family, bee_subfamily = beeprime_bee_subfamily,
+                    bee_genus = beeprime_bee_genus, hymenoptera_family = beeprime_hymenoptera_family,
+                    hymenoptera_lineage = beeprime_hymenoptera_lineage),
+      geography = region_geography_catalog, alignment_artifact = NULL, added_sequences = 0L
+    ))
+    descriptor <- if (!is.null(coi_reference_current()$state)) coi_reference_current()$state$manifest$reference_panels$beeprime_expanded else NULL
+    beeprime_expanded_reference(descriptor, beeprime_hymenoptera_scores)
+  })
+  beeprime_reference_status_ui <- reactive({
+    panel <- beeprime_reference()
+    if (!panel$available) return(div(class = "callout taxon-alert", strong(panel$label, ". "), panel$reason))
+    bees <- panel$scores |> filter(is_bee %in% TRUE)
+    div(class = "callout tiny", strong(panel$label, ". "),
+        "Version: ", panel$version, " · ", format(nrow(bees), big.mark = ","), " bee sequences",
+        if (panel$mode == "publication") " · original study reference" else paste0(" · ", panel$added_sequences, " added sequences"),
+        ". Tables and downloads use this reference. Publication PCR results retain their original study denominator.")
+  })
+  output$beeprime_reference_status <- renderUI(beeprime_reference_status_ui())
+  output$lineage_reference_status <- renderUI({
+    if (!identical(input$lineage_marker, "COI")) return(NULL)
+    if (identical(input$lineage_pair, "BEEPRIME")) return(beeprime_reference_status_ui())
+    div(class = "callout tiny", strong("Selected COI reference. "), coi_reference_status(coi_reference_current()))
+  })
+  output$region_reference_status <- renderUI(beeprime_reference_status_ui())
+
   beeprime_taxon_data <- reactive({
+    panel <- beeprime_reference()
+    if (!panel$available) return(tibble())
+    panel_table <- function(name) as_tibble(beeprime_reference_table(panel, name))
     genus_to_taxon <- beeprime_bee_genus |>
       distinct(family, subfamily, genus)
     empirical_mapped <- beeprime_empirical_genus |>
@@ -4396,27 +5229,27 @@ server <- function(input, output, session) {
 
     selected <- switch(
       input$beeprime_taxon_scope,
-      bee_family = beeprime_bee_family |>
+      bee_family = panel_table("bee_family") |>
         left_join(empirical_by_family, by = "family") |>
         mutate(taxon = family, context = "Bee family"),
-      bee_subfamily = beeprime_bee_subfamily |>
+      bee_subfamily = panel_table("bee_subfamily") |>
         left_join(empirical_by_subfamily, by = c("family", "subfamily")) |>
         mutate(taxon = paste(family, subfamily, sep = " · "), context = "Bee subfamily"),
-      bee_genus = beeprime_bee_genus |>
+      bee_genus = panel_table("bee_genus") |>
         left_join(
           beeprime_empirical_genus |>
             select(genus, n_empirical_tested, n_empirical_detected),
           by = "genus"
         ) |>
         mutate(taxon = genus, context = paste(family, subfamily, sep = " · ")),
-      hymenoptera_family = beeprime_hymenoptera_family |>
+      hymenoptera_family = panel_table("hymenoptera_family") |>
         mutate(
           taxon = family,
           context = lineage_group,
           n_empirical_tested = NA_real_,
           n_empirical_detected = NA_real_
         ),
-      hymenoptera_lineage = beeprime_hymenoptera_lineage |>
+      hymenoptera_lineage = panel_table("hymenoptera_lineage") |>
         mutate(
           taxon = lineage_group,
           context = "Broad taxonomic lineage",
@@ -4440,11 +5273,14 @@ server <- function(input, output, session) {
   })
 
   output$beeprime_deep_metrics <- renderUI({
-    bee <- beeprime_hymenoptera_lineage |> filter(lineage_group == "Bee")
+    panel <- beeprime_reference()
+    if (!panel$available) return(NULL)
+    bee <- as_tibble(panel$tables$hymenoptera_lineage) |> filter(lineage_group == "Bee")
     div(
       class = "metric-row",
-      div(class = "metric", tags$b("67,352"), span("author COI centroids")),
-      div(class = "metric", tags$b(format(bee$n_centroids, big.mark = ",")), span("bee centroids")),
+      div(class = "metric", tags$b(if (panel$mode == "publication") "67,352" else format(nrow(panel$scores), big.mark = ",")),
+          span(if (panel$mode == "publication") "publication COI centroids" else "expanded bee sequences")),
+      div(class = "metric", tags$b(format(bee$n_centroids, big.mark = ",")), span(if (panel$mode == "publication") "bee centroids" else "bee sequences")),
       div(
         class = "metric",
         tags$b(paste0(round(bee$pair_scorable_fraction * 100, 1), "%")),
@@ -4460,6 +5296,10 @@ server <- function(input, output, session) {
   })
 
   output$beeprime_interpretation <- renderUI({
+    panel <- beeprime_reference()
+    if (!panel$available) return(NULL)
+    if (panel$mode == "expanded") return(div(class = "callout mb-3",
+      "Scores use the selected expanded bee reference. This bee-only panel does not establish fit outside bees."))
     lineage <- beeprime_hymenoptera_lineage |>
       select(lineage_group, pair_median_penalty) |>
       arrange(pair_median_penalty)
@@ -4470,7 +5310,7 @@ server <- function(input, output, session) {
     )
     div(
       class = "callout mb-3",
-      strong("Expanded result: BeePrime looks bee-preferring, not broadly Hymenoptera-targeting. "),
+      strong("Publication reference: BeePrime has its lowest lineage median among bees. "),
       "Bees have the lowest lineage-level median penalty (", lineage_text, "). ",
       "This is an in-silico selectivity pattern, not a categorical amplification guarantee."
     )
@@ -4580,7 +5420,7 @@ server <- function(input, output, session) {
   beeprime_selected_sequence_data <- reactive({
     selected <- beeprime_selected_taxon()
     if (is.null(selected)) return(tibble())
-    x <- beeprime_hymenoptera_scores
+    x <- as_tibble(beeprime_reference()$scores)
     x <- switch(
       input$beeprime_taxon_scope,
       bee_family = x |>
@@ -4668,7 +5508,7 @@ server <- function(input, output, session) {
       class = "callout taxon-info",
       strong(paste0(selected$taxon, ". ")),
       paste0(
-        format(nrow(x), big.mark = ","), " exact clustered centroid",
+        format(nrow(x), big.mark = ","), if (beeprime_reference_mode() == "publication") " exact clustered centroid" else " exact reference sequence",
         if (nrow(x) == 1L) "" else "s",
         " were scored, representing ",
         format(sum(x$cluster_size, na.rm = TRUE), big.mark = ","),
@@ -4776,10 +5616,12 @@ server <- function(input, output, session) {
 
   output$download_beeprime_taxa <- downloadHandler(
     filename = function() {
-      paste0("BeePrime_", input$beeprime_taxon_scope, "_PrimerMiner_summary.csv")
+      paste0("BeePrime_", beeprime_reference()$version, "_", input$beeprime_taxon_scope, "_PrimerMiner_summary.csv")
     },
     content = function(file) {
-      write.csv(beeprime_taxon_data(), file, row.names = FALSE, na = "")
+      rows <- beeprime_taxon_data()
+      req(nrow(rows))
+      write.csv(rows, file, row.names = FALSE, na = "")
     }
   )
 
@@ -4791,7 +5633,7 @@ server <- function(input, output, session) {
       "",
       gsub("[^A-Za-z0-9]+", "_", selected$taxon)
     )
-    paste("BEEPRIME", input$beeprime_taxon_scope, taxon_slug, sep = "_")
+    paste("BEEPRIME", beeprime_reference()$version, input$beeprime_taxon_scope, taxon_slug, sep = "_")
   })
 
   output$download_beeprime_sequence_evidence <- downloadHandler(
@@ -4801,6 +5643,8 @@ server <- function(input, output, session) {
     content = function(file) {
       x <- beeprime_selected_sequence_data()
       req(nrow(x))
+      x$reference_mode <- beeprime_reference_mode()
+      x$reference_version <- beeprime_reference()$version
       write.csv(x, file, row.names = FALSE, na = "")
     }
   )
@@ -4812,9 +5656,7 @@ server <- function(input, output, session) {
     content = function(file) {
       selected_rows <- beeprime_selected_sequence_data()
       req(nrow(selected_rows))
-      source_path <- file.path(
-        "data", "external", "gurten2026", "ClusteredReferences.fasta"
-      )
+      source_path <- beeprime_reference_alignment_path(beeprime_reference())
       validate(need(file.exists(source_path), "The source FASTA is unavailable."))
       sequences <- parse_fasta(source_path)
       fasta_accessions <- sub(
@@ -4860,10 +5702,38 @@ server <- function(input, output, session) {
     record
   })
 
+  full_general_detail <- reactive({
+    req(input$detail_pair)
+    identical(coi_reference_current()$alignment_mode, "full") &&
+      !grepl("^CUSTOM_", input$detail_pair) && input$detail_pair != "BEEPRIME"
+  })
+
+  full_general_raw_scores <- reactive({
+    req(full_general_detail())
+    rows <- read_pair_sequence_evidence(input$detail_pair)
+    issue <- attr(rows, "pair_issue")
+    validate(need(nrow(rows), if (is.null(issue)) "The selected full COI sequence partition is unavailable." else issue))
+    rows
+  }) |> bindCache(input$detail_pair, coi_reference_current()$version, cache = "session")
+
   claimed_pair_overall <- reactive({
     req(input$detail_pair)
     if (isTRUE(custom_detail_active())) {
       return(custom_detail_record()$expanded_overall)
+    }
+    if (identical(input$detail_pair, "BEEPRIME") && beeprime_reference_mode() == "expanded") {
+      panel <- beeprime_reference()
+      if (!panel$available) return(claimed_primer_overall[0, ])
+      summary <- summarize_expanded_primer_scores(panel$scores, c("pair_id", "pair_label"))
+      summary$reference_suitable <- summary$n_pair_scorable >= 50L && summary$pair_scorable_fraction >= 0.80
+      summary$reference_limitation_reason <- "Too few expanded reference sequences contain both primer sites."
+      return(summary)
+    }
+    if (isTRUE(full_general_detail())) {
+      summary <- summarize_expanded_primer_scores(full_general_raw_scores(), c("pair_id", "pair_label"))
+      summary$reference_suitable <- summary$n_pair_scorable >= 50L && summary$pair_scorable_fraction >= 0.80
+      summary$reference_limitation_reason <- "Too few retained reference sequences contain both primer sites for these summary criteria."
+      return(summary)
     }
     if (!input$detail_pair %in% c("BEEPRIME", "ZBJ_ART", "ZBJ_ART_DEG")) {
       return(claimed_primer_overall[0, , drop = FALSE])
@@ -4874,7 +5744,7 @@ server <- function(input, output, session) {
   })
 
   targeted_zbj_active <- reactive({
-    input$detail_pair %in% c("ZBJ_ART", "ZBJ_ART_DEG") &&
+    !isTRUE(full_general_detail()) && input$detail_pair %in% c("ZBJ_ART", "ZBJ_ART_DEG") &&
       input$detail_order %in% targeted_zbj_overall$source_group
   })
 
@@ -4913,6 +5783,10 @@ server <- function(input, output, session) {
         )
       )
     }
+    if (isTRUE(full_general_detail())) {
+      rows <- full_general_raw_scores() |> filter(order == input$detail_order)
+      return(summarize_expanded_primer_scores(rows, c("pair_id", "pair_label")))
+    }
     if (isTRUE(targeted_zbj_active())) {
       return(
         targeted_zbj_scope() |>
@@ -4923,6 +5797,12 @@ server <- function(input, output, session) {
       )
     }
     if (input$detail_pair != "BEEPRIME") return(data.frame())
+    if (beeprime_reference_mode() == "expanded") {
+      panel <- beeprime_reference()
+      if (!panel$available) return(data.frame())
+      rows <- panel$scores[panel$scores$order == input$detail_order, , drop = FALSE]
+      return(summarize_expanded_primer_scores(rows, c("pair_id", "pair_label")))
+    }
     if (input$detail_order %in% c("Acari", "Collembola")) {
       return(
         claimed_primer_phylogeny_groups |>
@@ -4984,6 +5864,17 @@ server <- function(input, output, session) {
         selected |> arrange(desc(pair_median_penalty), taxon)
       ))
     }
+    if (isTRUE(full_general_detail())) {
+      selected <- as_tibble(coi_reference_taxon_summary(full_general_raw_scores(), input$detail_order, input$claimed_taxon_rank))
+      if (!nrow(selected)) return(selected)
+      return(switch(
+        input$claimed_taxon_sort,
+        coverage = selected |> arrange(pair_scorable_fraction, desc(n_centroids), taxon),
+        sample = selected |> arrange(desc(n_centroids), taxon),
+        taxon = selected |> arrange(taxon),
+        selected |> arrange(desc(pair_median_penalty), taxon)
+      ))
+    }
     if (isTRUE(targeted_zbj_active())) {
       selected <- switch(
         input$claimed_taxon_rank,
@@ -5024,6 +5915,16 @@ server <- function(input, output, session) {
       ))
     }
     if (input$detail_pair != "BEEPRIME") return(data.frame())
+    if (beeprime_reference_mode() == "expanded") {
+      panel <- beeprime_reference()
+      if (!panel$available || !identical(input$detail_order, "Hymenoptera")) return(data.frame())
+      rank <- input$claimed_taxon_rank
+      rows <- as_tibble(panel$scores)
+      groups <- c("pair_id", "pair_label", "order", "family")
+      if (rank %in% c("genus", "subfamily")) groups <- c(groups, rank)
+      return(as_tibble(summarize_expanded_primer_scores(rows, groups)) |>
+        mutate(taxon = .data[[rank]], context = order, reference_mode = panel$mode, reference_version = panel$version))
+    }
     selected_orders <- switch(
       input$detail_order,
       Acari = c(
@@ -5064,6 +5965,7 @@ server <- function(input, output, session) {
 
   claimed_selected_orders <- reactive({
     req(input$detail_order)
+    if (isTRUE(full_general_detail())) return(input$detail_order)
     switch(
       input$detail_order,
       Acari = c(
@@ -5082,7 +5984,9 @@ server <- function(input, output, session) {
     if (!nrow(x)) return(data.frame())
     usable <- claimed_reference_usable()
     targeted_active <- isTRUE(targeted_zbj_active())
-    evidence <- if (targeted_active) {
+    evidence <- if (isTRUE(full_general_detail())) {
+      paste0(format(x$n_centroids, big.mark = ","), " retained sequences")
+    } else if (targeted_active) {
       paste0(
         format(x$n_sequences, big.mark = ","), " complete COX1 · ",
         format(x$n_species, big.mark = ","), " species"
@@ -5132,13 +6036,25 @@ server <- function(input, output, session) {
     )
   })
 
-  claimed_selected_taxon <- reactive({
-    selected <- input$claimed_taxon_table_rows_selected
+  claimed_taxon_selection <- reactiveVal(NULL)
+  claimed_taxon_selection_observer <- observeEvent(input$claimed_taxon_table_rows_selected, {
+    row <- input$claimed_taxon_table_rows_selected
     x <- claimed_taxon_data()
-    if (length(selected) != 1L || selected < 1L || selected > nrow(x)) {
-      return(NULL)
+    if (length(row) != 1L || row < 1L || row > nrow(x)) {
+      claimed_taxon_selection(NULL)
+    } else {
+      claimed_taxon_selection(list(pair = input$detail_pair, order = input$detail_order,
+        rank = input$claimed_taxon_rank, taxon = x$taxon[row], context = x$context[row]))
     }
-    x[selected, , drop = FALSE]
+  }, ignoreInit = TRUE)
+  claimed_selected_taxon <- reactive({
+    selected <- claimed_taxon_selection()
+    if (is.null(selected) || !identical(selected$pair, input$detail_pair) ||
+        !identical(selected$order, input$detail_order) || !identical(selected$rank, input$claimed_taxon_rank)) return(NULL)
+    x <- claimed_taxon_data()
+    row <- which(x$taxon == selected$taxon & x$context == selected$context)
+    if (length(row) != 1L) return(NULL)
+    x[row, , drop = FALSE]
   })
 
   claimed_raw_scores <- reactive({
@@ -5151,17 +6067,21 @@ server <- function(input, output, session) {
       ))
       return(readRDS(path))
     }
+    if (isTRUE(full_general_detail())) return(full_general_raw_scores())
     if (input$detail_pair %in% c("ZBJ_ART", "ZBJ_ART_DEG")) {
       return(
         targeted_zbj_sequence_scores |>
           filter(pair_id == input$detail_pair)
       )
     }
+    if (identical(input$detail_pair, "BEEPRIME") && beeprime_reference_mode() == "expanded") {
+      return(as_tibble(beeprime_reference()$scores))
+    }
     x <- read_pair_sequence_evidence(input$detail_pair)
     validate(need(nrow(x), paste("Full order-alignment sequence evidence is not yet published for", input$detail_pair)))
     x
   }) |>
-    bindCache(input$detail_pair)
+    bindCache(input$detail_pair, beeprime_reference_mode(), coi_reference_current()$version, cache = "session")
 
   claimed_selected_sequence_data <- reactive({
     selected <- claimed_selected_taxon()
@@ -5174,20 +6094,8 @@ server <- function(input, output, session) {
       x <- x |>
         filter(order %in% claimed_selected_orders())
     }
-    x <- switch(
-      input$claimed_taxon_rank,
-      family = x |> filter(family == selected$taxon),
-      genus = x |>
-        filter(
-          genus == selected$taxon,
-          family == selected$family
-        ),
-      subfamily = x |>
-        filter(
-          subfamily == selected$taxon,
-          family == selected$family
-        )
-    )
+    x <- as_tibble(coi_reference_taxon_filter(x, input$claimed_taxon_rank, selected$taxon))
+    if (input$claimed_taxon_rank != "family") x <- as_tibble(coi_reference_taxon_filter(x, "family", selected$family))
     if ("cluster_size" %in% names(x)) {
       x |> arrange(desc(cluster_size), organism_label, accession)
     } else {
@@ -5295,7 +6203,11 @@ server <- function(input, output, session) {
     } else {
       format(overall$n_centroids, big.mark = ",")
     }
-    reference_label <- if (isTRUE(targeted_zbj_active())) {
+    reference_label <- if (isTRUE(full_general_detail())) {
+      "retained COI references"
+    } else if (identical(input$detail_pair, "BEEPRIME") && beeprime_reference_mode() == "expanded") {
+      "expanded bee sequences"
+    } else if (isTRUE(targeted_zbj_active())) {
       "complete COX1 sequences"
     } else {
       "author COI centroids"
@@ -5310,7 +6222,7 @@ server <- function(input, output, session) {
       div(
         class = "metric",
         tags$b(format(scope_n, big.mark = ",")),
-        span(paste(input$detail_order, "centroids"))
+        span(paste(input$detail_order, if (isTRUE(full_general_detail())) "retained references" else "centroids"))
       ),
       div(
         class = "metric",
@@ -5337,6 +6249,22 @@ server <- function(input, output, session) {
       slice(1)
     scope <- claimed_selected_scope()
     if (!nrow(overall)) return(NULL)
+    if (identical(input$detail_pair, "BEEPRIME") && beeprime_reference_mode() == "expanded") {
+      return(div(class = "callout tiny", beeprime_reference()$label, " · ", beeprime_reference()$version,
+                 ". The selected bee reference does not estimate fit outside bees."))
+    }
+
+    if (isTRUE(full_general_detail())) {
+      return(div(
+        class = "callout tiny mb-3",
+        strong("Selected full COI cohort. "),
+        input$detail_order, " contains ", format(scope$n_centroids, big.mark = ","),
+        " retained references; ", format(scope$n_pair_scorable, big.mark = ","),
+        " contain both scorable sites (", round(scope$pair_scorable_fraction * 100, 1), "%). ",
+        "Version: ", coi_reference_current()$version,
+        ". Family and sequence rows use these same accessions. Missing sites are coverage gaps; penalties describe sequence fit, not PCR probability."
+      ))
+    }
 
     if (isTRUE(targeted_zbj_active())) {
       targeted <- targeted_zbj_scope()
@@ -5444,6 +6372,8 @@ server <- function(input, output, session) {
   })
 
   output$claimed_phylogeny_group_table <- renderUI({
+    if (isTRUE(full_general_detail())) return(NULL)
+    if (identical(input$detail_pair, "BEEPRIME") && beeprime_reference_mode() == "expanded") return(NULL)
     req(input$detail_pair, input$detail_order)
     group_type <- switch(
       input$detail_order,
@@ -5551,6 +6481,19 @@ server <- function(input, output, session) {
     )
   })
 
+  output$claimed_reference_intro <- renderUI({
+    if (isTRUE(full_general_detail())) return(div(
+      class = "callout taxon-info",
+      strong("Full retained COI reference. "), coi_reference_status(coi_reference_current()),
+      " Family and genus rows resolve this selected cohort to exact accessions and aligned binding sequences. Unresolved taxonomy and incomplete binding sites retain their own denominators."
+    ))
+    div(
+      class = "callout taxon-info",
+      strong("Named reference evidence. "),
+      "This panel reports the selected study, targeted COX1, or session reference. Its taxonomy and exact-sequence rows retain that reference's denominator; incomplete binding regions remain visible."
+    )
+  })
+
   output$claimed_taxon_table <- DT::renderDT({
     x <- claimed_taxon_display()
     if (!nrow(x)) {
@@ -5566,11 +6509,14 @@ server <- function(input, output, session) {
         )
       ))
     }
+    selected <- claimed_selected_taxon()
+    raw <- claimed_taxon_data()
+    selected_row <- if (is.null(selected)) integer() else which(raw$taxon == selected$taxon & raw$context == selected$context)
     DT::datatable(
       x,
       rownames = FALSE,
       filter = "top",
-      selection = list(mode = "single", target = "row"),
+      selection = list(mode = "single", target = "row", selected = selected_row),
       class = "compact stripe hover order-column",
       options = list(
         pageLength = 20,
@@ -5605,6 +6551,12 @@ server <- function(input, output, session) {
         "No sequence-level rows could be recovered for this selection."
       ))
     }
+    if (isTRUE(full_general_detail())) return(div(
+      class = "callout taxon-info", strong(paste0(selected$taxon, ". ")),
+      format(nrow(x), big.mark = ","), " exact retained references from ", input$detail_order,
+      " were scored in ", coi_reference_current()$version,
+      ". Accessions open their source NCBI records; the FASTA download contains the exact frozen aligned sequences used for scoring."
+    ))
     if (isTRUE(targeted_zbj_active())) {
       return(div(
         class = "callout taxon-info",
@@ -5645,7 +6597,7 @@ server <- function(input, output, session) {
       ),
       downloadButton(
         "download_claimed_sequences_fasta",
-        "Download exact FASTA",
+        if (isTRUE(full_general_detail())) "Download exact aligned FASTA" else "Download exact FASTA",
         class = "btn-sm"
       )
     )
@@ -5707,8 +6659,8 @@ server <- function(input, output, session) {
     } else {
       unique(pair_rows$source_key)
     }
-    keys <- unique(c(keys, "beeprime2026_suppl5"))
-    if (identical(input$detail_order, "Lepidoptera")) {
+    keys <- if (isTRUE(full_general_detail())) unique(c(keys, "ncbi_nucleotide", "rentrez2017")) else unique(c(keys, "beeprime2026_suppl5"))
+    if (!isTRUE(full_general_detail()) && identical(input$detail_order, "Lepidoptera")) {
       keys <- unique(c(keys, "mitter2017", "kristensen2007"))
     }
     if (isTRUE(targeted_zbj_active())) {
@@ -5721,7 +6673,11 @@ server <- function(input, output, session) {
       } else {
         "Primer and expanded-reference sources"
       }),
-      p(if (isTRUE(custom_detail_active())) {
+      p(if (isTRUE(full_general_detail())) {
+        paste0("Primer provenance comes from the curated library. Taxonomy and binding-site evidence use the retained NCBI accession cohort ",
+               coi_reference_current()$version, "; unresolved ranks remain explicit.",
+               if (nrow(claim)) paste0(" Publication claim: ", claim$claim_note) else "")
+      } else if (isTRUE(custom_detail_active())) {
         paste0(
           "The primer sequences were entered in this session. Their coordinates ",
           "were alignment-derived on NC_001322.1; the taxonomic drill-down was ",
@@ -5778,7 +6734,7 @@ server <- function(input, output, session) {
 
   output$download_claimed_sequence_evidence <- downloadHandler(
     filename = function() {
-      paste0(selected_sequence_filename(), "_sequence_evidence.csv")
+      paste0(selected_sequence_filename(), if (identical(input$detail_pair, "BEEPRIME")) paste0("_", beeprime_reference()$version) else "", "_sequence_evidence.csv")
     },
     content = function(file) {
       x <- claimed_selected_sequence_data()
@@ -5789,12 +6745,23 @@ server <- function(input, output, session) {
 
   output$download_claimed_sequences_fasta <- downloadHandler(
     filename = function() {
-      paste0(selected_sequence_filename(), "_exact_sequences.fasta")
+      paste0(selected_sequence_filename(), if (identical(input$detail_pair, "BEEPRIME")) paste0("_", beeprime_reference()$version) else "", "_exact_sequences.fasta")
     },
     content = function(file) {
       selected_rows <- claimed_selected_sequence_data()
       req(nrow(selected_rows))
-      source_path <- if (isTRUE(targeted_zbj_active())) {
+      if (isTRUE(full_general_detail())) {
+        sequences <- coi_reference_selected_alignments(coi_reference_current(), selected_rows$accession)
+        writeLines(unlist(lapply(seq_along(sequences), function(i) {
+          sequence <- sequences[[i]]
+          starts <- seq(1L, nchar(sequence), by = 80L)
+          c(paste0(">", names(sequences)[i]), substring(sequence, starts, pmin(starts + 79L, nchar(sequence))))
+        }), use.names = FALSE), file, useBytes = TRUE)
+        return(invisible(NULL))
+      }
+      source_path <- if (identical(input$detail_pair, "BEEPRIME") && beeprime_reference_mode() == "expanded") {
+        beeprime_reference_alignment_path(beeprime_reference())
+      } else if (isTRUE(targeted_zbj_active())) {
         file.path(
           "data", "external", "targeted_zbj", "raw",
           paste0(input$detail_order, "_complete_COX1.fasta")
@@ -5864,7 +6831,7 @@ server <- function(input, output, session) {
       selected = available$pair_id[1], server = TRUE
     )
     targets <- if (input$lineage_marker == "COI") {
-      sort(unique(claimed_primer_orders$order))
+      sort(unique(c(claimed_primer_orders$order, names(coi_reference_current()$counts))))
     } else if (input$lineage_marker == "18S") {
       sort(unique(na.omit(pr2_18s_sets$specificity)))
     } else {
@@ -5873,20 +6840,38 @@ server <- function(input, output, session) {
     updateSelectizeInput(session, "lineage_target", choices = c("All", targets), selected = "All", server = TRUE)
   }, ignoreInit = FALSE)
 
+  observe({
+    req(identical(input$lineage_marker, "COI"), input$lineage_pair)
+    targets <- if (input$lineage_pair == "BEEPRIME") sort(unique(claimed_primer_orders$order)) else sort(names(coi_reference_current()$counts))
+    current <- isolate(input$lineage_target)
+    choices <- c("All", targets)
+    updateSelectizeInput(session, "lineage_target", choices = choices,
+      selected = if (!is.null(current) && current %in% choices) current else "All", server = TRUE)
+  })
+
   lineage_geography <- reactive({
     req(input$lineage_marker)
     if (input$lineage_marker != "COI") return(tibble())
+    if (identical(input$lineage_pair, "BEEPRIME") && beeprime_reference_mode() == "expanded") {
+      panel <- beeprime_reference()
+      if (!panel$available) return(region_geography_catalog[0, ])
+      return(as_tibble(panel$geography))
+    }
+    if (!identical(input$lineage_pair, "BEEPRIME")) return(as_tibble(coi_reference_geography(coi_reference_current())))
     release_table("geography", "data/derived/reference_geography.csv") |>
       mutate(
         country_or_territory = na_if(country_or_territory, ""),
         locality = na_if(locality, "")
       )
-  }) |> bindCache(input$lineage_marker)
+  }) |> bindCache(input$lineage_marker, input$lineage_pair, beeprime_reference_mode(), coi_reference_current()$version, cache = "session")
 
   observe({
     geo <- lineage_geography()
     countries <- if (nrow(geo)) sort(unique(na.omit(geo$country_or_territory))) else character()
-    updateSelectizeInput(session, "lineage_country", choices = c("All", countries), selected = "All", server = TRUE)
+    selected <- isolate(input$lineage_country)
+    choices <- c("All", countries)
+    updateSelectizeInput(session, "lineage_country", choices = choices,
+      selected = if (!is.null(selected) && selected %in% choices) selected else "All", server = TRUE)
   })
   observeEvent(input$lineage_country, {
     geo <- lineage_geography()
@@ -5894,12 +6879,22 @@ server <- function(input, output, session) {
       geo <- geo |> filter(country_or_territory == input$lineage_country)
     }
     localities <- if (nrow(geo)) sort(unique(na.omit(geo$locality))) else character()
-    updateSelectizeInput(session, "lineage_locality", choices = c("All", localities), selected = "All", server = TRUE)
+    selected <- isolate(input$lineage_locality)
+    choices <- c("All", localities)
+    updateSelectizeInput(session, "lineage_locality", choices = choices,
+      selected = if (!is.null(selected) && selected %in% choices) selected else "All", server = TRUE)
   }, ignoreInit = FALSE)
 
   lineage_scope <- reactive({
     if (input$lineage_marker != "COI") return(list(taxonomy = tibble(), geography = tibble()))
-    taxonomy <- expanded_reference_taxonomy
+    taxonomy <- if (identical(input$lineage_pair, "BEEPRIME") && beeprime_reference_mode() == "expanded") {
+      panel <- beeprime_reference()
+      if (!panel$available) return(list(taxonomy = tibble(), geography = tibble()))
+      as_tibble(panel$scores)
+    } else if (!identical(input$lineage_pair, "BEEPRIME")) {
+      if (!nrow(coi_reference_current()$taxonomy)) return(list(taxonomy = tibble(), geography = tibble()))
+      as_tibble(coi_reference_current()$taxonomy)
+    } else expanded_reference_taxonomy
     geo <- lineage_geography()
     joined <- taxonomy |> left_join(geo, by = "accession")
     selected <- joined
@@ -5915,26 +6910,51 @@ server <- function(input, output, session) {
       marker_registry$display_name[match(input$lineage_marker, marker_registry$marker_id)],
       " geography and lineage partitions are scheduled for an expanded reference release. Primer combinations and mapped positions are already available in Primer map."
     ))
-    if (!is.null(input$lineage_pair) && input$lineage_pair != "BEEPRIME") {
+    if (!is.null(input$lineage_pair) && input$lineage_pair != "BEEPRIME" && !nrow(coi_reference_current()$taxonomy)) {
       return(div(
         class = "callout tiny",
         strong("Full order-alignment evidence. "),
-        "The Gurten centroid geography is not reused for this primer. Country and lineage denominators appear after its append-only full-panel artifact has been published."
+        "Taxonomy and geography are unavailable for this selected COI panel. Unrelated publication references are not used to fill missing metadata."
       ))
     }
+    if (identical(input$lineage_pair, "BEEPRIME") && beeprime_reference_mode() == "expanded" && !beeprime_reference()$available) return(NULL)
     all_rows <- lineage_scope()$geography
     selected <- lineage_scope()$taxonomy
     located <- sum(!is.na(all_rows$country_or_territory))
     div(
       class = "callout tiny",
-      strong(format(located, big.mark = ","), " / ", format(nrow(all_rows), big.mark = ","), " eligible centroids have reference geography."),
-      br(), format(nrow(all_rows) - located, big.mark = ","), " lack a usable location. Current filters retain ", format(nrow(selected), big.mark = ","), " centroids."
+      strong(format(located, big.mark = ","), " / ", format(nrow(all_rows), big.mark = ","), " eligible references have reference geography."),
+      br(), format(nrow(all_rows) - located, big.mark = ","), " lack a usable location. Current filters retain ", format(nrow(selected), big.mark = ","), " references."
     )
   })
 
   lineage_summary_table <- function(source, rank) {
     if (input$lineage_marker != "COI" || is.null(input$lineage_pair)) return(tibble())
-    if (input$lineage_pair != "BEEPRIME") return(tibble())
+    if (input$lineage_pair != "BEEPRIME") {
+      if (!nrow(coi_reference_current()$taxonomy)) return(tibble())
+      rows <- lineage_raw_scores()
+      if (!is.null(input$lineage_target) && input$lineage_target != "All") rows <- rows |> filter(order == input$lineage_target)
+      rows <- rows |> filter(accession %in% lineage_scope()$taxonomy$accession)
+      if (!nrow(rows)) return(tibble())
+      groups <- c("pair_id", "pair_label", "order", "family")
+      if (rank %in% c("subfamily", "genus")) groups <- c(groups, rank)
+      return(as_tibble(summarize_expanded_primer_scores(rows, groups)) |>
+        rename(n_sequences = n_centroids) |>
+        mutate(reference_mode = "full", reference_version = coi_reference_current()$version))
+    }
+    if (beeprime_reference_mode() == "expanded") {
+      panel <- beeprime_reference()
+      if (!panel$available) return(tibble())
+      rows <- lineage_raw_scores()
+      if (!is.null(input$lineage_target) && input$lineage_target != "All") rows <- rows |> filter(order == input$lineage_target)
+      allowed <- lineage_scope()$taxonomy$accession
+      rows <- rows |> filter(accession %in% allowed)
+      if (!nrow(rows)) return(tibble())
+      groups <- c("pair_id", "pair_label", "order", "family")
+      if (rank %in% c("subfamily", "genus")) groups <- c(groups, rank)
+      return(as_tibble(summarize_expanded_primer_scores(rows, groups)) |>
+               mutate(reference_mode = panel$mode, reference_version = panel$version))
+    }
     x <- source |> filter(pair_id == input$lineage_pair)
     if (!is.null(input$lineage_target) && input$lineage_target != "All") x <- x |> filter(order == input$lineage_target)
     selected_accessions <- lineage_scope()$taxonomy$accession
@@ -5946,6 +6966,54 @@ server <- function(input, output, session) {
       x <- x |> inner_join(counts, by = rank)
     }
     x
+  }
+
+  # Display projections retain the source row order used by DT selections.
+  # Downloads below keep the complete scientific tables and their precision.
+  lineage_summary_display <- function(x, rank = "order") {
+    columns <- c(order = "Target group", family = "Family", subfamily = "Subfamily", genus = "Genus")
+    context <- if (rank == "order") "order" else if (rank == "family") c("order", "family") else c("order", "family", rank)
+    count_column <- intersect(c("n_sequences", "n_templates", "n_centroids"), names(x))[1]
+    if (!is.na(count_column)) columns[count_column] <- if (count_column == "n_centroids") "Centroids" else "References"
+    columns <- c(columns[intersect(context, names(columns))], columns[intersect(count_column, names(columns))],
+      n_pair_scorable = "Both sites", pair_scorable_fraction = "Scorable %",
+      perfect_match_fraction_among_scorable = "Perfect match %",
+      pair_median_penalty = "Pair median", pair_p90_penalty = "Pair p90")
+    terminal <- intersect(c("terminal_3_mismatch_fraction_among_scorable", "terminal_3_mismatch_fraction"), names(x))[1]
+    if (!is.na(terminal)) columns[terminal] <- "3′ mismatch %"
+    keep <- intersect(names(columns), names(x))
+    if (!length(keep)) return(data.frame(`Reference fit` = character(), check.names = FALSE))
+    display <- as.data.frame(x[, keep, drop = FALSE])
+    for (name in keep) {
+      if (is.numeric(display[[name]]) && grepl("fraction", name)) display[[name]] <- round(display[[name]] * 100, 1)
+      else if (is.numeric(display[[name]]) && grepl("penalty", name)) display[[name]] <- round(display[[name]], 1)
+    }
+    names(display) <- unname(columns[keep])
+    display
+  }
+
+  lineage_sequence_display <- function(x) {
+    organism <- intersect(c("organism_label", "scientific_name_ncbi", "species"), names(x))[1]
+    columns <- c(accession = "Accession")
+    if (!is.na(organism)) columns[organism] <- "Organism"
+    columns <- c(columns, order = "Target group", family = "Family", subfamily = "Subfamily", genus = "Genus",
+      cluster_size = "Cluster size", pair_scorable = "Both sites", pair_penalty = "Pair penalty",
+      forward_binding_sequence_primer_oriented = "Forward site", reverse_binding_sequence_primer_oriented = "Reverse site",
+      country_or_territory = "Country / territory", locality = "Locality")
+    optional <- intersect(c("subfamily", "country_or_territory", "locality"), names(x))
+    absent <- optional[vapply(optional, function(name) all(is.na(x[[name]]) | !nzchar(trimws(x[[name]]))), logical(1))]
+    if ("cluster_size" %in% names(x) && all(x$cluster_size %in% c(1L, NA))) absent <- c(absent, "cluster_size")
+    keep <- setdiff(intersect(names(columns), names(x)), absent)
+    if (!length(keep)) return(data.frame(Accession = character()))
+    display <- as.data.frame(x[, keep, drop = FALSE])
+    for (rank in intersect(c("family", "subfamily", "genus"), keep)) {
+      unresolved <- is.na(display[[rank]]) | !nzchar(trimws(display[[rank]]))
+      display[[rank]][unresolved] <- "Unresolved"
+    }
+    if ("pair_scorable" %in% keep) display$pair_scorable <- ifelse(is.na(display$pair_scorable), "Unresolved", ifelse(display$pair_scorable, "Yes", "No"))
+    if ("pair_penalty" %in% keep) display$pair_penalty <- round(display$pair_penalty, 1)
+    names(display) <- unname(columns[keep])
+    display
   }
 
   output$lineage_overview <- renderUI({
@@ -5960,9 +7028,9 @@ server <- function(input, output, session) {
     }
     tagList(
       h3("Reference fit by target group"),
-      p("Penalty is calculated only when both binding sites are scorable. Site availability and mismatch fit remain separate."),
+      p("Penalty is calculated only when both binding sites are scorable. Perfect-match and 3′-mismatch percentages use those scorable references; the scorable percentage uses every reference."),
       if (input$lineage_pair == "BEEPRIME") {
-        div(class = "callout tiny", strong("Study-specific exception: "), "BeePrime uses the Gurten et al. author centroids for its deep publication-linked view.")
+        div(class = "callout tiny", strong("Study-specific exception: "), paste0("BeePrime uses the selected reference: ", beeprime_reference()$label, "."))
       } else {
         div(class = "callout tiny", strong("General reference policy: "), "This primer is evaluated on full order-specific alignments. Gurten centroids are deliberately not substituted when its full artifact is unavailable.")
       },
@@ -5971,40 +7039,52 @@ server <- function(input, output, session) {
       DTOutput("lineage_geography_stratified")
     )
   })
-  output$lineage_overview_table <- renderDT({
+  lineage_overview_data <- reactive({
     summary <- if (input$lineage_pair == "BEEPRIME") {
-      claimed_primer_orders |> filter(pair_id == input$lineage_pair)
+      if (beeprime_reference_mode() == "expanded") {
+        panel <- beeprime_reference()
+        if (panel$available) as_tibble(summarize_expanded_primer_scores(panel$scores, c("pair_id", "pair_label", "order"))) else tibble()
+      } else claimed_primer_orders |> filter(pair_id == input$lineage_pair)
     } else {
-      order_scores |> filter(pair_id == input$lineage_pair) |>
-        mutate(evidence_source = ifelse(alignment_dir == full_alignment_dir, "full order alignment", "legacy centroid preview · awaiting 1,000-sequence release"))
+      current_order_scores() |> filter(pair_id == input$lineage_pair) |>
+        mutate(evidence_source = reference_evidence)
     }
     if (!is.null(input$lineage_target) && input$lineage_target != "All") summary <- summary |> filter(order == input$lineage_target)
-    datatable(summary, options = list(pageLength = 12, scrollX = TRUE), filter = "top", rownames = FALSE)
+    summary
+  })
+  output$lineage_overview_table <- renderDT({
+    datatable(lineage_summary_display(lineage_overview_data()), options = list(pageLength = 12, scrollX = TRUE, order = list()), filter = "top", rownames = FALSE)
   }, server = TRUE)
 
   output$lineage_families <- renderDT({
     x <- lineage_summary_table(claimed_primer_families, "family")
-    datatable(x, filter = "top", selection = "single", rownames = FALSE, options = list(pageLength = 15, scrollX = TRUE))
+    family <- lineage_selected_family()
+    order <- lineage_selected_family_order()
+    selected <- if (is.null(family)) integer() else which(x$family == family & x$order == order)
+    datatable(lineage_summary_display(x, "family"), filter = "top", selection = list(mode = "single", selected = selected), rownames = FALSE, options = list(pageLength = 15, scrollX = TRUE, order = list()))
   }, server = TRUE)
   output$lineage_subfamilies_ui <- renderUI({
     if (input$lineage_marker != "COI") return(div(class = "callout", "Subfamily evidence is not available for this marker release."))
     DTOutput("lineage_subfamilies")
   })
   output$lineage_subfamilies <- renderDT({
-    datatable(lineage_summary_table(claimed_primer_subfamilies, "subfamily"), filter = "top", selection = "single", rownames = FALSE, options = list(pageLength = 15, scrollX = TRUE))
+    datatable(lineage_summary_display(lineage_summary_table(claimed_primer_subfamilies, "subfamily"), "subfamily"), filter = "top", selection = "single", rownames = FALSE, options = list(pageLength = 15, scrollX = TRUE, order = list()))
   }, server = TRUE)
   output$lineage_genera_ui <- renderUI({
     if (input$lineage_marker != "COI") return(div(class = "callout", "Genus evidence is not available for this marker release."))
     DTOutput("lineage_genera")
   })
   output$lineage_genera <- renderDT({
-    datatable(lineage_summary_table(claimed_primer_genera, "genus"), filter = "top", selection = "single", rownames = FALSE, options = list(pageLength = 15, scrollX = TRUE))
+    datatable(lineage_summary_display(lineage_summary_table(claimed_primer_genera, "genus"), "genus"), filter = "top", selection = "single", rownames = FALSE, options = list(pageLength = 15, scrollX = TRUE, order = list()))
   }, server = TRUE)
 
   lineage_raw_scores <- reactive({
     req(input$lineage_marker == "COI", input$lineage_pair)
+    if (identical(input$lineage_pair, "BEEPRIME") && beeprime_reference_mode() == "expanded") {
+      return(as_tibble(beeprime_reference()$scores))
+    }
     read_pair_sequence_evidence(input$lineage_pair)
-  }) |> bindCache(input$lineage_pair)
+  }) |> bindCache(input$lineage_pair, beeprime_reference_mode(), coi_reference_current()$version, cache = "session")
 
   output$lineage_geography_interpretation <- renderUI({
     if (input$lineage_marker != "COI") return(NULL)
@@ -6041,10 +7121,28 @@ server <- function(input, output, session) {
     datatable(comparison, filter = "top", rownames = FALSE, options = list(pageLength = 12, scrollX = TRUE))
   }, server = TRUE)
 
-  lineage_selected_family <- reactive({
+  lineage_family_selection <- reactiveVal(NULL)
+  lineage_family_selection_observer <- observeEvent(input$lineage_families_rows_selected, {
     row <- input$lineage_families_rows_selected
     table <- lineage_summary_table(claimed_primer_families, "family")
-    if (length(row) && row <= nrow(table)) table$family[row] else NULL
+    if (length(row) != 1L || row < 1L || row > nrow(table)) {
+      lineage_family_selection(NULL)
+    } else {
+      lineage_family_selection(list(marker = input$lineage_marker, pair = input$lineage_pair,
+        target = input$lineage_target, country = input$lineage_country, locality = input$lineage_locality,
+        family = table$family[row], order = table$order[row]))
+    }
+  }, ignoreInit = TRUE)
+  lineage_selected_family <- reactive({
+    selected <- lineage_family_selection()
+    if (is.null(selected) || !identical(selected$marker, input$lineage_marker) ||
+        !identical(selected$pair, input$lineage_pair) || !identical(selected$target, input$lineage_target) ||
+        !identical(selected$country, input$lineage_country) || !identical(selected$locality, input$lineage_locality)) return(NULL)
+    selected$family
+  })
+  lineage_selected_family_order <- reactive({
+    if (is.null(lineage_selected_family())) return(NULL)
+    lineage_family_selection()$order
   })
   lineage_sequence_data <- reactive({
     if (input$lineage_marker != "COI") return(tibble())
@@ -6052,7 +7150,11 @@ server <- function(input, output, session) {
     if (!nrow(x)) return(x)
     if (!is.null(input$lineage_target) && input$lineage_target != "All" && "order" %in% names(x)) x <- x |> filter(order == input$lineage_target)
     family <- lineage_selected_family()
-    if (!is.null(family) && "family" %in% names(x)) x <- x |> filter(.data$family == family)
+    if (!is.null(family) && "family" %in% names(x)) {
+      x <- as_tibble(coi_reference_taxon_filter(x, "family", family))
+      selected_order <- lineage_selected_family_order()
+      if (!is.null(selected_order)) x <- x |> filter(order == selected_order)
+    }
     x <- x |> left_join(lineage_geography(), by = "accession")
     if (!is.null(input$lineage_country) && input$lineage_country != "All") x <- x |> filter(country_or_territory == input$lineage_country)
     if (!is.null(input$lineage_locality) && input$lineage_locality != "All") x <- x |> filter(locality == input$lineage_locality)
@@ -6060,17 +7162,103 @@ server <- function(input, output, session) {
   })
   output$lineage_sequence_note <- renderUI({
     if (input$lineage_marker != "COI") return(div(class = "callout", "Exact fungal sequence evidence will appear only after the expanded-reference artifact is released."))
+    if (identical(input$lineage_pair, "BEEPRIME") && !beeprime_reference()$available) return(NULL)
     if (input$lineage_pair != "BEEPRIME" && !nrow(lineage_raw_scores())) {
-      return(div(class = "callout", strong("Full sequence partition pending. "), "The previous shared Gurten-centroid score is intentionally withheld for this primer."))
+      issue <- attr(lineage_raw_scores(), "pair_issue")
+      return(div(class = "callout", strong("Full sequence partition unavailable. "), if (is.null(issue)) "The selected release does not supply verified exact-sequence evidence for this primer." else issue))
     }
     family <- lineage_selected_family()
-    div(class = "tiny", if (is.null(family)) "Select a family row to restrict exact sequence evidence." else paste("Showing exact evidence for", family), " Sequence artifacts load only when this tab is opened.")
+    div(class = "tiny", if (is.null(family)) "Select a family row to restrict exact sequence evidence." else paste("Showing exact evidence for", family, "in", lineage_selected_family_order()), " Sequence artifacts load only when this tab is opened.")
   })
   output$lineage_sequences <- renderDT({
-    x <- lineage_sequence_data()
-    keep <- intersect(c("accession", "organism_label", "scientific_name_ncbi", "order", "family", "subfamily", "genus", "cluster_size", "pair_scorable", "pair_penalty", "forward_binding_sequence_primer_oriented", "reverse_binding_sequence_primer_oriented", "country_or_territory", "locality"), names(x))
-    datatable(x[, keep, drop = FALSE], filter = "top", rownames = FALSE, options = list(pageLength = 15, scrollX = TRUE))
+    datatable(lineage_sequence_display(lineage_sequence_data()), filter = "top", rownames = FALSE, options = list(pageLength = 15, scrollX = TRUE, order = list()))
   }, server = TRUE)
+
+  lineage_download_stem <- reactive({
+    family <- lineage_selected_family()
+    target <- if (!is.null(family)) lineage_selected_family_order() else input$lineage_target
+    values <- c(input$lineage_pair, target, if (!is.null(family)) family)
+    paste(gsub("[^A-Za-z0-9]+", "_", values), collapse = "_")
+  })
+  lineage_selected_alignments <- reactive({
+    req(input$lineage_marker == "COI", input$lineage_pair != "BEEPRIME", coi_reference_current()$alignment_mode == "full")
+    rows <- lineage_sequence_data()
+    req(nrow(rows))
+    coi_reference_selected_alignments(coi_reference_current(), rows$accession)
+  })
+  write_lineage_sequence_csv <- function(file) {
+    rows <- lineage_sequence_data()
+    req(nrow(rows))
+    write.csv(rows, file, row.names = FALSE, na = "")
+  }
+  write_lineage_alignment_fasta <- function(file) {
+    sequences <- lineage_selected_alignments()
+    writeLines(unlist(lapply(seq_along(sequences), function(i) {
+      sequence <- sequences[[i]]
+      starts <- seq(1L, nchar(sequence), by = 80L)
+      c(paste0(">", names(sequences)[i]), substring(sequence, starts, pmin(starts + 79L, nchar(sequence))))
+    }), use.names = FALSE), file, useBytes = TRUE)
+  }
+  output$download_lineage_sequence_csv <- downloadHandler(
+    filename = function() paste0(lineage_download_stem(), "_sequence_evidence.csv"),
+    content = write_lineage_sequence_csv
+  )
+  output$download_lineage_alignment_fasta <- downloadHandler(
+    filename = function() paste0(lineage_download_stem(), "_aligned_sequences.fasta"),
+    content = write_lineage_alignment_fasta
+  )
+  output$download_lineage_overview_csv <- downloadHandler(
+    filename = function() paste0(input$lineage_pair, "_", input$lineage_target, "_reference_summary.csv"),
+    content = function(file) write.csv(lineage_overview_data(), file, row.names = FALSE, na = "")
+  )
+  output$download_lineage_family_csv <- downloadHandler(
+    filename = function() paste0(input$lineage_pair, "_", input$lineage_target, "_family_summary.csv"),
+    content = function(file) write.csv(lineage_summary_table(claimed_primer_families, "family"), file, row.names = FALSE, na = "")
+  )
+  output$download_lineage_subfamily_csv <- downloadHandler(
+    filename = function() paste0(input$lineage_pair, "_", input$lineage_target, "_subfamily_summary.csv"),
+    content = function(file) write.csv(lineage_summary_table(claimed_primer_subfamilies, "subfamily"), file, row.names = FALSE, na = "")
+  )
+  output$download_lineage_genus_csv <- downloadHandler(
+    filename = function() paste0(input$lineage_pair, "_", input$lineage_target, "_genus_summary.csv"),
+    content = function(file) write.csv(lineage_summary_table(claimed_primer_genera, "genus"), file, row.names = FALSE, na = "")
+  )
+  lineage_growth_qa <- reactive({
+    if (!identical(input$lineage_marker, "COI") || is.null(input$lineage_pair) || input$lineage_pair == "BEEPRIME") return(tibble())
+    reference <- coi_reference_current()
+    if (!identical(reference$alignment_mode, "full") || !nrow(reference$growth_qa)) return(tibble())
+    as_tibble(reference$growth_qa)
+  })
+  lineage_growth_data <- reactive({
+    rows <- lineage_growth_qa()
+    if (nrow(rows) && !is.null(input$lineage_target) && input$lineage_target != "All") {
+      rows <- rows |> filter(target_group == input$lineage_target)
+    }
+    rows
+  })
+  output$lineage_growth_table <- renderDT({
+    rows <- lineage_growth_data()
+    req(nrow(rows))
+    display <- rows |> transmute(
+      `Target group` = target_group,
+      `Previous retained` = previous_retained,
+      Added = added_new,
+      Retained = retained_after,
+      `Verified COI` = verified_marker_records
+    )
+    datatable(display, rownames = FALSE, selection = "none", class = "compact stripe",
+      options = list(dom = "t", pageLength = 22, scrollX = TRUE, scrollY = "360px", scrollCollapse = TRUE, order = list())) |>
+      formatRound(c("Previous retained", "Added", "Retained", "Verified COI"), digits = 0, mark = ",")
+  }, server = TRUE)
+  write_lineage_growth_qa_csv <- function(file) {
+    rows <- lineage_growth_qa()
+    req(nrow(rows))
+    write.csv(rows, file, row.names = FALSE, na = "")
+  }
+  output$download_lineage_growth_qa_csv <- downloadHandler(
+    filename = function() paste0("COI_", gsub("[^A-Za-z0-9._-]+", "_", coi_reference_current()$version), "_growth_QA.csv"),
+    content = write_lineage_growth_qa_csv
+  )
   output$lineage_sources <- renderUI({
     claims <- catalog_claims |> filter(marker_id == input$lineage_marker, pair_id == input$lineage_pair)
     marker <- marker_registry |> filter(marker_id == input$lineage_marker) |> slice(1)
@@ -6081,20 +7269,77 @@ server <- function(input, output, session) {
       div(
         class = "callout tiny",
         strong("Scoring reference: "),
-        if (input$lineage_marker == "COI" && input$lineage_pair == "BEEPRIME") "Gurten et al. study-specific 99.5% centroids." else if (input$lineage_marker == "COI") "Append-only full order reference alignment; no cross-primer reuse of Gurten centroids." else "Marker-specific pilot screening reference."
+        if (input$lineage_marker == "COI" && input$lineage_pair == "BEEPRIME") paste(beeprime_reference()$label, beeprime_reference()$version) else if (input$lineage_marker == "COI") "Append-only full order reference alignment; no cross-primer reuse of Gurten centroids." else "Marker-specific pilot screening reference."
       ),
+      if (identical(input$lineage_marker, "COI") && !is.null(input$lineage_pair) && input$lineage_pair != "BEEPRIME") {
+        reference <- coi_reference_current()
+        growth <- lineage_growth_qa()
+        tagList(
+          h4("COI reference growth"),
+          p(strong("Current reference: "), reference$version),
+          if (nrow(growth)) {
+            policy <- reference$policy
+            minimum <- if (is.null(policy$minimum_per_group)) 100L else policy$minimum_per_group
+            total <- if (is.null(policy$minimum_total)) 10000L else policy$minimum_total
+            tagList(
+              p("Marker-verified target: at least ", format(minimum, big.mark = ","),
+                " COI records per target group and ", format(total, big.mark = ","), " overall. This cohort has ",
+                format(reference$n_references, big.mark = ","), " retained records and ",
+                format(reference$n_verified_marker, big.mark = ","), " marker-verified COI records."),
+              p(class = "tiny", "Retained counts preserve historical records, including those with unresolved or failed current marker QC. Verified COI records pass the marker-feature checks. Added is the change from the previous frozen panel recorded in this release's QA. Counts describe each entire target group before primer, family or location filters."),
+              DTOutput("lineage_growth_table"),
+              div(class = "d-flex gap-2 flex-wrap my-3", downloadButton("download_lineage_growth_qa_csv", "Complete growth QA CSV")),
+              p(class = "tiny", "The table follows the selected target group; the CSV includes all ", nrow(growth), " groups and every original QA field.")
+            )
+          } else div(class = "callout tiny", "Growth evidence is unavailable for this legacy reference. A complete frozen growing-reference release is required to show retained counts and additions.")
+        )
+      },
+      if (input$lineage_marker == "COI" && input$lineage_pair != "BEEPRIME" && identical(coi_reference_current()$alignment_mode, "full")) {
+        rows <- lineage_sequence_data()
+        tagList(
+          h4("Filtered reference downloads"),
+          p(format(nrow(rows), big.mark = ","), " selected references · ", coi_reference_current()$version,
+            if (!is.null(lineage_selected_family())) paste0(" · ", lineage_selected_family(), " · ", lineage_selected_family_order())),
+          if (nrow(rows)) {
+            sequences <- lineage_selected_alignments()
+            widths <- unique(nchar(sequences))
+            tagList(
+              div(class = "callout tiny", "The FASTA preserves every gap and the frozen alignment coordinates (",
+                  paste(format(sort(widths), big.mark = ","), collapse = ", "), " alignment columns). Alignment columns are distinct from raw sequence length or amplicon length."),
+              div(class = "d-flex gap-2 flex-wrap mb-3",
+                downloadButton("download_lineage_sequence_csv", "Sequence evidence CSV"),
+                downloadButton("download_lineage_alignment_fasta", "Exact aligned FASTA"))
+            )
+          } else p("No reference records match the current selection."),
+          p("CSV downloads retain all fields and unrounded values. Summary downloads retain each table's current scope; sequence downloads also use the selected family."),
+          div(class = "d-flex gap-2 flex-wrap mb-3",
+            downloadButton("download_lineage_overview_csv", "Overview CSV"),
+            downloadButton("download_lineage_family_csv", "Families CSV"),
+            downloadButton("download_lineage_subfamily_csv", "Subfamilies CSV"),
+            downloadButton("download_lineage_genus_csv", "Genera CSV"))
+        )
+      },
       div(class = "callout tiny", "Original third-party licensing and attribution apply. Annual software and redistributable-data snapshots are prepared for Zenodo DOI deposition.")
     )
   })
 
   region_geography <- reactive({
+    if (identical(input$region_pair, "BEEPRIME") && beeprime_reference_mode() == "expanded") {
+      panel <- beeprime_reference()
+      if (!panel$available) return(region_geography_catalog[0, ])
+      return(as_tibble(panel$geography))
+    }
+    if (!identical(input$region_pair, "BEEPRIME")) return(as_tibble(coi_reference_geography(coi_reference_current())))
     region_geography_catalog
-  }) |> bindCache(input$region_marker)
+  }) |> bindCache(input$region_marker, input$region_pair, beeprime_reference_mode(), coi_reference_current()$version, cache = "session")
 
   region_pair_scores <- reactive({
     req(input$region_pair)
+    if (identical(input$region_pair, "BEEPRIME") && beeprime_reference_mode() == "expanded") {
+      return(as_tibble(beeprime_reference()$scores))
+    }
     read_pair_sequence_evidence(input$region_pair)
-  }) |> bindCache(input$region_pair)
+  }) |> bindCache(input$region_pair, beeprime_reference_mode(), coi_reference_current()$version, cache = "session")
 
   observeEvent(input$region_pair, {
     scores <- region_pair_scores()

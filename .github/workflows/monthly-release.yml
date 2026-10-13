@@ -3,25 +3,68 @@ on:
   schedule:
     - cron: "0 6 1 * *"
   workflow_dispatch:
+    inputs:
+      marker:
+        description: Marker to build
+        type: choice
+        options: [ITS_FUNGAL, COI, all]
+        default: ITS_FUNGAL
+      promote:
+        description: Promote verified immutable release to latest
+        type: boolean
+        default: false
+      coi_previous_release_id:
+        description: Optional verified immutable COI release to restore instead of latest
+        type: string
+        default: ""
+      coi_bootstrap:
+        description: Recover published COI accession membership when the legacy release lacks raw state
+        type: boolean
+        default: false
+      coi_seed_tag:
+        description: Optional manual GitHub draft-release tag containing a frozen COI seed
+        type: string
+        default: ""
+      coi_seed_asset:
+        description: Exact seed tar.gz asset name (manual runs only)
+        type: string
+        default: ""
+      coi_seed_sha256:
+        description: SHA-256 of the complete COI seed archive
+        type: string
+        default: ""
 permissions:
   contents: write
   issues: write
 jobs:
   build:
+    concurrency:
+      group: monthly-marker-release-${{ matrix.marker }}
+      cancel-in-progress: false
     strategy:
       fail-fast: false
       matrix:
-        marker: [COI, ITS_FUNGAL]
+        marker: ${{ fromJSON(inputs.marker == 'COI' && '["COI"]' || inputs.marker == 'ITS_FUNGAL' && '["ITS_FUNGAL"]' || '["COI","ITS_FUNGAL"]') }}
     runs-on: ubuntu-latest
     env:
       MARKER_ID: ${{ matrix.marker }}
-      RELEASE_ID: ${{ github.run_id }}-${{ matrix.marker }}
+      RELEASE_ID: ${{ github.run_id }}-${{ github.run_attempt }}-${{ matrix.marker }}
+      PROMOTE_RELEASE: ${{ github.event_name == 'schedule' || inputs.promote }}
       R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
       R2_BUCKET: ${{ secrets.R2_BUCKET }}
       AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
       ATLAS_DATA_BASE_URL: ${{ vars.ATLAS_DATA_BASE_URL }}
       ATLAS_MANIFEST_BASE_URL: ${{ vars.ATLAS_DATA_BASE_URL }}/releases
+      COI_PREVIOUS_RELEASE_ID: ${{ inputs.coi_previous_release_id }}
+      COI_ALLOW_BOOTSTRAP: ${{ inputs.coi_bootstrap || false }}
+      COI_TARGET_TOTAL: "10000"
+      COI_MIN_PER_GROUP: "100"
+      COI_MONTHLY_GROWTH: "0.01"
+      COI_REFRESH: "true"
+      COI_SEED_TAG: ${{ inputs.coi_seed_tag }}
+      COI_SEED_ASSET: ${{ inputs.coi_seed_asset }}
+      COI_SEED_SHA256: ${{ inputs.coi_seed_sha256 }}
     steps:
       - name: Preflight release configuration
         shell: bash
@@ -43,61 +86,119 @@ jobs:
         with: {python-version: "3.12"}
       - uses: r-lib/actions/setup-r@v2
       - uses: r-lib/actions/setup-renv@v2
+      - name: Parse application and build entry points
+        run: Rscript -e 'paths <- c("app.R", list.files(c("R", "scripts"), pattern="[.]R$", recursive=TRUE, full.names=TRUE)); invisible(lapply(paths, function(path) parse(file=path))); message("Parsed ", length(paths), " R sources")'
       - name: Install marker-build tools
         run: |
           sudo apt-get update
           sudo apt-get install -y mafft vsearch
-          python -m pip install pandas lxml html5lib
+          python -m pip install pandas lxml html5lib requests
           Rscript scripts/install_primerminer.R
-      - name: Build marker independently
+      - name: Restore retained COI acquisition inputs
+        if: ${{ matrix.marker == 'COI' }}
+        env: {GH_TOKEN: "${{ github.token }}"}
         run: |
-          if [ "$MARKER_ID" = COI ] && [ -n "$R2_BUCKET" ]; then
-            # Browser-copied repository secrets can retain a trailing newline.
-            # Normalise all S3 inputs before retrieving persistent COI state.
-            R2_ACCOUNT_ID="$(printf '%s' "$R2_ACCOUNT_ID" | tr -d '\r\n')"
-            R2_BUCKET="$(printf '%s' "$R2_BUCKET" | tr -d '\r\n')"
-            export AWS_ACCESS_KEY_ID="$(printf '%s' "$AWS_ACCESS_KEY_ID" | tr -d '\r\n')"
-            export AWS_SECRET_ACCESS_KEY="$(printf '%s' "$AWS_SECRET_ACCESS_KEY" | tr -d '\r\n')"
-            mkdir -p data/provenance
-            aws s3 cp "s3://${R2_BUCKET}/state/COI/coi_reference_accession_ledger.csv" data/provenance/coi_reference_accession_ledger.csv --endpoint-url "https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com" || true
+          if [ "$MARKER_ID" = COI ]; then
+            if [ -n "$COI_SEED_TAG" ]; then
+              [ "$GITHUB_EVENT_NAME" = workflow_dispatch ] || { echo 'COI seeds require a manual run' >&2; exit 1; }
+              [ -z "$COI_PREVIOUS_RELEASE_ID" ] && [ "$COI_ALLOW_BOOTSTRAP" != true ] || { echo 'Choose exactly one COI restoration source' >&2; exit 1; }
+              [[ "$COI_SEED_ASSET" =~ ^[A-Za-z0-9][A-Za-z0-9._-]*\.tar\.gz$ ]] || { echo 'Invalid COI seed asset name' >&2; exit 1; }
+              [[ "$COI_SEED_SHA256" =~ ^[A-Fa-f0-9]{64}$ ]] || { echo 'COI seed needs a complete SHA-256' >&2; exit 1; }
+              mkdir -p logs/coi_seed
+              gh release download "$COI_SEED_TAG" --repo "$GITHUB_REPOSITORY" --pattern "$COI_SEED_ASSET" --dir logs/coi_seed
+              python scripts/restore_coi_seed.py --archive "logs/coi_seed/$COI_SEED_ASSET" --sha256 "$COI_SEED_SHA256"
+            else
+              [ -z "$COI_SEED_ASSET$COI_SEED_SHA256" ] || { echo 'COI seed inputs require a tag' >&2; exit 1; }
+              Rscript scripts/restore_coi_reference_state.R
+            fi
           fi
+      - name: Build marker catalog and reference geometry
+        env: {GH_TOKEN: "${{ github.token }}"}
+        run: |
           python scripts/import_unite_primers.py
           Rscript scripts/build_catalog.R
           Rscript scripts/download_marker_references.R
           Rscript scripts/build_marker_geometry.R
+      - name: Acquire retained fungal reference panel
+        if: ${{ matrix.marker == 'ITS_FUNGAL' }}
+        env: {GH_TOKEN: "${{ github.token }}"}
+        run: |
+          if [ "$MARKER_ID" = ITS_FUNGAL ]; then
+            Rscript tests/test_fungal_restore_selection.R
+            Rscript scripts/build_fungal_snapshots.R restore
+            if [ -f data/derived/fungal_previous_reference_panel/panel.fasta ]; then
+              python scripts/build_fungal_reference_panel.py --previous-dir data/derived/fungal_previous_reference_panel
+            else
+              python scripts/build_fungal_reference_panel.py
+            fi
+          fi
+      - name: Score fungal snapshots and verify version history
+        if: ${{ matrix.marker == 'ITS_FUNGAL' }}
+        env: {GH_TOKEN: "${{ github.token }}"}
+        run: |
+          Rscript scripts/build_fungal_snapshots.R
+          Rscript tests/test_fungal_versions.R
+      - name: Acquire append-only COI reference panel
+        if: ${{ matrix.marker == 'COI' }}
+        env: {GH_TOKEN: "${{ github.token }}"}
+        run: |
           if [ "$MARKER_ID" = COI ]; then
             Rscript scripts/update_order_reference_panels.R
-            EVALUATION_MODE=full GB_SUBSET=1000 Rscript scripts/build_22_group_alignments.R
-            Rscript scripts/build_primer_positions.R
-            Rscript scripts/build_order_scores.R
-            Rscript scripts/download_gurten2026_reference.R
-            Rscript scripts/fetch_gurten2026_bee_taxonomy.R
-            Rscript scripts/build_gurten2026_beeprime_scores.R
-            Rscript scripts/download_targeted_complete_cox1.R
-            Rscript scripts/build_targeted_zbj_reference_scores.R
-            Rscript scripts/build_claimed_primer_scores.R
-            N_GEO_RECORDS=5000 Rscript scripts/fetch_reference_geography.R
           fi
+      - name: Align complete retained COI panel
+        if: ${{ matrix.marker == 'COI' }}
+        env: {GH_TOKEN: "${{ github.token }}"}
+        run: |
+          EVALUATION_MODE=full Rscript scripts/build_22_group_alignments.R
+      - name: Score complete retained COI panel
+        if: ${{ matrix.marker == 'COI' }}
+        env: {GH_TOKEN: "${{ github.token }}"}
+        run: |
+          Rscript scripts/build_primer_positions.R
+          EVALUATION_MODE=full Rscript scripts/build_order_scores.R
+      - name: Refresh legacy publication and targeted study references
+        if: ${{ matrix.marker == 'COI' }}
+        env: {GH_TOKEN: "${{ github.token }}"}
+        run: |
+          Rscript scripts/download_gurten2026_reference.R
+          Rscript scripts/fetch_gurten2026_bee_taxonomy.R
+          Rscript scripts/build_gurten2026_beeprime_scores.R
+          Rscript scripts/build_expanded_beeprime_reference.R
+          Rscript scripts/download_targeted_complete_cox1.R
+          Rscript scripts/build_targeted_zbj_reference_scores.R
+          Rscript scripts/build_claimed_primer_scores.R
+          N_GEO_RECORDS=5000 Rscript scripts/fetch_reference_geography.R
+      - name: Package immutable marker release
+        env: {GH_TOKEN: "${{ github.token }}"}
+        run: |
           Rscript scripts/build_release.R "$MARKER_ID"
       - name: Hard release gates
         run: |
           Rscript scripts/validate_release.R "$MARKER_ID"
           if [ "$MARKER_ID" = COI ]; then
+            Rscript scripts/verify_coi_reference_runtime.R
             Rscript tests/test_custom_primer_gate.R
             Rscript tests/test_claimed_primer_reference.R
+            Rscript tests/test_coi_retention.R
+            Rscript tests/test_coi_restore_cli.R
+            Rscript tests/test_coi_promotion.R
+            Rscript tests/test_coi_refresh.R
+            Rscript tests/test_primerminer_runtime.R
             Rscript -e 'source("app.R", local=new.env()); message("Application startup passed")'
           fi
-      - name: Stage and atomically promote in R2
+      - name: Publish immutable R2 release and verify public read-back
         run: bash scripts/publish_r2.sh
       - name: Upload QA evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: qa-${{ matrix.marker }}-${{ github.run_id }}
-          path: data/releases/${{ matrix.marker }}/
+          path: |
+            data/releases/${{ matrix.marker }}/
+            logs/coi_pre_promotion_*.json
       - name: Open failure issue
         if: failure()
         env: {GH_TOKEN: "${{ github.token }}"}
         run: |
           gh issue create --title "Monthly release failed: ${MARKER_ID} ${RELEASE_ID}" \
-            --body "The marker-specific build or release gate failed. Previous latest.json remains active. See workflow run: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+            --body "Build, validation, or publication failed. Inspect latest.json and workflow logs to establish whether a pointer was promoted. Workflow run: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"

@@ -1,0 +1,207 @@
+{
+  "identity": {
+    "input_sha256": "1b559fe4e11eca5af4825d00b89b17d816cac3b6c069edd8c43b2dbb72179aa4",
+    "metadata_sha256": "75f5f2ba1019be76680cd145b9b2bd545d696685aa729f8210789bf75f9ffba1",
+    "script_sha256": "4200119d39edfba94965deefc07a9bd5a8d28ac68d3f5c7df0d9c5e3c93ce7e4",
+    "helper_sha256": "3f991e0cf4340e33bb2d1a88cdc58f87d0c4142694d01c6d057db196b4345547",
+    "tool_manifest_sha256": "f627c71cb14a8ac289c19fbb4a7cec615a368ac9fbf7b53198f4c6372e3796e9",
+    "semantic_parameters": {
+      "profile": "F",
+      "preserve": true,
+      "save_regions": "all",
+      "detailed_results": true,
+      "complement": true,
+      "output_prefix": "regions",
+      "min_domains": 2,
+      "allow_single_domain": "1e-9,0",
+      "anchor": 0,
+      "only_full": false,
+      "algorithm": "hmmsearch",
+      "cpu": 6
+    },
+    "parser_rule_version": "itsx_regions_verified_oriented_slices_v2"
+  },
+  "input_sha256": "1b559fe4e11eca5af4825d00b89b17d816cac3b6c069edd8c43b2dbb72179aa4",
+  "script_sha256": "4200119d39edfba94965deefc07a9bd5a8d28ac68d3f5c7df0d9c5e3c93ce7e4",
+  "helper_sha256": "3f991e0cf4340e33bb2d1a88cdc58f87d0c4142694d01c6d057db196b4345547",
+  "tool_manifest_sha256": "f627c71cb14a8ac289c19fbb4a7cec615a368ac9fbf7b53198f4c6372e3796e9",
+  "profile_run_manifest_sha256": "addad756001d2010ace56bb535664210a2f86cc7f10d80acda901ce11d01e127",
+  "parser_rule_version": "itsx_regions_verified_oriented_slices_v2",
+  "n_input": 15402,
+  "n_detected": 15286,
+  "n_reverse": 0,
+  "n_chimeric": 0,
+  "region_counts": {
+    "5.8S:complete": 14601,
+    "5.8S:not_detected": 793,
+    "5.8S:partial": 8,
+    "ITS1:complete": 5132,
+    "ITS1:extraction_mismatch": 10,
+    "ITS1:not_detected": 121,
+    "ITS1:partial": 10139,
+    "ITS2:complete": 6868,
+    "ITS2:extraction_mismatch": 186,
+    "ITS2:not_detected": 602,
+    "ITS2:partial": 7746,
+    "LSU:flank_detected": 7057,
+    "LSU:not_detected": 8345,
+    "SSU:flank_detected": 5264,
+    "SSU:not_detected": 10138
+  },
+  "summary_proof": {
+    "reported_detected": 5387,
+    "real_detected_all_batches": 15286,
+    "real_detected_final_batch": 5386,
+    "ignored_exact_batch_sentinels": 1,
+    "scope": "last_internal_source_batch"
+  },
+  "source_batch_proof": [
+    {
+      "file": "main.1.fasta",
+      "sha256": "c24c0bebf6bad60bf274ab4b72afe25e47152a661077b65e1cf810027f937913",
+      "rows": 9999,
+      "first_id": "UNITE_0406cf05fa678f3c7f20",
+      "last_id": "UNITE_da310be83536ced442f0"
+    },
+    {
+      "file": "main.2.fasta",
+      "sha256": "fa7962b5c3fc05110c2270072c13657fc26cb18527d3559e6f22b07d4582288d",
+      "rows": 5403,
+      "first_id": "UNITE_e3f1927507fabda81070",
+      "last_id": "UNITE_fee37686f6ca4e24c97d"
+    }
+  ],
+  "command": [
+    "perl",
+    "/tmp/primer-atlas-unite-tools-pdx4gqc7/tools/src/ITSx_1.1.3/ITSx",
+    "-i",
+    "panel.fasta",
+    "-o",
+    "regions",
+    "-t",
+    "F",
+    "--preserve",
+    "T",
+    "--save_regions",
+    "all",
+    "--detailed_results",
+    "T",
+    "--save_raw",
+    "T",
+    "--cpu",
+    "6",
+    "--temp",
+    "/var/folders/kn/01_w1x4942132yqmmls82k1r0000gn/T/primer-atlas-unite-annotation-09_5cqrr/temp",
+    "-p",
+    "/tmp/primer-atlas-unite-tools-pdx4gqc7/tools/src/ITSx_1.1.3/ITSx_db/HMMs"
+  ],
+  "work_directory": "/var/folders/kn/01_w1x4942132yqmmls82k1r0000gn/T/primer-atlas-unite-annotation-09_5cqrr",
+  "limitation": "ITSx computational boundaries; SSU/LSU intervals are retained flanks, not complete genes. Complete regional alignments require valid adjacent anchors, unproblematic profile calls, and exact correctly oriented source slices. Original ITSx1.1.3 reverses S/W ambiguity incorrectly; mismatching outputs are withheld.",
+  "artifacts": {
+    "5_8S.fasta.gz": {
+      "path": "5_8S.fasta.gz",
+      "sha256": "8f07fd624ac586dd5ab30e18f94d72b94a5fd1c39473d2b440154a9cb4ca52ac",
+      "bytes": 280682
+    },
+    "ITS1.fasta.gz": {
+      "path": "ITS1.fasta.gz",
+      "sha256": "8dfcd739a39639233ebf7979c511165c44c34401760cf2fc80743525547ba874",
+      "bytes": 276908
+    },
+    "ITS2.fasta.gz": {
+      "path": "ITS2.fasta.gz",
+      "sha256": "382bd4daba91a92bdd77f47bf06ed59de3f178ba8846ce5ab576876f9e8fb531",
+      "bytes": 369899
+    },
+    "annotation_issues.csv.gz": {
+      "path": "annotation_issues.csv.gz",
+      "sha256": "4418e31fa7162bb3d5f05fe8901578da94ec45bbb19d2794c80107d63f163759",
+      "bytes": 2879
+    },
+    "code_parser_scanner_dependency.py": {
+      "path": "code_parser_scanner_dependency.py",
+      "sha256": "3f991e0cf4340e33bb2d1a88cdc58f87d0c4142694d01c6d057db196b4345547",
+      "bytes": 12644
+    },
+    "code_profile_run_annotator.py": {
+      "path": "code_profile_run_annotator.py",
+      "sha256": "5a37bb01e116a9610b4fe402c1683583d287fd5a3819d6cdeda065589a2097ad",
+      "bytes": 8676
+    },
+    "code_profile_run_scanner.py": {
+      "path": "code_profile_run_scanner.py",
+      "sha256": "d46a17463906e24c83806aa50ee3dda0c2b917504199945c7bb217bc91b3ab17",
+      "bytes": 8779
+    },
+    "code_region_parser.py": {
+      "path": "code_region_parser.py",
+      "sha256": "4200119d39edfba94965deefc07a9bd5a8d28ac68d3f5c7df0d9c5e3c93ce7e4",
+      "bytes": 25448
+    },
+    "orientations.csv.gz": {
+      "path": "orientations.csv.gz",
+      "sha256": "81b1a03f3715b9c80ba26a92843f6d60be7bf9309292d30edc4cb3acb4c92126",
+      "bytes": 874578
+    },
+    "oriented_raw.fasta.gz": {
+      "path": "oriented_raw.fasta.gz",
+      "sha256": "9186e34ea7204a676a0c0afdee0e2e6b6708d59a3c81042b07efc5f557db9899",
+      "bytes": 1948285
+    },
+    "profile_run_identity.json": {
+      "path": "profile_run_identity.json",
+      "sha256": "addad756001d2010ace56bb535664210a2f86cc7f10d80acda901ce11d01e127",
+      "bytes": 3059
+    },
+    "regions.5_8S.fasta.gz": {
+      "path": "regions.5_8S.fasta.gz",
+      "sha256": "0f243f69a99cea50ad8e26b5d5495ef198e262b6c22f7f65412403d82c175755",
+      "bytes": 280872
+    },
+    "regions.ITS1.fasta.gz": {
+      "path": "regions.ITS1.fasta.gz",
+      "sha256": "6fd1b6d736c8833bb80f5146d685d59d122f18a45e7ab991791ecbb1d4177611",
+      "bytes": 788374
+    },
+    "regions.ITS2.fasta.gz": {
+      "path": "regions.ITS2.fasta.gz",
+      "sha256": "8f4ccd6be1267e3badb555cf3493a54c58ab0860d77158ef5086af9650d12269",
+      "bytes": 758348
+    },
+    "regions.LSU.fasta.gz": {
+      "path": "regions.LSU.fasta.gz",
+      "sha256": "6a408dfa0af425b3d12051f8822125aa47e2db082272a9c5ae76030df3145ad4",
+      "bytes": 362174
+    },
+    "regions.SSU.fasta.gz": {
+      "path": "regions.SSU.fasta.gz",
+      "sha256": "22cce1f9bb0260eba1d1a472c4fe4ffbd6e3cbf466cb7010b55e8586176e2337",
+      "bytes": 200335
+    },
+    "regions.csv.gz": {
+      "path": "regions.csv.gz",
+      "sha256": "0e3d3fb1fc82f70d770289cf0bd1a25087fd9911c5c3171258419399386cca89",
+      "bytes": 1079890
+    },
+    "regions.extraction.results.gz": {
+      "path": "regions.extraction.results.gz",
+      "sha256": "76b2444300a74d6d899d642c2f00355aaa07134ff78f45f55bb47c600b709e1b",
+      "bytes": 512588
+    },
+    "regions.positions.txt.gz": {
+      "path": "regions.positions.txt.gz",
+      "sha256": "45dcd0fcf60ce3bd737d648daac97c44379dbae84fa3f0bccb5c3839792865f1",
+      "bytes": 427630
+    },
+    "regions.summary.txt.gz": {
+      "path": "regions.summary.txt.gz",
+      "sha256": "8ba8f4d5061dbeddeecf2cce386d1f792c45835d264d33dedd8216a1443965d5",
+      "bytes": 392
+    },
+    "tool_identity_manifest.json": {
+      "path": "tool_identity_manifest.json",
+      "sha256": "f627c71cb14a8ac289c19fbb4a7cec615a368ac9fbf7b53198f4c6372e3796e9",
+      "bytes": 2793
+    }
+  }
+}

@@ -13,8 +13,9 @@ The public architecture separates four layers:
 - Posit Connect Cloud runs the Shiny application from `main`.
 - Cloudflare R2 stores immutable marker releases and lazy sequence evidence.
 
-Compact pinned summaries keep the app usable during an R2 outage. Raw
-sequences and large generated score tables are intentionally excluded from Git.
+Compact pinned summaries keep the app usable during an R2 outage. The bounded
+fungal snapshots also bundle their exact sequences and alignments for recovery;
+large COI sequence and score artifacts remain outside Git.
 See [DEPLOYMENT.md](DEPLOYMENT.md) for the remaining account configuration.
 
 For a concise statement of scope, completed work, operational status, and next
@@ -35,15 +36,26 @@ intent are separate many-to-many facets. Filters use OR within a facet and AND
 between facets. Original use-case labels and claim wording remain preserved in
 the source catalog.
 
-The fungal ITS pilot imports an attributed snapshot of the
-[UNITE primer resource](https://unite.ut.ee/primers.php) offline. Its map uses
-the 18S–ITS1–5.8S–ITS2–28S landmark architecture on FN812768.2. It does not
-scrape UNITE during user sessions, and its current single-reference placements
-are explicitly distinguished from expanded fungal lineage evidence. All 121
-sequence-valid imported primer records are searchable in the app. Each primer
-uses the publication named by UNITE as its citation; UNITE is stored separately
-as compilation provenance. Unpublished and unreported references stay visibly
-labelled instead of being converted into a generic UNITE paper citation.
+The fungal rDNA explorer imports an attributed, offline snapshot of the
+[UNITE primer resource](https://unite.ut.ee/primers.php). It offers 20 starter
+combinations, a forward/reverse pairing matrix, and comparison of up to five
+product-length distributions. The complete candidate list remains searchable.
+The combinations also appear on the frozen multiple-sequence alignment, with
+shared columns, per-template spans, and a zoomable view of bases and primer sites.
+Illumina, PacBio, and Nanopore use distinct colors and editable project ceilings
+of 500 bp (Illumina adjustable from 452), 2,000 bp, and 3,500 bp. Eligibility is
+reported per template, with missing sites and ranges crossing ceilings visible.
+These are project settings, not universal instrument limits or PCR validation.
+
+V1 preserves the original FN812768.2 coordinate reference, catalog, and eight
+recorded geometries. V2 retains it and adds 20 accession-versioned NCBI records
+from five named phyla. A snapshot freezes raw sequences, taxonomy, the full
+alignment, primer catalog, exact-site results, source responses, and code
+provenance together. Changing a snapshot changes all these inputs together;
+class and phylum filters use its own represented denominator. Only unambiguous
+complete gene boundaries are drawn. Cross-clade spacer homology and broad
+fungal amplification performance are not established by this selected panel.
+See [the fungal explorer methods and release contract](docs/fungal-explorer.md).
 
 The 18S pilot imports PR2-primer 2.1.1 as a versioned snapshot: 321 individual
 18S primers and 123 documented primer sets. Ninety-three sets have conventional
@@ -69,12 +81,32 @@ sequence and locality coverage for a first Crambidae comparison.
 
 ## COI reference-panel policy
 
+**Required next milestone:** the sequence reference must grow each month,
+with a bee reference retained and extended for BeePrime only, broad
+arthropod references for general primers, and a separate aquatic arthropod
+option. Every supported order needs primer evaluation at least by family,
+with ecological comparisons using the matching reference and habitat scope.
+The bee publication alignment retains its study provenance. The growing
+general panel joins frozen accession taxonomy to its sequence-level scores
+for family summaries. A versioned inventory of families without references
+and the ecological refinements remain incomplete. See
+[the growing-reference contract](docs/growing-reference-contract.md) for the
+implementation gaps and completion gates.
+
 General COI primer pairs are scored against full NC_001322.1-coordinate order
-alignments, not the Gurten centroid panel. The initial production target is at
-least 1,000 retained sequences for each listed arthropod order or composite
-target group when NCBI can supply them. Every monthly release is append-only:
+alignments, not the Gurten centroid panel. The current target is at least
+10,000 marker-verified COI records overall and 100 in each of the 20 supported
+orders plus the Acari and Collembola composite groups. Historical retained
+records that fail current marker QC are reported separately. Every successful
+monthly release is append-only:
 the target becomes `ceiling(previous retained × 1.01)`, and only unseen
 accessions are added. Existing accessions are not replaced by a fresh sample.
+In **Inspect taxa and sequences → Sources and downloads**, the growth table
+reports the previous panel, additions, retained records and verified COI
+records for the selected group. **Complete growth QA CSV** exports all groups
+and every original field from that session's frozen release. See the
+[October 11 acquisition and hosting proof](docs/2026-10-11-coi-growth.md) for
+measured results and the public activation status.
 
 BeePrime is a named exception: its Gurten et al. (2026) 99.5% author centroids
 remain available as study-specific, publication-linked evidence. They are not
@@ -89,8 +121,9 @@ machine-readable contract is in
 `scripts/validate_release.R` enforces schema, IUPAC, citation, checksum,
 coordinate, count, completeness, and accession gates. The monthly workflow
 builds COI and fungal ITS independently, stages artifacts in R2, and replaces a
-marker's `latest.json` only after its gates pass. Failed markers leave their
-previous pointers active and open a GitHub issue.
+marker's `latest.json` only after its gates pass. Acquisition and validation
+failures leave the previous pointer active. Publication failures open a GitHub
+issue whose resolution requires checking the actual hosted pointer and app.
 
 The app deliberately keeps these concepts separate:
 
@@ -159,6 +192,16 @@ reference panels:
   centroids clustered by the authors at 99.5% from 316,254 NCBI sequences.
   Taxonomy from the authors' supplements and accession-level NCBI lineage
   records makes family, subfamily, and genus results traceable.
+
+BeePrime detail, lineage, and regional views share a **Reference alignment**
+choice. **Original publication alignment** reproduces the 590 mapped bee
+centroids. **Expanded alignment with new sequences** keeps those exact
+publication accessions and adds independently scored bee accessions identified
+through NCBI's Anthophila lineage. It is available only when the monthly
+release contains a checksum-verified alignment and score artifact. The selected
+version and reference size appear with results and are included in downloads.
+This choice affects BeePrime only; general primers continue to use their broad
+arthropod reference.
 
 The expanded reference contains 590 mapped bee centroids representing 1,305
 source records and all six listed bee families. Thirty of the 42 bee genera in
@@ -359,6 +402,9 @@ NCBI_EMAIL=you@example.org Rscript scripts/fetch_gurten2026_bee_taxonomy.R
 
 # Gurten et al. 99.5% centroid alignment -> BeePrime lineage summaries
 Rscript scripts/build_gurten2026_beeprime_scores.R
+
+# BeePrime-only expansion; preserves the 590 publication bee accessions
+Rscript scripts/build_expanded_beeprime_reference.R
 
 # audited target-claim summaries on the Gurten alignment
 Rscript scripts/build_claimed_primer_scores.R

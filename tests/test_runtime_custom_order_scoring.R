@@ -10,10 +10,9 @@ geometry <- read.csv(
   file.path(project_root, "data", "derived", "pair_geometry.csv"),
   stringsAsFactors = FALSE
 )
-stored_order <- read.csv(
-  file.path(project_root, "data", "derived", "order_pair_summary.csv"),
-  stringsAsFactors = FALSE
-)
+stored_order <- nanoparquet::read_parquet(file.path(
+  project_root, "data", "pinned", "COI", "2026-08-14", "overview.parquet"
+))
 stored_templates <- nanoparquet::read_parquet(file.path(
   project_root, "data", "pinned", "COI", "2026-08-14",
   "pair_templates.parquet"
@@ -63,6 +62,25 @@ stopifnot(
         stored_positions$pair_id == pair_id,
     ])
 )
+
+# The full-panel filename must retain the same biological order identity and
+# scientific results. The frozen preview is copied so this check stays small
+# and independent of any newly generated production scoring tables.
+suffix_fixture <- tempfile("coi-runtime-full-suffix-")
+dir.create(suffix_fixture)
+full_alignment_path <- file.path(suffix_fixture, paste0(order_name, "_COX1_full_reference_aligned.fasta"))
+stopifnot(file.copy(file.path(project_root, "data", "primerminer", "aligned_reference",
+                             paste0(order_name, "_COX1_reference_aligned.fasta")), full_alignment_path))
+runtime_full_suffix <- score_primer_pair_primerminer(
+  full_alignment_path,
+  primers[primers$pair_id == pair_id, ],
+  geometry[geometry$pair_id == pair_id, ]
+)
+for (table in c("order_scores", "pair_template_scores", "primer_position_scores")) {
+  stopifnot(all(runtime_full_suffix[[table]]$order == order_name),
+            isTRUE(all.equal(runtime_full_suffix[[table]], runtime[[table]], tolerance = 1e-10)))
+}
+unlink(suffix_fixture, recursive = TRUE)
 
 app_source <- paste(
   readLines(file.path(project_root, "app.R"), warn = FALSE),

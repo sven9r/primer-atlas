@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"  ?>
+<!DOCTYPE GBSet PUBLIC "-//NCBI//NCBI GBSeq/EN" "https://www.ncbi.nlm.nih.gov/dtd/NCBI_GBSeq.dtd">
+<GBSet>
+  <GBSeq>
+
+    <GBSeq_locus>HUMRGM</GBSeq_locus>
+    <GBSeq_length>5025</GBSeq_length>
+    <GBSeq_strandedness>double</GBSeq_strandedness>
+    <GBSeq_moltype>DNA</GBSeq_moltype>
+    <GBSeq_topology>linear</GBSeq_topology>
+    <GBSeq_division>PRI</GBSeq_division>
+    <GBSeq_update-date>10-NOV-1986</GBSeq_update-date>
+    <GBSeq_create-date>03-AUG-1993</GBSeq_create-date>
+    <GBSeq_definition>Human 28S ribosomal RNA gene</GBSeq_definition>
+    <GBSeq_primary-accession>M11167</GBSeq_primary-accession>
+    <GBSeq_accession-version>M11167.1</GBSeq_accession-version>
+    <GBSeq_other-seqids>
+      <GBSeqid>gb|M11167.1|HUMRGM</GBSeqid>
+      <GBSeqid>gi|337381</GBSeqid>
+    </GBSeq_other-seqids>
+    <GBSeq_keywords>
+      <GBKeyword>28S ribosomal RNA</GBKeyword>
+      <GBKeyword>ribosomal RNA</GBKeyword>
+    </GBSeq_keywords>
+    <GBSeq_source>Homo sapiens (human)</GBSeq_source>
+    <GBSeq_organism>Homo sapiens</GBSeq_organism>
+    <GBSeq_taxonomy>Eukaryota; Metazoa; Chordata; Craniata; Vertebrata; Euteleostomi; Mammalia; Eutheria; Euarchontoglires; Primates; Haplorrhini; Catarrhini; Hominidae; Homo</GBSeq_taxonomy>
+    <GBSeq_references>
+      <GBReference>
+        <GBReference_reference>1</GBReference_reference>
+        <GBReference_position>1..5025</GBReference_position>
+        <GBReference_authors>
+          <GBAuthor>Gonzalez,I.L.</GBAuthor>
+          <GBAuthor>Gorski,J.L.</GBAuthor>
+          <GBAuthor>Campen,T.J.</GBAuthor>
+          <GBAuthor>Dorney,D.J.</GBAuthor>
+          <GBAuthor>Erickson,J.M.</GBAuthor>
+          <GBAuthor>Sylvester,J.E.</GBAuthor>
+          <GBAuthor>Schmickel,R.D.</GBAuthor>
+        </GBReference_authors>
+        <GBReference_title>Variation among human 28S ribosomal RNA genes</GBReference_title>
+        <GBReference_journal>Proc. Natl. Acad. Sci. U.S.A. 82 (22), 7666-7670 (1985)</GBReference_journal>
+        <GBReference_pubmed>3865188</GBReference_pubmed>
+      </GBReference>
+    </GBSeq_references>
+    <GBSeq_comment>Original source text: Human fetal liver DNA, clone pA4.; Draft entry and sequence in computer readable form for [1] kindly provided by I.Gonzalez, 15-FEB-1986.~Six human 28S D6 regions were examined which yielded three versions of this highly variable region. The segment between positions 2129 and 2166 showed as much variation among humans as between human and chimpanzee.</GBSeq_comment>
+    <GBSeq_feature-table>
+      <GBFeature>
+        <GBFeature_key>source</GBFeature_key>
+        <GBFeature_location>1..5025</GBFeature_location>
+        <GBFeature_intervals>
+          <GBInterval>
+            <GBInterval_from>1</GBInterval_from>
+            <GBInterval_to>5025</GBInterval_to>
+            <GBInterval_accession>M11167.1</GBInterval_accession>
+          </GBInterval>
+        </GBFeature_intervals>
+        <GBFeature_quals>
+          <GBQualifier>
+            <GBQualifier_name>organism</GBQualifier_name>
+            <GBQualifier_value>Homo sapiens</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>mol_type</GBQualifier_name>
+            <GBQualifier_value>genomic DNA</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>db_xref</GBQualifier_name>
+            <GBQualifier_value>taxon:9606</GBQualifier_value>
+          </GBQualifier>
+        </GBFeature_quals>
+      </GBFeature>
+      <GBFeature>
+        <GBFeature_key>rRNA</GBFeature_key>
+        <GBFeature_location>1..5025</GBFeature_location>
+        <GBFeature_intervals>
+          <GBInterval>
+            <GBInterval_from>1</GBInterval_from>
+            <GBInterval_to>5025</GBInterval_to>
+            <GBInterval_accession>M11167.1</GBInterval_accession>
+          </GBInterval>
+        </GBFeature_intervals>
+        <GBFeature_quals>
+          <GBQualifier>
+            <GBQualifier_name>product</GBQualifier_name>
+            <GBQualifier_value>28S ribosomal RNA</GBQualifier_value>
+          </GBQualifier>
+          <GBQualifier>
+            <GBQualifier_name>transcription</GBQualifier_name>
+            <GBQualifier_value>CGCGACCTCAGATCAGACGTGGCGACCCGCTGAATTTAAGCATATTAGTCAGCGGAGGAAAAGAAACTAACCAGGATTCCCTCAGTAACGGCGAGTGAACAGGGAAGAGCCCAGCGCCGAATCCCCGCCCCGCGGGGCGCGGGACATGTGGCGTACGGAAGACCCGCTCCCCGGCGCCGCTCGTGGGGGGCCCAAGTCCTTCTGATCGAGGCCCAGCCCGTGGACGGTGTGAGGCCGGTAGCGGCCGGCGCGCGCCCGGGTCTTCCCGGAGTCGGGTTGCTTGGGAATGCAGCCCAAAGCGGGTGGTAAACTCCATCTAAGGCTAAATACCGGCACGAGACCGATAGTCAACAAGTACCGTAAGGGAAAGTTGAAAAGAACTTTGAAGAGAGAGTTCAAGAGGGCGTGAAACCGTTAAGAGGTAAACGGGTGGGGTCCGCGCAGTCCGCCCGGAGGATTCAACCCGGCGGCGGGTCCGGCCGTGTCGGCGGCCCGGCGGATCTTTCCCGCCCCCCGTTCCTCCCGACCCCTCCACCCGCCCTCCCTTCCCCCGCCGCCCCTCCTCCTCCTCCCCGGAGGGGGCGGGCTCCGGCGGGTGCGGGGGTGGGCGGGCGGGGCCGGGGGTGGGGTCGGCGGGGGACCGTCCCCCGGACCGGCGACCGGCCGCCGCCGGGCGCATTTCCAGGCGGTGCGCCGCGACCGGCTCCGGGACGGCTGGGAAGGCCCGGCGGGGAAGGTGGCTCGGGGGGCCCCGTCCGTCCGTCCGTCCTCCTCCTCCCCCGTCTCCGCCCCCCGGCCCCGCGTCCTCCCTCGGGAGGGCGCGCGGGTCGGGGCGGCGGCGGCGGCGGCGGTGGCGGCGGCGGCGGGGGCGGCGGGACCGAAACCCCCCCCGAGTGTTACAGCCCCCCCGGCAGCAGCACTCGCCGAATCCCGGGGCCGAGGGAGCGAGACCCGTCGCCGCGCTCTCCCCCCTCCCGGCGCCCACCCCCGCGGGAATCCCCGCGAGGGGGGTCTCCCCCGGCGCGGCGCCGGCGTCTCCTCGTGGGGGGGCCGGGCCACCCCTCCCACGGCGCGACCGCTCTCCCACCCCTCCTCCCCGCGCCCCCGCCCCGGCGACGGGGGGGGTGCCGCGCGCGGGTCGGGGGGCGGGGCGGACTGTCCCCAGTGCGCCCCGGGCGGGTCGCGCCGTCGGGCCCGGGGGAGGTTCTCTCGGGGCCACGCGCGCGTCCCCCGAAGAGGGGGACGGCGGAGCGAGCGCACGGGGTCGGCGGCGACGTCGGCTACCCACCCGACCCGTCTTGAAACACGGACCAAGGAGTCTAACACGTGCGCGAGTCGGGGGCTCGCACGAAAGCCGCCGTGGCGCAATGAAGGTGAAGGCCGGCGCGCTCGCCGGCCGAGGTGGGATCCCGAGGCCTCTCCAGTCCGCCGAGGGGCACCACCGGCCCGTCTCGCCCGCCGCGCCGGGGAGGTGGAGCACGAGCGCACGTGTTAGGACCCGAAAGATGGTGAACTATGCCTGGGCAGGGCGAAGCCAGAGGAAACTCTGGTGGAGGTCCGTAGCGGTCCTGACGTGCAAATCGGTCGTCCGACCTGGGTATAGGGGCGAAAGACTAATCGAACCATCTAGTAGCTGGTTCCCTCCGAAGTTTCCCTCAGGATAGCTGGCGCTCTCGCAGACCCGACGCACCCCCGCCACGCAGTTTTATCCGGTAAAGCGAATGATTAGAGGTCTTGGGGCCGAAACGATCTCAACCTATTCTCAAACTTTAAATGGGTAAGAAGCCCGGCTCGCTGGCGTGGAGCCGGGGTGGAATGCGAGTGCCTAGTGGGCCACTTTTGGTAAGCAGAACTGGCGCTGCGGGATGAACCGAACGCCGGGTTAAGGCGCCCGATGCCGACGCTCATCAGACCCCAGAAAAGGTGTTGGTTGATATAGACAGCAGGACGGTGGCCATGGAAGTCGGAATCCGCTAAGGAGTGTGTAACAACTCACCTGCCGAATCAACTAGCCCTGAAAATGGATGGCGCTGGAGCGTCGGGCCCATACCCGGCCGTCGCCGGCAGTCGAGAGTGGACGGGAGCGGCGGGGGCGGCGGCGCGCGCGCGCGTGTGGTGTGCGTCGGAGGGCGGCGGCGGCGGCGGCGGCGGGGGTGTGGGGTCCTTCCCCCGCCCCCCCCCCCACGCCTCCTCCCCTCCTCCCGCCCACGCCCCGCTCCCCGCCCCCGGAGCCCCGCGGAGCTACGCCGCGACGAGTAGGAGGGCCGCTGCGGTGAGCCTTGAAGCCTAGGGCGCGGGCCCGGGTGGAGGCCGCCGCAGGTGCAGATCTTGGTGGTAGTAGCAAATATTCAAACGAGAACTTTGAAGGCCGAAGTGGAGAAGGGTTCCATGTGAACAGCAGTTGAACATGGGTCAGTCGGTCCTGAGAGATGGGCGAGCGCCGTTCCGAAGGGACGGGCGATGGCCTCCGTTGCCCTCGGCCGATCGAAAGGGAGTCGGGTTCAGATCCCCGAATCCGGAGTGGCGGAGATGGGCGCCGCGAGGCGTCCAGTGCGGTAACGCGACCGATCCCGGAGAAGCCGGCGGGAGCCCCGGGGAGAGTTCTCTTTTCTTTGTGAAGGGCAGGGCGCCCTGGAATGGGTTCGCCCCGAGAGAGGGGCCCGTGCCTTGGAAAGCGTCGCGGTTCCGGCGGCGTCCGGTGAGCTCTCGCTGGCCCTTGAAAATCCGGGGGAGAGGGTGTAAATCTCGCGCCGGGCCGTACCCATATCCGCAGCAGGTCTCCAAGGTGAACAGCCTCTGGCATGTTGGAACAATGTAGGTAAGGGAAGTCGGCAAGCCGGATCCGTAACTTCGGGATAAGGATTGGCTCTAAGGGCTGGGTCGGTCGGGCTGGGGCGCGAAGCGGGGCTGGGCGCGCGCCGCGGCTGGACGAGGCGCGCGCCCCCCCCACGCCCGGGGCACCCCCCTCGCGGCCCTCCCCCGCCCCACCCGCGCGCGCCGCTCGCTCCCTCCCCACCCCGCGCCCTCTCTCTCTCTCTCTCCCCCGCTCCCCGTCCTCCCCCCTCCCCGGGGGAGCGCCGCGTGGGGGCGCGGCGGGGGGAGAAGGGTCGGGGCGGCAGGGGCCGCGCGGCGGCCGCCGGGGCGGCCGGCGGGGGCAGGTCCCCGCGAGGGGGGCCCCGGGGACCCGGGGGGCCGGCGGCGGCGCGGACTCTGGACGCGAGCCGGGCCCTTCCCGTGGATCGCCCCAGCTGCGGCGGGCGTCGCGGCCGCCCCCGGGGAGCCCGGCGGCGGCGCGGCGCGCCCCCCACCCCCACCCCACGTCTCGGTCGCGCGCGCGTCCGCTGGGGGCGGGAGCGGTCGGGCGGCGGCGGTCGGCGGGCGGCGGGGCGGGGCGGTTCGTCCCCCCGCCCTACCCCCCCGGCCCCGTCCGCCCCCCGTTCCCCCCTCCTCCTCGGCGCGCGGCGGCGGCGGCGGCAGGCGGCGGAGGGGCCGCGGGCCGGTCCCCCCCGCCGGGTCCGCCCCCGGGGCCGCGGTTCCGCGCGCGCCTCGCCTCGGCCGGCGCCTAGCAGCCGACTTAGAACTGGTGCGGACCAGGGGAATCCGACTGTTTAATTAAAACAAAGCATCGCGAAGGCCCGCGGCGGGTGTTGACGCGATGTGATTTCTGCCCAGTGCTCTGAATGTCAAAGTGAAGAAATTCAATGAAGCGCGGGTAAACGGCGGGAGTAACTATGACTCTCTTAAGGTAGCCAAATGCCTCGTCATCTAATTAGTGACGCGCATGAATGGATGAACGAGATTCCCACTGTCCCTACCTACTATCCAGCGAAACCACAGCCAAGGGAACGGGCTTGGCGGAATCAGCGGGGAAAGAAGACCCTGTTGAGCTTGACTCTAGTCTGGCACGGTGAAGAGACATGAGAGGTGTAGAATAAGTGGGAGGCCCCCGGCGCCCCCCCGGTGTCCCCGCGAGGGGCCCGGGGCGGGGTCCGCGGCCCTGCGGGCCGCCGGTGAAATACCACTACTCTGATCGTTTTTTCACTGACCCGGTGAGGCGGGGGGGCGAGCCCGAGGGGCTCTCGCTTCTGGCGCCAAGCGCCCGCCCGGCCGGGCGCGACCCGCTCCGGGGACAGTGCCAGGTGGGGAGTTTGACTGGGGCGGTACACCTGTCAAACGGTAACGCAGGTGTCCTAAGGCGAGCTCAGGGAGGACAGAAACCTCCCGTGGAGCAGAAGGGCAAAAGCTCGCTTGATCTTGATTTTCAGTACGAATACAGACCGTGAAAGCGGGGCCTCACGATCCTTCTGACCTTTTGGGTTTTAAGCAGGAGGTGTCAGAAAAGTTACCACAGGGATAACTGGCTTGTGGCGGCCAAGCGTTCATAGCGACGTCGCTTTTTGATCCTTCGATGTCGGCTCTTCCTATCATTGTGAAGCAGAATTCGCCAAGCGTTGGATTGTTCACCCACTAATAGGGAACGTGAGCTGGGTTTAGACCGTCGTGAGACAGGTTAGTTTTACCCTACTGATGATGTGTTGTTGCCATGGTAATCCTGCTCAGTACGAGAGGAACCGCAGGTTCAGACATTTGGTGTATGTGCTTGGCTGAGGAGCCAATGGGGCGAAGCTACCATCTGTGGGATTATGACTGAACGCCTCTAAGTCAGAATCCCGCCCAGGCGAACGATACGGCAGCGCCGCGGAGCCTCGGTTGGCCTCGGATAGCCGGTCCCCCGCCTGTCCCCGCCGGCGGGCCGCCCCCCCCTCCACGCGCCCCGCCGCGGGAGGGCGCGTGCCCCGCCGCGCGCCGGGACCGGGGTCCGGTGCGGAGTGCCCTTCGTCCTGGGAAACGGGGCGCGGCCGGAAAGGCGGCCGCCCCCTCGCCCGTCACGCACCGCACGTTCGTGGGGAACCTGGCGCTAAACCATTCGTAGACGACCTGCTTCTGGGTCGGGGTTTCGTACGTAGCAGAGCAGCTCCCTCGCTGCGATCTATTGAAAGTCAGCCCTCGACACAAGGGTTTGTC</GBQualifier_value>
+          </GBQualifier>
+        </GBFeature_quals>
+      </GBFeature>
+    </GBSeq_feature-table>
+    <GBSeq_sequence>cgcgacctcagatcagacgtggcgacccgctgaatttaagcatattagtcagcggaggaaaagaaactaaccaggattccctcagtaacggcgagtgaacagggaagagcccagcgccgaatccccgccccgcggggcgcgggacatgtggcgtacggaagacccgctccccggcgccgctcgtggggggcccaagtccttctgatcgaggcccagcccgtggacggtgtgaggccggtagcggccggcgcgcgcccgggtcttcccggagtcgggttgcttgggaatgcagcccaaagcgggtggtaaactccatctaaggctaaataccggcacgagaccgatagtcaacaagtaccgtaagggaaagttgaaaagaactttgaagagagagttcaagagggcgtgaaaccgttaagaggtaaacgggtggggtccgcgcagtccgcccggaggattcaacccggcggcgggtccggccgtgtcggcggcccggcggatctttcccgccccccgttcctcccgacccctccacccgccctcccttcccccgccgcccctcctcctcctccccggagggggcgggctccggcgggtgcgggggtgggcgggcggggccgggggtggggtcggcgggggaccgtcccccggaccggcgaccggccgccgccgggcgcatttccaggcggtgcgccgcgaccggctccgggacggctgggaaggcccggcggggaaggtggctcggggggccccgtccgtccgtccgtcctcctcctcccccgtctccgccccccggccccgcgtcctccctcgggagggcgcgcgggtcggggcggcggcggcggcggcggtggcggcggcggcgggggcggcgggaccgaaaccccccccgagtgttacagcccccccggcagcagcactcgccgaatcccggggccgagggagcgagacccgtcgccgcgctctcccccctcccggcgcccacccccgcgggaatccccgcgaggggggtctcccccggcgcggcgccggcgtctcctcgtgggggggccgggccacccctcccacggcgcgaccgctctcccacccctcctccccgcgcccccgccccggcgacggggggggtgccgcgcgcgggtcggggggcggggcggactgtccccagtgcgccccgggcgggtcgcgccgtcgggcccgggggaggttctctcggggccacgcgcgcgtcccccgaagagggggacggcggagcgagcgcacggggtcggcggcgacgtcggctacccacccgacccgtcttgaaacacggaccaaggagtctaacacgtgcgcgagtcgggggctcgcacgaaagccgccgtggcgcaatgaaggtgaaggccggcgcgctcgccggccgaggtgggatcccgaggcctctccagtccgccgaggggcaccaccggcccgtctcgcccgccgcgccggggaggtggagcacgagcgcacgtgttaggacccgaaagatggtgaactatgcctgggcagggcgaagccagaggaaactctggtggaggtccgtagcggtcctgacgtgcaaatcggtcgtccgacctgggtataggggcgaaagactaatcgaaccatctagtagctggttccctccgaagtttccctcaggatagctggcgctctcgcagacccgacgcacccccgccacgcagttttatccggtaaagcgaatgattagaggtcttggggccgaaacgatctcaacctattctcaaactttaaatgggtaagaagcccggctcgctggcgtggagccggggtggaatgcgagtgcctagtgggccacttttggtaagcagaactggcgctgcgggatgaaccgaacgccgggttaaggcgcccgatgccgacgctcatcagaccccagaaaaggtgttggttgatatagacagcaggacggtggccatggaagtcggaatccgctaaggagtgtgtaacaactcacctgccgaatcaactagccctgaaaatggatggcgctggagcgtcgggcccatacccggccgtcgccggcagtcgagagtggacgggagcggcgggggcggcggcgcgcgcgcgcgtgtggtgtgcgtcggagggcggcggcggcggcggcggcgggggtgtggggtccttcccccgcccccccccccacgcctcctcccctcctcccgcccacgccccgctccccgcccccggagccccgcggagctacgccgcgacgagtaggagggccgctgcggtgagccttgaagcctagggcgcgggcccgggtggaggccgccgcaggtgcagatcttggtggtagtagcaaatattcaaacgagaactttgaaggccgaagtggagaagggttccatgtgaacagcagttgaacatgggtcagtcggtcctgagagatgggcgagcgccgttccgaagggacgggcgatggcctccgttgccctcggccgatcgaaagggagtcgggttcagatccccgaatccggagtggcggagatgggcgccgcgaggcgtccagtgcggtaacgcgaccgatcccggagaagccggcgggagccccggggagagttctcttttctttgtgaagggcagggcgccctggaatgggttcgccccgagagaggggcccgtgccttggaaagcgtcgcggttccggcggcgtccggtgagctctcgctggcccttgaaaatccgggggagagggtgtaaatctcgcgccgggccgtacccatatccgcagcaggtctccaaggtgaacagcctctggcatgttggaacaatgtaggtaagggaagtcggcaagccggatccgtaacttcgggataaggattggctctaagggctgggtcggtcgggctggggcgcgaagcggggctgggcgcgcgccgcggctggacgaggcgcgcgccccccccacgcccggggcacccccctcgcggccctcccccgccccacccgcgcgcgccgctcgctccctccccaccccgcgccctctctctctctctctcccccgctccccgtcctcccccctccccgggggagcgccgcgtgggggcgcggcggggggagaagggtcggggcggcaggggccgcgcggcggccgccggggcggccggcgggggcaggtccccgcgaggggggccccggggacccggggggccggcggcggcgcggactctggacgcgagccgggcccttcccgtggatcgccccagctgcggcgggcgtcgcggccgcccccggggagcccggcggcggcgcggcgcgccccccacccccaccccacgtctcggtcgcgcgcgcgtccgctgggggcgggagcggtcgggcggcggcggtcggcgggcggcggggcggggcggttcgtccccccgccctacccccccggccccgtccgccccccgttcccccctcctcctcggcgcgcggcggcggcggcggcaggcggcggaggggccgcgggccggtcccccccgccgggtccgcccccggggccgcggttccgcgcgcgcctcgcctcggccggcgcctagcagccgacttagaactggtgcggaccaggggaatccgactgtttaattaaaacaaagcatcgcgaaggcccgcggcgggtgttgacgcgatgtgatttctgcccagtgctctgaatgtcaaagtgaagaaattcaatgaagcgcgggtaaacggcgggagtaactatgactctcttaaggtagccaaatgcctcgtcatctaattagtgacgcgcatgaatggatgaacgagattcccactgtccctacctactatccagcgaaaccacagccaagggaacgggcttggcggaatcagcggggaaagaagaccctgttgagcttgactctagtctggcacggtgaagagacatgagaggtgtagaataagtgggaggcccccggcgcccccccggtgtccccgcgaggggcccggggcggggtccgcggccctgcgggccgccggtgaaataccactactctgatcgttttttcactgacccggtgaggcgggggggcgagcccgaggggctctcgcttctggcgccaagcgcccgcccggccgggcgcgacccgctccggggacagtgccaggtggggagtttgactggggcggtacacctgtcaaacggtaacgcaggtgtcctaaggcgagctcagggaggacagaaacctcccgtggagcagaagggcaaaagctcgcttgatcttgattttcagtacgaatacagaccgtgaaagcggggcctcacgatccttctgaccttttgggttttaagcaggaggtgtcagaaaagttaccacagggataactggcttgtggcggccaagcgttcatagcgacgtcgctttttgatccttcgatgtcggctcttcctatcattgtgaagcagaattcgccaagcgttggattgttcacccactaatagggaacgtgagctgggtttagaccgtcgtgagacaggttagttttaccctactgatgatgtgttgttgccatggtaatcctgctcagtacgagaggaaccgcaggttcagacatttggtgtatgtgcttggctgaggagccaatggggcgaagctaccatctgtgggattatgactgaacgcctctaagtcagaatcccgcccaggcgaacgatacggcagcgccgcggagcctcggttggcctcggatagccggtcccccgcctgtccccgccggcgggccgcccccccctccacgcgccccgccgcgggagggcgcgtgccccgccgcgcgccgggaccggggtccggtgcggagtgcccttcgtcctgggaaacggggcgcggccggaaaggcggccgccccctcgcccgtcacgcaccgcacgttcgtggggaacctggcgctaaaccattcgtagacgacctgcttctgggtcggggtttcgtacgtagcagagcagctccctcgctgcgatctattgaaagtcagccctcgacacaagggtttgtc</GBSeq_sequence>
+  </GBSeq>
+
+</GBSet>

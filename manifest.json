@@ -2755,7 +2755,7 @@
   },
   "files": {
     "app.R": {
-      "checksum": "b57033a139f546c2b0b47239c004dbb9"
+      "checksum": "5f86fa473617bb1cb78dd67bd90adf02"
     },
     "data/catalog/claims.csv": {
       "checksum": "7e287c602b958d2d647bbee4089c0b39"
@@ -9796,7 +9796,7 @@
       "checksum": "2763ceaab3886056fb60dede0c1084ac"
     },
     "R/fungal_builder_ui.R": {
-      "checksum": "f7ab31d727f2fb665aa18896fb339935"
+      "checksum": "3f07481ab9038e1abb4a7f6724feda37"
     },
     "R/fungal_combination_builder.R": {
       "checksum": "05efd11a6fa5cb4eea2723e58c247cf6"
@@ -9809,6 +9809,9 @@
     },
     "R/fungal_fit.R": {
       "checksum": "77e6441dc909672f779f3ee8ddcf47ce"
+    },
+    "R/fungal_primer_atlas.R": {
+      "checksum": "fbcf16eb444ad5df06ae582a48b7bac8"
     },
     "R/fungal_primer_overview.R": {
       "checksum": "da90c732826a27a8663f6dedfb65bd5e"

@@ -30,6 +30,7 @@ source("R/unite_reference.R")
 source("R/unite_reference_ui.R")
 source("R/primer_overview.R")
 source("R/fungal_primer_overview.R")
+source("R/fungal_primer_atlas.R")
 source("R/fungal_combination_builder.R")
 source("R/unite_candidate_pairs.R")
 source("R/primer_publication_export.R")
@@ -1806,7 +1807,9 @@ ui <- page_navbar(
           full_screen = TRUE,
           card_header(uiOutput("map_card_title", inline = TRUE)),
           uiOutput("primer_overview_controls"),
+          conditionalPanel(condition="input.map_marker == 'ITS_FUNGAL'",fungalPrimerAtlasNavigatorUI()),
           conditionalPanel(condition="input.map_marker == 'ITS_FUNGAL'",fungalCombinationBuilderUI()),
+          conditionalPanel(condition="input.map_marker != 'ITS_FUNGAL' || input.fungal_overview_mode == 'amplicons'",
           div(class="atlas-segmented",
               radioButtons("primer_overview_platform", "Sequencing platform",
                   c("All platforms"="ALL", "Illumina"="ILLUMINA", "PacBio"="PACBIO", "Nanopore"="NANOPORE"),
@@ -1821,7 +1824,7 @@ ui <- page_navbar(
               span(span(class="legend-line legend-reverse"), "Reverse primer")),
           p(class="map-scroll-hint tiny", "Swipe horizontally across the map to see later positions and source columns."),
           uiOutput("primer_map"),
-          uiOutput("primer_overview_paging"),
+          uiOutput("primer_overview_paging")),
           tags$script(HTML("(function(){function bind(){Shiny.addCustomMessageHandler('primer-overview-inspect',function(message){var d=document.getElementById('primer-evidence-inspector');if(d){d.open=true;d.scrollIntoView({behavior:'smooth',block:'start'});}});var d=document.getElementById('primer-evidence-inspector');if(d)d.addEventListener('toggle',function(){if(d.open)Shiny.setInputValue('primer_overview_inspector_open',{nonce:Date.now()},{priority:'event'});});}$(bind);})();")),
           tags$details(id="primer-evidence-inspector", class="atlas-detail",
               tags$summary("Inspect evidence and alignments"),
@@ -2455,6 +2458,7 @@ server <- function(input, output, session) {
   overview_clicked_pair <- reactiveVal(NULL)
   overview_page <- reactiveVal(1L)
   fungal_builder_state <- reactiveValues(version=NULL,forward=character(),reverse=character())
+  fungal_builder_ack <- reactiveValues(forward=NULL,reverse=NULL)
   fungal_workspace <- fungalExplorerServer("fungal", selection = fungal_explorer_context)
   fungal_fit_workspace <- fungalFitServer("fungal_fit", selection = fungal_fit_context)
   unite_explorer_workspace <- uniteReferenceServer("unite_explorer", initial_mode = "primers",
@@ -2544,16 +2548,72 @@ server <- function(input, output, session) {
   })
   observeEvent(fungal_workspace$snapshot()$manifest$id,{
     defaults <- fungal_builder_defaults()
+    fungal_builder_ack$forward <- fungal_builder_ack$reverse <- NULL
     fungal_builder_state$version <- fungal_workspace$snapshot()$manifest$id
     fungal_builder_state$forward <- defaults$forward_ids
     fungal_builder_state$reverse <- defaults$reverse_ids
   },priority=100)
   observeEvent(input$fungal_builder_forward,{
-    fungal_builder_state$forward <- input$fungal_builder_forward %||% character()
+    selected <- input$fungal_builder_forward %||% character()
+    expected <- isolate(fungal_builder_ack$forward)
+    if(!is.null(expected)) {
+      if(!setequal(selected,expected)) return()
+      fungal_builder_ack$forward <- NULL
+    }
+    fungal_builder_state$forward <- selected
   },ignoreInit=TRUE,ignoreNULL=FALSE)
   observeEvent(input$fungal_builder_reverse,{
-    fungal_builder_state$reverse <- input$fungal_builder_reverse %||% character()
+    selected <- input$fungal_builder_reverse %||% character()
+    expected <- isolate(fungal_builder_ack$reverse)
+    if(!is.null(expected)) {
+      if(!setequal(selected,expected)) return()
+      fungal_builder_ack$reverse <- NULL
+    }
+    fungal_builder_state$reverse <- selected
   },ignoreInit=TRUE,ignoreNULL=FALSE)
+  fungal_atlas_data <- reactive({
+    region <- input$primer_overview_region %||% "ALL"
+    fungal_primer_atlas_data(fungal_workspace$snapshot(),fungal_overview_reference(),region=region)
+  })
+  output$fungal_primer_atlas <- renderUI({
+    req(identical(input$map_marker,"ITS_FUNGAL"))
+    fungal_primer_atlas(fungal_atlas_data(),selected_forward=fungal_builder_forward(),
+      selected_reverse=fungal_builder_reverse())
+  })
+  output$fungal_atlas_selection <- renderUI({
+    forward <- length(fungal_builder_forward()); reverse <- length(fungal_builder_reverse())
+    div(class="fungal-atlas-selection",
+      strong(forward," forward × ",reverse," reverse = ",forward*reverse," requested combinations"),
+      if(!forward || !reverse) span("Choose at least one primer in each direction."),
+      actionButton("fungal_builder_clear","Clear primers",class="btn-outline-secondary btn-sm"),
+      if((input$fungal_overview_mode %||% "atlas")=="atlas")
+        actionButton("fungal_atlas_show_amplicons","View selected amplicons",class="btn-primary btn-sm"))
+  })
+  observeEvent(input$fungal_atlas_show_amplicons,{
+    updateRadioButtons(session,"fungal_overview_mode",selected="amplicons")
+  })
+  observeEvent(input$fungal_atlas_primer_click,{
+    req(identical(input$map_marker,"ITS_FUNGAL"))
+    click <- input$fungal_atlas_primer_click
+    if(!is.list(click) || length(click$catalog_id)!=1L || length(click$direction)!=1L ||
+        !click$direction %in% c("forward","reverse")) return()
+    catalog <- fungal_workspace$snapshot()$catalog
+    component <- catalog[catalog$catalog_id==click$catalog_id & catalog$direction==click$direction,,drop=FALSE]
+    if(nrow(component)!=1L || !identical(click$version,fungal_workspace$snapshot()$manifest$id) ||
+        !identical(click$accession,fungal_overview_reference())) return()
+    current <- isolate(if(click$direction=="forward") fungal_builder_forward() else fungal_builder_reverse())
+    if(click$catalog_id %in% current) selected <- setdiff(current,click$catalog_id)
+    else if(length(current)<5L) selected <- c(current,click$catalog_id)
+    else {
+      showNotification("Choose up to five primers in each direction. Remove one before adding another.",type="message",duration=4)
+      return()
+    }
+    # Atlas clicks precede any queued selector echo. Accept the new selection's
+    # acknowledgment before later direct dropdown edits can become authoritative.
+    fungal_builder_ack[[click$direction]] <- selected
+    fungal_builder_state[[click$direction]] <- selected
+    updateSelectizeInput(session,paste0("fungal_builder_",click$direction),selected=selected)
+  },ignoreInit=TRUE)
   output$fungal_builder_controls <- renderUI({
     catalog <- fungal_combination_catalog(fungal_workspace$snapshot())
     choices <- function(direction) {
@@ -2570,6 +2630,7 @@ server <- function(input, output, session) {
   })
   observeEvent(input$fungal_builder_examples,{
     defaults <- fungal_builder_defaults()
+    fungal_builder_ack$forward <- fungal_builder_ack$reverse <- NULL
     fungal_builder_state$forward <- defaults$forward_ids
     fungal_builder_state$reverse <- defaults$reverse_ids
     updateSelectizeInput(session,"fungal_builder_forward",selected=defaults$forward_ids)
@@ -2580,6 +2641,7 @@ server <- function(input, output, session) {
     updateRadioButtons(session,"primer_overview_platform",selected="ALL")
   })
   observeEvent(input$fungal_builder_clear,{
+    fungal_builder_ack$forward <- fungal_builder_ack$reverse <- NULL
     fungal_builder_state$forward <- fungal_builder_state$reverse <- character()
     overview_clicked_pair(NULL)
     fungal_overview_evidence(NULL)
@@ -2628,6 +2690,7 @@ server <- function(input, output, session) {
       r <- catalog$catalog_id[catalog$primer_name==pair$reverse_primer & catalog$sequence==pair$reverse_sequence & catalog$direction=="reverse"]
       current_forward <- isolate(fungal_builder_forward())
       current_reverse <- isolate(fungal_builder_reverse())
+      fungal_builder_ack$forward <- fungal_builder_ack$reverse <- NULL
       if(length(f)==1L && !f %in% current_forward) fungal_builder_state$forward <- c(f,head(current_forward,4L))
       if(length(r)==1L && !r %in% current_reverse) fungal_builder_state$reverse <- c(r,head(current_reverse,4L))
       updateSelectizeInput(session,"fungal_builder_forward",selected=fungal_builder_state$forward)
@@ -2651,7 +2714,7 @@ server <- function(input, output, session) {
       regions <- c("All rDNA"="ALL", "18S / SSU"="SSU", "ITS1 / 5.8S / ITS2"="ITS", "28S / LSU"="LSU",
           setNames(paste0("landmark:",own$landmark_id),landmark_labels))
       current <- isolate(input$primer_overview_region)
-      if(is.null(current) || !current %in% regions) current <- "ITS"
+      if(is.null(current) || !current %in% regions) current <- "ALL"
       return(layout_columns(col_widths=c(4,5,3),
           selectInput("primer_overview_region","Region",regions,selected=current),
           selectizeInput("primer_overview_reference","Coordinate reference",setNames(taxonomy$accession,labels),selected=accession),
@@ -2669,7 +2732,7 @@ server <- function(input, output, session) {
   })
   observeEvent(input$map_marker, {
     overview_clicked_pair(NULL)
-    updateSelectInput(session,"primer_overview_region",selected=if(identical(input$map_marker,"ITS_FUNGAL")) "ITS" else "ALL")
+    updateSelectInput(session,"primer_overview_region",selected="ALL")
   },ignoreInit=TRUE)
   observeEvent(input$primer_overview_reference, {
     if(!identical(input$map_marker,"ITS_FUNGAL")) return()
@@ -2685,7 +2748,7 @@ server <- function(input, output, session) {
     choices <- c("All rDNA"="ALL","18S / SSU"="SSU","ITS1 / 5.8S / ITS2"="ITS","28S / LSU"="LSU",
         setNames(paste0("landmark:",own$landmark_id),labels))
     selected <- isolate(input$primer_overview_region)
-    if(is.null(selected) || !selected %in% choices) selected <- "ITS"
+    if(is.null(selected) || !selected %in% choices) selected <- "ALL"
     updateSelectInput(session,"primer_overview_region",choices=choices,selected=selected)
   },ignoreInit=TRUE)
   overview_rows <- reactive({

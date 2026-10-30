@@ -98,10 +98,13 @@
 primer_overview_map <- function(rows,primers,marker,landmarks=data.frame(),focus=NULL,
   thermal_rows=data.frame(),sodium_mM=50,ta_offset_c=4,citations=data.frame(),
   primer_facets=data.frame(),diet_uses=data.frame(),arthropod_off_target_ids=character(),
-  folmer_region=NULL,domain=NULL,active_pair_id=NULL,pair_click_input=NULL) {
+  folmer_region=NULL,domain=NULL,active_pair_id=NULL,pair_click_input=NULL,viewport_width=NULL) {
   tags <- htmltools::tags
   div <- tags$div
   tagList <- htmltools::tagList
+  if(!is.null(viewport_width) && (length(viewport_width)!=1L || !is.numeric(viewport_width) ||
+      !is.finite(viewport_width) || viewport_width<=0)) stop("The map viewport width must be one positive pixel measurement.")
+  compact <- !is.null(viewport_width) && viewport_width<1600
   x <- rows
   if(!is.data.frame(x) || !nrow(x)) return(div(class="callout","No primer pairs match the current filters. "))
   stopifnot(is.data.frame(marker),nrow(marker)==1L)
@@ -145,6 +148,11 @@ primer_overview_map <- function(rows,primers,marker,landmarks=data.frame(),focus
     width <- 1680
     left <- 112
     right <- 1000
+    if(compact) {
+      width <- max(240L,as.integer(floor(viewport_width)))
+      left <- 44
+      right <- width-24
+    }
     axis_domain <- if(is.null(domain)) .primer_overview_domain(
       x,
       folmer_start = focus$start,
@@ -159,10 +167,10 @@ primer_overview_map <- function(rows,primers,marker,landmarks=data.frame(),focus
       bounded <- pmin(pmax(bp, axis_min), axis_max)
       left + (bounded - axis_min) / (axis_max - axis_min) * (right - left)
     }
-    row_h <- 58
+    row_h <- if(compact) 82 else 58
     first_row_y <- 88
     last_row_y <- first_row_y + (nrow(x) - 1) * row_h
-    folmer_y <- last_row_y + 54
+    folmer_y <- last_row_y + if(compact) 70 else 54
     landmark_coordinates <- suppressWarnings(cbind(as.numeric(landmarks$start),as.numeric(landmarks$end)))
     landmark_valid <- if(nrow(landmarks)) stats::complete.cases(landmark_coordinates) &
       landmark_coordinates[,1L]>=1L & landmark_coordinates[,2L]>=landmark_coordinates[,1L] &
@@ -174,7 +182,8 @@ primer_overview_map <- function(rows,primers,marker,landmarks=data.frame(),focus
     domain_landmarks <- landmarks[landmark_valid & landmarks$landmark_type %in% c("domain","divergent_domain"),,drop=FALSE]
     gene_landmarks <- landmarks[landmark_valid & !landmarks$landmark_type %in% c("domain","divergent_domain"),,drop=FALSE]
     domain_y <- folmer_y+30
-    coi_y <- folmer_y + 40 + if(nrow(domain_landmarks)) 32L else 0L
+    coi_y <- folmer_y + if(compact && marker_id=="COI" && !is.null(folmer_region)) 70L else 40L
+    coi_y <- coi_y + if(nrow(domain_landmarks)) 32L else 0L
     height <- coi_y + 42
     start_col <- 1090
     end_col <- 1160
@@ -182,6 +191,7 @@ primer_overview_map <- function(rows,primers,marker,landmarks=data.frame(),focus
     informative_col <- 1350
     citation_col <- 1440
     number_x <- 16
+    measurements <- list()
     forward_color <- "#2563eb"
     informative_color <- "#9aa6b2"
     reverse_color <- "#dc2626"
@@ -230,7 +240,7 @@ primer_overview_map <- function(rows,primers,marker,landmarks=data.frame(),focus
       ),
       tags$text(
         x = right, y = 20, `text-anchor` = "end",
-        fill = "#48554e", `font-size` = 11, `font-weight` = 700,
+        fill = "#48554e", `font-size` = if(compact) 13 else 11, `font-weight` = 700,
         paste0("View ", axis_min, "–", axis_max, " bp")
       ),
       tags$line(
@@ -238,8 +248,14 @@ primer_overview_map <- function(rows,primers,marker,landmarks=data.frame(),focus
         stroke = "#6d756f", `stroke-width` = 1.5
       )
     )
+    if(compact) children <- children[6:7]
     tick_bp <- if(is.null(domain) || axis_max-axis_min<=1500L) 100L else if(axis_max-axis_min<=5000L) 500L else 1000L
-    ticks <- if(is.null(domain)) seq(axis_min,axis_max,100L) else {
+    if(compact) {
+      target_step <- (axis_max-axis_min)/max(1,(right-left)/62)
+      steps <- as.vector(outer(c(1,2,5),10^seq(0,8)))
+      tick_bp <- min(steps[steps>=target_step])
+    }
+    ticks <- if(is.null(domain) && !compact) seq(axis_min,axis_max,100L) else {
       limits <- c(ceiling(axis_min/tick_bp)*tick_bp,floor(axis_max/tick_bp)*tick_bp)
       if(limits[2L]>=limits[1L]) seq(limits[1L],limits[2L],tick_bp) else numeric()
     }
@@ -252,7 +268,7 @@ primer_overview_map <- function(rows,primers,marker,landmarks=data.frame(),focus
         ),
         tags$text(
           x = tx, y = 40, `text-anchor` = "middle",
-          fill = "#68736c", `font-size` = 11, tick
+          fill = "#68736c", `font-size` = if(compact) 12 else 11, tick
         )
       ))
     }
@@ -411,12 +427,13 @@ primer_overview_map <- function(rows,primers,marker,landmarks=data.frame(),focus
           tabindex = "0"
         ),
         tags$text(
-          x = f1 - 7, y = y + 4, `text-anchor` = "end",
+          x = if(compact) max(left,min(f1,right-nchar(f$primer_name)*8.4)) else f1 - 7,
+          y = if(compact) y-16 else y + 4, `text-anchor` = if(compact) "start" else "end",
           class = "primer-tooltip-target",
           `data-tooltip` = tooltip,
           `aria-label` = paste0("Show map-row details for ", row$pair_label),
           tabindex = "0",
-          fill = forward_color, `font-size` = 12, `font-weight` = 700,
+          fill = forward_color, `font-size` = if(compact) 14 else 12, `font-weight` = 700,
           f$primer_name
         ),
         tags$line(
@@ -436,12 +453,13 @@ primer_overview_map <- function(rows,primers,marker,landmarks=data.frame(),focus
           tabindex = "0"
         ),
         tags$text(
-          x = r2 + 7, y = y + 4, `text-anchor` = "start",
+          x = if(compact) min(right,max(r2,left+nchar(r$primer_name)*8.4)) else r2 + 7,
+          y = if(compact) y+22 else y + 4, `text-anchor` = if(compact) "end" else "start",
           class = "primer-tooltip-target",
           `data-tooltip` = tooltip,
           `aria-label` = paste0("Show map-row details for ", row$pair_label),
           tabindex = "0",
-          fill = reverse_color, `font-size` = 12, `font-weight` = 700,
+          fill = reverse_color, `font-size` = if(compact) 14 else 12, `font-weight` = 700,
           r$primer_name
         ),
         tags$text(
@@ -463,16 +481,40 @@ primer_overview_map <- function(rows,primers,marker,landmarks=data.frame(),focus
           paste0(row$targeted_region_bp, " bp")
         )
       )
+      if(compact) row_children <- row_children[1:10]
       if(!is.null(domain)) {
         remove <- c(if(!forward_visible) 5L,if(!forward_tip_visible) 6L,
           if(!reverse_visible) 8L,if(!reverse_tip_visible) 9L,
           if(!product_visible || row$reverse_start-1L<axis_min || row$forward_end+1L>axis_max) 4L)
         if(length(remove)) row_children <- row_children[-unique(remove)]
         if(!product_visible || product_clipped) row_children <- append(row_children,list(tags$text(
-          x=(left+right)/2,y=y+20,fill="#6b746f",`font-size`=10,
-          if(!product_visible) "Outside this bp window" else "Partly in view · full bp length retained")))
+          x=(left+right)/2,y=y+if(compact) 42 else 20,fill="#6b746f",`font-size`=if(compact) 12 else 10,
+          if(compact) paste0(if(!product_visible) "Outside this bp window" else "Partly in view", " · ",row$aligned_amplicon_bp," bp full length") else
+            if(!product_visible) "Outside this bp window" else "Partly in view · full bp length retained")))
       }
-      if (identical(f$source_key[1], "custom") ||
+      if(compact && product_visible && !product_clipped) row_children <- append(row_children,list(tags$text(
+        class="primer-overview-length",x=(left+right)/2,y=y+42,`text-anchor`="middle",
+        fill="#526176",`font-size`=12,
+        paste0(row$aligned_amplicon_bp," bp + primers · ",row$targeted_region_bp," bp internal"))))
+      if(compact) {
+        html_source <- function(source_row,prefix="") {
+          if(!nrow(source_row)) return(tags$span(paste0(prefix,"source unavailable")))
+          label <- as.character(source_row$short_citation[1L])
+          if(is.na(label) || !nzchar(label)) label <- "source unavailable"
+          url <- as.character(source_row$url[1L])
+          if(is.na(url) || !nzchar(url)) tags$span(paste0(prefix,label)) else
+            tags$a(href=url,target="_blank",rel="noopener noreferrer",paste0(prefix,label))
+        }
+        sources <- if(identical(f$source_key[1],"custom") || identical(r$source_key[1],"custom")) tags$span("Session input · not saved") else
+          if(identical(f$source_key[1],r$source_key[1])) html_source(forward_source) else
+            tagList(html_source(forward_source,"F: "),tags$br(),html_source(reverse_source,"R: "))
+        label <- paste0(i," · ",row$pair_label)
+        measurements[[i]] <- tags$tr(`data-pair-id`=row$pair_id,`data-product-bp`=row$aligned_amplicon_bp,
+          tags$th(scope="row",if(is.null(pair_click_input)) label else tags$button(type="button",class="pair-inspect primer-overview-measurement-button",
+            `data-pair-id`=row$pair_id,`data-pair-input`=pair_click_input,`aria-pressed`=if(row$pair_id %in% active_pair_id) "true" else "false",label)),
+          tags$td(row$pair_start),tags$td(row$pair_end),tags$td(paste0(row$aligned_amplicon_bp," bp")),
+          tags$td(paste0(row$targeted_region_bp," bp")),tags$td(sources))
+      } else if (identical(f$source_key[1], "custom") ||
         identical(r$source_key[1], "custom")) {
         row_children <- append(row_children, list(tags$text(
           x = citation_col, y = y + 4, fill = "#6b746f", `font-size` = 10.5,
@@ -498,7 +540,7 @@ primer_overview_map <- function(rows,primers,marker,landmarks=data.frame(),focus
           tabindex=if(!is.null(pair_click_input)) "0" else NULL,
           `aria-label`=if(!is.null(pair_click_input)) paste("Inspect",row$pair_label) else NULL,
           `aria-pressed`=if(!is.null(pair_click_input)) if(row$pair_id %in% active_pair_id) "true" else "false" else NULL,
-          tags$rect(x=0,y=y-25,width=width-12,height=52,rx=5,
+          tags$rect(x=0,y=y-25,width=width-12,height=if(compact) 72 else 52,rx=5,
             fill=if(row$pair_id %in% active_pair_id) "#eef2ff" else "transparent",
             `pointer-events`="all",style=if(!is.null(pair_click_input)) "cursor:pointer" else NULL),row_children)
         children <- append(children,list(row_group))
@@ -506,9 +548,9 @@ primer_overview_map <- function(rows,primers,marker,landmarks=data.frame(),focus
     }
     if (marker_id == "COI" && !is.null(folmer_region)) {
       children <- append(children, list(
-        tags$text(x = left - 14, y = folmer_y + 4, `text-anchor` = "end", fill = "#6b5720", `font-size` = 12, `font-weight` = 700, "Folmer region"),
+        tags$text(x = if(compact) left else left - 14, y = if(compact) folmer_y-13 else folmer_y + 4, `text-anchor` = if(compact) "start" else "end", fill = "#6b5720", `font-size` = 12, `font-weight` = 700, "Folmer region"),
         tags$line(x1 = scale_x(folmer_region$start), y1 = folmer_y, x2 = scale_x(folmer_region$end), y2 = folmer_y, stroke = "#d7a62b", `stroke-width` = 10, `stroke-linecap` = "round"),
-        tags$text(x = scale_x(folmer_region$end) + 10, y = folmer_y + 4, fill = "#6b5720", `font-size` = 11, paste0(folmer_region$start, "–", folmer_region$end, " · ", folmer_region$length_bp, " bp"))
+        tags$text(x = if(compact) left else scale_x(folmer_region$end) + 10, y = if(compact) folmer_y+23 else folmer_y + 4, fill = "#6b5720", `font-size` = if(compact) 12 else 11, paste0(folmer_region$start, "–", folmer_region$end, " · ", folmer_region$length_bp, " bp"))
       ))
     } else {
       for (j in seq_len(nrow(gene_landmarks))) {
@@ -516,7 +558,7 @@ primer_overview_map <- function(rows,primers,marker,landmarks=data.frame(),focus
         if(lm$end<axis_min || lm$start>axis_max) next
         landmark_children <- list(
           tags$rect(x = scale_x(lm$start), y = folmer_y - 9, width = max(2, scale_x(lm$end) - scale_x(lm$start)), height = 18, fill = if (j %% 2) "#9aa6a0" else "#d7dad7"),
-          tags$text(x = (scale_x(lm$start) + scale_x(lm$end)) / 2, y = folmer_y + 4, `text-anchor` = "middle", fill = "#17241d", `font-size` = 10, `font-weight` = 700, lm$label)
+          tags$text(x = (scale_x(lm$start) + scale_x(lm$end)) / 2, y = folmer_y + 4, `text-anchor` = "middle", fill = "#17241d", `font-size` = if(compact) 12 else 10, `font-weight` = 700, lm$label)
         )
         if(is.null(domain) && !nrow(domain_landmarks)) children <- append(children,landmark_children)
         else children <- append(children,list(tags$g(class="primer-overview-landmark",
@@ -526,7 +568,7 @@ primer_overview_map <- function(rows,primers,marker,landmarks=data.frame(),focus
       }
     }
     if(nrow(domain_landmarks)) {
-      children <- append(children,list(tags$text(x=left-14,y=domain_y+4,`text-anchor`="end",fill="#6b746f",`font-size`=11,"Domains")))
+      children <- append(children,list(tags$text(x=if(compact) left else left-14,y=if(compact) domain_y-13 else domain_y+4,`text-anchor`=if(compact) "start" else "end",fill="#6b746f",`font-size`=if(compact) 12 else 11,"Domains")))
       for(j in seq_len(nrow(domain_landmarks))) {
         lm <- domain_landmarks[j,,drop=FALSE]
         if(lm$end<axis_min || lm$start>axis_max) next
@@ -538,16 +580,18 @@ primer_overview_map <- function(rows,primers,marker,landmarks=data.frame(),focus
           tags$title(paste(label,"·",lm$start,"–",lm$end,"bp ·",lm$source_note)),
           tags$rect(x=scale_x(lm$start),y=domain_y-8,width=max(2,scale_x(lm$end)-scale_x(lm$start)),height=16,
             fill="#d7dad7",stroke="#9aa6a0",`stroke-dasharray`=if(partial) "3 2" else NULL),
-          tags$text(x=(scale_x(lm$start)+scale_x(lm$end))/2,y=domain_y+4,`text-anchor`="middle",fill="#17241d",`font-size`=10,`font-weight`=700,label))))
+          tags$text(x=(scale_x(lm$start)+scale_x(lm$end))/2,y=domain_y+4,`text-anchor`="middle",fill="#17241d",`font-size`=if(compact) 12 else 10,`font-weight`=700,label))))
       }
     }
     children <- append(children, list(
-      tags$text(x = left - 14, y = coi_y + 4, `text-anchor` = "end", fill = "#17241d", `font-size` = 12, `font-weight` = 700, marker$display_name),
+      tags$text(x = if(compact) left else left - 14, y = if(compact) coi_y-13 else coi_y + 4, `text-anchor` = if(compact) "start" else "end", fill = "#17241d", `font-size` = 12, `font-weight` = 700, marker$display_name),
       tags$line(x1 = left, y1 = coi_y, x2 = right, y2 = coi_y, stroke = "#17241d", `stroke-width` = 8, `stroke-linecap` = "round"),
-      tags$text(x = right + 10, y = coi_y + 4, fill = "#48554e", `font-size` = 11, paste0(axis_min, "–", min(axis_max, reference_length), " shown · ", marker$reference_version, " is ", format(reference_length, big.mark = ","), " bp"))
+      if(!compact) tags$text(x = right + 10, y = coi_y + 4, fill = "#48554e", `font-size` = 11, paste0(axis_min, "–", min(axis_max, reference_length), " shown · ", marker$reference_version, " is ", format(reference_length, big.mark = ","), " bp"))
     ))
     div(
       class = "primer-map-wrap",
+      `data-layout`=if(compact) "compact" else if(!is.null(viewport_width)) "wide" else NULL,
+      if(compact) tags$style(htmltools::HTML(".primer-map-wrap[data-layout='compact']{overflow-x:visible}.primer-map-wrap[data-layout='compact']>.primer-map{width:100%!important;min-width:0!important;max-width:100%;height:auto}.primer-overview-reference{font-size:12px;color:#526176;overflow-wrap:anywhere;margin:4px 0 12px}.primer-overview-measurements{border:1px solid #dbe3ee;border-radius:8px;padding:10px 12px}.primer-overview-measurements>summary{font-size:13px;font-weight:650;cursor:pointer}.primer-overview-measurement-scroll{max-width:100%;overflow:auto;margin-top:10px}.primer-overview-measurements table{border-collapse:collapse;white-space:nowrap;font-size:13px;width:100%}.primer-overview-measurements th,.primer-overview-measurements td{padding:9px 12px;border-bottom:1px solid #e2e8f0;text-align:left;vertical-align:top}.primer-overview-measurement-button{font:inherit;color:#4338ca;background:transparent;border:0;padding:0;text-align:left;cursor:pointer}.primer-overview-measurement-button[aria-pressed='true']{font-weight:750;text-decoration:underline}.primer-overview-measurement-button:focus-visible{outline:2px solid #4f46e5;outline-offset:3px}")),
       if(!is.null(pair_click_input)) tags$script(htmltools::HTML("if(!window.atlasPrimerOverviewClick){window.atlasPrimerOverviewClick=true;function atlasPrimerOverviewSelect(e){var row=e.target.closest('.primer-overview-row[data-pair-input]');if(!row||e.target.closest('a')||!window.Shiny)return;if(e.type==='keydown'&&e.key!=='Enter'&&e.key!==' ')return;if(e.type==='keydown')e.preventDefault();Shiny.setInputValue(row.dataset.pairInput,{pair:row.dataset.pairId,nonce:Date.now()},{priority:'event'});}document.addEventListener('click',atlasPrimerOverviewSelect);document.addEventListener('keydown',atlasPrimerOverviewSelect);}")),
       tags$svg(
         class = "primer-map", viewBox = paste(0, 0, width, height),
@@ -558,6 +602,12 @@ primer_overview_map <- function(rows,primers,marker,landmarks=data.frame(),focus
           ". Rows are numbered in their current displayed order."
         ),
         children
-      )
+      ),
+      if(compact) tags$p(class="primer-overview-reference",paste0(axis_min,"–",min(axis_max,reference_length)," bp shown · ",marker$coordinate_reference," · ",
+        marker$reference_version," is ",format(reference_length,big.mark=",")," bp. Product lengths include both primers.")),
+      if(compact) tags$details(class="primer-overview-measurements",tags$summary("Measurements and sources"),
+        div(class="primer-overview-measurement-scroll",tags$table(
+          tags$thead(tags$tr(lapply(c("Combination","Start bp","End bp","+ primers","− primers","Citation(s)"),function(label) tags$th(scope="col",label)))),
+          tags$tbody(measurements))))
     )
 }

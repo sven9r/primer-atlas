@@ -122,6 +122,13 @@ shiny::testServer(env$server, {
   session$setInputs(map_marker="COI")
   session$flushReact()
   stopifnot(grepl('class="primer-map"',output$primer_map$html,fixed=TRUE))
+  before_resize <- overview_rows()[,c("pair_id","pair_start","pair_end","aligned_amplicon_bp","targeted_region_bp")]
+  session$setInputs(primer_map_width=610)
+  session$flushReact()
+  stopifnot(grepl('data-layout="compact"',output$primer_map$html,fixed=TRUE),
+      grepl('viewBox="0 0 610 ',output$primer_map$html,fixed=TRUE),
+      grepl("Measurements and sources",output$primer_map$html,fixed=TRUE),
+      identical(before_resize,overview_rows()[,names(before_resize)]))
 
   # Explorer→fit transfers exactly one snapshot/pair, not a current catalog
   # selection assembled independently by the destination module.

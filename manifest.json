@@ -2755,7 +2755,7 @@
   },
   "files": {
     "app.R": {
-      "checksum": "c6a7d3d20c83ed35eb2e77da8ddb3e8d"
+      "checksum": "be4658b189148f6c26be48d6afce30b8"
     },
     "data/catalog/claims.csv": {
       "checksum": "7e287c602b958d2d647bbee4089c0b39"
@@ -9811,7 +9811,7 @@
       "checksum": "77e6441dc909672f779f3ee8ddcf47ce"
     },
     "R/fungal_primer_atlas.R": {
-      "checksum": "4d23f65b720d1732e5be581f6df4c209"
+      "checksum": "ddcabe84df83a8cb9b10335f58798f58"
     },
     "R/fungal_primer_orientation.R": {
       "checksum": "97f3f6765a7e2768e86da1646252cdf3"
@@ -9826,7 +9826,7 @@
       "checksum": "90d16ccaedf4a943c9f95a62dd8ff249"
     },
     "R/primer_overview.R": {
-      "checksum": "91330b4bd94e536e4dfbe640e6d2c48e"
+      "checksum": "d55a153323c921edf3951fdaed317d98"
     },
     "R/primer_publication_export.R": {
       "checksum": "ab27ced8fff78f24ed1aa675b755617b"

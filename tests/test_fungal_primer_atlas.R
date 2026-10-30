@@ -144,4 +144,119 @@ stopifnot(all(old$landmarks$accession=="FN812768.2"),
   nchar(as.character(atlas$fungal_primer_atlas(old)))>0L,
   identical(serialize(snapshot,NULL),original),
   inherits(try(atlas$fungal_primer_atlas_data(snapshot,"FOREIGN"),silent=TRUE),"try-error"))
-cat("Individual fungal atlas raw sites, all-catalog membership, role/selection metadata, split gene copies, honest missing states and readable label packing passed.\n")
+
+# Responsive screen layouts are rebuilt in physical pixels rather than
+# shrinking a 1000-pixel image and its text, or cropping its reverse arrows.
+# The export/default layout continues to use the original 65..965 scale.
+legacy <- atlas$fungal_primer_atlas(context)
+for(svg in collect(legacy,"svg")) {
+  stopifnot(as.numeric(strsplit(svg$attribs$viewBox," ",fixed=TRUE)[[1L]])[3L]==1000,
+    is.null(svg$attribs$width),is.null(svg$attribs$style),
+    svg$attribs[["data-axis-left"]]==65,svg$attribs[["data-axis-right"]]==965)
+}
+points_matrix <- function(points) {
+  values <- as.numeric(strsplit(gsub(","," ",points,fixed=TRUE),"[[:space:]]+")[[1L]])
+  matrix(values,ncol=2,byrow=TRUE)
+}
+responsive_contexts <- list(
+  all=context,
+  its=atlas$fungal_primer_atlas_data(snapshot,"PZ962702.1","ITS"),
+  historical=old)
+found_packed_gene_band <- FALSE
+for(viewport in c(600,390,320)) for(context_name in names(responsive_contexts)) {
+  value <- responsive_contexts[[context_name]]
+  rendered <- atlas$fungal_primer_atlas(value,viewport_width=viewport)
+  stopifnot("is-responsive" %in% strsplit(rendered$attribs$class," ",fixed=TRUE)[[1L]],
+    !length(has_class(collect(rendered,"p"),"fungal-atlas-scroll-cue")))
+  svgs <- collect(rendered,"svg")
+  stopifnot(length(svgs)==nrow(value$panels))
+  for(i in seq_along(svgs)) {
+    svg <- svgs[[i]];panel <- value$panels[i,,drop=FALSE]
+    box <- as.numeric(strsplit(svg$attribs$viewBox," ",fixed=TRUE)[[1L]])
+    stopifnot(box[3L]==viewport,svg$attribs$width==viewport,svg$attribs$height==box[4L],
+      grepl(paste0("width:",viewport,"px"),svg$attribs$style,fixed=TRUE),
+      grepl("min-width:0",svg$attribs$style,fixed=TRUE),
+      !grepl("transform",svg$attribs$style,fixed=TRUE),
+      svg$attribs[["data-domain-start"]]==panel$start,
+      svg$attribs[["data-domain-end"]]==panel$end,
+      svg$attribs[["data-axis-left"]]>0,svg$attribs[["data-axis-right"]]<viewport)
+    left <- as.numeric(svg$attribs[["data-axis-left"]]);right <- as.numeric(svg$attribs[["data-axis-right"]])
+    raw_to_pixel <- function(bp) left+(pmax(panel$start,pmin(panel$end,bp))-panel$start)/(panel$end-panel$start)*(right-left)
+    baseline <- filter_attr(collect(svg,"line"),"stroke","#cbd5e1")
+    stopifnot(length(baseline)==1L,baseline[[1L]]$attribs$x1==raw_to_pixel(panel$start),
+      baseline[[1L]]$attribs$x2==raw_to_pixel(panel$end))
+    groups <- has_class(collect(svg,"g"),"fungal-atlas-primer")
+    expected_sites <- value$rows[value$rows$end>=panel$start & value$rows$start<=panel$end,,drop=FALSE]
+    stopifnot(setequal(vapply(groups,function(row) row$attribs[["data-catalog-id"]],character(1L)),expected_sites$catalog_id))
+    for(group in groups) {
+      site <- expected_sites[expected_sites$catalog_id==group$attribs[["data-catalog-id"]],,drop=FALSE]
+      label <- collect(group,"text")
+      binding <- Filter(function(line) line$attribs[["stroke-width"]] %in% c(4,7),collect(group,"line"))
+      stopifnot(length(label)==1L,label[[1L]]$attribs[["font-size"]]==14,
+        group$attribs[["data-label-left"]]>=left,group$attribs[["data-label-right"]]<=right,
+        group$attribs[["data-start-bp"]]==site$start,group$attribs[["data-end-bp"]]==site$end,
+        group$attribs[["data-selection-state"]]=="unselected",
+        group$attribs[["data-assigned-catalog-id"]]==site$catalog_id,
+        group$attribs[["data-catalog-direction"]]==site$direction,
+        length(binding)==1L,abs(binding[[1L]]$attribs$x1-raw_to_pixel(site$start))<1e-8,
+        abs(binding[[1L]]$attribs$x2-raw_to_pixel(site$end))<1e-8)
+      for(arrow in collect(group,"polygon")) {
+        points <- points_matrix(arrow$attribs$points)
+        stopifnot(all(points[,1L]>=0 & points[,1L]<=viewport),
+          abs(points[1L,1L]-raw_to_pixel(group$attribs[["data-three-prime-bp"]]))<1e-8)
+      }
+    }
+    # Every role is repacked for the actual available width; same-lane labels
+    # cannot overlap even where many primers share a physical binding site.
+    lanes <- split(groups,vapply(groups,function(row) paste(row$attribs[["data-direction"]],row$attribs[["data-label-lane"]]),character(1L)))
+    for(lane in lanes) {
+      bounds <- do.call(rbind,lapply(lane,function(row) c(row$attribs[["data-label-left"]],row$attribs[["data-label-right"]])))
+      bounds <- bounds[order(bounds[,1L]),,drop=FALSE]
+      if(nrow(bounds)>1L) stopifnot(all(bounds[-1L,1L]>head(bounds[,2L],-1L)))
+    }
+    gene_groups <- has_class(collect(svg,"g"),"fungal-atlas-landmark")
+    packed_genes <- filter_attr(gene_groups,"data-label-packed","true")
+    for(gene in gene_groups) stopifnot(collect(gene,"text")[[1L]]$attribs[["font-size"]]==14)
+    for(gene in packed_genes) stopifnot(gene$attribs[["data-label-left"]]>=left,gene$attribs[["data-label-right"]]<=right)
+    forward_groups <- filter_attr(groups,"data-direction","forward")
+    if(length(packed_genes) && length(forward_groups)) {
+      # Full 14px text bounds have a gap from the closest primer's arrow/body;
+      # checking only x packing would miss the narrow ITS/5.8S overlap.
+      gene_top <- min(vapply(packed_genes,function(gene) collect(gene,"text")[[1L]]$attribs$y-14,numeric(1L)))
+      forward_bottom <- max(vapply(forward_groups,function(group) {
+        binding <- Filter(function(line) line$attribs[["stroke-width"]] %in% c(4,7),collect(group,"line"))[[1L]]
+        binding$attribs$y1+6
+      },numeric(1L)))
+      stopifnot(gene_top-forward_bottom>=12)
+      if(any(vapply(packed_genes,function(gene) gene$attribs[["data-label-lane"]]>1L,logical(1L)))) found_packed_gene_band <- TRUE
+    }
+    for(domain in has_class(collect(svg,"g"),"fungal-atlas-domain")) {
+      stopifnot(domain$attribs[["data-label-left"]]>=left,domain$attribs[["data-label-right"]]<=right)
+    }
+    # Tick labels and every rendered annotation remain inside the actual SVG.
+    for(text in collect(svg,"text")) stopifnot(text$attribs$x>=0,text$attribs$x<=viewport,
+      text$attribs$y>0,text$attribs$y<box[4L])
+  }
+}
+stopifnot(found_packed_gene_band)
+
+# At narrow screen widths, a reversed primer retains the exact parent click
+# identity and physical interval while moving to the opposite-role lane.
+reversed_site <- context$rows[context$rows$catalog_id==parent$catalog_id,,drop=FALSE]
+for(viewport in c(600,390)) {
+  rendered <- atlas$fungal_primer_atlas(context,selected_reverse=reversed$catalog_id,
+    variant_catalog=variants,viewport_width=viewport)
+  groups <- filter_attr(has_class(collect(rendered,"g"),"fungal-atlas-primer"),"data-catalog-id",parent$catalog_id)
+  stopifnot(length(groups)>0L,all(vapply(groups,function(group)
+    group$attribs[["data-assigned-catalog-id"]]==reversed$catalog_id &&
+    group$attribs[["data-selection-state"]]=="reversed" &&
+    group$attribs[["data-catalog-direction"]]=="forward" && group$attribs[["data-direction"]]=="reverse" &&
+    group$attribs[["data-start-bp"]]==reversed_site$start && group$attribs[["data-end-bp"]]==reversed_site$end &&
+    group$attribs[["data-three-prime-bp"]]==reversed_site$start &&
+    collect(group,"text")[[1L]]$attribs[["font-size"]]==14,logical(1L))))
+}
+for(width in list(319,0,Inf,NA_real_,numeric(),c(390,600),"600")) {
+  stopifnot(inherits(try(atlas$fungal_primer_atlas(context,viewport_width=width),silent=TRUE),"try-error"))
+}
+stopifnot(identical(serialize(snapshot,NULL),original))
+cat("Individual fungal atlas raw sites, memberships, roles, copies, missing states and responsive pixel-width label/arrow packing passed.\n")

@@ -161,4 +161,66 @@ stopifnot(long_group$attribs[["data-product-bp"]]==335L,
 unresolved <- raw_rows[1L,]
 unresolved$reverse_start <- NA_real_
 stopifnot(inherits(try(primer_overview_map(unresolved,data.frame(),raw_marker),silent=TRUE),"try-error"))
+
+# The actual embedded pane is narrower than the former 1,350px scroll canvas.
+# Every physical endpoint must fit the measured screen width; labels retain
+# real pixel sizes, and full measurements/source links move into closed details.
+compact <- primer_overview_map(fish,components,markers[markers$marker_id=="COI",],
+  thermal_rows=pair_thermal_summary(components),citations=citations,primer_facets=facets,diet_uses=diet,
+  folmer_region=folmer,viewport_width=650,pair_click_input="primer_overview_pair_click",active_pair_id=fish$pair_id)
+compact_svg <- collect_tags(compact,"svg")[[1L]]
+compact_group <- has_attr(collect_tags(compact_svg,"g"),"data-pair-id",fish$pair_id)[[1L]]
+compact_blue <- has_attr(collect_tags(compact_group,"line"),"stroke","#2563eb")[[1L]]
+compact_red <- has_attr(collect_tags(compact_group,"line"),"stroke","#dc2626")[[1L]]
+compact_details <- collect_tags(compact,"details")[[1L]]
+compact_table_row <- has_attr(collect_tags(compact_details,"tr"),"data-pair-id",fish$pair_id)[[1L]]
+compact_cells <- vapply(collect_tags(compact_table_row,"td")[1:4],function(tag) as.character(tag$children[[1L]]),character(1))
+stopifnot(
+  compact$attribs[["data-layout"]]=="compact",
+  as.numeric(strsplit(compact_svg$attribs$viewBox," ",fixed=TRUE)[[1L]])[3L]==650,
+  abs(number_attr(compact_blue,"x1")-(44+19/800*582))<1e-8,
+  abs(number_attr(compact_blue,"x2")-(44+44/800*582))<1e-8,
+  abs(number_attr(compact_red,"x1")-(44+700/800*582))<1e-8,
+  abs(number_attr(compact_red,"x2")-(44+725/800*582))<1e-8,
+  length(collect_tags(compact_group,"polygon"))==2L,
+  compact_group$attribs[["data-product-bp"]]==707,
+  compact_group$attribs[["data-pair-input"]]=="primer_overview_pair_click",
+  compact_group$attribs[["aria-pressed"]]=="true",
+  identical(compact_cells,c("19","725","707 bp","655 bp")),
+  is.null(compact_details$attribs$open),
+  length(has_attr(collect_tags(compact_details,"a"),"href","https://doi.org/10.1098/rstb.2005.1716"))==1L,
+  length(has_attr(collect_tags(compact_details,"button"),"data-pair-input","primer_overview_pair_click"))==1L,
+  length(has_attr(collect_tags(compact_svg,"text"),"x","1090"))==0L,
+  length(has_attr(collect_tags(compact_group,"text"),"font-size","14"))==2L,
+  all(vapply(has_attr(collect_tags(compact_svg,"text"),"y","40"),function(tag) number_attr(tag,"font-size")==12,logical(1))),
+  grepl("View 0–800 bp",html(compact_svg),fixed=TRUE)
+)
+for(viewport in c(360,650,737,1200,1599)) {
+  responsive <- primer_overview_map(fish,components,markers[markers$marker_id=="COI",],folmer_region=folmer,viewport_width=viewport)
+  svg <- collect_tags(responsive,"svg")[[1L]]
+  stopifnot(responsive$attribs[["data-layout"]]=="compact",as.numeric(strsplit(svg$attribs$viewBox," ",fixed=TRUE)[[1L]])[3L]==viewport)
+  for(line in collect_tags(svg,"line")) stopifnot(all(c(number_attr(line,"x1"),number_attr(line,"x2"))>=0),
+    all(c(number_attr(line,"x1"),number_attr(line,"x2"))<=viewport))
+}
+# Screen clipping cannot invent an endpoint. The exact same product and
+# partial/missing-arrow accounting survives when a physical-bp ROI is selected.
+compact_raw <- primer_overview_map(raw_rows,data.frame(),raw_marker,focus=c(150,400),domain=c(100,450),
+  pair_click_input="fungal-pair_click",viewport_width=650)
+compact_raw_groups <- collect_tags(collect_tags(compact_raw,"svg")[[1L]],"g")
+compact_outside <- has_attr(compact_raw_groups,"data-pair-id","outside")[[1L]]
+compact_left <- has_attr(compact_raw_groups,"data-pair-id","left")[[1L]]
+stopifnot(length(collect_tags(compact_outside,"polygon"))==0L,length(collect_tags(compact_left,"polygon"))==1L,
+  compact_left$attribs[["data-product-bp"]]==451L,compact_left$attribs[["data-start-bp"]]==50L,
+  compact_left$attribs[["data-window-state"]]=="clipped")
+compact_ssu <- primer_overview_map(ssu_row,ssu_components,markers[markers$marker_id=="18S",],
+  landmarks=ssu_landmarks,focus=c(1,1800),viewport_width=650)
+ssu_ticks <- has_attr(collect_tags(collect_tags(compact_ssu,"svg")[[1L]],"text"),"y","40")
+stopifnot(length(ssu_ticks)<19L,all(vapply(ssu_ticks,function(tag) number_attr(tag,"font-size")==12,logical(1))))
+# Default/export mode remains the original 1,680-unit source-column scene.
+explicit_default <- primer_overview_map(fish,components,markers[markers$marker_id=="COI",],
+  thermal_rows=pair_thermal_summary(components),citations=citations,primer_facets=facets,diet_uses=diet,
+  arthropod_off_target_ids=fish$pair_id,folmer_region=folmer,viewport_width=NULL)
+stopifnot(identical(html(explicit_default),coi_html),length(collect_tags(explicit_default,"details"))==0L,
+  as.numeric(strsplit(collect_tags(explicit_default,"svg")[[1L]]$attribs$viewBox," ",fixed=TRUE)[[1L]])[3L]==1680,
+  inherits(try(primer_overview_map(fish,components,markers[markers$marker_id=="COI",],viewport_width=0),silent=TRUE),"try-error"))
 cat("Shared primer overview geometry, sources, landmarks, clipping and click identity passed.\n")

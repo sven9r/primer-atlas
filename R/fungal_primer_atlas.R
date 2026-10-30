@@ -210,8 +210,14 @@ fungal_primer_atlas_data <- function(snapshot,accession,region="ALL") {
   data.frame(catalog_id=ids,label_x=(xmin+xmax)/2,label_left=xmin,label_right=xmax,lane=lanes)
 }
 
-fungal_primer_atlas <- function(data,selected_forward=character(),selected_reverse=character(),click_input="fungal_atlas_primer_click",variant_catalog=NULL) {
+fungal_primer_atlas <- function(data,selected_forward=character(),selected_reverse=character(),click_input="fungal_atlas_primer_click",variant_catalog=NULL,viewport_width=NULL) {
   if(!is.list(data) || !all(c("rows","landmarks","panels","missing","catalog","accession","version_id") %in% names(data))) stop("Build an explicit frozen primer-atlas context first")
+  responsive <- !is.null(viewport_width)
+  if(responsive && (!is.numeric(viewport_width) || length(viewport_width)!=1L || is.na(viewport_width) ||
+      !is.finite(viewport_width) || viewport_width<320)) stop("Atlas viewport width must be one finite pixel width of at least 320.")
+  width <- if(responsive) as.numeric(viewport_width) else 1000
+  left <- if(responsive) 40 else 65
+  right <- if(responsive) width-28 else 965
   if(is.null(variant_catalog)) variant_catalog <- data.frame(catalog_id=character(),direction=character(),parent_catalog_id=character())
   if(!all(c("catalog_id","direction","parent_catalog_id") %in% names(variant_catalog)) || anyDuplicated(variant_catalog$catalog_id)) stop("Atlas variant identity is incomplete")
   if(any(!selected_forward %in% c(data$catalog$catalog_id[data$catalog$direction=="forward"],variant_catalog$catalog_id[variant_catalog$direction=="forward"])) ||
@@ -243,17 +249,27 @@ fungal_primer_atlas <- function(data,selected_forward=character(),selected_rever
   tags <- htmltools::tags
   if(!nrow(data$panels)) return(tags$div(class="fungal-primer-atlas",tags$p("No individually verified primer placements are available in this view. Missing or ambiguous sites do not establish locus absence.")))
   panel_tags <- lapply(seq_len(nrow(data$panels)),function(p) {
-    panel <- data$panels[p,,drop=FALSE];bounds<-c(panel$start,panel$end);left<-65;right<-965;width<-1000
+    panel <- data$panels[p,,drop=FALSE];bounds<-c(panel$start,panel$end)
     scale <- function(bp) left+(pmax(bounds[1L],pmin(bounds[2L],bp))-bounds[1L])/diff(bounds)*(right-left)
     sites <- data$rows[data$rows$end>=bounds[1L] & data$rows$start<=bounds[2L],,drop=FALSE]
     forwards<-sites[sites$direction=="forward",,drop=FALSE];reverses<-sites[sites$direction=="reverse",,drop=FALSE]
-    fp <- .fungal_atlas_pack(forwards,scale);rp <- .fungal_atlas_pack(reverses,scale)
+    fp <- .fungal_atlas_pack(forwards,scale,left=left,right=right)
+    rp <- .fungal_atlas_pack(reverses,scale,left=left,right=right)
     domains<-data$landmarks[data$landmarks$is_domain & data$landmarks$end>=bounds[1L] & data$landmarks$start<=bounds[2L],,drop=FALSE]
     domain_labels<-domains;domain_labels$primer_name<-domain_labels$label
-    dp<-.fungal_atlas_pack(domain_labels,scale,font_size=13)
+    dp<-.fungal_atlas_pack(domain_labels,scale,left=left,right=right,font_size=13)
+    genes<-data$landmarks[!data$landmarks$is_domain & data$landmarks$end>=bounds[1L] & data$landmarks$start<=bounds[2L],,drop=FALSE]
+    gene_labels<-genes;gene_labels$primer_name<-genes$label
+    gp<-.fungal_atlas_pack(gene_labels,scale,left=left,right=right)
+    gene_narrow <- if(nrow(genes)) vapply(seq_len(nrow(genes)),function(i)
+      scale(genes$end[i])-scale(genes$start[i])<nchar(genes$label[i])*8+8,logical(1)) else logical()
+    # Packed gene names occupy their own band below the closest forward
+    # primer lane. Extra lanes must add space, never overlap primer arrows.
+    gene_label_lanes <- max(c(0L,gp$lane[gene_narrow]))
+    gene_label_band <- max(0L,gene_label_lanes-1L)*20
     domain_height<-if(nrow(domains)) 12+max(dp$lane)*18 else 0
     nf<-max(c(0L,fp$lane));nr<-max(c(0L,rp$lane));step<-42
-    gene_y<-90+nf*step;height<-gene_y+110+domain_height+max(1,nr)*step
+    gene_y<-90+nf*step+gene_label_band;height<-gene_y+110+domain_height+max(1,nr)*step
     children<-list(tags$text(x=left,y=22,fill="#475569",`font-size`=14,"Raw template bases (bp)"))
     ticks<-pretty(bounds,n=6);ticks<-ticks[ticks>=bounds[1L] & ticks<=bounds[2L]]
     for(tick in ticks) children<-append(children,list(tags$line(x1=scale(tick),x2=scale(tick),y1=32,y2=height-25,stroke="#e2e8f0",`stroke-width`=1),
@@ -264,7 +280,7 @@ fungal_primer_atlas <- function(data,selected_forward=character(),selected_rever
         row<-rows[i,,drop=FALSE];layout<-packed[i,,drop=FALSE]
         selected<-row$catalog_id %in% if(role=="forward") selected_forward else selected_reverse
         color<-if(role=="forward") "#2563eb" else "#dc2626"
-        y<-if(role=="forward") gene_y-28-layout$lane*step else gene_y+40+domain_height+layout$lane*step
+        y<-if(role=="forward") gene_y-28-layout$lane*step-gene_label_band else gene_y+40+domain_height+layout$lane*step
         tip<-if(role=="forward") row$end else row$start
         visible_tip<-tip>=bounds[1L] && tip<=bounds[2L]
         source<-.fungal_atlas_text(row,"reference","Original citation unavailable")
@@ -298,19 +314,20 @@ fungal_primer_atlas <- function(data,selected_forward=character(),selected_rever
       })
     }
     children<-append(children,draw_primers(forwards,fp,"forward"));children<-append(children,draw_primers(reverses,rp,"reverse"))
-    genes<-data$landmarks[!data$landmarks$is_domain & data$landmarks$end>=bounds[1L] & data$landmarks$start<=bounds[2L],,drop=FALSE]
-    gene_labels<-genes;gene_labels$primer_name<-genes$label
-    gp<-.fungal_atlas_pack(gene_labels,scale)
     for(i in seq_len(nrow(genes))) {
       row<-genes[i,,drop=FALSE];partial<-grepl("partial|anchor",paste(row$boundary_status,row$landmark_type),ignore.case=TRUE)
       label<-row$label
       color<-if(row$label %in% c("ITS1","ITS2")) "#fef3c7" else "#dbe4ed"
       x1<-scale(row$start);x2<-scale(row$end)
-      narrow<-x2-x1<nchar(label)*8+8
+      narrow<-gene_narrow[i]
       label_x<-if(narrow) gp$label_x[i] else (x1+x2)/2
       label_y<-if(narrow) gene_y-18-gp$lane[i]*17 else gene_y+5
       children<-append(children,list(tags$g(class="fungal-atlas-landmark",`data-landmark-id`=row$landmark_id,`data-start-bp`=row$start,
         `data-end-bp`=row$end,`data-boundary-status`=row$boundary_status,
+        `data-label-packed`=tolower(as.character(narrow)),
+        `data-label-lane`=if(narrow) gp$lane[i] else NULL,
+        `data-label-left`=if(narrow) gp$label_left[i] else NULL,
+        `data-label-right`=if(narrow) gp$label_right[i] else NULL,
         tags$title(paste(row$label,row$start,"–",row$end,"raw bp ·",row$boundary_status,"·",row$evidence_status,"·",row$source_note)),
         tags$rect(x=x1,y=gene_y-14,width=max(1,x2-x1),height=28,rx=2,fill=color,stroke="#64748b",`stroke-dasharray`=if(partial) "4 3" else NULL),
         if(narrow) tags$line(x1=(x1+x2)/2,x2=label_x,y1=gene_y-14,y2=label_y+4,stroke="#64748b",`stroke-width`=1),
@@ -334,12 +351,16 @@ fungal_primer_atlas <- function(data,selected_forward=character(),selected_rever
           if(grepl("adjoining_SSU",panel$basis)) "Source regions with adjoining SSU context" else
             if(grepl("landmark_and",panel$basis)) "Mapped region with surrounding raw bases" else "Verified sites; gene boundaries unavailable")),
       tags$div(class="fungal-atlas-scroll",tags$svg(class="fungal-atlas-svg",viewBox=paste(0,0,width,height),role="img",
+        width=if(responsive) width else NULL,height=if(responsive) height else NULL,
+        style=if(responsive) paste0("width:",width,"px;min-width:0;max-width:none;height:auto") else NULL,
+        `data-layout-width`=width,`data-axis-left`=left,`data-axis-right`=right,
+        `data-domain-start`=bounds[1L],`data-domain-end`=bounds[2L],
         `aria-label`=paste(panel$title,"individual verified primer sites on",data$accession),children)))
   })
-  tags$div(class="fungal-primer-atlas",`data-version-id`=data$version_id,`data-accession`=data$accession,
-    tags$style(htmltools::HTML(".fungal-atlas-panel{margin:0 0 20px}.fungal-atlas-panel h4{font-size:1rem;margin:10px 0 2px}.fungal-atlas-axis-note,.fungal-atlas-context{font-size:.8rem;color:#64748b;margin:0 0 8px}.fungal-atlas-scroll{overflow-x:auto;max-width:100%;border:1px solid #e2e8f0;border-radius:10px;background:#fff}.fungal-atlas-svg{display:block;width:100%;min-width:1000px;height:auto}.fungal-atlas-primer:focus-visible{outline:2px solid #4f46e5}.fungal-atlas-scroll-cue{font-size:.8rem;color:#64748b;margin:4px 0}@media(min-width:1100px){.fungal-atlas-scroll-cue{display:none}}")),
+  tags$div(class=paste("fungal-primer-atlas",if(responsive) "is-responsive" else ""),`data-version-id`=data$version_id,`data-accession`=data$accession,
+    tags$style(htmltools::HTML(".fungal-atlas-panel{margin:0 0 20px}.fungal-atlas-panel h4{font-size:1rem;margin:10px 0 2px}.fungal-atlas-axis-note,.fungal-atlas-context{font-size:.8rem;color:#64748b;margin:0 0 8px}.fungal-atlas-scroll{overflow-x:auto;max-width:100%;border:1px solid #e2e8f0;border-radius:10px;background:#fff}.fungal-atlas-svg{display:block;width:100%;height:auto}.fungal-primer-atlas:not(.is-responsive) .fungal-atlas-svg{min-width:1000px}.fungal-primer-atlas.is-responsive .fungal-atlas-svg{min-width:0}.fungal-atlas-primer:focus-visible{outline:2px solid #4f46e5}.fungal-atlas-scroll-cue{font-size:.8rem;color:#64748b;margin:4px 0}@media(min-width:1100px){.fungal-atlas-scroll-cue{display:none}}")),
     tags$p(class="fungal-atlas-context",paste0(nrow(data$rows)," uniquely placed primers in this view · UNITE catalog; positions on NCBI ",data$accession," · raw bp. Blue → forward; red ← reverse. Click: select → reverse direction → remove. Up to five each.")),
-    tags$p(class="fungal-atlas-scroll-cue","Scroll sideways to see the complete gene bar and primer labels."),panel_tags,
+    if(!responsive) tags$p(class="fungal-atlas-scroll-cue","Scroll sideways to see the complete gene bar and primer labels."),panel_tags,
     tags$details(tags$summary(paste0(nrow(data$missing)," catalog primers have missing, multiple or unavailable placements on this template")),
       tags$p("These site states do not establish amplification failure or absence of the locus. Boundary primers can appear in both panels with the same selection identity."),
       tags$div(class="fungal-atlas-scroll",tags$table(class="table table-sm",tags$thead(tags$tr(tags$th("Primer"),tags$th("Direction"),tags$th("Site evidence"))),

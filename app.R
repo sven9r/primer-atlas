@@ -732,7 +732,7 @@ a.shiny-download-link.btn.disabled, a.shiny-download-link.btn[aria-disabled='tru
 .primer-map-wrap { overflow-x:auto; width:100%; min-width:0; max-width:100%; padding:8px 2px 16px;
   position:relative; z-index:1; overscroll-behavior-x:contain; scrollbar-gutter:stable; }
 .primer-map { min-width:0; width:100%; display:block; }
-.primer-map-wrap > .primer-map { width:max(100%,1350px); max-width:none; }
+.primer-map-wrap > .primer-map { width:100%; max-width:100%; }
 .primer-tooltip-target { cursor:pointer; }
 .primer-tooltip-target:focus-visible {
   outline:3px solid rgba(67,56,202,.65); outline-offset:4px;
@@ -761,6 +761,7 @@ a.shiny-download-link.btn.disabled, a.shiny-download-link.btn[aria-disabled='tru
   content:'Pinned · click the same item again or press Escape to close';
   color:var(--green);
 }
+.primer-hover-tooltip.inspector-preview::after { content:'Click the row to inspect evidence'; }
 .map-legend { display:flex; flex-wrap:wrap; gap:14px; align-items:center;
   padding:2px 2px 10px; font-size:.75rem; color:#475569; }
 .legend-line { display:inline-block; width:28px; height:5px; border-radius:999px;
@@ -1166,6 +1167,64 @@ app_js <- "
     document.addEventListener('DOMContentLoaded', labelSidebarToggles, {once:true});
   } else labelSidebarToggles();
   document.addEventListener('shiny:connected', labelSidebarToggles);
+  // Measure the visible panel, including changes caused by sidebars and tabs.
+  // SVGs are drawn at this width so labels retain their actual screen size.
+  var primerWidths = {};
+  var watchedPrimerPanels = new WeakSet();
+  var primerResizeTimer = null;
+  var primerPanelIds = {primer_map:'primer_map_width', fungal_primer_atlas:'fungal_atlas_width'};
+  function primerPanelBox(panel) {
+    // bslib uses display:contents for renderUI and conditional wrappers.
+    // Observe their real containing box, rather than a zero-width wrapper.
+    while (panel.parentElement && window.getComputedStyle(panel).display === 'contents') panel = panel.parentElement;
+    return panel;
+  }
+  function reportPrimerWidths() {
+    if (!window.Shiny || typeof Shiny.setInputValue !== 'function') return;
+    Object.keys(primerPanelIds).forEach(function(id) {
+      var panel = document.getElementById(id);
+      if (!panel) return;
+      var box = primerPanelBox(panel);
+      var style = window.getComputedStyle(box);
+      var width = Math.floor(box.getBoundingClientRect().width -
+        (parseFloat(style.paddingLeft) || 0) - (parseFloat(style.paddingRight) || 0) -
+        (parseFloat(style.borderLeftWidth) || 0) - (parseFloat(style.borderRightWidth) || 0)) - 4;
+      if (width < 200) return;
+      width = Math.max(320, width);
+      if (Math.abs(width - (primerWidths[id] || 0)) < 4) return;
+      primerWidths[id] = width;
+      Shiny.setInputValue(primerPanelIds[id], width, {priority:'event'});
+    });
+  }
+  function queuePrimerWidths() {
+    window.clearTimeout(primerResizeTimer);
+    primerResizeTimer = window.setTimeout(reportPrimerWidths, 80);
+  }
+  var primerPanelObserver = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(queuePrimerWidths) : null;
+  var watchedPrimerCard = null;
+  var primerMutationObserver = typeof MutationObserver !== 'undefined' ? new MutationObserver(watchPrimerPanels) : null;
+  function watchPrimerPanels() {
+    var card = document.getElementById('primer-map-card');
+    if (card && primerMutationObserver && watchedPrimerCard !== card) {
+      primerMutationObserver.disconnect();
+      primerMutationObserver.observe(card,{subtree:true,childList:true,attributes:true,attributeFilter:['style','class']});
+      watchedPrimerCard = card;
+    }
+    Object.keys(primerPanelIds).forEach(function(id) {
+      var panel = document.getElementById(id);
+      var box = panel && primerPanelBox(panel);
+      if (box && primerPanelObserver && !watchedPrimerPanels.has(box)) {
+        watchedPrimerPanels.add(box);
+        primerPanelObserver.observe(box);
+      }
+    });
+    queuePrimerWidths();
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', watchPrimerPanels, {once:true});
+  else watchPrimerPanels();
+  document.addEventListener('shiny:connected', watchPrimerPanels);
+  window.addEventListener('resize', queuePrimerWidths);
+  $(document).on('shiny:connected shown.bs.tab', watchPrimerPanels);
   var primerTooltip = null;
   var pinnedPrimerTooltipTarget = null;
 
@@ -1202,6 +1261,7 @@ app_js <- "
     tooltip.textContent = message;
     tooltip.classList.add('visible');
     tooltip.classList.toggle('pinned', !!pinned);
+    tooltip.classList.toggle('inspector-preview', !!target.closest('.primer-overview-row[data-pair-input]'));
     tooltip.setAttribute('aria-hidden', 'false');
     window.requestAnimationFrame(function() {
       placePrimerTooltip(target);
@@ -1260,6 +1320,10 @@ app_js <- "
     var target = event.target.closest(
       '.primer-tooltip-target[data-tooltip]'
     );
+    if (target && target.closest('.primer-overview-row[data-pair-input]')) {
+      hidePrimerTooltip();
+      return;
+    }
     if (target) {
       if (pinnedPrimerTooltipTarget === target) {
         hidePrimerTooltip();
@@ -1276,6 +1340,11 @@ app_js <- "
     var target = event.target.closest(
       '.primer-tooltip-target[data-tooltip]'
     );
+    if (target && target.closest('.primer-overview-row[data-pair-input]') &&
+        (event.key === 'Enter' || event.key === ' ')) {
+      hidePrimerTooltip();
+      return;
+    }
     if (event.key === 'Escape') {
       hidePrimerTooltip();
     } else if (target && (event.key === 'Enter' || event.key === ' ')) {
@@ -1823,7 +1892,7 @@ ui <- page_navbar(
               span(span(class="legend-line legend-forward"), "Forward primer"),
               span(span(class="legend-line legend-informative"), "Amplicon − primers (informative)"),
               span(span(class="legend-line legend-reverse"), "Reverse primer")),
-          p(class="map-scroll-hint tiny", "Swipe horizontally across the map to see later positions and source columns."),
+          p(class="map-scroll-hint tiny", "Click a primer row to inspect its measurements, sources and reference evidence."),
           uiOutput("primer_map"),
           uiOutput("primer_overview_paging")),
           tags$script(HTML("(function(){function bind(){Shiny.addCustomMessageHandler('primer-overview-inspect',function(message){var d=document.getElementById('primer-evidence-inspector');if(d){d.open=true;d.scrollIntoView({behavior:'smooth',block:'start'});}});var d=document.getElementById('primer-evidence-inspector');if(d)d.addEventListener('toggle',function(){if(d.open)Shiny.setInputValue('primer_overview_inspector_open',{nonce:Date.now()},{priority:'event'});});}$(bind);})();")),
@@ -2599,7 +2668,8 @@ server <- function(input, output, session) {
   output$fungal_primer_atlas <- renderUI({
     req(identical(input$map_marker,"ITS_FUNGAL"))
     fungal_primer_atlas(fungal_atlas_data(),selected_forward=fungal_builder_forward(),
-      selected_reverse=fungal_builder_reverse(),variant_catalog=fungal_builder_variants())
+      selected_reverse=fungal_builder_reverse(),variant_catalog=fungal_builder_variants(),
+      viewport_width=input$fungal_atlas_width)
   })
   output$fungal_atlas_selection <- renderUI({
     forward <- length(fungal_builder_forward()); reverse <- length(fungal_builder_reverse())
@@ -4488,7 +4558,8 @@ server <- function(input, output, session) {
       annotations <- bind_rows(data$landmarks,data$domains)
       return(primer_overview_map(rows,components,data$marker,landmarks=annotations,
           focus=data$focus,domain=data$domain,thermal_rows=thermal,sodium_mM=sodium,ta_offset_c=offset,
-          citations=data$citations,active_pair_id=active,pair_click_input="primer_overview_pair_click"))
+          citations=data$citations,active_pair_id=active,pair_click_input="primer_overview_pair_click",
+          viewport_width=input$primer_map_width))
     }
     marker <- marker_registry |> filter(marker_id==input$map_marker) |> slice(1)
     landmarks <- marker_landmarks |> filter(marker_id==input$map_marker) |> arrange(display_order)
@@ -4508,7 +4579,8 @@ server <- function(input, output, session) {
     primer_overview_map(rows,components,marker,landmarks=landmarks,focus=focus,domain=domain,
         thermal_rows=thermal,sodium_mM=sodium,ta_offset_c=offset,citations=citations,
         primer_facets=primer_facets,diet_uses=diet_uses,arthropod_off_target_ids=arthropod_off_target_ids,
-        folmer_region=folmer_region,active_pair_id=active,pair_click_input="primer_overview_pair_click")
+        folmer_region=folmer_region,active_pair_id=active,pair_click_input="primer_overview_pair_click",
+        viewport_width=input$primer_map_width)
   })
 
   output$its_map_catalog_ui <- renderUI({

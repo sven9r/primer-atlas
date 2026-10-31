@@ -92,20 +92,62 @@ stopifnot(
   length(regmatches(rendered_default, gregexpr('<circle cx="16"', rendered_default, fixed = TRUE))[[1L]]) == nrow(default_rows),
   grepl("View 0–800 bp", rendered_default, fixed = TRUE)
 )
+# Check declared controls and layout order from R calls, independent of source
+# whitespace. The shared explorer now precedes the closed published-evidence
+# workspace; the retained map controls still have their deliberate order.
+control_calls <- list()
+visit_controls <- function(node) {
+  if (missing(node)) return(invisible(NULL))
+  if (is.expression(node)) {
+    for (child in node) visit_controls(child)
+    return(invisible(NULL))
+  }
+  if (!is.call(node)) return(invisible(NULL))
+  callee <- paste(deparse(node[[1L]]), collapse = "")
+  args <- as.list(node)[-1L]
+  argument <- function(name, position = NULL) {
+    named <- which(names(args) == name)
+    if (length(named)) return(args[[named[1L]]])
+    if (!is.null(position) && length(args) >= position) return(args[[position]])
+    NULL
+  }
+  standard <- callee %in% c("selectInput", "selectizeInput", "radioButtons", "checkboxGroupInput",
+    "actionButton", "sliderInput", "uiOutput", "primerExploreUI")
+  container <- identical(callee, "tags$details")
+  if (standard || container) {
+    id <- if (container) argument("id") else argument(if (callee == "uiOutput") "outputId" else "inputId", 1L)
+    label <- if (container || callee %in% c("uiOutput", "primerExploreUI")) NULL else argument("label", 2L)
+    if (is.character(id) && length(id) == 1L) control_calls[[length(control_calls) + 1L]] <<-
+      list(id = id, label = label, kind = callee)
+  }
+  for (child in args) visit_controls(child)
+  invisible(NULL)
+}
+visit_controls(parse(text = app_source))
+control_position <- function(id, label = NULL, kind = NULL) {
+  matches <- which(vapply(control_calls, function(control)
+    identical(control$id, id) && (is.null(label) || identical(control$label, label)) &&
+      (is.null(kind) || identical(control$kind, kind)), logical(1)))
+  # Missing and duplicate declarations both violate the intended UI contract.
+  if (length(matches) == 1L) as.integer(matches) else -1L
+}
 positions <- c(
-  marker = regexpr('"map_marker", "Marker"', app_source, fixed = TRUE)[1],
-  application = regexpr('"application_filter", "Applications"', app_source, fixed = TRUE)[1],
-  map_sort = regexpr('"map_sort", "Order rows by"', app_source, fixed = TRUE)[1],
-  select_all = regexpr('"select_all", "Select all"', app_source, fixed = TRUE)[1],
-  amplicon_range = regexpr(
-    '"amplicon_range", "Amplicon + primers (bp)"',
-    app_source,
-    fixed = TRUE
-  )[1],
-  pair_select = regexpr('uiOutput("pair_selector_ui")', app_source, fixed = TRUE)[1]
+  organism = control_position("map_organism", "Organism group", "selectInput"),
+  marker = control_position("map_marker", "Marker", "selectInput"),
+  explorer = control_position("explore", kind = "primerExploreUI"),
+  published_evidence = control_position("legacy-primer-workspace", kind = "tags$details"),
+  application = control_position("application_filter", "Applications"),
+  map_sort = control_position("map_sort", "Order rows by"),
+  select_all = control_position("select_all", "Select all"),
+  amplicon_range = control_position("amplicon_range", "Amplicon + primers (bp)"),
+  pair_select = control_position("pair_selector_ui", kind = "uiOutput")
 )
 stopifnot(
   all(positions > 0),
+  positions["organism"] < positions["marker"],
+  positions["marker"] < positions["explorer"],
+  positions["explorer"] < positions["published_evidence"],
+  positions["published_evidence"] < positions["application"],
   positions["marker"] < positions["application"],
   positions["application"] < positions["map_sort"],
   positions["map_sort"] < positions["select_all"],
@@ -206,4 +248,4 @@ stopifnot(
   identical(unname(alphabetical_choices), c("C", "A", "B"))
 )
 
-message("Shared primer-map domain, legacy-range parity and control-order checks passed.")
+message("Shared primer-map domain, legacy-range parity and parsed primary/published-evidence control-order checks passed.")

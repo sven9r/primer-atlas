@@ -16,6 +16,9 @@ review, merge and deployment.
   the previously validated MAFFT/VSEARCH environment. The rolling latest image
   moved to Ubuntu 26.04 and the unchanged retention fixture failed at MAFFT.
   Alignment failures now retain the executable, version, status and stderr.
+- Check map control identities and ordering from parsed R declarations, so
+  source spacing does not cause a false layout regression. Run the complete
+  regression suite in parallel groups while retaining the required `test` gate.
 
 - Put organism and marker selection above a shared individual-primer overview,
   Mix & match builder, detailed amplicon map and taxonomic fit page. Fish can

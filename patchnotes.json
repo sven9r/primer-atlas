@@ -44,6 +44,14 @@
             "tests/test_coi_retention.R"
           ],
           "change": "Pin the scientific jobs to the previously validated Ubuntu 24.04 MAFFT/VSEARCH environment after ubuntu-latest changed to 26.04. Preserve alignment flags and hard gates while surfacing subprocess status, executable, version and stderr."
+        },
+        {
+          "kind": "complete_parallel_ci_and_layout_contract",
+          "paths": [
+            ".github/workflows/test.yml",
+            "tests/test_primer_map_domain.R"
+          ],
+          "change": "Keep every regression check in parallel groups behind the existing required test gate; validate control IDs, labels and ordering from parsed R declarations instead of exact source spacing."
         }
       ],
       "verification": [
@@ -51,8 +59,9 @@
         "All nine new R checks, source-captioned exports, actual Shiny download callbacks and ZIP checksums passed locally",
         "All 21 focused legacy compatibility checks passed; final shared-map and app-navigation checks also passed",
         "All 22 fish, animal and taxonomy source checks passed against raw slices, hashes, accessions, ecology and taxon IDs",
-        "The deployment manifest has 2404 files with zero checksum mismatches and remains below the100MiB gate",
-        "The real two-worker COI retention builds and controlled MAFFT failure diagnostics pass locally; the pinned clean GitHub runner is being rechecked"
+        "The deployment manifest has 2404 files with zero checksum mismatches and remains below the 100 MiB gate",
+        "The real two-worker COI retention builds and controlled MAFFT failure diagnostics pass locally; current hosted verification is recorded in the PR checks",
+        "All 125 Python source acquisition and provenance checks pass locally, along with the complete regression tail after the repaired layout assertion"
       ],
       "known_limitations": [
         "Small starter panels do not establish broad animal-marker coverage or empirical PCR performance",

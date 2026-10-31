@@ -84,8 +84,19 @@ run_mafft <- function(reference, fragments, output, log_path) {
     "--addfragments", shQuote(fragments),
     shQuote(reference)
   )
-  status <- system2(mafft, args, stdout = temporary, stderr = log_path)
-  if (!identical(status, 0L)) stop("MAFFT failed; see ", log_path)
+  invocation_error <- NULL
+  status <- tryCatch(system2(mafft, args, stdout = temporary, stderr = log_path),
+    error = function(error) { invocation_error <<- conditionMessage(error); NA_integer_ })
+  if (length(status)!=1L || is.na(status) || status!=0L) {
+    stderr <- if (file.exists(log_path)) tail(readLines(log_path,warn=FALSE),40L) else "MAFFT created no stderr log."
+    if (!length(stderr)) stderr <- "MAFFT stderr log is empty."
+    stop(paste0("MAFFT failed (exit status ",if(length(status)==1L && !is.na(status)) status else "unavailable", ").\n",
+      paste(stderr,collapse="\n"),if(!is.null(invocation_error)) paste0("\nInvocation error: ",invocation_error) else "",
+      "\nExecutable: ",unname(mafft),"\nVersion: ",paste(aligner_version,collapse=" "),
+      "\nCommand: ",paste(c(shQuote(unname(mafft)),args),collapse=" "),
+      "\nPlatform: ",paste(Sys.info()[c("sysname","release","machine")],collapse=" / "),
+      "\nFull stderr: ",log_path),call.=FALSE)
+  }
 
   aligned <- parse_fasta(temporary)
   widths <- nchar(aligned)
@@ -135,6 +146,10 @@ run_primerminer_clustering <- function(raw_path, destination_dir) {
 
 manifest_rows <- vector("list", nrow(orders))
 aligner_version <- system2(mafft, "--version", stdout = TRUE, stderr = TRUE)
+version_status <- attr(aligner_version,"status")
+if (!length(aligner_version) || (!is.null(version_status) && version_status!=0L)) {
+  stop("MAFFT version probe failed for ",unname(mafft),": ",paste(aligner_version,collapse="\n"))
+}
 
 # Source labels describe the frozen acquisition input. This stage only aligns
 # those records; it never submits a new query or applies an acquisition subset.

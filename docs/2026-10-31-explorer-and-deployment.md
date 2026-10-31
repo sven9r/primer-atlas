@@ -72,6 +72,14 @@ metadata. The original broad-reference publication export remains available.
 
 ## Publishing this version
 
+Scientific test and monthly-release workers use Ubuntu 24.04, matching the
+last validated native alignment toolchain. The first CI attempt on this change
+inherited Ubuntu 26.04 through `ubuntu-latest` and stopped in the unchanged
+MAFFT retention fixture. Pinning the environment keeps native tool changes
+separate from application changes; alignment errors now include their actual
+stderr, executable, version and platform. The alignment parameters and hard
+validation gates are unchanged.
+
 The hosting services already exist. This change does not require a new host.
 
 1. Pass the required GitHub check and obtain the repository's required

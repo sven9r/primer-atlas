@@ -43,8 +43,35 @@ align <- function(path) {
   setwd(path); Sys.setenv(ORDERS=paste(groups, collapse=','), EVALUATION_MODE='full')
   log <- file.path(path, 'build.log')
   status <- system2(file.path(R.home('bin'), 'Rscript'), 'scripts/build_22_group_alignments.R', stdout=log, stderr=log)
-  if(status != 0L) stop(paste(readLines(log, warn=FALSE), collapse='\n'))
+  if(status != 0L) {
+    # R truncates long condition messages. Print the captured child output
+    # before the short error so MAFFT's actual failure survives ephemeral CI.
+    cat(readLines(log,warn=FALSE),sep='\n',file=stderr())
+    stop('COI fixture alignment failed with exit status ',status,'; diagnostics printed above. Full log: ',log)
+  }
 }
+# Exercise the actual subprocess wrapper's failure path without changing its
+# biological parameters or accepting any synthetic alignment as a real result.
+wrapper <- parse(file.path(repo,'scripts/build_22_group_alignments.R'))
+definition <- Filter(function(expression) is.call(expression) && identical(expression[[1L]],as.name('<-')) &&
+  identical(expression[[2L]],as.name('run_mafft')),as.list(wrapper))
+stopifnot(length(definition)==1L)
+diagnostic_env <- new.env(parent=globalenv())
+eval(definition[[1L]],envir=diagnostic_env)
+diagnostic_shim <- file.path(fixture,'mafft_failure_fixture')
+writeLines(c('#!/bin/sh','printf "%s\\n" "fixture MAFFT: required helper could not start" >&2','exit 42'),diagnostic_shim)
+Sys.chmod(diagnostic_shim,'0755')
+diagnostic_env$mafft <- diagnostic_shim
+diagnostic_env$aligner_version <- 'fixture-mafft-version'
+diagnostic_log <- file.path(fixture,'mafft_failure.log')
+diagnostic_output <- file.path(fixture,'never_installed.fasta')
+failure <- tryCatch({diagnostic_env$run_mafft('reference.fasta','fragments.fasta',diagnostic_output,diagnostic_log);NULL},error=function(error)error)
+stopifnot(inherits(failure,'error'),grepl('exit status 42',conditionMessage(failure),fixed=TRUE),
+  grepl('required helper could not start',conditionMessage(failure),fixed=TRUE),
+  grepl('fixture-mafft-version',conditionMessage(failure),fixed=TRUE),
+  grepl('--adjustdirectionaccurately',conditionMessage(failure),fixed=TRUE),
+  grepl('--keeplength',conditionMessage(failure),fixed=TRUE),
+  !file.exists(diagnostic_output),file.exists(diagnostic_log))
 # Worker one creates a validated immutable state using the actual MAFFT builder.
 first <- worker('first')
 for (g in seq_along(groups)) {

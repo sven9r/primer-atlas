@@ -5,7 +5,9 @@ on:
   pull_request:
 jobs:
   test:
-    runs-on: ubuntu-latest
+    # Keep the scientific toolchain on the OS used by the validated releases.
+    # ubuntu-latest moved to 26.04 and changed MAFFT/VSEARCH beneath the lockfile.
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - uses: r-lib/actions/setup-r@v2

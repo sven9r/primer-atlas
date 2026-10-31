@@ -45,7 +45,8 @@ jobs:
       fail-fast: false
       matrix:
         marker: ${{ fromJSON(inputs.marker == 'COI' && '["COI"]' || inputs.marker == 'ITS_FUNGAL' && '["ITS_FUNGAL"]' || '["COI","ITS_FUNGAL"]') }}
-    runs-on: ubuntu-latest
+    # Match the validated MAFFT/VSEARCH environment used by regression tests.
+    runs-on: ubuntu-24.04
     env:
       MARKER_ID: ${{ matrix.marker }}
       RELEASE_ID: ${{ github.run_id }}-${{ github.run_attempt }}-${{ matrix.marker }}

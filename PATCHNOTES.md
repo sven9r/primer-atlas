@@ -12,6 +12,11 @@ not mistaken for a completed release.
 **Status:** Implemented and verified locally; public release awaits the required
 review, merge and deployment.
 
+- Pin scientific test and monthly-release workers to Ubuntu 24.04, matching
+  the previously validated MAFFT/VSEARCH environment. The rolling latest image
+  moved to Ubuntu 26.04 and the unchanged retention fixture failed at MAFFT.
+  Alignment failures now retain the executable, version, status and stderr.
+
 - Put organism and marker selection above a shared individual-primer overview,
   Mix & match builder, detailed amplicon map and taxonomic fit page. Fish can
   select 12S, COI, 18S and 28S; animal groups expose complementary 18S/28S.

@@ -6,6 +6,14 @@ missing-reference bias. Animal COI is active; fungal ITS and eukaryotic 18S are
 pilots. Vertebrate mitochondrial 12S, bacterial/archaeal 16S, animal
 mitochondrial 16S, and 28S have stable registry entries for later releases.
 
+The shared explorer separates organism group and marker selection, then offers
+individual primer sites, catalog/custom mixing, amplicon maps and taxonomic
+fit. All 22 exposed animal-group/marker routes have source-backed components
+and explicit starter templates. These small examples remain separate from the
+growing arthropod COI panel and broad UNITE collection. Current implementation,
+data scope and public activation steps are in the
+[October 31 record](docs/2026-10-31-explorer-and-deployment.md).
+
 The public architecture separates four layers:
 
 - GitHub versions code, schemas, compact catalogs, manifests, and documentation.
@@ -16,7 +24,7 @@ The public architecture separates four layers:
 Compact pinned summaries keep the app usable during an R2 outage. The bounded
 fungal snapshots also bundle their exact sequences and alignments for recovery;
 large COI sequence and score artifacts remain outside Git.
-See [DEPLOYMENT.md](DEPLOYMENT.md) for the remaining account configuration.
+See [DEPLOYMENT.md](DEPLOYMENT.md) for review, publication and data activation.
 
 For a concise statement of scope, completed work, operational status, and next
 milestones, see [PROJECT_STATUS.md](PROJECT_STATUS.md). Human-readable changes

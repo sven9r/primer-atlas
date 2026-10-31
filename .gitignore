@@ -60,3 +60,4 @@ data/releases/ITS_FUNGAL/**
 
 logs/
 tmp/
+__pycache__/

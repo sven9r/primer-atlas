@@ -2755,16 +2755,22 @@
   },
   "files": {
     "app.R": {
-      "checksum": "be4658b189148f6c26be48d6afce30b8"
+      "checksum": "9434611a99f6e0c7e3bd2af2496e9987"
+    },
+    "data/catalog/animal_assay_primers.csv": {
+      "checksum": "2fa5305e99724631bc4222aa27ab46cc"
     },
     "data/catalog/claims.csv": {
       "checksum": "7e287c602b958d2d647bbee4089c0b39"
+    },
+    "data/catalog/fish_assay_primers.csv": {
+      "checksum": "3d201c031497b77b8db7a4f27ebc6cb3"
     },
     "data/catalog/marker_landmarks.csv": {
       "checksum": "9e40e8406910f76a63515abed46dd6c9"
     },
     "data/catalog/marker_organism_groups.csv": {
-      "checksum": "f66a41cea7dac33452ca60210dc8a71a"
+      "checksum": "91a157e0c5613df6f465a38bacb32dc6"
     },
     "data/catalog/markers.csv": {
       "checksum": "f0830bdd26d4562add84f5782eda6e46"
@@ -2818,7 +2824,7 @@
       "checksum": "ab38b117f2d31531febe43e47cc4df84"
     },
     "data/catalog/sources.csv": {
-      "checksum": "6cdaccb770c6385b33965b304ec73192"
+      "checksum": "3605590e6e8b73227a72e9cf8686ecc1"
     },
     "data/catalog/unite_primers.csv": {
       "checksum": "e1262bc293bbdee6bfaa3ab596705641"
@@ -2898,6 +2904,39 @@
     "data/external/targeted_zbj/targeted_complete_cox1_manifest.csv": {
       "checksum": "db3e57f4d3252d9ae745fc4d7ec08c60"
     },
+    "data/pinned/ANIMAL_STARTER/v1/manifest.json": {
+      "checksum": "85e992fe63a1285b7aaa46a0be65a01e"
+    },
+    "data/pinned/ANIMAL_STARTER/v1/source/ncbi-records-01.xml.gz": {
+      "checksum": "109d41d5965d35c65ab5b40cabd3806f"
+    },
+    "data/pinned/ANIMAL_STARTER/v1/source/ncbi-records-02.xml.gz": {
+      "checksum": "9781c621a32650791a3e72d801630164"
+    },
+    "data/pinned/ANIMAL_STARTER/v1/source/ncbi-records-03.xml.gz": {
+      "checksum": "c875a782070401949a61d3db2552e73f"
+    },
+    "data/pinned/ANIMAL_STARTER/v1/source/ncbi-records-04.xml.gz": {
+      "checksum": "ce11967bb17cbfdbde0c856e6676bb0c"
+    },
+    "data/pinned/ANIMAL_STARTER/v1/source/ncbi-records-05.xml.gz": {
+      "checksum": "e3d2a4a2b6d2582f8febbda3f7149ff5"
+    },
+    "data/pinned/ANIMAL_STARTER/v1/taxonomy_source/ncbi-NC_001322.1.xml.gz": {
+      "checksum": "e3d2a4a2b6d2582f8febbda3f7149ff5"
+    },
+    "data/pinned/ANIMAL_STARTER/v1/taxonomy_source/ncbi-taxonomy-20261031.xml.gz": {
+      "checksum": "a83a984d06cec7b7d4f9c0617de2a33c"
+    },
+    "data/pinned/ANIMAL_STARTER/v1/taxonomy.csv": {
+      "checksum": "a53ec605a60f0fbc09846f7129b9218a"
+    },
+    "data/pinned/ANIMAL_STARTER/v1/templates.csv": {
+      "checksum": "83dc4f02c939861736d5a8a41e875fbe"
+    },
+    "data/pinned/ANIMAL_STARTER/v1/templates.fasta": {
+      "checksum": "45cfc8904d5ffd32513c52a8d7a4b697"
+    },
     "data/pinned/COI/2026-08-14/families.parquet": {
       "checksum": "5d1b1a9c02dc5eba738b5df0508c083f"
     },
@@ -2924,6 +2963,30 @@
     },
     "data/pinned/COI/2026-08-14/taxonomy.parquet": {
       "checksum": "449fbff5347a1b9564dc2198935f356a"
+    },
+    "data/pinned/FISH_STARTER/v1/manifest.json": {
+      "checksum": "8ca184b716d360ee5c8f338cdf6bfb90"
+    },
+    "data/pinned/FISH_STARTER/v1/source/ncbi-records-01.xml.gz": {
+      "checksum": "f3674328ab9420da69cd0f14249d1ead"
+    },
+    "data/pinned/FISH_STARTER/v1/source/ncbi-records-02.xml.gz": {
+      "checksum": "9c7fe2c348a5f1d41e847a015f1c64bc"
+    },
+    "data/pinned/FISH_STARTER/v1/source/ncbi-records-03.xml.gz": {
+      "checksum": "76d4c18aba2ce139118800eaf53edf3f"
+    },
+    "data/pinned/FISH_STARTER/v1/taxonomy_source/ncbi-taxonomy-20261031.xml.gz": {
+      "checksum": "a83a984d06cec7b7d4f9c0617de2a33c"
+    },
+    "data/pinned/FISH_STARTER/v1/taxonomy.csv": {
+      "checksum": "ea7c074f49e925f2497e34196d7c7740"
+    },
+    "data/pinned/FISH_STARTER/v1/templates.csv": {
+      "checksum": "558fb831a1f3c7f5fd36052e38ea6818"
+    },
+    "data/pinned/FISH_STARTER/v1/templates.fasta": {
+      "checksum": "7f30f7f6c2dc26261f9ce0995f28b0d7"
     },
     "data/pinned/ITS_FUNGAL/2026-08-14/pair_geometry.parquet": {
       "checksum": "20eaf3af6756c9b1b896ccd6a1e9034c"
@@ -9765,6 +9828,12 @@
     "data/releases/ITS_FUNGAL/latest.json": {
       "checksum": "1890d80605094aa7de14359e173f70be"
     },
+    "R/animal_fit_ui.R": {
+      "checksum": "8f7e85a829b5c57f422470d6a9d4b40d"
+    },
+    "R/animal_fit.R": {
+      "checksum": "2e3250c777368496ab7d60c739c5e3f7"
+    },
     "R/app_assets.R": {
       "checksum": "dbcba1d53a7015b191d5c1a69092215f"
     },
@@ -9825,11 +9894,29 @@
     "R/fungal_versions.R": {
       "checksum": "90d16ccaedf4a943c9f95a62dd8ff249"
     },
+    "R/marker_targets.R": {
+      "checksum": "5803dc8afce0f8fda74f4e173eae88f5"
+    },
+    "R/primer_explore_server.R": {
+      "checksum": "a0f81a2d9c65af18b880a62890b90f81"
+    },
+    "R/primer_explore_ui.R": {
+      "checksum": "e3a59113384f5eb0b0a16eaaf48dfd7f"
+    },
+    "R/primer_mixer_exports.R": {
+      "checksum": "98017f620206c08f505317f00c70300e"
+    },
+    "R/primer_mixer.R": {
+      "checksum": "e6806289c77bd2755748694928c29096"
+    },
     "R/primer_overview.R": {
-      "checksum": "d55a153323c921edf3951fdaed317d98"
+      "checksum": "d37f1970f6cda3f93dd539fa81baad4a"
     },
     "R/primer_publication_export.R": {
       "checksum": "ab27ced8fff78f24ed1aa675b755617b"
+    },
+    "R/primer_site_overview.R": {
+      "checksum": "32e9abe0ac8cc9ce996e24120b551630"
     },
     "R/primerminer_runtime.R": {
       "checksum": "7544e593f3fc8aa3bbd50882ad87b480"
@@ -9865,7 +9952,7 @@
       "checksum": "6931b31b4d88e1fefb43ffeeb80014ef"
     },
     "www/atlas-workspace.css": {
-      "checksum": "65085fdddccf29aff7cf6aaaed709bc0"
+      "checksum": "a1129c8ed68510e77962b92a4ebce93e"
     },
     "www/evolab-berkeley.png": {
       "checksum": "d954558e15002f445db3995d94e4ae0c"

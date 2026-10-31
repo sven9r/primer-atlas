@@ -5,6 +5,36 @@ same `id` as their counterparts in `patchnotes.json`. A patchnote distinguishes
 repository changes from external deployment actions so that prepared code is
 not mistaken for a completed release.
 
+## 2026-10-31 — Shared marker exploration and taxonomic fit
+
+**ID:** `2026-10-31-shared-explorer-animal-fit`
+
+**Status:** Implemented and verified locally; public release awaits the required
+review, merge and deployment.
+
+- Put organism and marker selection above a shared individual-primer overview,
+  Mix & match builder, detailed amplicon map and taxonomic fit page. Fish can
+  select 12S, COI, 18S and 28S; animal groups expose complementary 18S/28S.
+- Combine up to five forward and five reverse catalog/custom components;
+  retain every requested combination, explicit reverse-complement candidates,
+  raw coordinates, substitution/3′ evidence, length filters and source scope.
+- Add 32 source-backed animal primer components and 24 accession-versioned
+  animal/fish starter templates. Preserve partial/predicted flags and separately
+  freeze NCBI taxonomy for these records and the existing COI coordinate reference.
+- Group the actual selected template results by hierarchy with exact,
+  substitution, partial, ambiguous and missing states, exact denominators,
+  accession drill-down and optional user-labelled taxonomy metadata.
+- Preserve full COI scores, broad UNITE evidence, frozen fungal versions and
+  advanced alignments. Separate new source-bounded fungal SSU/LSU intervals
+  from the whole rDNA reference and withhold unsupported historical anchors.
+- Export cited standalone SVG, a formatted HTML paper table, a checksummed
+  evidence ZIP, full result/primer/taxonomy CSV and exact template FASTA. Narrow maps retain the full coordinate range and both ends.
+
+The new panels are mapping examples, not representative coverage surveys or
+new monthly animal-marker releases. The public deployment sequence and
+scientific scope are recorded in
+[the implementation record](docs/2026-10-31-explorer-and-deployment.md).
+
 ## 2026-10-11 — Fungal combinations, platforms, and versions
 
 - Follow-up: connect the combination list and comparison selection to the actual

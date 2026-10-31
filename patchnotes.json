@@ -4,6 +4,58 @@
   "entry_order": "newest_first",
   "entries": [
     {
+      "id": "2026-10-31-shared-explorer-animal-fit",
+      "date": "2026-10-31",
+      "category": "reference_and_interface",
+      "status": "local_verified_public_release_pending_review",
+      "summary": "Unify target-aware marker choice, primer overview, catalog/custom mixing, detailed amplicons and taxonomic fit across animal groups and markers.",
+      "repository_changes": [
+        {
+          "kind": "shared_exploration_and_taxonomic_fit",
+          "paths": [
+            "app.R",
+            "R/marker_targets.R",
+            "R/primer_site_overview.R",
+            "R/primer_mixer.R",
+            "R/primer_explore_ui.R",
+            "R/primer_explore_server.R",
+            "R/animal_fit.R",
+            "R/animal_fit_ui.R"
+          ],
+          "change": "Expose corresponding marker choices and use the same selected chemical components, candidate combinations and explicit templates in the overview, map and hierarchy-scoped fit view."
+        },
+        {
+          "kind": "source_backed_starter_panels_and_exports",
+          "paths": [
+            "data/catalog/fish_assay_primers.csv",
+            "data/catalog/animal_assay_primers.csv",
+            "data/pinned/FISH_STARTER/v1",
+            "data/pinned/ANIMAL_STARTER/v1",
+            "R/primer_mixer_exports.R"
+          ],
+          "change": "Add 32 cited animal oligos and 24 actual starter templates with independently versioned source taxonomy; retain candidate chemistry, source/model/partial flags, coordinates, checksums and citation-bearing exports."
+        }
+      ],
+      "verification": [
+        "All 22 animal-group/marker routes have actual scoped templates, source-backed oligos and reconciled taxonomic-fit denominators",
+        "All nine new R checks, source-captioned exports, actual Shiny download callbacks and ZIP checksums passed locally",
+        "All 21 focused legacy compatibility checks passed; final shared-map and app-navigation checks also passed",
+        "All 22 fish, animal and taxonomy source checks passed against raw slices, hashes, accessions, ecology and taxon IDs",
+        "The deployment manifest has 2404 files with zero checksum mismatches and remains below the100MiB gate"
+      ],
+      "known_limitations": [
+        "Small starter panels do not establish broad animal-marker coverage or empirical PCR performance",
+        "New 12S/18S/28S monthly reference cohorts remain separate scientific release work",
+        "The updated app is not public until the required reviewing approval, merge and deployment finish"
+      ],
+      "remaining_actions": [
+        "Pass required GitHub CI and obtain the required approving review",
+        "Merge and publish the updated Posit app, then verify anonymous public interaction and exact downloads",
+        "Activate and verify the full-state COI pointer using the documented controlled workflow",
+        "Continue broad family inventories, animal-marker reference acquisition and ecological refinements"
+      ]
+    },
+    {
       "id": "2026-10-11-fungal-combinations-versions",
       "date": "2026-10-11",
       "category": "reference_and_interface",

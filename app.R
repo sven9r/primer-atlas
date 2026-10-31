@@ -36,6 +36,14 @@ source("R/fungal_combination_builder.R")
 source("R/unite_candidate_pairs.R")
 source("R/primer_publication_export.R")
 source("R/fungal_builder_ui.R")
+source("R/marker_targets.R")
+source("R/primer_mixer.R")
+source("R/primer_mixer_exports.R")
+source("R/primer_site_overview.R")
+source("R/primer_explore_ui.R")
+source("R/primer_explore_server.R")
+source("R/animal_fit.R")
+source("R/animal_fit_ui.R")
 primer_publication_citations <- read.csv("data/catalog/primer_publication_citations.csv",stringsAsFactors=FALSE)
 
 coi_release_state <- tryCatch(atlas_read_manifest("COI"), error = function(e) NULL)
@@ -1636,10 +1644,10 @@ institution_banner <- div(
 hero <- div(
   class = "hero",
   div(class = "eyebrow", "Multi-marker primer decision support"),
-  h1("Choose a marker. Explore its evidence."),
+  h1("Find primers for your question."),
   p(
-    "Find primer combinations, check their reference support, ",
-    "and follow a result to the sequences behind it."
+    "Choose an organism group and a marker. Explore the regions, mix primers, ",
+    "and inspect the sequences behind each result."
   )
 )
 
@@ -1654,6 +1662,7 @@ ui <- page_navbar(
   header = tagList(
     tags$style(HTML(app_css)),
     tags$script(HTML(app_js)),
+    tags$script(HTML("$(function(){Shiny.addCustomMessageHandler('atlas-explore-evidence',function(){var a=document.getElementById('legacy-primer-workspace');var b=document.getElementById('primer-evidence-inspector');if(a)a.open=true;if(b){b.open=true;b.scrollIntoView({behavior:'smooth',block:'start'});}});Shiny.addCustomMessageHandler('atlas-full-fit-evidence',function(){var d=document.getElementById('reference-fit-details');if(d)d.open=true;});});")),
     tags$link(rel = "stylesheet", href = atlas_asset_url("atlas-workspace.css"))
   ),
   nav_panel(
@@ -1664,8 +1673,8 @@ ui <- page_navbar(
       div(
         class = "start-grid atlas-marker-grid",
         div(class = "start-card atlas-marker-card",
-            span(class = "atlas-status-chip", "Animal marker"), h3("COI"),
-            p("Explore animal primer products and binding-site fit across the retained reference groups."),
+            span(class = "atlas-status-chip", "Animal group"), h3("Arthropods"),
+            p("Start with COI, or investigate secondary 18S and 28S markers. Combine catalog and custom primers."),
             div(class = "atlas-card-actions",
                 actionButton("go_coi_explore", "Explore primers →", class = "btn-primary"),
                 actionButton("go_fit", "Check taxonomic fit", class = "btn-outline-secondary"))),
@@ -1675,6 +1684,11 @@ ui <- page_navbar(
             div(class = "atlas-card-actions",
                 actionButton("go_fungal_explore", "Explore primers →", class = "btn-primary"),
                 actionButton("go_fungal_fit", "Check taxonomic fit", class = "btn-outline-secondary"))),
+        div(class = "start-card atlas-marker-card",
+            span(class = "atlas-status-chip", "Animal group"), h3("Fish"),
+            p("Compare 12S, COI, 18S and 28S assays on explicit fish templates, with source scope and substitutions visible."),
+            div(class = "atlas-card-actions",
+                actionButton("go_fish_explore", "Explore fish primers →", class = "btn-primary"))),
         div(class = "start-card atlas-marker-card atlas-18s-entry",
             span(class = "atlas-status-chip", "Eukaryotic marker"), h3("18S"),
             p("Browse documented SSU combinations and their regions in the PR2 primer catalog."),
@@ -1691,10 +1705,10 @@ ui <- page_navbar(
             div(strong("Animal COI · active"), uiOutput("coi_start_reference_status")),
             div(strong("Fungal rDNA · versioned panel"), span("Primer products, gene/domain tracks and taxonomic reference support use the selected immutable snapshot. This small panel does not establish broad fungal amplification performance.")),
             div(strong("Eukaryotic 18S · pilot"), span("321 catalog primers and 123 documented sets. Ninety-three sets have drawable geometry; this is not broad taxonomic performance evidence.")),
-            div(strong("Additional 12S, 16S and broad 28S panels · planned"), span("Fungal 28S is available within the rDNA explorer. Other marker reference panels remain planned."))
+            div(strong("Fish 12S / COI / 18S / 28S · sequence examples"), span("Source-backed assay components and accession-versioned starter templates support mix and match. Broad taxonomic coverage and monthly fish marker releases remain separate work."))
         ),
         p(class = "tiny mt-3 mb-0", "Reference fit and sampling describe available sequences. They do not predict PCR success or establish a species' geographic range. The Hawaiʻi–Madagascar audit is separate research documented in the repository and is not loaded into this app."),
-        p(class = "tiny mt-3 mb-0", "App version 2026.10.11 · Growing COI references and versioned fungal combinations")
+        p(class = "tiny mt-3 mb-0", "App version 2026.10.31 · Shared primer exploration and taxonomic fit")
       )
     )
   ),
@@ -1702,7 +1716,14 @@ ui <- page_navbar(
     "Primer explorer", value = "find",
     div(
       class = "container-fluid primer-map-page",
-      workspace_heading("Primer explorer", "Choose a marker, then inspect its regions and primer products."),
+      workspace_heading("Primer explorer", "Choose your target and marker. Explore the regions, combine primers, then inspect their template fit."),
+      div(class="explore-target-toolbar",
+        selectInput("map_organism","Organism group",choices=organism_group_choices,selected="ARTHROPODS"),
+        selectInput("map_marker","Marker",choices=atlas_target_marker_choices(
+          atlas_target_marker_options("ARTHROPODS",marker_registry,marker_organism_groups)),selected="COI")),
+      primerExploreUI("explore"),
+      tags$details(id="legacy-primer-workspace",class="atlas-detail explore-published-evidence",
+      tags$summary("Published assays, versioned alignments and extended reference evidence"),
       div(class = "atlas-page-tools",
           actionButton("go_coi_map", "Animal COI", class = "btn btn-outline-primary btn-sm"),
           actionButton("go_fungal_map", "Fungal rDNA", class = "btn btn-outline-primary btn-sm"),
@@ -1714,24 +1735,7 @@ ui <- page_navbar(
           open = list(desktop = "closed", mobile = "closed"),
           h4("Build the view"),
           tags$a(href = "#primer-map-card", class = "btn btn-outline-success btn-sm mb-3", "Jump to primer map"),
-          div(
-            class = "organism-picker",
-            radioButtons(
-              "map_organism", "What are you looking for?",
-              choices = organism_group_choices,
-              selected = "ALL", inline = TRUE
-            )
-          ),
           uiOutput("map_marker_guidance"),
-          selectInput(
-            "map_marker", "Marker",
-            choices = setNames(
-              marker_registry$marker_id[marker_registry$status %in% c("active", "pilot")],
-              paste0(marker_registry$display_name[marker_registry$status %in% c("active", "pilot")],
-                     ifelse(marker_registry$status[marker_registry$status %in% c("active", "pilot")] == "pilot", " · pilot", ""))
-            ),
-            selected = "COI"
-          ),
           conditionalPanel(
             condition = "input.map_marker == 'ITS_FUNGAL'",
             div(
@@ -1914,23 +1918,34 @@ ui <- page_navbar(
                       actionButton("overview_open_fit", "Check taxonomic fit", class="btn-primary")),
                   uiOutput("custom_diagnostic_selector"), uiOutput("custom_location_detail")))
         )
-      )
+      ))
     )
   ),
   nav_panel(
     "Taxonomic fit", value = "fit",
     div(
       class = "container-fluid",
-      workspace_heading("Taxonomic fit", "Choose a marker and investigate the reference evidence behind a primer combination."),
+      workspace_heading("Taxonomic fit", "Investigate your selected combinations across taxa, then open the exact templates behind each result."),
+      div(class="explore-target-toolbar",
+        selectInput("fit_target_group","Organism group",organism_group_choices,selected="ARTHROPODS"),
+        selectInput("fit_locus","Marker",atlas_target_marker_choices(atlas_target_marker_options("ARTHROPODS",marker_registry,marker_organism_groups)),selected="COI")),
+      conditionalPanel(condition="input.map_marker != 'ITS_FUNGAL'",
+        div(class="atlas-card-actions mb-3",
+          actionButton("fit_choose_primers","Choose primers in explorer",class="btn-outline-primary btn-sm"),
+          actionButton("fit_load_example","Load example combinations",class="btn-outline-secondary btn-sm")),
+        animalFitUI("animal_fit")),
+      uiOutput("fit_full_reference_entry"),
+      tags$details(id="reference-fit-details",class="atlas-detail explore-published-evidence",
+      tags$summary("Published reference collections and full COI scores"),
       div(class = "atlas-segmented atlas-fit-marker",
           radioButtons("fit_marker", "Marker", c("Animal COI" = "COI", "Fungal rDNA" = "ITS_FUNGAL"), "COI", inline = TRUE)),
-      conditionalPanel(condition = "input.fit_marker == 'ITS_FUNGAL'",
+      conditionalPanel(condition = "input.fit_marker == 'ITS_FUNGAL' && input.map_marker == 'ITS_FUNGAL'",
           div(class = "atlas-segmented atlas-fungal-collection",
               radioButtons("fungal_fit_source", "Reference collection",
                   c("Broad ITS · UNITE" = "UNITE", "Long rDNA · NCBI" = "NCBI"), "UNITE", inline = TRUE)),
           conditionalPanel(condition = "input.fungal_fit_source == 'UNITE'", uniteReferenceUI("unite_fit", initial_mode = "primers")),
           conditionalPanel(condition = "input.fungal_fit_source == 'NCBI'", fungalFitUI("fungal_fit"))),
-      conditionalPanel(condition = "input.fit_marker == 'COI'",
+      conditionalPanel(condition = "input.fit_marker == 'COI' && input.map_marker == 'COI' && ['ALL','ARTHROPODS','METAZOA'].indexOf(input.map_organism) >= 0",
       div(class = "callout tiny", strong("Active COI reference: "), uiOutput("coi_fit_reference_status")),
       card(
         fill = FALSE,
@@ -2255,7 +2270,7 @@ ui <- page_navbar(
           )
         )
       ))
-      )
+      ))
     )
   ),
   nav_panel(
@@ -2530,6 +2545,114 @@ server <- function(input, output, session) {
   fungal_builder_state <- reactiveValues(version=NULL,forward=character(),reverse=character())
   fungal_builder_ack <- reactiveValues(forward=NULL,reverse=NULL)
   fungal_workspace <- fungalExplorerServer("fungal", selection = fungal_explorer_context)
+  explore_workspace <- primerExploreServer("explore",marker=reactive(input$map_marker),
+    target_group=reactive(input$map_organism %||% "ARTHROPODS"),fungal_snapshot=fungal_workspace$snapshot,
+    taxonomic_report=function() {
+      if(identical(input$map_marker,"ITS_FUNGAL")) return(NULL)
+      animal_fit_workspace$data()
+    },
+    on_fit=function() {
+      if(identical(input$map_marker,"ITS_FUNGAL")) {
+        updateRadioButtons(session,"fit_marker",selected="ITS_FUNGAL")
+        updateRadioButtons(session,"fungal_fit_source",selected="UNITE")
+      }
+      updateNavbarPage(session,"main_nav",selected="fit")
+    },
+    on_version=function(version) {
+      if(version %in% fungal_read_index(remote=FALSE)$id) updateSelectInput(session,"fungal-version",selected=version)
+    },
+    on_evidence=function(pair,components) {
+      f <- components[components$primer_id==pair$forward_id,,drop=FALSE]
+      r <- components[components$primer_id==pair$reverse_id,,drop=FALSE]
+      if(nrow(f)!=1L || nrow(r)!=1L) return()
+      if(identical(input$map_marker,"ITS_FUNGAL")) {
+        catalog <- fungal_builder_variants()
+        forward_id <- catalog$catalog_id[catalog$direction=="forward" & catalog$primer_name==f$primer_name & catalog$sequence==f$source_sequence]
+        reverse_id <- catalog$catalog_id[catalog$direction=="reverse" & catalog$primer_name==r$primer_name & catalog$sequence==r$source_sequence]
+        if(length(forward_id)!=1L || length(reverse_id)!=1L) {
+          showNotification("These exact chemical oligos are outside the frozen UNITE search. The session's template results are retained; broader scores are unavailable.",duration=10)
+          return(FALSE)
+        }
+        fungal_builder_ack$forward <- fungal_builder_ack$reverse <- NULL
+        fungal_builder_state$forward <- forward_id; fungal_builder_state$reverse <- reverse_id
+        updateSelectizeInput(session,"fungal_builder_forward",selected=forward_id)
+        updateSelectizeInput(session,"fungal_builder_reverse",selected=reverse_id)
+        updateRadioButtons(session,"fungal_overview_mode",selected="amplicons")
+        rows <- fungal_builder_result()$selected_pairs
+        if(nrow(rows)!=1L) return()
+        overview_clicked_pair(rows$pair_id)
+        set_fungal_overview_evidence(rows$pair_id,as.numeric(Sys.time()))
+        updateSelectizeInput(session,"overview_evidence_pair",selected=rows$pair_id)
+        session$sendCustomMessage("atlas-explore-evidence",list())
+        return(TRUE)
+      } else if(identical(input$map_marker,"COI") && input$map_organism %in% c("ALL","METAZOA","ARTHROPODS")) {
+        candidates <- intersect(primers$pair_id[primers$direction=="forward" & primers$sequence==f$source_sequence],
+          primers$pair_id[primers$direction=="reverse" & primers$sequence==r$source_sequence])
+        candidates <- intersect(candidates,pair_meta$pair_id[pair_meta$marker_id=="COI"])
+        if(!length(candidates)) {
+          showNotification("This newly assembled pair has no precomputed full-panel score. Its explicit template results remain available here.",duration=10)
+          return()
+        }
+        updateSelectInput(session,"detail_pair",selected=candidates[1L])
+        updateRadioButtons(session,"fit_marker",selected="COI")
+        updateNavbarPage(session,"main_nav",selected="fit")
+        session$sendCustomMessage("atlas-full-fit-evidence",list())
+        return(TRUE)
+      }
+    })
+  animal_fit_workspace <- animalFitServer("animal_fit",marker=reactive(input$map_marker),
+    target_group=reactive(input$map_organism %||% "ARTHROPODS"),result=explore_workspace$result)
+  fit_picker_ack <- new.env(parent=emptyenv()); fit_picker_ack$group <- fit_picker_ack$marker <- NULL
+  observeEvent(list(input$map_organism,input$map_marker), {
+    req(input$map_organism,input$map_marker)
+    rows <- atlas_target_marker_options(input$map_organism,marker_registry,marker_organism_groups)
+    if(!identical(isolate(input$fit_target_group),input$map_organism)) {
+      fit_picker_ack$group <- input$map_organism
+      updateSelectInput(session,"fit_target_group",selected=input$map_organism)
+    }
+    if(input$map_marker %in% rows$marker_id) {
+      fit_picker_ack$marker <- if(!identical(isolate(input$fit_locus),input$map_marker)) input$map_marker else NULL
+      updateSelectInput(session,"fit_locus",choices=atlas_target_marker_choices(rows),selected=input$map_marker)
+    }
+    if(identical(input$map_marker,"ITS_FUNGAL")) {
+      updateRadioButtons(session,"fit_marker",selected="ITS_FUNGAL")
+      session$sendCustomMessage("atlas-full-fit-evidence",list())
+    }
+  },ignoreNULL=TRUE)
+  observeEvent(input$fit_target_group, {
+    if(!is.null(fit_picker_ack$group)) {
+      if(identical(input$fit_target_group,fit_picker_ack$group)) fit_picker_ack$group <- NULL
+      return()
+    }
+    if(!identical(input$fit_target_group,input$map_organism))
+      updateSelectInput(session,"map_organism",selected=input$fit_target_group)
+  },ignoreInit=TRUE)
+  observeEvent(input$fit_locus, {
+    if(!is.null(fit_picker_ack$marker)) {
+      if(identical(input$fit_locus,fit_picker_ack$marker)) fit_picker_ack$marker <- NULL
+      return()
+    }
+    rows <- atlas_target_marker_options(input$map_organism,marker_registry,marker_organism_groups)
+    if(input$fit_locus %in% rows$marker_id && !identical(input$fit_locus,input$map_marker))
+      updateSelectInput(session,"map_marker",selected=input$fit_locus)
+  },ignoreInit=TRUE)
+  observeEvent(input$fit_choose_primers,updateNavbarPage(session,"main_nav",selected="find"))
+  observeEvent(input$fit_load_example,explore_workspace$load_example())
+  observeEvent(input$main_nav, {
+    if(identical(input$main_nav,"fit") && identical(input$map_marker,"ITS_FUNGAL"))
+      session$sendCustomMessage("atlas-full-fit-evidence",list())
+  })
+  output$fit_full_reference_entry <- renderUI({
+    if(!identical(input$map_marker,"COI") || !input$map_organism %in% c("ALL","METAZOA","ARTHROPODS")) return(NULL)
+    div(class="atlas-panel mt-3",strong("Growing arthropod COI reference"),
+      p(class="atlas-context-line",coi_reference_status(coi_reference_current()),
+        " · This independent collection contains precomputed scores for curated COI pairs. Newly assembled candidates retain their own template results above."),
+      actionButton("fit_open_full_reference","Open full arthropod reference scores",class="btn-outline-primary btn-sm"))
+  })
+  observeEvent(input$fit_open_full_reference, {
+    updateRadioButtons(session,"fit_marker",selected="COI")
+    session$sendCustomMessage("atlas-full-fit-evidence",list())
+  })
   fungal_fit_workspace <- fungalFitServer("fungal_fit", selection = fungal_fit_context)
   unite_explorer_workspace <- uniteReferenceServer("unite_explorer", initial_mode = "primers",
       dataset=function(version_id=NULL) fungal_builder_broad_data(version_id %||% input[["unite_explorer-version"]]),
@@ -3122,15 +3245,19 @@ server <- function(input, output, session) {
   }
   navigate_from("go_find", "find")
   observeEvent(input$go_fit, {
+    open_explorer_marker("COI","ARTHROPODS")
     updateRadioButtons(session, "fit_marker", selected = "COI")
     updateNavbarPage(session, "main_nav", selected = "fit")
+    session$sendCustomMessage("atlas-full-fit-evidence",list())
   })
   observeEvent(input$go_fungal_fit, {
+    open_explorer_marker("ITS_FUNGAL","FUNGI")
     updateRadioButtons(session, "fit_marker", selected = "ITS_FUNGAL")
     updateRadioButtons(session, "fungal_fit_source", selected = "UNITE")
     updateNavbarPage(session, "main_nav", selected = "fit")
   })
   observeEvent(input$go_fungal_fit_library, {
+    open_explorer_marker("ITS_FUNGAL","FUNGI")
     updateRadioButtons(session, "fit_marker", selected = "ITS_FUNGAL")
     updateRadioButtons(session, "fungal_fit_source", selected = "NCBI")
     updateNavbarPage(session, "main_nav", selected = "fit")
@@ -3185,6 +3312,9 @@ server <- function(input, output, session) {
   navigate_from("go_taxa", "taxa")
   navigate_from("go_sources", "sources")
   map_navigation_marker <- reactiveVal(NULL)
+  previous_map_group <- reactiveVal(NULL)
+  explorer_marker_rows <- function(group) atlas_target_marker_options(
+    group,marker_registry,marker_organism_groups,include_planned=TRUE)
   marker_choice_labels <- function(rows) {
     setNames(
       rows$marker_id,
@@ -3276,8 +3406,8 @@ server <- function(input, output, session) {
     # Keep the requested marker through the asynchronous organism-input update.
     # A previous arthropod scope otherwise supplies only COI marker choices.
     map_navigation_marker(if (identical(input$map_organism, "ALL")) NULL else "18S")
-    updateRadioButtons(session, "map_organism", selected = "ALL")
-    updateSelectInput(session, "map_marker", choices = marker_choice_labels(released_marker_rows), selected = "18S")
+    updateSelectInput(session, "map_organism", selected = "ALL")
+    updateSelectInput(session, "map_marker", choices = atlas_target_marker_choices(explorer_marker_rows("ALL")), selected = "18S")
     updateSelectInput(session, "application_filter", selected = character())
     updateSelectInput(session, "environment_filter", selected = character())
     updateSelectInput(session, "intent_filter", selected = character())
@@ -3296,9 +3426,9 @@ server <- function(input, output, session) {
   navigate_to_18s_from("go_18s_start")
   open_explorer_marker <- function(marker, group = "ALL") {
     map_navigation_marker(if (identical(input$map_organism, group)) NULL else marker)
-    updateRadioButtons(session, "map_organism", selected = group)
-    rows <- marker_rows_for_organism(group, released_only = TRUE)
-    updateSelectInput(session, "map_marker", choices = marker_choice_labels(rows), selected = marker)
+    updateSelectInput(session, "map_organism", selected = group)
+    rows <- explorer_marker_rows(group)
+    updateSelectInput(session, "map_marker", choices = atlas_target_marker_choices(rows), selected = marker)
     for (id in c("application_filter", "environment_filter", "intent_filter")) {
       updateSelectInput(session, id, selected = character())
     }
@@ -3308,7 +3438,8 @@ server <- function(input, output, session) {
     }
     updateNavbarPage(session, "main_nav", selected = "find")
   }
-  observeEvent(input$go_coi_explore, open_explorer_marker("COI"))
+  observeEvent(input$go_coi_explore, open_explorer_marker("COI","ARTHROPODS"))
+  observeEvent(input$go_fish_explore, open_explorer_marker("12S_MT","FISH"))
   observeEvent(input$go_coi_map, open_explorer_marker("COI"))
   observeEvent(input$go_fungal_explore, {
     open_explorer_marker("ITS_FUNGAL", "FUNGI")
@@ -3364,22 +3495,17 @@ server <- function(input, output, session) {
   output$map_marker_guidance <- renderUI(marker_guidance_ui(input$map_organism))
   output$lineage_marker_guidance <- renderUI(marker_guidance_ui(input$lineage_organism))
   observeEvent(input$map_organism, {
-    rows <- marker_rows_for_organism(input$map_organism, released_only = TRUE)
-    if (!nrow(rows)) rows <- released_marker_rows
+    rows <- explorer_marker_rows(input$map_organism)
+    if (!nrow(rows)) rows <- explorer_marker_rows("ALL")
     requested <- isolate(map_navigation_marker())
-    selected <- if (!is.null(requested) && requested %in% rows$marker_id) {
-      requested
-    } else if (!is.null(input$map_marker) && input$map_marker %in% rows$marker_id) {
-      input$map_marker
-    } else {
-      rows$marker_id[1]
-    }
+    selected <- atlas_target_marker_selection(rows,current=isolate(input$map_marker),requested=requested,
+      group_changed=!identical(isolate(previous_map_group()),input$map_organism))
+    previous_map_group(input$map_organism)
     updateSelectInput(
       session, "map_marker",
-      choices = marker_choice_labels(rows), selected = selected
+      choices = atlas_target_marker_choices(rows), selected = selected
     )
-    if (identical(selected, requested) && (identical(input$map_organism, "ALL") ||
-        (identical(requested, "ITS_FUNGAL") && identical(input$map_organism, "FUNGI")))) map_navigation_marker(NULL)
+    if (identical(selected, requested)) map_navigation_marker(NULL)
     if (selected %in% c("COI", "18S")) {
       opening_18s <- identical(requested, "18S") && identical(input$map_organism, "ALL")
       choices <- pair_choices_for_marker(selected, input$map_organism, apply_filters = !opening_18s)

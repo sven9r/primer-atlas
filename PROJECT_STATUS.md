@@ -1,6 +1,17 @@
 # Primer Atlas project status
 
-**Status date:** 2026-10-11
+**Status date:** 2026-10-31
+
+**October 31 working branch:** The shared overview → Mix & match → amplicons →
+taxonomic fit flow now supports target-specific marker choice, source-backed
+animal primer supplements, custom components and explicit raw templates.
+Fish 12S/COI/18S/28S, complementary animal 18S/28S, bird assays and independent
+starter taxonomy are implemented. The fit page groups the same selected
+template results by hierarchy and preserves exact denominators, source flags
+and drill-down. The broad reference cohorts remain separate. Public release
+still requires review/merge and deployment; broad new animal-marker cohorts
+are not claimed by these small starter panels. See
+[the implementation and deployment record](docs/2026-10-31-explorer-and-deployment.md).
 
 **Current phase:** Public hosting retains the verified 2026.10.02 app and
 October 1 marker releases. The October 11 local COI acquisition now retains
@@ -272,8 +283,9 @@ The project separates four operational responsibilities:
 - [x] Merge and verify the ITS primer-first navigator in a clean browser session.
 - [ ] Add 18S to the release matrix only after its artifact contract and hard
       release gates are defined.
-- [ ] Expand fungal ITS beyond the single pilot reference while continuing to
-      label reference scope and missing lineage evidence explicitly.
+- [x] Expand fungal ITS beyond the single pilot reference: the separate broad
+      UNITE snapshot has 15,402 retained templates, while long-rDNA geometry
+      uses 21 versioned NCBI templates. Scope and absent evidence remain explicit.
 - [x] Show per-marker readiness and limitations on the app landing page.
 - [ ] Complete source-backed organism/application tags for further catalog entries.
 - [ ] Reconcile Crambidae taxa and coordinates, then score both binding sites

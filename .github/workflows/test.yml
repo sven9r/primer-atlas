@@ -59,6 +59,15 @@ jobs:
             tests/test_fungal_versions.R \
             tests/test_fungal_workspace.R \
             tests/test_marker_runtime.R \
+            tests/test_marker_targets.R \
+            tests/test_primer_site_overview.R \
+            tests/test_primer_mixer.R \
+            tests/test_primer_mixer_exports.R \
+            tests/test_primer_mixer_taxonomy.R \
+            tests/test_primer_mixer_fungal_regions.R \
+            tests/test_animal_fit.R \
+            tests/test_animal_marker_routes.R \
+            tests/test_primer_explore.R \
             tests/test_order_lens_interaction.R \
             tests/test_primer_map_domain.R \
             tests/test_primer_map_details.R \
@@ -74,6 +83,8 @@ jobs:
         run: Rscript tests/test_bundle_size.R
       - name: Verify fungal acquisition boundary rules
         run: python3 -m unittest discover -s tests -p test_fungal_reference_panel.py
+      - name: Verify fish and animal starter provenance
+        run: python3 -m unittest discover -s tests -p '*starter_*.py'
       - name: Verify fungal domain projection boundaries
         run: python3 -m unittest discover -s tests -p test_fungal_domain_mapping.py
       - name: Verify UNITE import, region and snapshot boundaries

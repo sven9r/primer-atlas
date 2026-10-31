@@ -281,6 +281,9 @@ primer_overview_map <- function(rows,primers,marker,landmarks=data.frame(),focus
     ))
     for (i in seq_len(nrow(x))) {
       row <- x[i, ]
+      product_color <- informative_color
+      if("platform_tier" %in% names(row) && !is.na(row$platform_tier)) product_color <- switch(as.character(row$platform_tier),
+        ILLUMINA="#2563eb",PACBIO="#7c3aed",NANOPORE="#0f766e",BEYOND="#64748b",informative_color)
       y <- first_row_y + (i - 1) * row_h
       f <- map_primers |> dplyr::filter(pair_id == row$pair_id, direction == "forward") |> dplyr::slice(1)
       r <- map_primers |> dplyr::filter(pair_id == row$pair_id, direction == "reverse") |> dplyr::slice(1)
@@ -407,7 +410,7 @@ primer_overview_map <- function(rows,primers,marker,landmarks=data.frame(),focus
           `data-tooltip` = tooltip,
           `aria-label` = paste0("Show map-row details for ", row$pair_label),
           tabindex = "0",
-          stroke = informative_color, `stroke-width` = 5, `stroke-linecap` = "round",
+          stroke = product_color, `stroke-width` = 5, `stroke-linecap` = "round",
           `pointer-events` = "stroke"
         ),
         tags$line(

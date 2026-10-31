@@ -1,4 +1,4 @@
-# Public Multi-Marker Primer Atlas
+# Primer Atlas
 
 An open-source Shiny atlas for exploring where metabarcoding primers bind and
 why particular lineage–primer combinations may be vulnerable to mismatch or

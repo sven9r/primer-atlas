@@ -12,6 +12,9 @@ not mistaken for a completed release.
 **Status:** Implemented and verified locally; public release awaits the required
 review, merge and deployment.
 
+- Standardize the product name as Primer Atlas across app, citation, landing
+  page, README, contributor notice and global bibliography download. Marker
+  names and scientific sequence identities retain their original scope.
 - Pin scientific test and monthly-release workers to Ubuntu 24.04, matching
   the previously validated MAFFT/VSEARCH environment. The rolling latest image
   moved to Ubuntu 26.04 and the unchanged retention fixture failed at MAFFT.

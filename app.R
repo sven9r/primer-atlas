@@ -7825,7 +7825,7 @@ server <- function(input, output, session) {
   }, server = TRUE)
 
   output$download_bib <- downloadHandler(
-    filename = "coi-primer-atlas-references.bib",
+    filename = "primer-atlas-references.bib",
     content = function(file) {
       entries <- vapply(seq_len(nrow(public_citations)), function(i) {
         row <- public_citations[i, ]

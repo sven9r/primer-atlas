@@ -52,6 +52,17 @@
             "tests/test_primer_map_domain.R"
           ],
           "change": "Keep every regression check in parallel groups behind the existing required test gate; validate control IDs, labels and ordering from parsed R declarations instead of exact source spacing."
+        },
+        {
+          "kind": "general_product_naming",
+          "paths": [
+            "README.md",
+            "CITATION.cff",
+            "docs/index.html",
+            "LICENSE",
+            "app.R"
+          ],
+          "change": "Use Primer Atlas as the general product name and primer-atlas-references.bib for the global bibliography. Preserve marker-specific scientific identifiers and source metadata."
         }
       ],
       "verification": [

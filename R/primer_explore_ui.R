@@ -4,19 +4,17 @@ primerExploreUI <- function(id) {
   ns <- shiny::NS(id)
   shiny::tagList(
     shiny::div(class="explore-flow atlas-workspace", id=ns("workspace"),
-      shiny::div(class="explore-stepbar", `aria-label`="Investigation steps",
-        shiny::tags$a(href=paste0("#",ns("overview_card")), "1  Overview"),
-        shiny::tags$a(href=paste0("#",ns("mix_card")), "2  Mix & match"),
-        shiny::tags$a(href=paste0("#",ns("map_card")), "3  Amplicons & fit")),
       shiny::div(class="atlas-panel", id=ns("overview_card"),
-        shiny::div(class="explore-panel-heading", shiny::h3("Marker overview"), shiny::uiOutput(ns("scope"))),
-        shiny::div(class="explore-reference-tools",
-          shiny::selectInput(ns("reference"),"Coordinate template",choices=character()),
-          shiny::uiOutput(ns("region_ui"))),
-        shiny::selectInput(ns("mismatches"),"Site search · allowed substitutions per primer",
-          c("Exact IUPAC-compatible sequence"="0","Up to 1 substitution"="1","Up to 2 substitutions"="2","Up to 3 substitutions"="3","Up to 4 substitutions"="4","Up to 5 substitutions"="5"),selected="2"),
+        shiny::div(class="explore-panel-heading", shiny::h3("Primer map overview"), shiny::uiOutput(ns("scope"))),
         shiny::uiOutput(ns("overview")),
         shiny::p(class="atlas-context-line", "Click a primer to select it. Click again to use its reverse complement in the opposite direction; a third click removes it."),
+        shiny::tags$details(class="atlas-detail",id=ns("map_settings"),
+          shiny::tags$summary("Map settings"),
+          shiny::div(class="explore-reference-tools",
+            shiny::selectInput(ns("reference"),"Coordinate template",choices=character()),
+            shiny::uiOutput(ns("region_ui"))),
+          shiny::selectInput(ns("mismatches"),"Site search · allowed substitutions per primer",
+            c("Exact IUPAC-compatible sequence"="0","Up to 1 substitution"="1","Up to 2 substitutions"="2","Up to 3 substitutions"="3","Up to 4 substitutions"="4","Up to 5 substitutions"="5"),selected="2")),
         shiny::tags$details(class="atlas-detail",
           shiny::tags$summary("Templates and reference provenance"),
           shiny::uiOutput(ns("version_ui")),
@@ -27,6 +25,10 @@ primerExploreUI <- function(id) {
             shiny::actionButton(ns("use_fasta"),"Use these templates",class="btn-outline-primary btn-sm"),
             shiny::actionButton(ns("reset_templates"),"Restore reference templates",class="btn-outline-secondary btn-sm")),
           shiny::p(class="atlas-context-line","FASTA stays in this app session. Choose the correct marker; headers are not treated as verified taxonomy. Up to 100 templates and 200,000 bases."))),
+      shiny::div(class="explore-stepbar", `aria-label`="Investigation steps",
+        shiny::tags$a(href=paste0("#",ns("overview_card")), "1  Overview"),
+        shiny::tags$a(href=paste0("#",ns("mix_card")), "2  Mix & match"),
+        shiny::tags$a(href=paste0("#",ns("map_card")), "3  Amplicons & fit")),
       shiny::div(class="atlas-panel", id=ns("mix_card"),
         shiny::div(class="explore-panel-heading",shiny::h3("Mix & match"),shiny::uiOutput(ns("selection_count"))),
         shiny::p(class="atlas-context-line","Choose up to five primers in each direction. Every forward × reverse combination is checked on each selected template."),
@@ -70,6 +72,6 @@ primerExploreUI <- function(id) {
           shiny::tags$summary("Sources, sequences and downloads"),
           shiny::uiOutput(ns("selected_sources")),
           shiny::uiOutput(ns("downloads_ui"))))),
-    shiny::tags$script(shiny::HTML(paste0("(function(){var rootId=",jsonlite::toJSON(ns("workspace"),auto_unbox=TRUE),";function sendWidth(){var root=document.getElementById(rootId);if(!root||!window.Shiny)return;var b=root.getBoundingClientRect();if(b.width>200)Shiny.setInputValue(",jsonlite::toJSON(ns("width"),auto_unbox=TRUE),",Math.max(320,Math.floor(b.width-38)),{priority:'event'});}function bind(){var root=document.getElementById(rootId);if(!root||root.dataset.exploreBound)return;root.dataset.exploreBound='1';var last=0;new ResizeObserver(function(){var b=root.getBoundingClientRect();if(Math.abs(b.width-last)>4){last=b.width;sendWidth();}}).observe(root);root.addEventListener('click',function(e){var p=e.target.closest('.primer-site-choice');if(p&&root.contains(p)&&window.Shiny){Shiny.setInputValue(",jsonlite::toJSON(ns("primer_click"),auto_unbox=TRUE),",{id:p.dataset.primerId,nonce:Date.now()},{priority:'event'});}var row=e.target.closest('.primer-overview-row');if(row&&root.contains(row)){var d=document.getElementById(",jsonlite::toJSON(ns("evidence"),auto_unbox=TRUE),");if(d)d.open=true;}});root.addEventListener('keydown',function(e){var p=e.target.closest('.primer-site-choice');if(p&&(e.key==='Enter'||e.key===' ')){e.preventDefault();p.dispatchEvent(new MouseEvent('click',{bubbles:true}));}});sendWidth();}$(function(){bind();$(document).on('shiny:connected shown.bs.tab',sendWidth);});})();")))
+    shiny::tags$script(shiny::HTML(paste0("(function(){var rootId=",jsonlite::toJSON(ns("workspace"),auto_unbox=TRUE),";function sendWidth(){var root=document.getElementById(rootId);if(!root||!window.Shiny||typeof window.Shiny.setInputValue!=='function')return;var b=root.getBoundingClientRect();if(b.width>200)Shiny.setInputValue(",jsonlite::toJSON(ns("width"),auto_unbox=TRUE),",Math.max(320,Math.floor(b.width-38)),{priority:'event'});}function bind(){var root=document.getElementById(rootId);if(!root||root.dataset.exploreBound)return;root.dataset.exploreBound='1';var last=0;new ResizeObserver(function(){var b=root.getBoundingClientRect();if(Math.abs(b.width-last)>4){last=b.width;sendWidth();}}).observe(root);root.addEventListener('click',function(e){var p=e.target.closest('.primer-site-choice');if(p&&root.contains(p)&&window.Shiny){Shiny.setInputValue(",jsonlite::toJSON(ns("primer_click"),auto_unbox=TRUE),",{id:p.dataset.primerId,nonce:Date.now()},{priority:'event'});}var row=e.target.closest('.primer-overview-row');if(row&&root.contains(row)){var d=document.getElementById(",jsonlite::toJSON(ns("evidence"),auto_unbox=TRUE),");if(d)d.open=true;}});root.addEventListener('keydown',function(e){var p=e.target.closest('.primer-site-choice');if(p&&(e.key==='Enter'||e.key===' ')){e.preventDefault();p.dispatchEvent(new MouseEvent('click',{bubbles:true}));}});sendWidth();}$(function(){bind();$(document).on('shiny:connected shown.bs.tab',sendWidth);});})();")))
   )
 }

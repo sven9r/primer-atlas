@@ -1657,66 +1657,20 @@ workspace_heading <- function(title, description) {
 
 ui <- page_navbar(
   id = "main_nav",
+  selected = "find",
   title = "Primer Atlas",
   theme = atlas_theme,
   header = tagList(
     tags$style(HTML(app_css)),
     tags$script(HTML(app_js)),
-    tags$script(HTML("$(function(){Shiny.addCustomMessageHandler('atlas-explore-evidence',function(){var a=document.getElementById('legacy-primer-workspace');var b=document.getElementById('primer-evidence-inspector');if(a)a.open=true;if(b){b.open=true;b.scrollIntoView({behavior:'smooth',block:'start'});}});Shiny.addCustomMessageHandler('atlas-full-fit-evidence',function(){var d=document.getElementById('reference-fit-details');if(d)d.open=true;});});")),
+    tags$script(HTML("$(function(){Shiny.addCustomMessageHandler('atlas-explore-evidence',function(message){var a=document.getElementById('legacy-primer-workspace');var b=document.getElementById('primer-evidence-inspector');if(a)a.open=true;if(b){b.open=true;b.scrollIntoView({behavior:'smooth',block:'start'});}});Shiny.addCustomMessageHandler('atlas-full-fit-evidence',function(message){var d=document.getElementById('reference-fit-details');if(d)d.open=true;});});")),
     tags$link(rel = "stylesheet", href = atlas_asset_url("atlas-workspace.css"))
   ),
   nav_panel(
-    "Start here", value = "start",
-    div(
-      class = "container-fluid atlas-home",
-      hero,
-      div(
-        class = "start-grid atlas-marker-grid",
-        div(class = "start-card atlas-marker-card",
-            span(class = "atlas-status-chip", "Animal group"), h3("Arthropods"),
-            p("Start with COI, or investigate secondary 18S and 28S markers. Combine catalog and custom primers."),
-            div(class = "atlas-card-actions",
-                actionButton("go_coi_explore", "Explore primers →", class = "btn-primary"),
-                actionButton("go_fit", "Check taxonomic fit", class = "btn-outline-secondary"))),
-        div(class = "start-card atlas-marker-card",
-            span(class = "atlas-status-chip", "Fungal marker"), h3("Fungal rDNA"),
-                p("Explore fungal primer combinations across 18S, ITS and 28S, then inspect their reference evidence."),
-            div(class = "atlas-card-actions",
-                actionButton("go_fungal_explore", "Explore primers →", class = "btn-primary"),
-                actionButton("go_fungal_fit", "Check taxonomic fit", class = "btn-outline-secondary"))),
-        div(class = "start-card atlas-marker-card",
-            span(class = "atlas-status-chip", "Animal group"), h3("Fish"),
-            p("Compare 12S, COI, 18S and 28S assays on explicit fish templates, with source scope and substitutions visible."),
-            div(class = "atlas-card-actions",
-                actionButton("go_fish_explore", "Explore fish primers →", class = "btn-primary"))),
-        div(class = "start-card atlas-marker-card atlas-18s-entry",
-            span(class = "atlas-status-chip", "Eukaryotic marker"), h3("18S"),
-            p("Browse documented SSU combinations and their regions in the PR2 primer catalog."),
-            div(class = "atlas-card-actions",
-                actionButton("go_18s_start", "18S primers →", class = "btn-primary")))
-      ),
-      div(class = "atlas-home-links",
-          actionButton("go_find", "Return to primer explorer", class = "btn-outline-secondary btn-sm"),
-          actionButton("go_taxa", "Open reference library", class = "btn-outline-secondary btn-sm"),
-          actionButton("go_sources", "Sources and methods", class = "btn-outline-secondary btn-sm")),
-      tags$details(class = "atlas-detail atlas-home-status",
-        tags$summary("Reference status and available evidence"),
-        div(class = "readiness-list",
-            div(strong("Animal COI · active"), uiOutput("coi_start_reference_status")),
-            div(strong("Fungal rDNA · versioned panel"), span("Primer products, gene/domain tracks and taxonomic reference support use the selected immutable snapshot. This small panel does not establish broad fungal amplification performance.")),
-            div(strong("Eukaryotic 18S · pilot"), span("321 catalog primers and 123 documented sets. Ninety-three sets have drawable geometry; this is not broad taxonomic performance evidence.")),
-            div(strong("Fish 12S / COI / 18S / 28S · sequence examples"), span("Source-backed assay components and accession-versioned starter templates support mix and match. Broad taxonomic coverage and monthly fish marker releases remain separate work."))
-        ),
-        p(class = "tiny mt-3 mb-0", "Reference fit and sampling describe available sequences. They do not predict PCR success or establish a species' geographic range. The Hawaiʻi–Madagascar audit is separate research documented in the repository and is not loaded into this app."),
-        p(class = "tiny mt-3 mb-0", "App version 2026.10.31 · Shared primer exploration and taxonomic fit")
-      )
-    )
-  ),
-  nav_panel(
-    "Primer explorer", value = "find",
+    "Primer map", value = "find",
     div(
       class = "container-fluid primer-map-page",
-      workspace_heading("Primer explorer", "Choose your target and marker. Explore the regions, combine primers, then inspect their template fit."),
+      div(class = "workspace-heading explore-map-heading", h1("Primer map")),
       div(class="explore-target-toolbar",
         selectInput("map_organism","Organism group",choices=organism_group_choices,selected="ARTHROPODS"),
         selectInput("map_marker","Marker",choices=atlas_target_marker_choices(
@@ -2352,6 +2306,53 @@ ui <- page_navbar(
   ),
   nav_menu("More",
   nav_panel(
+    "About the Atlas", value = "start",
+    div(
+      class = "container-fluid atlas-home",
+      hero,
+      div(
+        class = "start-grid atlas-marker-grid",
+        div(class = "start-card atlas-marker-card",
+            span(class = "atlas-status-chip", "Animal group"), h3("Arthropods"),
+            p("Start with COI, or investigate secondary 18S and 28S markers. Combine catalog and custom primers."),
+            div(class = "atlas-card-actions",
+                actionButton("go_coi_explore", "Explore primers →", class = "btn-primary"),
+                actionButton("go_fit", "Check taxonomic fit", class = "btn-outline-secondary"))),
+        div(class = "start-card atlas-marker-card",
+            span(class = "atlas-status-chip", "Fungal marker"), h3("Fungal rDNA"),
+                p("Explore fungal primer combinations across 18S, ITS and 28S, then inspect their reference evidence."),
+            div(class = "atlas-card-actions",
+                actionButton("go_fungal_explore", "Explore primers →", class = "btn-primary"),
+                actionButton("go_fungal_fit", "Check taxonomic fit", class = "btn-outline-secondary"))),
+        div(class = "start-card atlas-marker-card",
+            span(class = "atlas-status-chip", "Animal group"), h3("Fish"),
+            p("Compare 12S, COI, 18S and 28S assays on explicit fish templates, with source scope and substitutions visible."),
+            div(class = "atlas-card-actions",
+                actionButton("go_fish_explore", "Explore fish primers →", class = "btn-primary"))),
+        div(class = "start-card atlas-marker-card atlas-18s-entry",
+            span(class = "atlas-status-chip", "Eukaryotic marker"), h3("18S"),
+            p("Browse documented SSU combinations and their regions in the PR2 primer catalog."),
+            div(class = "atlas-card-actions",
+                actionButton("go_18s_start", "18S primers →", class = "btn-primary")))
+      ),
+      div(class = "atlas-home-links",
+          actionButton("go_find", "Open primer map", class = "btn-outline-secondary btn-sm"),
+          actionButton("go_taxa", "Open reference library", class = "btn-outline-secondary btn-sm"),
+          actionButton("go_sources", "Sources and methods", class = "btn-outline-secondary btn-sm")),
+      tags$details(class = "atlas-detail atlas-home-status",
+        tags$summary("Reference status and available evidence"),
+        div(class = "readiness-list",
+            div(strong("Animal COI · active"), uiOutput("coi_start_reference_status")),
+            div(strong("Fungal rDNA · versioned panel"), span("Primer products, gene/domain tracks and taxonomic reference support use the selected immutable snapshot. This small panel does not establish broad fungal amplification performance.")),
+            div(strong("Eukaryotic 18S · pilot"), span("321 catalog primers and 123 documented sets. Ninety-three sets have drawable geometry; this is not broad taxonomic performance evidence.")),
+            div(strong("Fish 12S / COI / 18S / 28S · sequence examples"), span("Source-backed assay components and accession-versioned starter templates support mix and match. Broad taxonomic coverage and monthly fish marker releases remain separate work."))
+        ),
+        p(class = "tiny mt-3 mb-0", "Reference fit and sampling describe available sequences. They do not predict PCR success or establish a species' geographic range. The Hawaiʻi–Madagascar audit is separate research documented in the repository and is not loaded into this app."),
+        p(class = "tiny mt-3 mb-0", "App version 2026.10.31 · Shared primer exploration and taxonomic fit")
+      )
+    )
+  ),
+  nav_panel(
     "Compare regions · COI", value = "regions",
     div(
       class = "container-fluid",
@@ -2544,7 +2545,8 @@ server <- function(input, output, session) {
   overview_page <- reactiveVal(1L)
   fungal_builder_state <- reactiveValues(version=NULL,forward=character(),reverse=character())
   fungal_builder_ack <- reactiveValues(forward=NULL,reverse=NULL)
-  fungal_workspace <- fungalExplorerServer("fungal", selection = fungal_explorer_context)
+  fungal_workspace <- fungalExplorerServer("fungal", selection = fungal_explorer_context,
+    active=reactive(identical(session$clientData[["output_fungal-alignment_overview_hidden"]],FALSE)))
   explore_workspace <- primerExploreServer("explore",marker=reactive(input$map_marker),
     target_group=reactive(input$map_organism %||% "ARTHROPODS"),fungal_snapshot=fungal_workspace$snapshot,
     taxonomic_report=function() {
@@ -2678,8 +2680,11 @@ server <- function(input, output, session) {
   fungal_builder_broad_data <- function(version_id=NULL) {
     broad <- unite_reference_read(version_id=version_id)
     if(is.null(broad)) return(NULL)
-    candidates <- fungal_builder_result()$selected_pairs
     request <- fungal_overview_evidence()
+    # The base collection is already complete. Only assemble candidate evidence
+    # when a combination has actually been selected or handed off for inspection.
+    if(is.null(request) && (!length(fungal_builder_forward()) || !length(fungal_builder_reverse()))) return(broad)
+    candidates <- fungal_builder_result()$selected_pairs
     if(is.list(request) && is.data.frame(request$row) && !request$pair %in% candidates$pair_id)
       candidates <- bind_rows(candidates,request$row)
     unite_reference_with_candidates(broad,candidates,catalog=fungal_orientation_catalog(fungal_workspace$snapshot()))$data
@@ -2886,8 +2891,12 @@ server <- function(input, output, session) {
   fungal_builder_result <- reactive(fungal_combination_builder(fungal_workspace$snapshot(),
       forward_ids=fungal_builder_forward(),reverse_ids=fungal_builder_reverse(),accession=fungal_overview_reference(),
       catalog=fungal_builder_variants(),platform=input$primer_overview_platform %||% "ALL",length_range=fungal_builder_length_range(),max_per_direction=5L))
-  observeEvent(list(fungal_builder_result()$selected_pairs$pair_id,fungal_workspace$snapshot()$manifest$id),{
-    ids <- fungal_builder_result()$selected_pairs$pair_id
+  fungal_builder_selected_ids <- reactive({
+    if(!length(fungal_builder_forward()) || !length(fungal_builder_reverse())) return(character())
+    fungal_builder_result()$selected_pairs$pair_id
+  })
+  observeEvent(list(fungal_builder_selected_ids(),fungal_workspace$snapshot()$manifest$id),{
+    ids <- fungal_builder_selected_ids()
     previous <- fungal_overview_evidence()
     if(!length(ids)) {
       overview_clicked_pair(NULL)

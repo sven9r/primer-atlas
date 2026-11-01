@@ -154,7 +154,7 @@ fungal_primer_overview_default_accession <- function(snapshot,pair_rows=NULL,reg
   accessions <- names(snapshot$sequences)
   if (!length(accessions)) return(NULL)
   choices <- lapply(accessions,function(accession) {
-    data <- fungal_primer_overview_data(snapshot,pair_rows,accession,region,max_rows=max(1L,nrow(pair_rows)))
+    data <- fungal_primer_overview_data(snapshot,pair_rows,accession,region,max_rows=max(1L,nrow(pair_rows)),summary_only=TRUE)
     data.frame(accession=accession,n_mapped=data$summary$n_mapped,
       n_complete_regions=sum(data$landmarks$boundary_status=="complete"),
       n_regions=nrow(data$landmarks),length_bp=data$reference_length,stringsAsFactors=FALSE)
@@ -163,12 +163,13 @@ fungal_primer_overview_default_accession <- function(snapshot,pair_rows=NULL,reg
   rows$accession[order(-rows$n_mapped,-rows$n_complete_regions,-rows$n_regions,rows$length_bp,rows$accession)][1L]
 }
 
-fungal_primer_overview_data <- function(snapshot,pair_rows=NULL,accession=NULL,region="ALL",max_rows=20L) {
+fungal_primer_overview_data <- function(snapshot,pair_rows=NULL,accession=NULL,region="ALL",max_rows=20L,summary_only=FALSE) {
   required <- c("manifest","sequences","catalog","pairs","pair_sequences","landmarks")
   if (!all(required %in% names(snapshot))) stop("Fungal overview requires one complete frozen snapshot.")
   if (is.null(pair_rows)) pair_rows <- snapshot$pairs
   if (!is.data.frame(pair_rows) || !"pair_id" %in% names(pair_rows) || anyNA(pair_rows$pair_id) || anyDuplicated(pair_rows$pair_id)) stop("Overview candidates need unique frozen pair identities.")
   if (length(max_rows)!=1L || !is.finite(max_rows) || max_rows!=floor(max_rows) || max_rows<0L) stop("Overview row limit must be a nonnegative integer.")
+  if(!is.logical(summary_only) || length(summary_only)!=1L || is.na(summary_only)) stop("Summary-only selection must be one explicit logical value.")
   if (is.null(accession)) accession <- fungal_primer_overview_default_accession(snapshot,pair_rows,region)
   if (length(accession)!=1L || is.na(accession) || !accession %in% names(snapshot$sequences)) stop("Choose a reference retained in this fungal snapshot.")
   sequence <- toupper(unname(snapshot$sequences[[accession]]))
@@ -204,6 +205,19 @@ fungal_primer_overview_data <- function(snapshot,pair_rows=NULL,accession=NULL,r
   })
   region_candidates <- Filter(function(row) row$region$matches,considered)
   shown <- head(region_candidates,as.integer(max_rows))
+  if(summary_only) {
+    # Default-reference ranking needs validated product/annotation counts,
+    # rather than thousands of display rows, citation hashes and repeated
+    # frame bindings. Run the identical site/ownership/region checks above;
+    # preserve the caller's limit and every existing summary denominator.
+    mapped <- sum(vapply(shown,function(record) record$product,logical(1)))
+    summary <- data.frame(version_id=version,accession=accession,region=selection$id,n_panel=length(snapshot$sequences),
+      n_snapshot_pairs=nrow(snapshot$pairs),n_candidates=nrow(rows),n_region_candidates=length(region_candidates),
+      n_shown_candidates=length(shown),n_mapped=mapped,n_missing=length(shown)-mapped,
+      n_truncated=max(0L,length(region_candidates)-length(shown)),stringsAsFactors=FALSE)
+    return(list(summary=summary,landmarks=annotations$landmarks,reference_length=length_bp,
+      accession=accession,version_id=version,summary_only=TRUE))
+  }
   pair_meta <- .fungal_overview_empty_pairs(); primers <- .fungal_overview_empty_primers(); citations <- .fungal_overview_empty_citations()
   missing <- list()
   for (record in shown) {

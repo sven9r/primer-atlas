@@ -5,6 +5,14 @@ individual-primer overview → Mix & match → amplicons → taxonomic fit. The
 previous published-pair maps, broad UNITE evidence, frozen alignments and
 full arthropod COI scores remain available in explicit reference sections.
 
+The app opens directly on the Primer map tab. Its overview precedes Map
+settings, combinations and fit; the former welcome page is under More → About
+the Atlas. Reference, region and substitution controls remain available in the
+closed Map settings panel below the overview.
+Initial loading does not assemble hidden fungal candidates. Fungal default
+reference selection uses the same validated counts and ranking while omitting
+display rows and citation assembly until the detailed view needs them.
+
 Arthropods default to COI. Fish can choose mitochondrial 12S, COI, nuclear 18S
 and 28S, with mitochondrial 16S also supported by source-backed components and
 actual templates. The existing animal groups also expose 18S and 28S as complementary

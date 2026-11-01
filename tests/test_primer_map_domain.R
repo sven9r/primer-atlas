@@ -123,7 +123,8 @@ visit_controls <- function(node) {
   for (child in args) visit_controls(child)
   invisible(NULL)
 }
-visit_controls(parse(text = app_source))
+app_ast <- parse(text = app_source)
+visit_controls(app_ast)
 control_position <- function(id, label = NULL, kind = NULL) {
   matches <- which(vapply(control_calls, function(control)
     identical(control$id, id) && (is.null(label) || identical(control$label, label)) &&
@@ -176,6 +177,34 @@ stopifnot(
   grepl('"Map row ", i', renderer_source, fixed = TRUE),
   grepl("Sorting and filtering recalculate this number.", renderer_source, fixed = TRUE)
 )
+
+# A fresh session must open the primer overview, with its tab first. The
+# welcome/about content must not become the default merely by moving a panel.
+ui_assignments <- Filter(function(node) is.call(node) &&
+  identical(node[[1L]], as.name("<-")) && identical(node[[2L]], as.name("ui")), as.list(app_ast))
+stopifnot(length(ui_assignments) == 1L)
+navbar <- ui_assignments[[1L]][[3L]]
+stopifnot(is.call(navbar), identical(navbar[[1L]], as.name("page_navbar")))
+navbar_args <- as.list(navbar)[-1L]
+panels <- Filter(function(node) is.call(node) &&
+  identical(node[[1L]], as.name("nav_panel")), navbar_args)
+stopifnot(
+  identical(navbar_args$id, "main_nav"),
+  identical(navbar_args$selected, "find"),
+  length(panels) > 0L,
+  identical(as.list(panels[[1L]])$value, "find")
+)
+
+# Check the rendered shared UI, rather than strings inside its navigation
+# links: the actual primer overview precedes combination controls and results.
+explorer_ui <- new.env(parent = baseenv())
+source(file.path(project_root, "R", "primer_explore_ui.R"), local = explorer_ui)
+flow_html <- paste(as.character(explorer_ui$primerExploreUI("map-order")), collapse = "\n")
+flow_positions <- vapply(c("overview_card", "overview", "map_settings", "mix_card", "map_card"), function(id) {
+  found <- gregexpr(paste0('id="map-order-', id, '"'), flow_html, fixed = TRUE)[[1L]]
+  if (length(found) == 1L && found[1L] > 0L) as.integer(found[1L]) else -1L
+}, integer(1))
+stopifnot(all(flow_positions > 0L), all(diff(flow_positions) > 0L))
 
 sorting_fixture <- data.frame(
   pair_label = c("Zulu", "Alpha", "Middle"),
@@ -248,4 +277,4 @@ stopifnot(
   identical(unname(alphabetical_choices), c("C", "A", "B"))
 )
 
-message("Shared primer-map domain, legacy-range parity and parsed primary/published-evidence control-order checks passed.")
+message("Shared primer-map domain, default overview navigation, rendered investigation order and retained map-control checks passed.")

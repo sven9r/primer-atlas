@@ -158,11 +158,13 @@ primerExploreServer <- function(id, marker, target_group, fungal_snapshot=NULL, 
       shiny::tagList(shiny::selectInput(ns("region"),"Region",choices,selected=current),
         shiny::checkboxInput(ns("all_sites"),"Show all mapped primer labels",value=FALSE))
     })
+    # Closed map settings must still initialize the region used by the overview.
+    shiny::outputOptions(output,"region_ui",suspendWhenHidden=FALSE)
     domain <- shiny::reactive({
       id <- selected_reference(); rows <- templates()
       if(is.null(id)) return(NULL)
       size <- nchar(rows$sequence[match(id,rows$template_id)])
-      region <- input$region
+      region <- input$region %||% if(active_marker()=="ITS_FUNGAL") "ITS" else "ALL"
       if(!is.null(region) && startsWith(region,"landmark:") && is.null(state$supplied)) {
         own <- annotations(); own <- own[own$landmark_id==sub("^landmark:","",region),,drop=FALSE]
         if(nrow(own)!=1L) return(NULL)
@@ -257,11 +259,12 @@ primerExploreServer <- function(id, marker, target_group, fungal_snapshot=NULL, 
       if(nrow(active_variants)) sites <- sites[!sites$primer_id %in% active_variants$parent_primer_id,,drop=FALSE]
       sites <- sites[sites$end>=domain()[1] & sites$start<=domain()[2],,drop=FALSE]
       n_sites <- nrow(sites)
-      if(!isTRUE(input$all_sites) && n_sites>14L) {
+      per_direction <- if((input$width %||% 650)<800) 5L else 7L
+      if(!isTRUE(input$all_sites) && n_sites>2L*per_direction) {
         picked <- unlist(lapply(c("forward","reverse"),function(role) {
           indices <- which(sites$direction==role)
           indices <- indices[order(sites$start[indices],sites$primer_name[indices])]
-          if(length(indices)>7L) indices[unique(round(seq(1,length(indices),length.out=7L)))] else indices
+          if(length(indices)>per_direction) indices[unique(round(seq(1,length(indices),length.out=per_direction)))] else indices
         }))
         picked <- unique(c(picked,which(sites$primer_id %in% c(forward(),reverse()))))
         sites <- sites[picked,,drop=FALSE]

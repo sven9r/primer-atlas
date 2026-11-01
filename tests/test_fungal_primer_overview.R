@@ -141,4 +141,36 @@ stopifnot(chosen %in% c("PZ962702.1","PZ276773.1"),
 foreign <- starters[1L,];foreign$pair_id <- "NOT_IN_THIS_SNAPSHOT"
 stopifnot(inherits(try(fungal_primer_overview_data(snapshot,foreign,"PZ962702.1"),silent=TRUE),"try-error"),
           inherits(try(fungal_primer_overview_data(snapshot,starters,"FOREIGN"),silent=TRUE),"try-error"))
+# Ranking summaries keep the identical scientific validation/counts while
+# omitting display-only primer/citation frames for every candidate template.
+for(accession in c("PZ962702.1","FN812768.2")) for(region in c("ALL","ITS","SSU","LSU","landmark:28S_D1")) for(limit in c(0L,3L,20L)) {
+  complete <- fungal_primer_overview_data(snapshot,starters,accession,region,max_rows=limit)
+  counts <- fungal_primer_overview_data(snapshot,starters,accession,region,max_rows=limit,summary_only=TRUE)
+  stopifnot(identical(counts$summary,complete$summary),identical(counts$landmarks,complete$landmarks),
+    identical(counts$reference_length,complete$reference_length),
+    !any(c("pair_meta","primers","citations") %in% names(counts)))
+}
+bad_counts <- fungal_primer_overview_data(bad,pair,"PZ962702.1",summary_only=TRUE)
+stopifnot(bad_counts$summary$n_mapped==0L,bad_counts$summary$n_missing==1L,
+  inherits(try(fungal_primer_overview_data(snapshot,foreign,"PZ962702.1",summary_only=TRUE),silent=TRUE),"try-error"))
+# Derive a baseline winner with the former full-display path on a bounded
+# source fixture, then instrument calls to prohibit that path during ranking.
+fixture <- snapshot
+fixture$sequences <- fixture$sequences[c("FN812768.2","PZ962702.1","PZ276773.1")]
+fixture_pairs <- starters[1:5,,drop=FALSE]
+full_ranking <- do.call(rbind,lapply(names(fixture$sequences),function(accession) {
+  value <- fungal_primer_overview_data(fixture,fixture_pairs,accession,"ALL",max_rows=nrow(fixture_pairs))
+  data.frame(accession=accession,n_mapped=value$summary$n_mapped,
+    n_complete_regions=sum(value$landmarks$boundary_status=="complete"),n_regions=nrow(value$landmarks),length_bp=value$reference_length)
+}))
+expected <- with(full_ranking,accession[order(-n_mapped,-n_complete_regions,-n_regions,length_bp,accession)][1L])
+original_overview <- fungal_primer_overview_data
+ranking_calls <- 0L
+fungal_primer_overview_data <- function(...,summary_only=FALSE) {
+  stopifnot(isTRUE(summary_only));ranking_calls <<- ranking_calls+1L
+  original_overview(...,summary_only=summary_only)
+}
+actual <- fungal_primer_overview_default_accession(fixture,fixture_pairs,"ALL")
+fungal_primer_overview_data <- original_overview
+stopifnot(identical(actual,expected),ranking_calls==length(fixture$sequences),identical(serialize(snapshot,NULL),original))
 message("Fungal shared-overview raw lengths, ownership, regions, provenance and historical fixtures passed.")

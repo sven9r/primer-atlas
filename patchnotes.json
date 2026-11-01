@@ -63,6 +63,21 @@
             "app.R"
           ],
           "change": "Use Primer Atlas as the general product name and primer-atlas-references.bib for the global bibliography. Preserve marker-specific scientific identifiers and source metadata."
+        },
+        {
+          "kind": "primer_map_first_navigation",
+          "paths": [
+            "app.R",
+            "R/primer_explore_ui.R",
+            "R/primer_explore_server.R",
+            "www/atlas-workspace.css",
+            "tests/test_primer_map_domain.R",
+            "R/fungal_primer_overview.R",
+            "tests/test_fungal_primer_overview.R",
+            "R/fungal_ui.R",
+            "tests/test_fungal_explorer_ui.R"
+          ],
+          "change": "Open the first Primer map tab by default; move the welcome page under More/About the Atlas and place reference/search settings below the overview. Preserve shared combination and fit state, with hidden region controls initialized for the map. Avoid empty hidden fungal candidate assembly; select fungal defaults using equivalent validated summaries without constructing display rows or citations. Initialize the advanced fungal alignment only when its detailed panel is visible, preserving snapshots and candidate state while inactive."
         }
       ],
       "verification": [

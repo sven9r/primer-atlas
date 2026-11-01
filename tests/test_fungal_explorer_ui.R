@@ -43,6 +43,35 @@ for(id in c("download_manifest","download_pairs","download_sequences","download_
   stopifnot(length(regmatches(ui,gregexpr(paste0('id="inspect-',id,'"'),ui,fixed=TRUE))[[1L]])==1L)
 }
 
+# A closed historical-details module must not map all pair/template coordinates
+# during an unrelated marker's first render. Visibility only gates alignment
+# work: snapshots, candidates and selection context remain accessible.
+lazy_env <- new.env(parent=env)
+source("R/fungal_ui.R",local=lazy_env)
+index_calls <- mapping_calls <- 0L
+original_index <- fungal_alignment_index
+original_mapping <- fungal_alignment_pair_rows
+lazy_env$fungal_alignment_index <- function(...) { index_calls <<- index_calls+1L;original_index(...) }
+lazy_env$fungal_alignment_pair_rows <- function(...) { mapping_calls <<- mapping_calls+1L;original_mapping(...) }
+details_visible <- reactiveVal(FALSE)
+shiny::testServer(lazy_env$fungalExplorerServer,args=list(id="lazy",active=details_visible),{
+  session$setInputs(version=old_id,platform="ALL",phylum="ALL",class="ALL",locus="ALL",search="",
+    examples_only=TRUE,show_unresolved=TRUE,compare_pairs=character())
+  session$flushReact()
+  stopifnot(index_calls==0L,mapping_calls==0L,snapshot()$manifest$id==old_id,nrow(candidates())>0L)
+  retained_pair <- active_pair()$pair_id
+  details_visible(TRUE)
+  session$flushReact()
+  stopifnot(index_calls>0L,mapping_calls>0L,active_pair()$pair_id==retained_pair,
+    alignment_index()$n_columns==nchar(frozen[[old_id]]$alignment[1L]),nrow(mapped_alignment())>0L)
+  before <- c(index_calls,mapping_calls)
+  details_visible(FALSE)
+  session$setInputs(version=current_id)
+  session$flushReact()
+  stopifnot(identical(c(index_calls,mapping_calls),before),snapshot()$manifest$id==current_id,
+    nrow(candidates())>0L,length(selected_accessions())==21L)
+})
+
 context <- reactiveVal(NULL)
 messages <- new.env(parent=emptyenv())
 mock <- shiny::MockShinySession$new()

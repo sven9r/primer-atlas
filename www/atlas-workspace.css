@@ -133,6 +133,7 @@
 @media(prefers-reduced-motion:reduce) { .atlas-workspace * { scroll-behavior:auto!important; } }
 
 /* A single target → marker → components → sequence evidence flow. */
+.primer-map-page > .explore-map-heading { padding:0 0 10px; }
 .explore-target-toolbar { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:14px;
   margin-bottom:18px; padding:16px 18px; border:1px solid var(--atlas-line); border-radius:12px; background:#fff; }
 .explore-target-toolbar .shiny-input-container,.explore-selector-grid .shiny-input-container,

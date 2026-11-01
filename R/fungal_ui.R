@@ -130,8 +130,10 @@ fungalExplorerUI <- function(id) {
           p(class="tiny mt-3", "Exact compatible sites establish candidate geometry on this panel. Length eligibility includes primers and excludes adapters; it does not establish PCR success.")))
 }
 
-fungalExplorerServer <- function(id,selection=NULL) {
+fungalExplorerServer <- function(id,selection=NULL,active=NULL) {
   moduleServer(id, function(input, output, session) {
+    alignment_active <- reactive(if(is.null(active)) TRUE else
+      isTRUE(if(is.function(active)) active() else active))
     index <- fungal_read_index()
     updateSelectInput(session,"version",choices=setNames(index$id,paste0(index$label," · ",substr(sub("^v[0-9]+-","",index$id),1,8))),selected=tail(index$id,1))
     selected_pair <- reactiveVal(NULL)
@@ -352,14 +354,20 @@ fungalExplorerServer <- function(id,selection=NULL) {
       }))
     })
     alignment_index <- reactive({
+      # Alignment initialization observers also run while their UI is closed.
+      # Retain snapshot/candidate/history access, but defer all coordinate
+      # mapping until the caller actually opens the detailed alignment view.
+      req(alignment_active())
       data <- snapshot()
       validate(need(length(data$alignment)>0,"This reference version has no frozen alignment."))
       fungal_alignment_index(data$alignment,data$sequences)
     })
     frozen_alignment_mapping <- reactive({
+      req(alignment_active())
       fungal_alignment_pair_rows(pair_sequences=snapshot()$pair_sequences,index=alignment_index())
     })
     mapped_alignment_regions <- reactive({
+      req(alignment_active())
       fungal_alignment_landmark_rows(alignment_index(),snapshot()$landmarks,snapshot()$manifest$reference_accession)
     })
     mapped_alignment <- reactive({

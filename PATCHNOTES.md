@@ -12,6 +12,14 @@ not mistaken for a completed release.
 **Status:** Implemented and verified locally; public release awaits the required
 review, merge and deployment.
 
+- Open directly on the primer map as the first navigation tab. Put the welcome
+  page under More → About the Atlas, and place reference/search settings below
+  the overview in a closed panel. Keep combinations and fit after the map.
+- Avoid building hidden fungal candidate maps during the initial view. Rank
+  fungal reference templates from validated summaries while preserving the same
+  site checks, counts and selected reference; build detailed rows on demand.
+- Guard initial browser width measurement until Shiny is ready and correct
+  detail-handoff handler signatures so fresh map loads have no startup errors.
 - Standardize the product name as Primer Atlas across app, citation, landing
   page, README, contributor notice and global bibliography download. Marker
   names and scientific sequence identities retain their original scope.

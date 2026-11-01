@@ -2755,7 +2755,7 @@
   },
   "files": {
     "app.R": {
-      "checksum": "53220ff28a75c0ca6969a94085acbf9f"
+      "checksum": "1b0711eee2279d719c29232cfcc5ec6a"
     },
     "data/catalog/animal_assay_primers.csv": {
       "checksum": "2fa5305e99724631bc4222aa27ab46cc"
@@ -9886,10 +9886,10 @@
       "checksum": "97f3f6765a7e2768e86da1646252cdf3"
     },
     "R/fungal_primer_overview.R": {
-      "checksum": "da90c732826a27a8663f6dedfb65bd5e"
+      "checksum": "ed2a7c9f197a28bfa0e004a204e458c1"
     },
     "R/fungal_ui.R": {
-      "checksum": "5f92777fda15abebaba637673cc02cbb"
+      "checksum": "9a4adcc340e6337ca7ca0cd044bc35e6"
     },
     "R/fungal_versions.R": {
       "checksum": "90d16ccaedf4a943c9f95a62dd8ff249"
@@ -9898,10 +9898,10 @@
       "checksum": "5803dc8afce0f8fda74f4e173eae88f5"
     },
     "R/primer_explore_server.R": {
-      "checksum": "a0f81a2d9c65af18b880a62890b90f81"
+      "checksum": "1c772edd087bb058ee1a1667b0a29bca"
     },
     "R/primer_explore_ui.R": {
-      "checksum": "e3a59113384f5eb0b0a16eaaf48dfd7f"
+      "checksum": "bf525ee8d0f108091911ac074a147b13"
     },
     "R/primer_mixer_exports.R": {
       "checksum": "98017f620206c08f505317f00c70300e"
@@ -9952,7 +9952,7 @@
       "checksum": "6931b31b4d88e1fefb43ffeeb80014ef"
     },
     "www/atlas-workspace.css": {
-      "checksum": "a1129c8ed68510e77962b92a4ebce93e"
+      "checksum": "0b3e567fef11da12760002e16b5736b8"
     },
     "www/evolab-berkeley.png": {
       "checksum": "d954558e15002f445db3995d94e4ae0c"

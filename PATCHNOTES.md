@@ -5,11 +5,139 @@ same `id` as their counterparts in `patchnotes.json`. A patchnote distinguishes
 repository changes from external deployment actions so that prepared code is
 not mistaken for a completed release.
 
+## 2026-10-31 — Shared marker exploration and taxonomic fit
+
+**ID:** `2026-10-31-shared-explorer-animal-fit`
+
+**Status:** Implemented and verified locally; public release awaits the required
+review, merge and deployment.
+
+- Open directly on the primer map as the first navigation tab. Put the welcome
+  page under More → About the Atlas, and place reference/search settings below
+  the overview in a closed panel. Keep combinations and fit after the map.
+- Avoid building hidden fungal candidate maps during the initial view. Rank
+  fungal reference templates from validated summaries while preserving the same
+  site checks, counts and selected reference; build detailed rows on demand.
+- Guard initial browser width measurement until Shiny is ready and correct
+  detail-handoff handler signatures so fresh map loads have no startup errors.
+- Keep empty template and catalog states valid during organism/marker
+  transitions so a group change cannot close the session before its marker
+  loads, and custom candidates remain usable for markers without a catalog.
+- Standardize the product name as Primer Atlas across app, citation, landing
+  page, README, contributor notice and global bibliography download. Marker
+  names and scientific sequence identities retain their original scope.
+- Pin scientific test and monthly-release workers to Ubuntu 24.04, matching
+  the previously validated MAFFT/VSEARCH environment. The rolling latest image
+  moved to Ubuntu 26.04 and the unchanged retention fixture failed at MAFFT.
+  Alignment failures now retain the executable, version, status and stderr.
+- Check map control identities and ordering from parsed R declarations, so
+  source spacing does not cause a false layout regression. Run the complete
+  regression suite in parallel groups while retaining the required `test` gate.
+
+- Put organism and marker selection above a shared individual-primer overview,
+  Mix & match builder, detailed amplicon map and taxonomic fit page. Fish can
+  select 12S, COI, 18S and 28S; animal groups expose complementary 18S/28S.
+- Combine up to five forward and five reverse catalog/custom components;
+  retain every requested combination, explicit reverse-complement candidates,
+  raw coordinates, substitution/3′ evidence, length filters and source scope.
+- Add 32 source-backed animal primer components and 24 accession-versioned
+  animal/fish starter templates. Preserve partial/predicted flags and separately
+  freeze NCBI taxonomy for these records and the existing COI coordinate reference.
+- Group the actual selected template results by hierarchy with exact,
+  substitution, partial, ambiguous and missing states, exact denominators,
+  accession drill-down and optional user-labelled taxonomy metadata.
+- Preserve full COI scores, broad UNITE evidence, frozen fungal versions and
+  advanced alignments. Separate new source-bounded fungal SSU/LSU intervals
+  from the whole rDNA reference and withhold unsupported historical anchors.
+- Export cited standalone SVG, a formatted HTML paper table, a checksummed
+  evidence ZIP, full result/primer/taxonomy CSV and exact template FASTA. Narrow maps retain the full coordinate range and both ends.
+
+The new panels are mapping examples, not representative coverage surveys or
+new monthly animal-marker releases. The public deployment sequence and
+scientific scope are recorded in
+[the implementation record](docs/2026-10-31-explorer-and-deployment.md).
+
+## 2026-10-11 — Fungal combinations, platforms, and versions
+
+- Follow-up: connect the combination list and comparison selection to the actual
+  frozen fungal alignment, with shared alignment coordinates, per-template
+  product spans, nucleotide inspection, and an export of raw and aligned sites.
+
+**ID:** `2026-10-11-fungal-combinations-versions`
+
+**Status:** Implemented and tested locally. Immutable R2 staging succeeded;
+public app deployment awaits protected-main review and merge.
+
+- Replace the eight-pair fungal view with 20 starter examples, a searchable full
+  candidate list, pairing matrix, and comparison of up to five combinations.
+- Use distinct Illumina, PacBio, and Nanopore colors, editable project ceilings,
+  per-template length eligibility, and ranges crossing tiers. Class and phylum
+  filters recalculate the actual reference denominator.
+- Preserve the original V1 and add a 21-template NCBI panel in V2. Freeze the
+  catalog, raw sequences, full alignment, taxonomy, sites, products, source
+  responses, and code provenance together, with SHA-256 checksums.
+- Restore full retained panel and version history on clean workers; publish
+  immutable releases only after anonymous public read-back checks.
+- Refresh the app and project landing page with neutral surfaces, compact
+  workspace titles, clearer controls, and responsive layouts.
+- Withhold fuzzy or repeated gene-feature boundaries. Nine individual landmarks
+  remain trustworthy; all templates have unresolved full gene architecture.
+  Exact primer-site products remain candidate evidence, not PCR validation.
+
+Staging run `38138046767` published release `38138046767-1-ITS_FUNGAL`,
+including V1, V2, and fresh-worker V3 (`v3-024e37f16b66`). All 60 artifacts
+passed anonymous public SHA-256 read-back checks. The app loader independently
+read and verified all three hosted snapshots. V3 retains the same 21 sequences
+and 884 pairs while freezing the runner's refreshed source/alignment provenance.
+The existing public latest pointer remains `36864394345-ITS_FUNGAL`.
+[PR #22](https://github.com/sven9r/primer-atlas/pull/22) contains the app changes.
+
+## 2026-10-02 — BeePrime publication or expanded alignment
+
+**ID:** `2026-10-02-beeprime-alignment-choice`
+
+**Status:** Implemented and tested locally; not yet published.
+
+- Add a shared BeePrime selector for the original publication alignment or a
+  growing bee-only alignment. The choice changes scores, denominators,
+  lineage/region summaries, and sequence downloads.
+- Retain the exact 590 publication accessions. New rows enter the expanded
+  panel only when their NCBI lineage is within Anthophila; general primers
+  continue to use their own broad reference.
+- Publish checksummed scores, alignment, added-sequence FASTA, geography, and
+  taxonomy-audit artifacts in the release manifest. Preserve the previous
+  expanded panel between releases and stop on missing or corrupt state.
+- Local build used 299 Hymenoptera records, identified 30 bees, and produced a
+  620-record/801-column panel. Release validation and the choice-routing test
+  passed. Public deployment and cross-month clean-runner retention remain
+  outstanding.
+
+## 2026-10-02 — Growing references and family evaluation clarified
+
+**ID:** `2026-10-02-growing-family-reference-contract`
+
+**Status:** Required scope recorded locally; pipeline and app implementation
+remain incomplete. No new app publication is claimed by this entry.
+
+- Make monthly retained-sequence growth and family evaluation across every
+  supported order the next required scientific milestone.
+- Retain and extend the bee panel for BeePrime only; general arthropod
+  primers use their broad arthropod reference.
+- Require a separate aquatic arthropod option with matching primer use,
+  ecology-supported reference membership and freshwater/marine refinement.
+- Require regional comparisons from the same accession-level scores within
+  order/family, with missing taxonomy/geography and scorable denominators.
+- Record the audited gaps: missing retained FASTA restoration, stale alignment
+  reuse, missing full-panel family taxonomy, study-restricted family views,
+  and geography acquisition tied to the fixed study panel.
+- Add `docs/growing-reference-contract.md` with explicit completion gates and
+  move this work from optional expansion into P0 in PROJECT_STATUS.md.
+
 ## 2026-10-02 — Primer Atlas version 2026.10.02
 
 **ID:** `2026-10-02-primer-atlas-version`
 
-**Status:** Final verification underway; publication pending.
+**Status:** Published and verified on Posit from main commit `648dd55`.
 
 - Prepare the persistent marker selectors, source-backed organism/diet records,
   grouped publications, and metadata download from the September local work.
@@ -20,6 +148,9 @@ not mistaken for a completed release.
   Connect bundle. Research pilot outputs are excluded from that bundle.
 - Update the remaining scientific backlog and correct the old COI-blocked
   status: October monthly run 36864394345 passed both marker promotions.
+- PR #20 and merged-main CI passed all 16 tests and the bundle gate. Public
+  marker returns, dietary filters, empty-filter recovery, and the actual
+  126-row/46-column download were verified after Posit publication.
 
 Current verification and publication details:
 [`docs/2026-10-02-release.md`](docs/2026-10-02-release.md).

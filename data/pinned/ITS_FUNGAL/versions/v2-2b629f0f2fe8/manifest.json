@@ -1,0 +1,243 @@
+{
+  "schema_version": "1.0.0",
+  "marker_id": "ITS_FUNGAL",
+  "id": "v2-2b629f0f2fe8",
+  "version_number": 2,
+  "label": "V2 · NCBI fungal reference panel",
+  "description": "Bounded NCBI fungal rDNA reference panel with frozen accession taxonomy, alignment, landmark evidence and exact primer-site results.",
+  "created_at": "2026-10-11 12:00:49 UTC",
+  "sequence_count": 21,
+  "reference_accession": null,
+  "input_sha256": "2b629f0f2fe87b190d8a5338bdee3c1fb0deff12903ba71d52d3f19912d614d1",
+  "code_sha256": "8d83d6d718dd1c63e8b7692f24d124cd4a03ee46a7881968fc5c16d0261a003e",
+  "tooling_sha256": "29965addea29185f21a4c8efe2a47d61637cd3e0ae7be479b120e30fe957d4ae",
+  "base_commit": "3c85d41ad87a1f5703827aa7af92fe2f381ecbfc",
+  "code_commit": "3c85d41ad87a1f5703827aa7af92fe2f381ecbfc",
+  "code_commit_role": "base checkout; frozen code artifacts are authoritative",
+  "working_tree_modified": true,
+  "source_identity_sha256": "6d312304932c30ebfaebfdd80759450f9aa74fe774da6618988214ddefc11901",
+  "engine": "exact_iupac_site_search",
+  "source_manifest": {
+    "schema_version": "1.0.0",
+    "source": "NCBI GenBank and NCBI Taxonomy",
+    "acquired_at": "2026-10-11T11:37:47Z",
+    "acquisition_time_basis": "original raw-response cache file modification time; proxy when no first-download log is available",
+    "built_at": "2026-10-11T11:51:53Z",
+    "sampling_policy": "bounded cached NCBI search per named phylum; not random, exhaustive, or guaranteed newest",
+    "panel_count": 21,
+    "previous_count": 0,
+    "retained_previous_count": 0,
+    "added_count": 21,
+    "searches": [
+      {
+        "clade": "Ascomycota",
+        "query": "Ascomycota[Organism:exp] AND (\"18S ribosomal RNA\"[Title] OR \"small subunit ribosomal RNA\"[Title]) AND \"internal transcribed spacer\"[Title] AND 2500:12000[SLEN]",
+        "count_available": 1344,
+        "selected": [
+          "PZ900404.1",
+          "PZ528244.1",
+          "PZ528241.1",
+          "PZ528240.1"
+        ],
+        "sha256": "8841a6ca2d32e9504319370b6eb2579b520778652190d700cbf58f72ddd08c92",
+        "cache_file": "search_Ascomycota_f12cd3bb456e9a20.json",
+        "acquired_at": "2026-10-11T11:37:41Z"
+      },
+      {
+        "clade": "Basidiomycota",
+        "query": "Basidiomycota[Organism:exp] AND (\"18S ribosomal RNA\"[Title] OR \"small subunit ribosomal RNA\"[Title]) AND \"internal transcribed spacer\"[Title] AND 2500:12000[SLEN]",
+        "count_available": 601,
+        "selected": [
+          "PZ962702.1",
+          "PZ276773.1",
+          "PZ547617.1",
+          "PZ123758.1"
+        ],
+        "sha256": "2e67870b8193dee6a0c09aab389a21418e45ae0ef7544c423e803257d2126582",
+        "cache_file": "search_Basidiomycota_5dd6c4878ef28323.json",
+        "acquired_at": "2026-10-11T11:37:42Z"
+      },
+      {
+        "clade": "Chytridiomycota",
+        "query": "Chytridiomycota[Organism:exp] AND (\"18S ribosomal RNA\"[Title] OR \"small subunit ribosomal RNA\"[Title]) AND \"internal transcribed spacer\"[Title] AND 2500:12000[SLEN]",
+        "count_available": 625,
+        "selected": [
+          "PV921575.1",
+          "PV921574.1",
+          "PV921573.1",
+          "PV921572.1"
+        ],
+        "sha256": "e50094d360231f151730fc2ed4dd028138bd8c9be2be11035a9e2bdcf701c05b",
+        "cache_file": "search_Chytridiomycota_e58fa9f3bbee3838.json",
+        "acquired_at": "2026-10-11T11:37:43Z"
+      },
+      {
+        "clade": "Mucoromycota",
+        "query": "Mucoromycota[Organism:exp] AND (\"18S ribosomal RNA\"[Title] OR \"small subunit ribosomal RNA\"[Title]) AND \"internal transcribed spacer\"[Title] AND 2500:12000[SLEN]",
+        "count_available": 14,
+        "selected": [
+          "MT436029.1",
+          "MT436028.1",
+          "FJ430740.1",
+          "KT736106.1"
+        ],
+        "sha256": "612dd95dd9f2a47a43fd1082dce89c0d261fc2c8bd7c29208edb40050ec26a02",
+        "cache_file": "search_Mucoromycota_1fa56a5ea842ba14.json",
+        "acquired_at": "2026-10-11T11:37:44Z"
+      },
+      {
+        "clade": "Glomeromycota",
+        "query": "Glomeromycota[Organism:exp] AND (\"18S ribosomal RNA\"[Title] OR \"small subunit ribosomal RNA\"[Title]) AND \"internal transcribed spacer\"[Title] AND 2500:12000[SLEN]",
+        "count_available": 911,
+        "selected": [
+          "PX215164.1",
+          "PX215163.1",
+          "PX215162.1",
+          "PX215161.1"
+        ],
+        "sha256": "afedc721566baafdbf3d485b6132d4b93de1485652bac01f0bff6070a0956a3e",
+        "cache_file": "search_Glomeromycota_822b59e354f4d39f.json",
+        "acquired_at": "2026-10-11T11:37:45Z"
+      }
+    ],
+    "previous_run_manifest_sha256": null,
+    "raw_responses": {
+      "records_b7a841bb9d8e7266.xml": "8b958af51ff9830624c233b7cc02011530833165af0f03f004d544bdfa2b57be",
+      "taxonomy_90986e1f46d6f4c9.xml": "7d2a81ff20232cbe71423a69680cee95a720d8bf1a555d08d692cd52e67b6020"
+    },
+    "raw_response_acquired_at": {
+      "records_b7a841bb9d8e7266.xml": "2026-10-11T11:37:46Z",
+      "taxonomy_90986e1f46d6f4c9.xml": "2026-10-11T11:37:47Z"
+    },
+    "taxonomy_snapshot_sha256": "7d2a81ff20232cbe71423a69680cee95a720d8bf1a555d08d692cd52e67b6020",
+    "mafft_version": "v7.526 (2024/Apr/26)",
+    "alignment_policy": "full alignment without keeplength; product lengths use raw ungapped templates; cross-clade variable-region homology not assumed",
+    "artifacts_sha256": {
+      "panel.fasta": "f096600f9441509ee7dfac59d3818052e5c054fb712c372ef415bf9fd4f164f3",
+      "panel_manifest.csv": "463c259bae18520c08a6a462fc66c6e175a00ca3a9c1b4747a39f0e71b65656f",
+      "landmarks.csv": "1844b3e4e9791361dea3c375a1985bf4fad0c22f545868fe0c056dae9c040ca4",
+      "alignment.fasta": "6382a41295e5e3200150d43f47849de5e7ee6e95af6ad8351c5396cc6804c47c"
+    }
+  },
+  "artifacts": {
+    "raw_catalog": {
+      "path": "raw_catalog.csv",
+      "sha256": "c90d5a34972e3944ebd003959ae80b1a5143fdb485c89112836c0ab1c3929438",
+      "bytes": 44299,
+      "rows": 121
+    },
+    "catalog": {
+      "path": "catalog.csv",
+      "sha256": "3262802b38c2c24b3a1220a1be32d190145f9379dc0e0fce3187ac511f9741e4",
+      "bytes": 50361,
+      "rows": 112
+    },
+    "taxonomy": {
+      "path": "taxonomy.csv",
+      "sha256": "fc481c481af5d7df88f76f4da2b240f533a62a916ce8860e4eefad1990e4052f",
+      "bytes": 15035,
+      "rows": 21
+    },
+    "geometry": {
+      "path": "geometry.csv",
+      "sha256": "c82deb017cd6f6abb0f79d0e9df6b32261022d4e159c29a0f6067065ae1144b0",
+      "bytes": 1965,
+      "rows": 8
+    },
+    "landmarks": {
+      "path": "landmarks.csv",
+      "sha256": "4215243cca537aa8de383ca11a6ed781e0dddd0a1132cef8ab388321e4edeec4",
+      "bytes": 769,
+      "rows": 9
+    },
+    "pairs": {
+      "path": "pairs.csv",
+      "sha256": "afdc9433ba52f4f7b33776601ed2ca16eacc0a9ebe6d0bc4cfc85292ef667647",
+      "bytes": 292497,
+      "rows": 884
+    },
+    "pair_sequences": {
+      "path": "pair_sequences.csv",
+      "sha256": "65186a1288119d7dc856542c73e6212b94dc16f2be1ba4148b7cd3dc43c119b4",
+      "bytes": 3210199,
+      "rows": 18564
+    },
+    "sites": {
+      "path": "sites.csv",
+      "sha256": "fe47a8cd253332caaa6a48403b79e8a2a0c182aba58db25ae7431d14532ccfb8",
+      "bytes": 370504,
+      "rows": 2352
+    },
+    "primer_pairs": {
+      "path": "primer_pairs.csv",
+      "sha256": "9190c4f4a41e2cf690f2bf40482beca9a9bed03461e4b9965eceb8e26742e7e5",
+      "bytes": 928,
+      "rows": 8
+    },
+    "oligos": {
+      "path": "oligos.csv",
+      "sha256": "548a560257905e402fe598752f667c9eaae89a166cabc65be69e502717535435",
+      "bytes": 1887,
+      "rows": 9
+    },
+    "pair_oligos": {
+      "path": "pair_oligos.csv",
+      "sha256": "6409b117dbaebb3be14161243bed3e1b9ad9329a898db7c6e8df8fb20391d054",
+      "bytes": 2312,
+      "rows": 66
+    },
+    "sequences": {
+      "path": "sequences.fasta",
+      "sha256": "98a9bc84be13a73228a5a762801b0d070e2cd0950e50c33efbd0f2cb665b12dd",
+      "bytes": 96517,
+      "rows": 21
+    },
+    "alignment": {
+      "path": "alignment.fasta",
+      "sha256": "8fb1119fa517de4b47ea1de73d27cc2bfdf62a59f68b3be9e1cadc8326f0a664",
+      "bytes": 378903,
+      "rows": 21
+    },
+    "run_manifest": {
+      "path": "run_manifest.json",
+      "sha256": "10870602e666f5de58fdddf510ee00c1a9f078524a5b21d58df3282b2fdf9365",
+      "bytes": 4485
+    },
+    "code_functions": {
+      "path": "code_functions.R",
+      "sha256": "08d71b5d1a7563661e8afe4130e2f6c5932a0386777124abb6bad23639cea3d8",
+      "bytes": 55796,
+      "rows": 1742
+    },
+    "code_explorer": {
+      "path": "code_explorer.R",
+      "sha256": "77d0e36ffc6a574b9b825b6e9f3ee1f9133bae2da269bce1d2033d255eb08615",
+      "bytes": 19327,
+      "rows": 362
+    },
+    "code_acquisition": {
+      "path": "code_acquisition.py",
+      "sha256": "bd7af96ba635d74cdc9dac59eea434ed0882c1f8b29b0fe7f474e955576cbf8b",
+      "bytes": 19372,
+      "rows": 351
+    },
+    "code_snapshot_builder": {
+      "path": "code_snapshot_builder.R",
+      "sha256": "7acd7b4a6035772f7dbd9b43f9451b87ab42a1b608cfc206dee7fcbb8ba9d7b5",
+      "bytes": 19101,
+      "rows": 304
+    },
+    "code_version_reader": {
+      "path": "code_version_reader.R",
+      "sha256": "dad606136a321602ade3f0eac7b7b9088b76c30582e7cc4da08ae4c0a5d49bd1",
+      "bytes": 9063,
+      "rows": 162
+    },
+    "code_data_layer": {
+      "path": "code_data_layer.R",
+      "sha256": "4cd99a38fb814cceb3a46c5c1c9938b2f9eeed03b9b03c175cfd3b549e649749",
+      "bytes": 4641,
+      "rows": 93
+    }
+  }
+}

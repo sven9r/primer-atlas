@@ -1,0 +1,123 @@
+{
+  "schema_version": 1,
+  "version": "fish-starter-v1",
+  "created_date": "2026-10-31",
+  "status": "starter_mapping_panel",
+  "n_templates": 13,
+  "n_source_accessions": 7,
+  "marker_counts": {
+    "12S_MT": 3,
+    "16S_MT": 3,
+    "COI": 3,
+    "18S": 3,
+    "28S": 1
+  },
+  "scope": "Selected NCBI records for interactive primer geometry. Not a representative fish reference release, not monthly maintained, and not PCR performance evidence.",
+  "coordinate_contract": "Each template is an exact plus-strand slice of one archived accession-version feature. Local template coordinates start at one. source_start/source_end map back to the original record; no inter-template alignment or domain-coordinate projection is claimed.",
+  "acquisition": "NCBI Entrez skill ncbi_entrez.py efetch, nuccore, gb XML. Returned accession versions and lengths were checked before freezing.",
+  "builder": {
+    "path": "scripts/build_fish_starter_panel.py",
+    "sha256": "eb26c362a0c6dced967213efea521c93d34ea5071c2a2c47257955d90647a04b"
+  },
+  "artifacts": {
+    "templates.csv": {
+      "sha256": "e51081c379279816691ed5b924074104d89a271b8e693f6f203d4c7f8af67a9f",
+      "bytes": 29142
+    },
+    "templates.fasta": {
+      "sha256": "67dd50f7fe7fdc59682e3973085fedd833c532046dc6d29d3ece39666a5065db",
+      "bytes": 21657
+    },
+    "taxonomy.csv": {
+      "sha256": "aee8355ef6d419ce0b4db1207da23caacd61aa7d65a38a08fd701fa3cea8d753",
+      "bytes": 9095
+    }
+  },
+  "sources": [
+    {
+      "file": "source/ncbi-records-01.xml.gz",
+      "sha256": "7796479a72fdb134abd8b66bd387bd01a08f560c384115582426e1636079268b",
+      "uncompressed_sha256": "6b84760d6f41492c4d311dffac9c3ee38de300fe1213fa6c4f9ee360bce1be85",
+      "accessions": [
+        "NC_002333.2",
+        "NC_002081.1",
+        "NC_001950.1",
+        "FJ915075.1",
+        "FJ710886.1"
+      ],
+      "endpoint": "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi",
+      "params": {
+        "db": "nuccore",
+        "id": "NC_002333.2,NC_002081.1,NC_001950.1,FJ915075.1,FJ710886.1",
+        "rettype": "gb",
+        "retmode": "xml"
+      }
+    },
+    {
+      "file": "source/ncbi-records-02.xml.gz",
+      "sha256": "cfe71d198fa181d2e8056e286a535c071dee60106406c699cba1f5ccc1191f04",
+      "uncompressed_sha256": "a7ba8511479637322b686caa9c661d02fdd2110a0517e7726f5b344c3b0eff21",
+      "accessions": [
+        "XR_012407110.1"
+      ],
+      "endpoint": "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi",
+      "params": {
+        "db": "nuccore",
+        "id": "XR_012407110.1",
+        "rettype": "gb",
+        "retmode": "xml"
+      }
+    },
+    {
+      "file": "source/ncbi-records-03.xml.gz",
+      "sha256": "b7965459a226aed322576245ade3012f0c074369bec15b2f1f70ac42507c87b9",
+      "uncompressed_sha256": "0cd7fe5fb15a509fb1c0475073d1a07da4d924c8019a7fdccce2c4a993c5d7d2",
+      "accessions": [
+        "XR_012403044.1"
+      ],
+      "endpoint": "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi",
+      "params": {
+        "db": "nuccore",
+        "id": "XR_012403044.1",
+        "rettype": "gb",
+        "retmode": "xml"
+      }
+    }
+  ],
+  "taxonomy_supplement": {
+    "version": "NCBI-Taxonomy-2026-10-31-v1",
+    "retrieved_date": "2026-10-31",
+    "n_rows": 13,
+    "n_panel_template_rows": 13,
+    "external_template_ids": [],
+    "scope": "Authoritative NCBI rank values joined through exact accession-source taxon IDs. No names inferred from FASTA headers, no unresolved rank filled from another rank, and no new sequence membership or scoring denominator.",
+    "missing_rank_label": "Unresolved",
+    "rank_fields": [
+      "kingdom",
+      "phylum",
+      "class",
+      "order",
+      "family",
+      "genus",
+      "species"
+    ],
+    "taxonomy_source_sha256_definition": "SHA-256 of the uncompressed original TaxaSet XML response; raw_taxonomy_sha256 hashes its stored gzip archive.",
+    "builder": {
+      "path": "scripts/build_starter_taxonomy_supplements.py",
+      "sha256": "4022c7469f9bb42f6869c5f2a6c507147bfcdc3826764bc04cab6a1e1efa7bf5"
+    },
+    "sources": [
+      {
+        "file": "taxonomy_source/ncbi-taxonomy-20261031.xml.gz",
+        "sha256": "b18757be55b4e1ef84801e12da1ce3734cd736b67c7afcd8fcca94afad39361d",
+        "uncompressed_sha256": "578b4b22bf68791528f1d7742ad09e96485ffd6ecf4b6966e6e8ddb472a74288",
+        "endpoint": "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi",
+        "params": {
+          "db": "taxonomy",
+          "id": "7955,8049,7830,8030,7227,9031,7245,6669,35525",
+          "retmode": "xml"
+        }
+      }
+    ]
+  }
+}

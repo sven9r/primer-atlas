@@ -39,10 +39,12 @@ writeManifest(appDir = ".", appFiles = app_files, python = NULL, quarto = FALSE)
 manifest <- jsonlite::read_json("manifest.json", simplifyVector = FALSE)
 
 # rsconnect includes packages from the project-wide renv.lock. readxl is used
-# only by monthly data-build scripts, which are not part of this Shiny bundle.
+# only by monthly data-build scripts. PrimerMiner's pinned evaluator and tables
+# are bundled as source; the app does not need its installed package.
 # Connect Cloud installs packages from manifest.json, so keep build-only
 # dependencies out of the app runtime while retaining them in renv.lock for CI.
 manifest$packages$readxl <- NULL
+manifest$packages$PrimerMiner <- NULL
 jsonlite::write_json(manifest, "manifest.json", pretty = TRUE, auto_unbox = TRUE, null = "null")
 
 paths <- names(manifest$files)

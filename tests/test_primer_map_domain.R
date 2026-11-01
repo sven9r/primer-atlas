@@ -2,6 +2,7 @@
 
 project_root <- normalizePath(getwd(), mustWork = TRUE)
 source(file.path(project_root, "R", "functions.R"))
+source(file.path(project_root, "R", "primer_overview.R"))
 
 pairs <- read.csv(
   file.path(project_root, "data", "derived", "pair_geometry.csv"),
@@ -20,7 +21,7 @@ bindings <- read.csv(
 )
 
 inside <- pairs[pairs$pair_id %in% c("NOSPID", "NOSPI2_LAURELIN", "NOPLANT"), ]
-inside_domain <- primer_map_domain(inside, folmer$start, folmer$end)
+inside_domain <- .primer_overview_domain(inside, folmer$start, folmer$end)
 stopifnot(
   identical(unname(inside_domain), c(0, 700))
 )
@@ -29,7 +30,7 @@ default_ids <- c(
   "MCO", "LERAY_XT", "ZBJ_ART", "FWH2", "BF2_BR2", "ANML",
   "BEEPRIME", "NOSPID", "NOSPI2_LAURELIN"
 )
-default_domain <- primer_map_domain(
+default_domain <- .primer_overview_domain(
   pairs[pairs$pair_id %in% default_ids, ],
   folmer$start,
   folmer$end
@@ -58,36 +59,105 @@ late_pair <- data.frame(
   reverse_start = 1276,
   reverse_end = 1300
 )
-late_domain <- primer_map_domain(late_pair, folmer$start, folmer$end)
+late_domain <- .primer_overview_domain(late_pair, folmer$start, folmer$end)
 stopifnot(
   identical(unname(late_domain), c(0, 1300))
 )
+# The extracted renderer uses the same range calculation as the legacy helper.
+# Exercise both on real inside/default placements and a synthetic late site.
+for (fixture in list(inside, pairs[pairs$pair_id %in% default_ids, ], late_pair)) {
+  stopifnot(identical(
+    .primer_overview_domain(fixture, folmer$start, folmer$end),
+    primer_map_domain(fixture, folmer$start, folmer$end)
+  ))
+}
 
 app_source <- paste(
   readLines(file.path(project_root, "app.R"), warn = FALSE),
   collapse = "\n"
 )
+renderer_source <- paste(
+  readLines(file.path(project_root, "R", "primer_overview.R"), warn = FALSE),
+  collapse = "\n"
+)
+default_rows <- pairs[pairs$pair_id %in% default_ids, , drop = FALSE]
+markers <- read.csv(file.path(project_root, "data", "catalog", "markers.csv"), stringsAsFactors = FALSE)
+rendered_default <- paste(as.character(primer_overview_map(
+  default_rows,
+  read.csv(file.path(project_root, "data", "primers.csv"), stringsAsFactors = FALSE),
+  markers[markers$marker_id == "COI", , drop = FALSE],
+  folmer_region = folmer
+)), collapse = "\n")
+stopifnot(
+  length(regmatches(rendered_default, gregexpr('<circle cx="16"', rendered_default, fixed = TRUE))[[1L]]) == nrow(default_rows),
+  grepl("View 0–800 bp", rendered_default, fixed = TRUE)
+)
+# Check declared controls and layout order from R calls, independent of source
+# whitespace. The shared explorer now precedes the closed published-evidence
+# workspace; the retained map controls still have their deliberate order.
+control_calls <- list()
+visit_controls <- function(node) {
+  if (missing(node)) return(invisible(NULL))
+  if (is.expression(node)) {
+    for (child in node) visit_controls(child)
+    return(invisible(NULL))
+  }
+  if (!is.call(node)) return(invisible(NULL))
+  callee <- paste(deparse(node[[1L]]), collapse = "")
+  args <- as.list(node)[-1L]
+  argument <- function(name, position = NULL) {
+    named <- which(names(args) == name)
+    if (length(named)) return(args[[named[1L]]])
+    if (!is.null(position) && length(args) >= position) return(args[[position]])
+    NULL
+  }
+  standard <- callee %in% c("selectInput", "selectizeInput", "radioButtons", "checkboxGroupInput",
+    "actionButton", "sliderInput", "uiOutput", "primerExploreUI")
+  container <- identical(callee, "tags$details")
+  if (standard || container) {
+    id <- if (container) argument("id") else argument(if (callee == "uiOutput") "outputId" else "inputId", 1L)
+    label <- if (container || callee %in% c("uiOutput", "primerExploreUI")) NULL else argument("label", 2L)
+    if (is.character(id) && length(id) == 1L) control_calls[[length(control_calls) + 1L]] <<-
+      list(id = id, label = label, kind = callee)
+  }
+  for (child in args) visit_controls(child)
+  invisible(NULL)
+}
+app_ast <- parse(text = app_source)
+visit_controls(app_ast)
+control_position <- function(id, label = NULL, kind = NULL) {
+  matches <- which(vapply(control_calls, function(control)
+    identical(control$id, id) && (is.null(label) || identical(control$label, label)) &&
+      (is.null(kind) || identical(control$kind, kind)), logical(1)))
+  # Missing and duplicate declarations both violate the intended UI contract.
+  if (length(matches) == 1L) as.integer(matches) else -1L
+}
 positions <- c(
-  marker = regexpr('"map_marker", "Marker"', app_source, fixed = TRUE)[1],
-  application = regexpr('"application_filter", "Applications"', app_source, fixed = TRUE)[1],
-  map_sort = regexpr('"map_sort", "Order rows by"', app_source, fixed = TRUE)[1],
-  select_all = regexpr('"select_all", "Select all"', app_source, fixed = TRUE)[1],
-  amplicon_range = regexpr(
-    '"amplicon_range", "Amplicon + primers (bp)"',
-    app_source,
-    fixed = TRUE
-  )[1],
-  pair_select = regexpr('uiOutput("pair_selector_ui")', app_source, fixed = TRUE)[1]
+  organism = control_position("map_organism", "Organism group", "selectInput"),
+  marker = control_position("map_marker", "Marker", "selectInput"),
+  explorer = control_position("explore", kind = "primerExploreUI"),
+  published_evidence = control_position("legacy-primer-workspace", kind = "tags$details"),
+  application = control_position("application_filter", "Applications"),
+  map_sort = control_position("map_sort", "Order rows by"),
+  select_all = control_position("select_all", "Select all"),
+  amplicon_range = control_position("amplicon_range", "Amplicon + primers (bp)"),
+  pair_select = control_position("pair_selector_ui", kind = "uiOutput")
 )
 stopifnot(
   all(positions > 0),
+  positions["organism"] < positions["marker"],
+  positions["marker"] < positions["explorer"],
+  positions["explorer"] < positions["published_evidence"],
+  positions["published_evidence"] < positions["application"],
   positions["marker"] < positions["application"],
   positions["application"] < positions["map_sort"],
   positions["map_sort"] < positions["select_all"],
   positions["select_all"] < positions["amplicon_range"],
   positions["amplicon_range"] < positions["pair_select"],
-  grepl("primer_map_domain(", app_source, fixed = TRUE),
-  grepl('paste0("View ", axis_min, "–", axis_max, " bp")', app_source, fixed = TRUE),
+  grepl('source("R/primer_overview.R")', app_source, fixed = TRUE),
+  grepl("primer_overview_map(", app_source, fixed = TRUE),
+  grepl(".primer_overview_domain(", paste(deparse(body(primer_overview_map)), collapse = "\n"), fixed = TRUE),
+  grepl('paste0("View ", axis_min, "–", axis_max, " bp")', renderer_source, fixed = TRUE),
   grepl("sorted_filtered_pairs <- reactive({", app_source, fixed = TRUE),
   grepl("sorted_pair_choices <- reactive({", app_source, fixed = TRUE),
   grepl(
@@ -97,17 +167,44 @@ stopifnot(
   ),
   grepl("number_primer_choice_labels(", app_source, fixed = TRUE),
   grepl('updateCheckboxGroupInput(', app_source, fixed = TRUE),
-  grepl("number_x <- 16", app_source, fixed = TRUE),
-  grepl("left <- 112", app_source, fixed = TRUE),
+  grepl("number_x <- 16", renderer_source, fixed = TRUE),
+  grepl("left <- 112", renderer_source, fixed = TRUE),
   grepl("primer-hover-tooltip", app_source, fixed = TRUE),
   grepl("pinnedPrimerTooltipTarget", app_source, fixed = TRUE),
-  grepl('class = "primer-tooltip-target"', app_source, fixed = TRUE),
-  grepl('`data-tooltip` = tooltip', app_source, fixed = TRUE),
-  grepl('"\\nTags: "', app_source, fixed = TRUE),
-  grepl('"Map row ", i', app_source, fixed = TRUE),
-  grepl("Sorting and filtering recalculate this number.", app_source, fixed = TRUE),
-  grepl('class = "legend-number"', app_source, fixed = TRUE)
+  grepl('class = "primer-tooltip-target"', renderer_source, fixed = TRUE),
+  grepl('`data-tooltip` = tooltip', renderer_source, fixed = TRUE),
+  grepl('"\\nTags: "', renderer_source, fixed = TRUE),
+  grepl('"Map row ", i', renderer_source, fixed = TRUE),
+  grepl("Sorting and filtering recalculate this number.", renderer_source, fixed = TRUE)
 )
+
+# A fresh session must open the primer overview, with its tab first. The
+# welcome/about content must not become the default merely by moving a panel.
+ui_assignments <- Filter(function(node) is.call(node) &&
+  identical(node[[1L]], as.name("<-")) && identical(node[[2L]], as.name("ui")), as.list(app_ast))
+stopifnot(length(ui_assignments) == 1L)
+navbar <- ui_assignments[[1L]][[3L]]
+stopifnot(is.call(navbar), identical(navbar[[1L]], as.name("page_navbar")))
+navbar_args <- as.list(navbar)[-1L]
+panels <- Filter(function(node) is.call(node) &&
+  identical(node[[1L]], as.name("nav_panel")), navbar_args)
+stopifnot(
+  identical(navbar_args$id, "main_nav"),
+  identical(navbar_args$selected, "find"),
+  length(panels) > 0L,
+  identical(as.list(panels[[1L]])$value, "find")
+)
+
+# Check the rendered shared UI, rather than strings inside its navigation
+# links: the actual primer overview precedes combination controls and results.
+explorer_ui <- new.env(parent = baseenv())
+source(file.path(project_root, "R", "primer_explore_ui.R"), local = explorer_ui)
+flow_html <- paste(as.character(explorer_ui$primerExploreUI("map-order")), collapse = "\n")
+flow_positions <- vapply(c("overview_card", "overview", "map_settings", "mix_card", "map_card"), function(id) {
+  found <- gregexpr(paste0('id="map-order-', id, '"'), flow_html, fixed = TRUE)[[1L]]
+  if (length(found) == 1L && found[1L] > 0L) as.integer(found[1L]) else -1L
+}, integer(1))
+stopifnot(all(flow_positions > 0L), all(diff(flow_positions) > 0L))
 
 sorting_fixture <- data.frame(
   pair_label = c("Zulu", "Alpha", "Middle"),
@@ -180,4 +277,4 @@ stopifnot(
   identical(unname(alphabetical_choices), c("C", "A", "B"))
 )
 
-message("Dynamic primer-map domain and control-order checks passed.")
+message("Shared primer-map domain, default overview navigation, rendered investigation order and retained map-control checks passed.")

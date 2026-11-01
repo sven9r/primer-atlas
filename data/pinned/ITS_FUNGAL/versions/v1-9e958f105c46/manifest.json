@@ -1,0 +1,105 @@
+{
+  "schema_version": "1.0.0",
+  "marker_id": "ITS_FUNGAL",
+  "id": "v1-9e958f105c46",
+  "version_number": 1,
+  "label": "V1 · original fungal reference",
+  "description": "Original FN812768.2 reference, captured UNITE catalog, eight mapped pairs and pilot landmarks. Taxonomic class and clade are unresolved.",
+  "created_at": "2026-10-11 11:39:38 UTC",
+  "sequence_count": 1,
+  "reference_accession": "FN812768.2",
+  "input_sha256": "9e958f105c46ddbc9c9226a179573344c3cf6f676f3896c99e1ff38c4a2882aa",
+  "code_sha256": "957479c3686914e7a929a44dba73165d0fe5506d42b8f0146fe79e17415e8886",
+  "code_commit": "3c85d41ad87a1f5703827aa7af92fe2f381ecbfc",
+  "engine": "exact_iupac_site_search",
+  "source_manifest": {
+    "source": "NCBI nuccore FN812768.2",
+    "reference_accession": "FN812768.2",
+    "scope": "one reference"
+  },
+  "artifacts": {
+    "raw_catalog": {
+      "path": "raw_catalog.csv",
+      "sha256": "c90d5a34972e3944ebd003959ae80b1a5143fdb485c89112836c0ab1c3929438",
+      "bytes": 44299,
+      "rows": 121
+    },
+    "catalog": {
+      "path": "catalog.csv",
+      "sha256": "3262802b38c2c24b3a1220a1be32d190145f9379dc0e0fce3187ac511f9741e4",
+      "bytes": 50361,
+      "rows": 112
+    },
+    "taxonomy": {
+      "path": "taxonomy.csv",
+      "sha256": "ea5bf0309661237ea63011083cdab25de5e8bd9f8fd68989bdd5bd21ea526716",
+      "bytes": 230,
+      "rows": 1
+    },
+    "geometry": {
+      "path": "geometry.csv",
+      "sha256": "c82deb017cd6f6abb0f79d0e9df6b32261022d4e159c29a0f6067065ae1144b0",
+      "bytes": 1965,
+      "rows": 8
+    },
+    "landmarks": {
+      "path": "landmarks.csv",
+      "sha256": "cde324cecb6d420737c9babea6977a8c4610198c01e9544940a309aec0e8e2a3",
+      "bytes": 756,
+      "rows": 5
+    },
+    "pairs": {
+      "path": "pairs.csv",
+      "sha256": "e45d47e6930c508de054b5f9e33c2283a90d89b0f3aa54ffef1bc7cca7aa7653",
+      "bytes": 6997,
+      "rows": 23
+    },
+    "pair_sequences": {
+      "path": "pair_sequences.csv",
+      "sha256": "787ddf72fc535d6ed8435dd1546baed385bbd8d3bf8cd0228786bb7cf5fea86e",
+      "bytes": 3205,
+      "rows": 23
+    },
+    "sites": {
+      "path": "sites.csv",
+      "sha256": "790a90fd57d2964b1ad0772c91dba31923eb66656c1db6980d0408820fb3a208",
+      "bytes": 13607,
+      "rows": 112
+    },
+    "primer_pairs": {
+      "path": "primer_pairs.csv",
+      "sha256": "9190c4f4a41e2cf690f2bf40482beca9a9bed03461e4b9965eceb8e26742e7e5",
+      "bytes": 928,
+      "rows": 8
+    },
+    "oligos": {
+      "path": "oligos.csv",
+      "sha256": "548a560257905e402fe598752f667c9eaae89a166cabc65be69e502717535435",
+      "bytes": 1887,
+      "rows": 9
+    },
+    "pair_oligos": {
+      "path": "pair_oligos.csv",
+      "sha256": "6409b117dbaebb3be14161243bed3e1b9ad9329a898db7c6e8df8fb20391d054",
+      "bytes": 2312,
+      "rows": 66
+    },
+    "sequences": {
+      "path": "sequences.fasta",
+      "sha256": "aad9b1f1b8e11fd784d71532881eb7d0a700a4cc04ea5a5ccd760fd896d7915a",
+      "bytes": 752,
+      "rows": 1
+    },
+    "alignment": {
+      "path": "alignment.fasta",
+      "sha256": "66a42fab341c6bb11359a71afa52b61515644da036595ea27c3b896aea4ef5b7",
+      "bytes": 863,
+      "rows": 1
+    },
+    "run_manifest": {
+      "path": "run_manifest.json",
+      "sha256": "fc8198715378c9b1f8973be605e4c555db9d95008fb2a602eaadd541a5e8c37c",
+      "bytes": 109
+    }
+  }
+}

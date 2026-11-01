@@ -9,7 +9,8 @@ general <- policy[policy$target_group == "ALL_ARTHROPOD_GROUPS", , drop = FALSE]
 bee <- policy[policy$exception_pair_id == "BEEPRIME", , drop = FALSE]
 stopifnot(
   nrow(general) == 1L,
-  general$baseline_sequences == 1000L,
+  general$baseline_sequences == 100L,
+  general$minimum_total_sequences == 10000L,
   abs(general$monthly_growth_fraction - 0.01) < 1e-12,
   general$update_mode == "append_unseen_accessions",
   general$scoring_input == "full_reference_coordinate_alignment",
@@ -22,13 +23,17 @@ update_source <- paste(readLines("scripts/update_order_reference_panels.R", warn
 alignment_source <- paste(readLines("scripts/build_22_group_alignments.R", warn = FALSE), collapse = "\n")
 release_source <- paste(readLines("scripts/build_release.R", warn = FALSE), collapse = "\n")
 stopifnot(
-  grepl("ceiling\\(previous_n \\* \\(1 \\+ growth\\)\\)", update_source),
-  grepl("setdiff\\(as.character\\(search\\$ids\\), existing\\$entrez_uid\\)", update_source),
+  grepl("build_coi_reference_panel.py", update_source, fixed = TRUE),
+  grepl("--previous-dir", update_source, fixed = TRUE),
+  grepl("coi_assert_retention(old, current)", update_source, fixed = TRUE),
+  !grepl("rentrez::entrez_fetch", update_source, fixed = TRUE),
   grepl('EVALUATION_MODE", "full', alignment_source, fixed = TRUE),
   grepl("full_order_", release_source, fixed = TRUE),
   grepl("exact_beeprime", release_source, fixed = TRUE),
   !grepl('pattern = "\\^claimed_\\.\\*', release_source)
 )
+# Behavioral policy boundaries and retained-state proof are checked by
+# tests/test_coi_reference_panel.py and tests/test_coi_retention.R.
 
 its_oligos <- oligos[oligos$marker_id == "ITS_FUNGAL", , drop = FALSE]
 stopifnot(

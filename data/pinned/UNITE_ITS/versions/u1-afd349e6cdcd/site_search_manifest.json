@@ -1,0 +1,22 @@
+{
+  "complete": true,
+  "scan_rule_version": "exact_iupac_unique_sites_v1",
+  "n_records": 15402,
+  "n_catalog": 112,
+  "n_pairs": 884,
+  "n_site_searches": 1725024,
+  "n_sparse_rows": 166162,
+  "n_no_exact_hits": 1558862,
+  "sequence_file": "data/derived/unite_reference_panel/annotations_v2/oriented_raw.fasta.gz",
+  "sequence_sha256": "9186e34ea7204a676a0c0afdee0e2e6b6708d59a3c81042b07efc5f557db9899",
+  "record_ids_sha256": "d9ba8429539e278c59c727bc594569d57e77cd948b23228d2ddd03435d5cda69",
+  "metadata_sha256": "75f5f2ba1019be76680cd145b9b2bd545d696685aa729f8210789bf75f9ffba1",
+  "catalog_sha256": "3262802b38c2c24b3a1220a1be32d190145f9379dc0e0fce3187ac511f9741e4",
+  "pair_catalog_sha256": "afdc9433ba52f4f7b33776601ed2ca16eacc0a9ebe6d0bc4cfc85292ef667647",
+  "script_sha256": "3f991e0cf4340e33bb2d1a88cdc58f87d0c4142694d01c6d057db196b4345547",
+  "catalog_artifact_sha256": "3db27ed5e1b4012792aceebb84ebff03c3de67daee6923b39b4936986b156a2d",
+  "pair_artifact_sha256": "f22ec2d1f874bfe7bd12ae6567b78971a948bbff21980880c5431434cfde2d34",
+  "site_artifact_sha256": "0fa676e68a0992359da4df496e8823121c7d7112a44f162d6ac361a4c204ba13",
+  "search_rules": "Unique exact IUPAC-compatible A/C/G/T template sites; overlapping hits counted; template ambiguity never establishes a site; exact chance expectation <=0.05; inward products >=100 encoded bp including primers",
+  "limitation": "Missing exact hits can reflect truncated records or primer mismatches; no PCR probability or whole-taxon coverage inferred."
+}

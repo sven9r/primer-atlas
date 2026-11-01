@@ -10,14 +10,23 @@ and an organism group can be investigated with more than one locus.
 | Mitochondrial 12S | Vertebrates, especially fish and birds | Broader vertebrate eDNA with assays such as 12S-V5 |
 | Prokaryotic 16S | Bacteria and Archaea | Plant-associated microbiomes and host-associated communities |
 | Animal mitochondrial 16S | Multiple metazoan lineages | Fish, arthropods, and zooplankton with taxon-specific reference panels |
-| 18S | Protists, microbial eukaryotes, and plankton | Broad eukaryotes, fungi, metazoans, and degraded-template surveys |
+| 18S | Protists, microbial eukaryotes, and plankton | Complementary choice for every animal group, including fish, arthropods and birds; broad eukaryotes and fungi |
 | Fungal ITS | Fungi | Species-oriented fungal community profiling |
-| 28S LSU | Fungi, phytoplankton, and other eukaryotes | Phylogenetic community profiling and complementary protist/metazoan evidence |
+| 28S LSU | Fungi, phytoplankton, and other eukaryotes | Complementary choice for every animal group, including fish, arthropods and birds; phylogenetic community profiling |
 
 These links describe established use or a defensible complementary role. They
 do not mean that every primer targeting the marker covers every listed group.
 Primer sequence, variable region, amplicon length, reference database, and
 assay chemistry remain separate evidence layers.
+
+The explorer keeps the selected organism group while the user changes marker.
+Arthropods default to COI; fish default to mitochondrial 12S and also offer COI,
+18S and 28S. 18S and 28S are available across the animal groups as complementary
+investigations. These catalog relationships do not make a broad nuclear assay
+fish-specific, establish equal recovery among animal taxa, or transfer an
+arthropod COI score to a fish template. Mitochondrial 16S remains a separate
+animal marker. Catalog/custom-template availability is displayed separately
+from a published marker release or a scored, taxon-matched reference panel.
 
 ## 12S distinction
 
@@ -46,8 +55,9 @@ Representative source: [Klindworth et al. 2013](https://doi.org/10.1093/nar/gks8
 ## 18S distinction
 
 The 18S pilot exposes PR2-primer 2.1.1 as two separate objects: 321 individual
-primers and 123 documented primer sets. The combination list is the primary
-selection surface. Source-mapped sets can be drawn on the 1,799 bp
+primers and 123 documented primer sets. The explorer starts with individual
+primer positions, followed by Mix & match and a detailed amplicon/template
+view. Original source-mapped sets remain available on the 1,799 bp
 *Saccharomyces cerevisiae* FU970071 coordinate reference; sets lacking usable
 pair geometry remain searchable and are not silently discarded. V4 and V9
 assays remain distinct observation processes.

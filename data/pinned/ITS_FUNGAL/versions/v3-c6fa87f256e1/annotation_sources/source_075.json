@@ -1,0 +1,32 @@
+{
+  "source_accession": "X00525.1",
+  "source_definition": "Mouse 28S ribosomal RNA",
+  "source_organism": "Mus musculus",
+  "source_length_bp": 4712,
+  "source_rRNA_location": "1..4712",
+  "coordinate_system": "one-based inclusive; record coordinates equal mature 28S gene-relative coordinates because the rRNA feature spans the full record",
+  "source_update_date": "06-JUN-2003",
+  "source_url": "https://www.ncbi.nlm.nih.gov/nuccore/X00525.1",
+  "primary_paper": {
+    "title": "The complete nucleotide sequence of mouse 28S rRNA gene. Implications for the process of size increase of the large subunit rRNA in higher eukaryotes",
+    "authors": "Hassouna et al.",
+    "year": 1984,
+    "journal": "Nucleic Acids Research 12(8):3563-3583",
+    "pubmed_id": "6328426"
+  },
+  "source_xml_path": "logs/fungal_domain_mapping_research/structural_references.gb.xml",
+  "source_xml_sha256": "a77f83440d8994638f7639c453597cf8ec97a593fbc77b079570eff077bb22e0",
+  "source_sequence_sha256": "6b9298b46841a7909727df463e39bd3469f67937cd5e982214060a6ea296fead",
+  "source_feature_rows": 13,
+  "eligible_source_feature_rows": 12,
+  "eligible_distinct_classic_domain_names": 11,
+  "split_domain": "D7 consists of separate D7a and D7b intervals; do not merge the intervening conserved segment",
+  "withheld_domains": [
+    "D10"
+  ],
+  "D10_issue": "Unmodified source D10 3272..3819 contains D9 3629..3686 and cannot be treated as a reliable exclusive classical D-domain interval. No guessed correction made.",
+  "D11_note": "Source D11 is 4221..4225 (5 nt). Preserve that exact source size; do not inflate or omit merely because of its small span.",
+  "mapping_caveat": "These are source annotations in mammalian 28S, not fungal validated boundaries. A fungal projection must use LSU-specific alignment with independently supported, unique conserved flanks and retain unresolved/failed mappings.",
+  "fasta_path": "logs/fungal_domain_mapping_research/X00525.1.fasta",
+  "domain_csv_path": "logs/fungal_domain_mapping_research/X00525.1_D_domains.source.csv"
+}

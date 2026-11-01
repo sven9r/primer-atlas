@@ -1,0 +1,49 @@
+{
+  "schema_version": "1.0.0",
+  "itsx_version": "1.1.3",
+  "hmmer_version": "3.4",
+  "architecture": "arm64",
+  "files": {
+    "itsx_program": {
+      "path": "/Users/sven9r/Desktop/Berkeley/projects/2026_99_primer_alignment wild/tmp/unite-tools/src/ITSx_1.1.3/ITSx",
+      "sha256": "a23d00dc4962216170ea10075b4aae8c34bd97e3b77eab2d67b00e4fc4d9360e"
+    },
+    "itsx_wrapper": {
+      "path": "/Users/sven9r/Desktop/Berkeley/projects/2026_99_primer_alignment wild/tmp/unite-tools/bin/ITSx",
+      "sha256": "1735db8035074b632079274d0c8b05685f4eb101340670421c99811cf9c10cf4"
+    },
+    "hmmsearch": {
+      "path": "/Users/sven9r/Desktop/Berkeley/projects/2026_99_primer_alignment wild/tmp/unite-tools/hmmer-3.4/bin/hmmsearch",
+      "sha256": "c6a96cb7a925d5ac2261a3accd79f20b844ad8cac584183cff8cc3085a300952"
+    },
+    "fungal_profile": {
+      "path": "/Users/sven9r/Desktop/Berkeley/projects/2026_99_primer_alignment wild/tmp/unite-tools/src/ITSx_1.1.3/ITSx_db/HMMs/F.hmm",
+      "sha256": "a8c38c5c82b7ef680595bb8c22e6437d1b591a6ae22cbe13d29f6988ec2aed37"
+    },
+    "runtime_paths": {
+      "path": "/Users/sven9r/Desktop/Berkeley/projects/2026_99_primer_alignment wild/tmp/unite-tools/runtime_paths.json",
+      "sha256": "a39611eecb37b5ce82f94c0d12dcc3bb2eccef660e45504c8a2586b3e54074ba"
+    },
+    "fungal_profile_h3f": {
+      "path": "/Users/sven9r/Desktop/Berkeley/projects/2026_99_primer_alignment wild/tmp/unite-tools/src/ITSx_1.1.3/ITSx_db/HMMs/F.hmm.h3f",
+      "sha256": "ce152afa34ef7756c86cff56820381eeb82852905629f427c6495d24ce9c3b1d"
+    },
+    "fungal_profile_h3i": {
+      "path": "/Users/sven9r/Desktop/Berkeley/projects/2026_99_primer_alignment wild/tmp/unite-tools/src/ITSx_1.1.3/ITSx_db/HMMs/F.hmm.h3i",
+      "sha256": "26089291a6efbfeed6ec6db922f6aa402922b632ba8fa546ae45e75bb8025d1e"
+    },
+    "fungal_profile_h3m": {
+      "path": "/Users/sven9r/Desktop/Berkeley/projects/2026_99_primer_alignment wild/tmp/unite-tools/src/ITSx_1.1.3/ITSx_db/HMMs/F.hmm.h3m",
+      "sha256": "4314e12dc73a12ff875964840962376d1b4cf561678b4d033eab0662dec6adff"
+    },
+    "fungal_profile_h3p": {
+      "path": "/Users/sven9r/Desktop/Berkeley/projects/2026_99_primer_alignment wild/tmp/unite-tools/src/ITSx_1.1.3/ITSx_db/HMMs/F.hmm.h3p",
+      "sha256": "2238a57b15b0579c235248cd7cdae62ca26288ebb5cd9c104feda2d6f3d9e1f3"
+    }
+  },
+  "effective_profile": "F",
+  "hmmer_algorithm": "hmmsearch",
+  "complement_ambiguity_note": "Official ITSx1.1.3 swaps S/W in complement construction; mismatching extracted slices will be withheld rather than adopting changed source bases.",
+  "profile_directory": "/tmp/primer-atlas-unite-tools-pdx4gqc7/tools/src/ITSx_1.1.3/ITSx_db/HMMs",
+  "original_capture_manifest_sha256": "ae253286868d7a6d687ee2f1ca843a5df61799bf53f34b12c4b612bffb991150"
+}

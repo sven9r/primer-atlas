@@ -1,0 +1,223 @@
+{
+  "schema_version": 1,
+  "version": "animal-starter-v1",
+  "created_date": "2026-10-31",
+  "status": "starter_mapping_panel",
+  "n_templates": 11,
+  "n_source_accessions": 10,
+  "group_marker_counts": {
+    "ARTHROPODS": {
+      "12S_MT": 0,
+      "16S_MT": 1,
+      "COI": 0,
+      "18S": 1,
+      "28S": 1
+    },
+    "BIRDS": {
+      "12S_MT": 1,
+      "16S_MT": 0,
+      "COI": 1,
+      "18S": 1,
+      "28S": 1
+    },
+    "ZOOPLANKTON": {
+      "12S_MT": 0,
+      "16S_MT": 1,
+      "COI": 1,
+      "18S": 1,
+      "28S": 1
+    }
+  },
+  "scope": "Selected arthropod, bird and source-supported freshwater zooplankton exemplars. Not a representative animal reference release, not monthly maintained, and not PCR performance evidence. Fish templates remain in their separate panel.",
+  "coordinate_contract": "Exact contiguous source-feature slices oriented by the annotated strand, with local coordinates starting at one. source_start/source_end preserve original raw genomic bounds; source_strand records reverse complements. Partial source boundaries remain explicit. No inter-species alignment or SSU/LSU domain boundaries are inferred.",
+  "ecology_sources": [
+    {
+      "source_key": "colbourne2011_daphnia",
+      "species": "Daphnia pulex",
+      "doi": "10.1126/science.1197761",
+      "url": "https://doi.org/10.1126/science.1197761",
+      "scope": "Primary genome paper identifies D. pulex as a freshwater lake/pond grazer and forage species."
+    },
+    {
+      "source_key": "orsini2016_daphnia",
+      "species": "Daphnia magna",
+      "doi": "10.1038/sdata.2016.30",
+      "url": "https://doi.org/10.1038/sdata.2016.30",
+      "scope": "Primary transcriptome study identifies D. magna as a pelagic freshwater lake/pond grazer and prey species."
+    }
+  ],
+  "withheld_features": [
+    {
+      "accession_version": "M21017.1",
+      "location": "join(3288..5075,5121..7232)",
+      "reason": "Discontinuous source 28S feature; not concatenated into genomic PCR geometry."
+    },
+    {
+      "accession_version": "M21017.1",
+      "location": "11727..>12026",
+      "reason": "Partial terminal repeat; complete 18S feature is available separately."
+    }
+  ],
+  "genomic_correspondences": [
+    {
+      "template_accession_version": "NR_133562.1",
+      "genomic_accession_version": "NW_007931121.1",
+      "genomic_start": 70955,
+      "genomic_end": 74924,
+      "strand": "+",
+      "sequence_sha256": "393f7cbc3ea582c189d2547a975537a37d3f58f30a2d5afc821ee7c7a9e0ddd4",
+      "proof": "Exact sequence equality to the contiguous genomic rRNA feature with transcript_id NR_133562.1; repeat-specific reference span only."
+    }
+  ],
+  "acquisition": "NCBI Entrez skill ncbi_entrez.py efetch, nuccore, gb XML. Source organism taxonomy, accession versions, sequence lengths and feature coordinates validated before freezing.",
+  "builder": {
+    "path": "scripts/build_animal_starter_panel.py",
+    "sha256": "31a26b33f6f0365425af5dbde228bcdd981613915b9125b19dabe52bd20ebdc7"
+  },
+  "artifacts": {
+    "templates.csv": {
+      "sha256": "64c6e01aa67c6066b5587f00cb79b1810f5ca75f1883ad954919a043a23ae194",
+      "bytes": 36162
+    },
+    "templates.fasta": {
+      "sha256": "d770cc2cb277fe84e742f8c3261e30a0fa899b5d855fea9bce8327f132ea152b",
+      "bytes": 25509
+    },
+    "taxonomy.csv": {
+      "sha256": "839fe1c02d7e38aece88fd4a96d91130ea9f8614a54efb032198ddfe5df98021",
+      "bytes": 8580
+    }
+  },
+  "sources": [
+    {
+      "file": "source/ncbi-records-01.xml.gz",
+      "sha256": "58f8f7cf8044c4fa88538f060a7cce6dbff3d40ec5e9896c8ef83c1cb4ae5322",
+      "uncompressed_sha256": "0da9f367454b0d1f38393e959f73260638790a0f01ce7798010f9d9f6e748947",
+      "accessions": [
+        "M21017.1",
+        "NR_133562.1",
+        "NC_001323.1",
+        "XR_005840241.1"
+      ],
+      "endpoint": "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi",
+      "params": {
+        "db": "nuccore",
+        "id": "M21017.1,NR_133562.1,NC_001323.1,XR_005840241.1",
+        "rettype": "gb",
+        "retmode": "xml"
+      }
+    },
+    {
+      "file": "source/ncbi-records-02.xml.gz",
+      "sha256": "21b5913c68150d429438ca13c525a694c45ddf6ee6fad4b456d8fb3574fc4e97",
+      "uncompressed_sha256": "44c00035cdbc841ed0c22203ec837178a8067b4209b5729bcaf545ef3eba43dc",
+      "accessions": [
+        "AF173612.1"
+      ],
+      "endpoint": "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi",
+      "params": {
+        "db": "nuccore",
+        "id": "AF173612.1",
+        "rettype": "gb",
+        "retmode": "xml"
+      }
+    },
+    {
+      "file": "source/ncbi-records-03.xml.gz",
+      "sha256": "5c7a5d4fbf7be69c77a7903dae3794c28255826d5dddeac984b9eb8dffa644e0",
+      "uncompressed_sha256": "0d0f62be91fd4a47bfb252bb7f3d64929d82427d26e47b114023ca26ed4894cf",
+      "accessions": [
+        "NW_007931121.1"
+      ],
+      "endpoint": "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi",
+      "params": {
+        "db": "nuccore",
+        "id": "NW_007931121.1",
+        "rettype": "gbwithparts",
+        "retmode": "xml"
+      }
+    },
+    {
+      "file": "source/ncbi-records-04.xml.gz",
+      "sha256": "2e88188f299b563adc0c6e6f630735d4594ecb9e5a4af38a9a7ad36040eb7f3e",
+      "uncompressed_sha256": "bac3577e8264ddf18cada11392afd6e3a4c05e4cb6315d22429efb084294f78f",
+      "accessions": [
+        "NC_026914.1",
+        "AF014011.1",
+        "EU370436.1"
+      ],
+      "endpoint": "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi",
+      "params": {
+        "db": "nuccore",
+        "id": "NC_026914.1,AF014011.1,EU370436.1",
+        "rettype": "gb",
+        "retmode": "xml"
+      }
+    },
+    {
+      "file": "source/ncbi-records-05.xml.gz",
+      "sha256": "26765e6d527355a541e0e3a033415097591493c8fd330247fe67f7ee25030656",
+      "uncompressed_sha256": "b9fb708a607b892e156aad468885aaa285d8e66c4ab91421ec93e6db52246ea8",
+      "accessions": [
+        "NC_001322.1"
+      ],
+      "endpoint": "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi",
+      "params": {
+        "db": "nuccore",
+        "id": "NC_001322.1",
+        "rettype": "gb",
+        "retmode": "xml"
+      }
+    }
+  ],
+  "taxonomy_supplement": {
+    "version": "NCBI-Taxonomy-2026-10-31-v1",
+    "retrieved_date": "2026-10-31",
+    "n_rows": 12,
+    "n_panel_template_rows": 11,
+    "external_template_ids": [
+      "NC_001322.1_COX1"
+    ],
+    "scope": "Authoritative NCBI rank values joined through exact accession-source taxon IDs. No names inferred from FASTA headers, no unresolved rank filled from another rank, and no new sequence membership or scoring denominator.",
+    "missing_rank_label": "Unresolved",
+    "rank_fields": [
+      "kingdom",
+      "phylum",
+      "class",
+      "order",
+      "family",
+      "genus",
+      "species"
+    ],
+    "taxonomy_source_sha256_definition": "SHA-256 of the uncompressed original TaxaSet XML response; raw_taxonomy_sha256 hashes its stored gzip archive.",
+    "builder": {
+      "path": "scripts/build_starter_taxonomy_supplements.py",
+      "sha256": "4022c7469f9bb42f6869c5f2a6c507147bfcdc3826764bc04cab6a1e1efa7bf5"
+    },
+    "sources": [
+      {
+        "file": "taxonomy_source/ncbi-taxonomy-20261031.xml.gz",
+        "sha256": "b18757be55b4e1ef84801e12da1ce3734cd736b67c7afcd8fcca94afad39361d",
+        "uncompressed_sha256": "578b4b22bf68791528f1d7742ad09e96485ffd6ecf4b6966e6e8ddb472a74288",
+        "endpoint": "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi",
+        "params": {
+          "db": "taxonomy",
+          "id": "7955,8049,7830,8030,7227,9031,7245,6669,35525",
+          "retmode": "xml"
+        }
+      },
+      {
+        "file": "taxonomy_source/ncbi-NC_001322.1.xml.gz",
+        "sha256": "26765e6d527355a541e0e3a033415097591493c8fd330247fe67f7ee25030656",
+        "uncompressed_sha256": "b9fb708a607b892e156aad468885aaa285d8e66c4ab91421ec93e6db52246ea8",
+        "endpoint": "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi",
+        "params": {
+          "db": "nuccore",
+          "id": "NC_001322.1",
+          "rettype": "gb",
+          "retmode": "xml"
+        }
+      }
+    ]
+  }
+}

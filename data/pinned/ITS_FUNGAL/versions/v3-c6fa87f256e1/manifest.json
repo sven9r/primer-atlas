@@ -1,0 +1,1036 @@
+{
+  "schema_version": "1.0.0",
+  "marker_id": "ITS_FUNGAL",
+  "id": "v3-c6fa87f256e1",
+  "version_number": 3,
+  "label": "V3 · LSU domains and partial genes",
+  "description": "Sequences, alignment, catalog and primer results are unchanged from v2-2b629f0f2fe8; reviewed LSU domain annotations and their source evidence are frozen in this version.",
+  "created_at": "2026-10-12 14:32:10 UTC",
+  "sequence_count": 21,
+  "reference_accession": null,
+  "input_sha256": "c6fa87f256e16a8f3ed837a29e9c01bc5a9ce95d1ed42c3b61f0375548d8efb4",
+  "code_sha256": "8d83d6d718dd1c63e8b7692f24d124cd4a03ee46a7881968fc5c16d0261a003e",
+  "tooling_sha256": "29965addea29185f21a4c8efe2a47d61637cd3e0ae7be479b120e30fe957d4ae",
+  "base_commit": "3c85d41ad87a1f5703827aa7af92fe2f381ecbfc",
+  "code_commit": "3c85d41ad87a1f5703827aa7af92fe2f381ecbfc",
+  "code_commit_role": "base checkout; frozen code artifacts are authoritative",
+  "working_tree_modified": true,
+  "source_identity_sha256": "6d312304932c30ebfaebfdd80759450f9aa74fe774da6618988214ddefc11901",
+  "engine": "exact_iupac_site_search",
+  "source_manifest": {
+    "schema_version": "1.0.0",
+    "source": "NCBI GenBank and NCBI Taxonomy",
+    "acquired_at": "2026-10-11T11:37:47Z",
+    "acquisition_time_basis": "original raw-response cache file modification time; proxy when no first-download log is available",
+    "built_at": "2026-10-11T11:51:53Z",
+    "sampling_policy": "bounded cached NCBI search per named phylum; not random, exhaustive, or guaranteed newest",
+    "panel_count": 21,
+    "previous_count": 0,
+    "retained_previous_count": 0,
+    "added_count": 21,
+    "searches": [
+      {
+        "clade": "Ascomycota",
+        "query": "Ascomycota[Organism:exp] AND (\"18S ribosomal RNA\"[Title] OR \"small subunit ribosomal RNA\"[Title]) AND \"internal transcribed spacer\"[Title] AND 2500:12000[SLEN]",
+        "count_available": 1344,
+        "selected": [
+          "PZ900404.1",
+          "PZ528244.1",
+          "PZ528241.1",
+          "PZ528240.1"
+        ],
+        "sha256": "8841a6ca2d32e9504319370b6eb2579b520778652190d700cbf58f72ddd08c92",
+        "cache_file": "search_Ascomycota_f12cd3bb456e9a20.json",
+        "acquired_at": "2026-10-11T11:37:41Z"
+      },
+      {
+        "clade": "Basidiomycota",
+        "query": "Basidiomycota[Organism:exp] AND (\"18S ribosomal RNA\"[Title] OR \"small subunit ribosomal RNA\"[Title]) AND \"internal transcribed spacer\"[Title] AND 2500:12000[SLEN]",
+        "count_available": 601,
+        "selected": [
+          "PZ962702.1",
+          "PZ276773.1",
+          "PZ547617.1",
+          "PZ123758.1"
+        ],
+        "sha256": "2e67870b8193dee6a0c09aab389a21418e45ae0ef7544c423e803257d2126582",
+        "cache_file": "search_Basidiomycota_5dd6c4878ef28323.json",
+        "acquired_at": "2026-10-11T11:37:42Z"
+      },
+      {
+        "clade": "Chytridiomycota",
+        "query": "Chytridiomycota[Organism:exp] AND (\"18S ribosomal RNA\"[Title] OR \"small subunit ribosomal RNA\"[Title]) AND \"internal transcribed spacer\"[Title] AND 2500:12000[SLEN]",
+        "count_available": 625,
+        "selected": [
+          "PV921575.1",
+          "PV921574.1",
+          "PV921573.1",
+          "PV921572.1"
+        ],
+        "sha256": "e50094d360231f151730fc2ed4dd028138bd8c9be2be11035a9e2bdcf701c05b",
+        "cache_file": "search_Chytridiomycota_e58fa9f3bbee3838.json",
+        "acquired_at": "2026-10-11T11:37:43Z"
+      },
+      {
+        "clade": "Mucoromycota",
+        "query": "Mucoromycota[Organism:exp] AND (\"18S ribosomal RNA\"[Title] OR \"small subunit ribosomal RNA\"[Title]) AND \"internal transcribed spacer\"[Title] AND 2500:12000[SLEN]",
+        "count_available": 14,
+        "selected": [
+          "MT436029.1",
+          "MT436028.1",
+          "FJ430740.1",
+          "KT736106.1"
+        ],
+        "sha256": "612dd95dd9f2a47a43fd1082dce89c0d261fc2c8bd7c29208edb40050ec26a02",
+        "cache_file": "search_Mucoromycota_1fa56a5ea842ba14.json",
+        "acquired_at": "2026-10-11T11:37:44Z"
+      },
+      {
+        "clade": "Glomeromycota",
+        "query": "Glomeromycota[Organism:exp] AND (\"18S ribosomal RNA\"[Title] OR \"small subunit ribosomal RNA\"[Title]) AND \"internal transcribed spacer\"[Title] AND 2500:12000[SLEN]",
+        "count_available": 911,
+        "selected": [
+          "PX215164.1",
+          "PX215163.1",
+          "PX215162.1",
+          "PX215161.1"
+        ],
+        "sha256": "afedc721566baafdbf3d485b6132d4b93de1485652bac01f0bff6070a0956a3e",
+        "cache_file": "search_Glomeromycota_822b59e354f4d39f.json",
+        "acquired_at": "2026-10-11T11:37:45Z"
+      }
+    ],
+    "previous_run_manifest_sha256": null,
+    "raw_responses": {
+      "records_b7a841bb9d8e7266.xml": "8b958af51ff9830624c233b7cc02011530833165af0f03f004d544bdfa2b57be",
+      "taxonomy_90986e1f46d6f4c9.xml": "7d2a81ff20232cbe71423a69680cee95a720d8bf1a555d08d692cd52e67b6020"
+    },
+    "raw_response_acquired_at": {
+      "records_b7a841bb9d8e7266.xml": "2026-10-11T11:37:46Z",
+      "taxonomy_90986e1f46d6f4c9.xml": "2026-10-11T11:37:47Z"
+    },
+    "taxonomy_snapshot_sha256": "7d2a81ff20232cbe71423a69680cee95a720d8bf1a555d08d692cd52e67b6020",
+    "mafft_version": "v7.526 (2024/Apr/26)",
+    "alignment_policy": "full alignment without keeplength; product lengths use raw ungapped templates; cross-clade variable-region homology not assumed",
+    "artifacts_sha256": {
+      "panel.fasta": "f096600f9441509ee7dfac59d3818052e5c054fb712c372ef415bf9fd4f164f3",
+      "panel_manifest.csv": "463c259bae18520c08a6a462fc66c6e175a00ca3a9c1b4747a39f0e71b65656f",
+      "landmarks.csv": "1844b3e4e9791361dea3c375a1985bf4fad0c22f545868fe0c056dae9c040ca4",
+      "alignment.fasta": "6382a41295e5e3200150d43f47849de5e7ee6e95af6ad8351c5396cc6804c47c"
+    }
+  },
+  "artifacts": {
+    "raw_catalog": {
+      "path": "raw_catalog.csv",
+      "sha256": "c90d5a34972e3944ebd003959ae80b1a5143fdb485c89112836c0ab1c3929438",
+      "bytes": 44299,
+      "rows": 121
+    },
+    "catalog": {
+      "path": "catalog.csv",
+      "sha256": "3262802b38c2c24b3a1220a1be32d190145f9379dc0e0fce3187ac511f9741e4",
+      "bytes": 50361,
+      "rows": 112
+    },
+    "taxonomy": {
+      "path": "taxonomy.csv",
+      "sha256": "fc481c481af5d7df88f76f4da2b240f533a62a916ce8860e4eefad1990e4052f",
+      "bytes": 15035,
+      "rows": 21
+    },
+    "geometry": {
+      "path": "geometry.csv",
+      "sha256": "c82deb017cd6f6abb0f79d0e9df6b32261022d4e159c29a0f6067065ae1144b0",
+      "bytes": 1965,
+      "rows": 8
+    },
+    "landmarks": {
+      "path": "landmarks.csv",
+      "sha256": "b1c7fc1460650ece5b42697ddf092efa19395d8936271962a84997e962ec75ca",
+      "bytes": 11172,
+      "rows": 34,
+      "character_columns": ["accession", "landmark_id", "label", "source_note", "landmark_type", "evidence_status", "boundary_status", "source_reference", "source_location", "parent_landmark", "domain_scheme", "source_url", "source_citation", "mapping_method"]
+    },
+    "pairs": {
+      "path": "pairs.csv",
+      "sha256": "afdc9433ba52f4f7b33776601ed2ca16eacc0a9ebe6d0bc4cfc85292ef667647",
+      "bytes": 292497,
+      "rows": 884
+    },
+    "pair_sequences": {
+      "path": "pair_sequences.csv",
+      "sha256": "65186a1288119d7dc856542c73e6212b94dc16f2be1ba4148b7cd3dc43c119b4",
+      "bytes": 3210199,
+      "rows": 18564
+    },
+    "sites": {
+      "path": "sites.csv",
+      "sha256": "fe47a8cd253332caaa6a48403b79e8a2a0c182aba58db25ae7431d14532ccfb8",
+      "bytes": 370504,
+      "rows": 2352
+    },
+    "primer_pairs": {
+      "path": "primer_pairs.csv",
+      "sha256": "9190c4f4a41e2cf690f2bf40482beca9a9bed03461e4b9965eceb8e26742e7e5",
+      "bytes": 928,
+      "rows": 8
+    },
+    "oligos": {
+      "path": "oligos.csv",
+      "sha256": "548a560257905e402fe598752f667c9eaae89a166cabc65be69e502717535435",
+      "bytes": 1887,
+      "rows": 9
+    },
+    "pair_oligos": {
+      "path": "pair_oligos.csv",
+      "sha256": "6409b117dbaebb3be14161243bed3e1b9ad9329a898db7c6e8df8fb20391d054",
+      "bytes": 2312,
+      "rows": 66
+    },
+    "sequences": {
+      "path": "sequences.fasta",
+      "sha256": "98a9bc84be13a73228a5a762801b0d070e2cd0950e50c33efbd0f2cb665b12dd",
+      "bytes": 96517,
+      "rows": 21
+    },
+    "alignment": {
+      "path": "alignment.fasta",
+      "sha256": "8fb1119fa517de4b47ea1de73d27cc2bfdf62a59f68b3be9e1cadc8326f0a664",
+      "bytes": 378903,
+      "rows": 21
+    },
+    "run_manifest": {
+      "path": "run_manifest.json",
+      "sha256": "10870602e666f5de58fdddf510ee00c1a9f078524a5b21d58df3282b2fdf9365",
+      "bytes": 4485
+    },
+    "code_functions": {
+      "path": "code_functions.R",
+      "sha256": "08d71b5d1a7563661e8afe4130e2f6c5932a0386777124abb6bad23639cea3d8",
+      "bytes": 55796,
+      "rows": 1742
+    },
+    "code_explorer": {
+      "path": "code_explorer.R",
+      "sha256": "77d0e36ffc6a574b9b825b6e9f3ee1f9133bae2da269bce1d2033d255eb08615",
+      "bytes": 19327,
+      "rows": 362
+    },
+    "code_acquisition": {
+      "path": "code_acquisition.py",
+      "sha256": "bd7af96ba635d74cdc9dac59eea434ed0882c1f8b29b0fe7f474e955576cbf8b",
+      "bytes": 19372,
+      "rows": 351
+    },
+    "code_snapshot_builder": {
+      "path": "code_snapshot_builder.R",
+      "sha256": "7acd7b4a6035772f7dbd9b43f9451b87ab42a1b608cfc206dee7fcbb8ba9d7b5",
+      "bytes": 19101,
+      "rows": 304
+    },
+    "code_version_reader": {
+      "path": "code_version_reader.R",
+      "sha256": "dad606136a321602ade3f0eac7b7b9088b76c30582e7cc4da08ae4c0a5d49bd1",
+      "bytes": 9063,
+      "rows": 162
+    },
+    "code_data_layer": {
+      "path": "code_data_layer.R",
+      "sha256": "4cd99a38fb814cceb3a46c5c1c9938b2f9eeed03b9b03c175cfd3b549e649749",
+      "bytes": 4641,
+      "rows": 93
+    },
+    "domain_annotation_provenance": {
+      "path": "domain_annotation_run_manifest.json",
+      "sha256": "28f5fe4bd7c70d509f33e835c484da1d3508a34b243cb4455eecb4b25fde7d92",
+      "bytes": 10589
+    },
+    "code_domain_snapshot_builder": {
+      "path": "code_domain_snapshot_builder.R",
+      "sha256": "0f9c0396cfa2dcadc549fcbfc02f43ff94dbcbe826ba6ddd0535ec3ddf3547b4",
+      "bytes": 15291
+    },
+    "code_domain_snapshot_reader": {
+      "path": "code_domain_snapshot_reader.R",
+      "sha256": "c878a93a801005253d4a880d979a433332c1b4095ab1d3364d2596a8745b8523",
+      "bytes": 10622
+    },
+    "code_domain_retention_pipeline": {
+      "path": "code_domain_retention_pipeline.py",
+      "sha256": "ac581c174429091ddb3044a8d0e2e9695b505205c62f669168f02f7faa40ca2d",
+      "bytes": 19814
+    },
+    "domain_annotation_source_001": {
+      "path": "annotation_sources/source_001.fasta",
+      "sha256": "d335492b26728c26722667cb8ed20dbf07c11023b287a4d1fdd0732873c60550",
+      "bytes": 9620
+    },
+    "domain_annotation_source_002": {
+      "path": "annotation_sources/source_002.fasta",
+      "sha256": "88c820bf175799890ba9b40d7a43614f610cadacfe980c40ff351ac33ac43a52",
+      "bytes": 5934
+    },
+    "domain_annotation_source_003": {
+      "path": "annotation_sources/source_003.fasta",
+      "sha256": "733d5f8b354ccc881c4f0dc7f664b57ebb291f05c47661f9d7cd02e64d2b3cee",
+      "bytes": 9630
+    },
+    "domain_annotation_source_004": {
+      "path": "annotation_sources/source_004.fasta",
+      "sha256": "b01a979448f8ffee150a398f3aa03873dc879f8ce529e4be5711ee670f50210e",
+      "bytes": 5451
+    },
+    "domain_annotation_source_005": {
+      "path": "annotation_sources/source_005.fasta",
+      "sha256": "3f26e8d4dcc7acf577d5a22415597971fbdffb3101efad9881398d08f6dd257a",
+      "bytes": 10256
+    },
+    "domain_annotation_source_006": {
+      "path": "annotation_sources/source_006.fasta",
+      "sha256": "74cbf0bb7b6319b90b3dde85bddf2081d9a3f1fcdf4a822b19568decbcfd98f5",
+      "bytes": 6247
+    },
+    "domain_annotation_source_007": {
+      "path": "annotation_sources/source_007.fasta",
+      "sha256": "261f42f7ef607f9e602bca674e26f902af03bce3eca92f03cc140106f2e3b5fa",
+      "bytes": 9642
+    },
+    "domain_annotation_source_008": {
+      "path": "annotation_sources/source_008.fasta",
+      "sha256": "05127b07797f30f174fae5d73d4b35136cfec70ebf9a0342fad6217debecc11a",
+      "bytes": 7272
+    },
+    "domain_annotation_source_009": {
+      "path": "annotation_sources/source_009.fasta",
+      "sha256": "d335492b26728c26722667cb8ed20dbf07c11023b287a4d1fdd0732873c60550",
+      "bytes": 9620
+    },
+    "domain_annotation_source_010": {
+      "path": "annotation_sources/source_010.fasta",
+      "sha256": "88c820bf175799890ba9b40d7a43614f610cadacfe980c40ff351ac33ac43a52",
+      "bytes": 5934
+    },
+    "domain_annotation_source_011": {
+      "path": "annotation_sources/source_011.fasta",
+      "sha256": "3f26e8d4dcc7acf577d5a22415597971fbdffb3101efad9881398d08f6dd257a",
+      "bytes": 10256
+    },
+    "domain_annotation_source_012": {
+      "path": "annotation_sources/source_012.fasta",
+      "sha256": "74cbf0bb7b6319b90b3dde85bddf2081d9a3f1fcdf4a822b19568decbcfd98f5",
+      "bytes": 6247
+    },
+    "domain_annotation_source_013": {
+      "path": "annotation_sources/source_013.fasta",
+      "sha256": "fc87de12cca9b1428568e666e7cf9dba21bffe830dc186d3d58990a72acb6194",
+      "bytes": 9632
+    },
+    "domain_annotation_source_014": {
+      "path": "annotation_sources/source_014.fasta",
+      "sha256": "05127b07797f30f174fae5d73d4b35136cfec70ebf9a0342fad6217debecc11a",
+      "bytes": 7272
+    },
+    "domain_annotation_source_015": {
+      "path": "annotation_sources/source_015.fasta",
+      "sha256": "3f26e8d4dcc7acf577d5a22415597971fbdffb3101efad9881398d08f6dd257a",
+      "bytes": 10256
+    },
+    "domain_annotation_source_016": {
+      "path": "annotation_sources/source_016.fasta",
+      "sha256": "74cbf0bb7b6319b90b3dde85bddf2081d9a3f1fcdf4a822b19568decbcfd98f5",
+      "bytes": 6247
+    },
+    "domain_annotation_source_017": {
+      "path": "annotation_sources/source_017.fasta",
+      "sha256": "eb763ba6dfb0f6635a61d28af31762ce46d870003fa8a589c98c7135fe629a8f",
+      "bytes": 10296
+    },
+    "domain_annotation_source_018": {
+      "path": "annotation_sources/source_018.fasta",
+      "sha256": "31d1a2bcd20c33a6d8fea7d61f2b1c1b20adce6526fd66376ad1524567d58730",
+      "bytes": 8464
+    },
+    "domain_annotation_source_019": {
+      "path": "annotation_sources/source_019.fasta",
+      "sha256": "eb763ba6dfb0f6635a61d28af31762ce46d870003fa8a589c98c7135fe629a8f",
+      "bytes": 10296
+    },
+    "domain_annotation_source_020": {
+      "path": "annotation_sources/source_020.fasta",
+      "sha256": "31d1a2bcd20c33a6d8fea7d61f2b1c1b20adce6526fd66376ad1524567d58730",
+      "bytes": 8464
+    },
+    "domain_annotation_source_021": {
+      "path": "annotation_sources/source_021.fasta",
+      "sha256": "097e802805de445bd2fdf40856e5838a301f56c19872197844d0169abd5fa526",
+      "bytes": 10282
+    },
+    "domain_annotation_source_022": {
+      "path": "annotation_sources/source_022.fasta",
+      "sha256": "31d1a2bcd20c33a6d8fea7d61f2b1c1b20adce6526fd66376ad1524567d58730",
+      "bytes": 8464
+    },
+    "domain_annotation_source_023": {
+      "path": "annotation_sources/source_023.fasta",
+      "sha256": "4631d8acf776a34b612fe3df038392416e5183dd309efff508060a1afe53acaf",
+      "bytes": 10284
+    },
+    "domain_annotation_source_024": {
+      "path": "annotation_sources/source_024.fasta",
+      "sha256": "f666b1655dd4bf3f01212111c8b8e984cf81aa44fd5812a69380face3bb50729",
+      "bytes": 5764
+    },
+    "domain_annotation_source_025": {
+      "path": "annotation_sources/source_025.fasta",
+      "sha256": "354d147f31fbd22f237aab705df77d29572699ea14fddf1250b732c7752bcce3",
+      "bytes": 10280
+    },
+    "domain_annotation_source_026": {
+      "path": "annotation_sources/source_026.fasta",
+      "sha256": "61318f936aa778ad0872d71a15fa502ce9981c4efe3fd807fe29bed1a64e0103",
+      "bytes": 7585
+    },
+    "domain_annotation_source_027": {
+      "path": "annotation_sources/source_027.fasta",
+      "sha256": "3fe62ceee5c7b10b6db0b8f1edb60e85e2f1923442e46e8c1c657f134ad5fb65",
+      "bytes": 9650
+    },
+    "domain_annotation_source_028": {
+      "path": "annotation_sources/source_028.fasta",
+      "sha256": "f6352ee4d40f51f3f8955cb8651bcee1031accad21ddb4a4bc06f89866cf412f",
+      "bytes": 8151
+    },
+    "domain_annotation_source_029": {
+      "path": "annotation_sources/source_029.fasta",
+      "sha256": "9e3460558e16556aa394d62221b60a930d46770b3b2d8f960e61f02e10599cbe",
+      "bytes": 10284
+    },
+    "domain_annotation_source_030": {
+      "path": "annotation_sources/source_030.fasta",
+      "sha256": "61318f936aa778ad0872d71a15fa502ce9981c4efe3fd807fe29bed1a64e0103",
+      "bytes": 7585
+    },
+    "domain_annotation_source_031": {
+      "path": "annotation_sources/source_031.fasta",
+      "sha256": "c8fe2999ee920cfad03bd24feb627c254e14665c7c0ae19bc016bbd98688893c",
+      "bytes": 10278
+    },
+    "domain_annotation_source_032": {
+      "path": "annotation_sources/source_032.fasta",
+      "sha256": "f666b1655dd4bf3f01212111c8b8e984cf81aa44fd5812a69380face3bb50729",
+      "bytes": 5764
+    },
+    "domain_annotation_source_033": {
+      "path": "annotation_sources/source_033.fasta",
+      "sha256": "fb9433790cc312a421c26db7ca82c2bc98492a91fc0b8a658ff7b7bd44f4b10b",
+      "bytes": 9636
+    },
+    "domain_annotation_source_034": {
+      "path": "annotation_sources/source_034.fasta",
+      "sha256": "b01a979448f8ffee150a398f3aa03873dc879f8ce529e4be5711ee670f50210e",
+      "bytes": 5451
+    },
+    "domain_annotation_source_035": {
+      "path": "annotation_sources/source_035.fasta",
+      "sha256": "3f26e8d4dcc7acf577d5a22415597971fbdffb3101efad9881398d08f6dd257a",
+      "bytes": 10256
+    },
+    "domain_annotation_source_036": {
+      "path": "annotation_sources/source_036.fasta",
+      "sha256": "74cbf0bb7b6319b90b3dde85bddf2081d9a3f1fcdf4a822b19568decbcfd98f5",
+      "bytes": 6247
+    },
+    "domain_annotation_source_037": {
+      "path": "annotation_sources/source_037.fasta",
+      "sha256": "097e802805de445bd2fdf40856e5838a301f56c19872197844d0169abd5fa526",
+      "bytes": 10282
+    },
+    "domain_annotation_source_038": {
+      "path": "annotation_sources/source_038.fasta",
+      "sha256": "31d1a2bcd20c33a6d8fea7d61f2b1c1b20adce6526fd66376ad1524567d58730",
+      "bytes": 8464
+    },
+    "domain_annotation_source_039": {
+      "path": "annotation_sources/source_039.fasta",
+      "sha256": "fb9433790cc312a421c26db7ca82c2bc98492a91fc0b8a658ff7b7bd44f4b10b",
+      "bytes": 9636
+    },
+    "domain_annotation_source_040": {
+      "path": "annotation_sources/source_040.fasta",
+      "sha256": "b01a979448f8ffee150a398f3aa03873dc879f8ce529e4be5711ee670f50210e",
+      "bytes": 5451
+    },
+    "domain_annotation_source_041": {
+      "path": "annotation_sources/source_041.fasta",
+      "sha256": "8351518c333761c3d4904072deb987c80bc9dfa34a9a29c52e722815b4ad0754",
+      "bytes": 9632
+    },
+    "domain_annotation_source_042": {
+      "path": "annotation_sources/source_042.fasta",
+      "sha256": "f6352ee4d40f51f3f8955cb8651bcee1031accad21ddb4a4bc06f89866cf412f",
+      "bytes": 8151
+    },
+    "domain_annotation_source_043": {
+      "path": "annotation_sources/source_043.fasta",
+      "sha256": "733d5f8b354ccc881c4f0dc7f664b57ebb291f05c47661f9d7cd02e64d2b3cee",
+      "bytes": 9630
+    },
+    "domain_annotation_source_044": {
+      "path": "annotation_sources/source_044.fasta",
+      "sha256": "b01a979448f8ffee150a398f3aa03873dc879f8ce529e4be5711ee670f50210e",
+      "bytes": 5451
+    },
+    "domain_annotation_source_045": {
+      "path": "annotation_sources/source_045.fasta",
+      "sha256": "d335492b26728c26722667cb8ed20dbf07c11023b287a4d1fdd0732873c60550",
+      "bytes": 9620
+    },
+    "domain_annotation_source_046": {
+      "path": "annotation_sources/source_046.fasta",
+      "sha256": "88c820bf175799890ba9b40d7a43614f610cadacfe980c40ff351ac33ac43a52",
+      "bytes": 5934
+    },
+    "domain_annotation_source_047": {
+      "path": "annotation_sources/source_047.fasta",
+      "sha256": "261f42f7ef607f9e602bca674e26f902af03bce3eca92f03cc140106f2e3b5fa",
+      "bytes": 9642
+    },
+    "domain_annotation_source_048": {
+      "path": "annotation_sources/source_048.fasta",
+      "sha256": "05127b07797f30f174fae5d73d4b35136cfec70ebf9a0342fad6217debecc11a",
+      "bytes": 7272
+    },
+    "domain_annotation_source_049": {
+      "path": "annotation_sources/source_049.fasta",
+      "sha256": "8351518c333761c3d4904072deb987c80bc9dfa34a9a29c52e722815b4ad0754",
+      "bytes": 9632
+    },
+    "domain_annotation_source_050": {
+      "path": "annotation_sources/source_050.fasta",
+      "sha256": "f6352ee4d40f51f3f8955cb8651bcee1031accad21ddb4a4bc06f89866cf412f",
+      "bytes": 8151
+    },
+    "domain_annotation_source_051": {
+      "path": "annotation_sources/source_051.fasta",
+      "sha256": "9e3460558e16556aa394d62221b60a930d46770b3b2d8f960e61f02e10599cbe",
+      "bytes": 10284
+    },
+    "domain_annotation_source_052": {
+      "path": "annotation_sources/source_052.fasta",
+      "sha256": "61318f936aa778ad0872d71a15fa502ce9981c4efe3fd807fe29bed1a64e0103",
+      "bytes": 7585
+    },
+    "domain_annotation_source_053": {
+      "path": "annotation_sources/source_053.fasta",
+      "sha256": "4631d8acf776a34b612fe3df038392416e5183dd309efff508060a1afe53acaf",
+      "bytes": 10284
+    },
+    "domain_annotation_source_054": {
+      "path": "annotation_sources/source_054.fasta",
+      "sha256": "f666b1655dd4bf3f01212111c8b8e984cf81aa44fd5812a69380face3bb50729",
+      "bytes": 5764
+    },
+    "domain_annotation_source_055": {
+      "path": "annotation_sources/source_055.fasta",
+      "sha256": "3fe62ceee5c7b10b6db0b8f1edb60e85e2f1923442e46e8c1c657f134ad5fb65",
+      "bytes": 9650
+    },
+    "domain_annotation_source_056": {
+      "path": "annotation_sources/source_056.fasta",
+      "sha256": "f6352ee4d40f51f3f8955cb8651bcee1031accad21ddb4a4bc06f89866cf412f",
+      "bytes": 8151
+    },
+    "domain_annotation_source_057": {
+      "path": "annotation_sources/source_057.fasta",
+      "sha256": "c8fe2999ee920cfad03bd24feb627c254e14665c7c0ae19bc016bbd98688893c",
+      "bytes": 10278
+    },
+    "domain_annotation_source_058": {
+      "path": "annotation_sources/source_058.fasta",
+      "sha256": "f666b1655dd4bf3f01212111c8b8e984cf81aa44fd5812a69380face3bb50729",
+      "bytes": 5764
+    },
+    "domain_annotation_source_059": {
+      "path": "annotation_sources/source_059.fasta",
+      "sha256": "fc87de12cca9b1428568e666e7cf9dba21bffe830dc186d3d58990a72acb6194",
+      "bytes": 9632
+    },
+    "domain_annotation_source_060": {
+      "path": "annotation_sources/source_060.fasta",
+      "sha256": "05127b07797f30f174fae5d73d4b35136cfec70ebf9a0342fad6217debecc11a",
+      "bytes": 7272
+    },
+    "domain_annotation_source_061": {
+      "path": "annotation_sources/source_061.fasta",
+      "sha256": "d335492b26728c26722667cb8ed20dbf07c11023b287a4d1fdd0732873c60550",
+      "bytes": 9620
+    },
+    "domain_annotation_source_062": {
+      "path": "annotation_sources/source_062.fasta",
+      "sha256": "88c820bf175799890ba9b40d7a43614f610cadacfe980c40ff351ac33ac43a52",
+      "bytes": 5934
+    },
+    "domain_annotation_source_063": {
+      "path": "annotation_sources/source_063.fasta",
+      "sha256": "354d147f31fbd22f237aab705df77d29572699ea14fddf1250b732c7752bcce3",
+      "bytes": 10280
+    },
+    "domain_annotation_source_064": {
+      "path": "annotation_sources/source_064.fasta",
+      "sha256": "61318f936aa778ad0872d71a15fa502ce9981c4efe3fd807fe29bed1a64e0103",
+      "bytes": 7585
+    },
+    "domain_annotation_source_065": {
+      "path": "annotation_sources/source_065.py",
+      "sha256": "4f51b63a527376dc5615a6137bc82f1a1805b107a51bbf4b1d384989a9beb99e",
+      "bytes": 23048
+    },
+    "domain_annotation_source_066": {
+      "path": "annotation_sources/source_066.json",
+      "sha256": "336b4b6af82d2b841e7dc1d8e90f74b32f2215b9b6e10db57ca90ce0c7b08505",
+      "bytes": 345865
+    },
+    "domain_annotation_source_067": {
+      "path": "annotation_sources/source_067.json",
+      "sha256": "f2eb189f6e632f1efd1306e7162d2b41dd21263eacbccc9635883120b069612f",
+      "bytes": 20052
+    },
+    "domain_annotation_source_068": {
+      "path": "annotation_sources/source_068.csv",
+      "sha256": "516e6070ff84c75a4dfe5ba979f2c6536e8268fd21e92da5b765bc19ac581621",
+      "bytes": 10496
+    },
+    "domain_annotation_source_069": {
+      "path": "annotation_sources/source_069.csv",
+      "sha256": "7446d3542984b1ccf60af398a3f72fb4a471ef026bdda9f90ac44a75631c81c9",
+      "bytes": 1242
+    },
+    "domain_annotation_source_070": {
+      "path": "annotation_sources/source_070.fasta",
+      "sha256": "2005ece949ac6bc9c647a16576e10f3ec85360e12eb9d679f8fd02459a446718",
+      "bytes": 5163
+    },
+    "domain_annotation_source_071": {
+      "path": "annotation_sources/source_071.txt",
+      "sha256": "79fe2248190b9b85b53b3b4882c5aa3875e984a63935b7b8fff8959f143ab871",
+      "bytes": 14457
+    },
+    "domain_annotation_source_072": {
+      "path": "annotation_sources/source_072.txt",
+      "sha256": "8b958af51ff9830624c233b7cc02011530833165af0f03f004d544bdfa2b57be",
+      "bytes": 240572
+    },
+    "domain_annotation_source_073": {
+      "path": "annotation_sources/source_073.txt",
+      "sha256": "a77f83440d8994638f7639c453597cf8ec97a593fbc77b079570eff077bb22e0",
+      "bytes": 41382
+    },
+    "domain_annotation_source_074": {
+      "path": "annotation_sources/source_074.csv",
+      "sha256": "512d6c0b0d6d0e69feac98d9c2dd8bb87d6645d38e4e2756f71e8a648f5fef53",
+      "bytes": 8817
+    },
+    "domain_annotation_source_075": {
+      "path": "annotation_sources/source_075.json",
+      "sha256": "bb066fcda5dba352c18fdd500503e1ace6751d706362e6de6d223fc2a6ce5456",
+      "bytes": 2047
+    },
+    "domain_annotation_source_076": {
+      "path": "annotation_sources/source_076.fasta",
+      "sha256": "2410a0aa7a3064cd8fe5fa40845fdef125f00a42e13f675646431be384132b46",
+      "bytes": 4846
+    }
+  },
+  "annotation_parent_id": "v2-2b629f0f2fe8",
+  "annotation_parent_manifest_sha256": "abd55ae98a44a4eb49c2e923d559ec4b59094c9b466d815a651a2dfd7a5cfa6f",
+  "annotation_source_identity_sha256": "a9d158afda46eb28ef95ec2aaa54ceb55f555bfdf2e0c2d1114143b1c572a41a",
+  "annotation_provenance_sha256": "28f5fe4bd7c70d509f33e835c484da1d3508a34b243cb4455eecb4b25fde7d92",
+  "annotation_builder_sha256": "0f9c0396cfa2dcadc549fcbfc02f43ff94dbcbe826ba6ddd0535ec3ddf3547b4",
+  "annotation_reader_sha256": "c878a93a801005253d4a880d979a433332c1b4095ab1d3364d2596a8745b8523",
+  "annotation_retention_pipeline_sha256": "ac581c174429091ddb3044a8d0e2e9695b505205c62f669168f02f7faa40ca2d",
+  "annotation_base_commit": "cd12908d4afef09b1505272414906bfc3bb806db",
+  "annotation_working_tree_modified": true,
+  "annotation_source_archives": {
+    "domain_annotation_source_001": {
+      "original_name": "alignments/03a1d01f1d90d629.aligned.fasta",
+      "original_sha256": "d335492b26728c26722667cb8ed20dbf07c11023b287a4d1fdd0732873c60550",
+      "encoding": "original_bytes"
+    },
+    "domain_annotation_source_002": {
+      "original_name": "alignments/03a1d01f1d90d629.input.fasta",
+      "original_sha256": "88c820bf175799890ba9b40d7a43614f610cadacfe980c40ff351ac33ac43a52",
+      "encoding": "original_bytes"
+    },
+    "domain_annotation_source_003": {
+      "original_name": "alignments/0f607ef8006330c0.aligned.fasta",
+      "original_sha256": "733d5f8b354ccc881c4f0dc7f664b57ebb291f05c47661f9d7cd02e64d2b3cee",
+      "encoding": "original_bytes"
+    },
+    "domain_annotation_source_004": {
+      "original_name": "alignments/0f607ef8006330c0.input.fasta",
+      "original_sha256": "b01a979448f8ffee150a398f3aa03873dc879f8ce529e4be5711ee670f50210e",
+      "encoding": "original_bytes"
+    },
+    "domain_annotation_source_005": {
+      "original_name": "alignments/1114283918d87a2b.aligned.fasta",
+      "original_sha256": "3f26e8d4dcc7acf577d5a22415597971fbdffb3101efad9881398d08f6dd257a",
+      "encoding": "original_bytes"
+    },
+    "domain_annotation_source_006": {
+      "original_name": "alignments/1114283918d87a2b.input.fasta",
+      "original_sha256": "74cbf0bb7b6319b90b3dde85bddf2081d9a3f1fcdf4a822b19568decbcfd98f5",
+      "encoding": "original_bytes"
+    },
+    "domain_annotation_source_007": {
+      "original_name": "alignments/165e1ff4dbb46b07.aligned.fasta",
+      "original_sha256": "261f42f7ef607f9e602bca674e26f902af03bce3eca92f03cc140106f2e3b5fa",
+      "encoding": "original_bytes"
+    },
+    "domain_annotation_source_008": {
+      "original_name": "alignments/165e1ff4dbb46b07.input.fasta",
+      "original_sha256": "05127b07797f30f174fae5d73d4b35136cfec70ebf9a0342fad6217debecc11a",
+      "encoding": "original_bytes"
+    },
+    "domain_annotation_source_009": {
+      "original_name": "alignments/17cd36a84cd96d90.aligned.fasta",
+      "original_sha256": "d335492b26728c26722667cb8ed20dbf07c11023b287a4d1fdd0732873c60550",
+      "encoding": "original_bytes"
+    },
+    "domain_annotation_source_010": {
+      "original_name": "alignments/17cd36a84cd96d90.input.fasta",
+      "original_sha256": "88c820bf175799890ba9b40d7a43614f610cadacfe980c40ff351ac33ac43a52",
+      "encoding": "original_bytes"
+    },
+    "domain_annotation_source_011": {
+      "original_name": "alignments/38747e3b4acb834f.aligned.fasta",
+      "original_sha256": "3f26e8d4dcc7acf577d5a22415597971fbdffb3101efad9881398d08f6dd257a",
+      "encoding": "original_bytes"
+    },
+    "domain_annotation_source_012": {
+      "original_name": "alignments/38747e3b4acb834f.input.fasta",
+      "original_sha256": "74cbf0bb7b6319b90b3dde85bddf2081d9a3f1fcdf4a822b19568decbcfd98f5",
+      "encoding": "original_bytes"
+    },
+    "domain_annotation_source_013": {
+      "original_name": "alignments/45a4ca23dc4072fa.aligned.fasta",
+      "original_sha256": "fc87de12cca9b1428568e666e7cf9dba21bffe830dc186d3d58990a72acb6194",
+      "encoding": "original_bytes"
+    },
+    "domain_annotation_source_014": {
+      "original_name": "alignments/45a4ca23dc4072fa.input.fasta",
+      "original_sha256": "05127b07797f30f174fae5d73d4b35136cfec70ebf9a0342fad6217debecc11a",
+      "encoding": "original_bytes"
+    },
+    "domain_annotation_source_015": {
+      "original_name": "alignments/460f9485aaf98977.aligned.fasta",
+      "original_sha256": "3f26e8d4dcc7acf577d5a22415597971fbdffb3101efad9881398d08f6dd257a",
+      "encoding": "original_bytes"
+    },
+    "domain_annotation_source_016": {
+      "original_name": "alignments/460f9485aaf98977.input.fasta",
+      "original_sha256": "74cbf0bb7b6319b90b3dde85bddf2081d9a3f1fcdf4a822b19568decbcfd98f5",
+      "encoding": "original_bytes"
+    },
+    "domain_annotation_source_017": {
+      "original_name": "alignments/498447a3425ea2cd.aligned.fasta",
+      "original_sha256": "eb763ba6dfb0f6635a61d28af31762ce46d870003fa8a589c98c7135fe629a8f",
+      "encoding": "original_bytes"
+    },
+    "domain_annotation_source_018": {
+      "original_name": "alignments/498447a3425ea2cd.input.fasta",
+      "original_sha256": "31d1a2bcd20c33a6d8fea7d61f2b1c1b20adce6526fd66376ad1524567d58730",
+      "encoding": "original_bytes"
+    },
+    "domain_annotation_source_019": {
+      "original_name": "alignments/5445adad101558bf.aligned.fasta",
+      "original_sha256": "eb763ba6dfb0f6635a61d28af31762ce46d870003fa8a589c98c7135fe629a8f",
+      "encoding": "original_bytes"
+    },
+    "domain_annotation_source_020": {
+      "original_name": "alignments/5445adad101558bf.input.fasta",
+      "original_sha256": "31d1a2bcd20c33a6d8fea7d61f2b1c1b20adce6526fd66376ad1524567d58730",
+      "encoding": "original_bytes"
+    },
+    "domain_annotation_source_021": {
+      "original_name": "alignments/5c7c363377938028.aligned.fasta",
+      "original_sha256": "097e802805de445bd2fdf40856e5838a301f56c19872197844d0169abd5fa526",
+      "encoding": "original_bytes"
+    },
+    "domain_annotation_source_022": {
+      "original_name": "alignments/5c7c363377938028.input.fasta",
+      "original_sha256": "31d1a2bcd20c33a6d8fea7d61f2b1c1b20adce6526fd66376ad1524567d58730",
+      "encoding": "original_bytes"
+    },
+    "domain_annotation_source_023": {
+      "original_name": "alignments/5ecb28005962802f.aligned.fasta",
+      "original_sha256": "4631d8acf776a34b612fe3df038392416e5183dd309efff508060a1afe53acaf",
+      "encoding": "original_bytes"
+    },
+    "domain_annotation_source_024": {
+      "original_name": "alignments/5ecb28005962802f.input.fasta",
+      "original_sha256": "f666b1655dd4bf3f01212111c8b8e984cf81aa44fd5812a69380face3bb50729",
+      "encoding": "original_bytes"
+    },
+    "domain_annotation_source_025": {
+      "original_name": "alignments/72d23f38cbcd6715.aligned.fasta",
+      "original_sha256": "354d147f31fbd22f237aab705df77d29572699ea14fddf1250b732c7752bcce3",
+      "encoding": "original_bytes"
+    },
+    "domain_annotation_source_026": {
+      "original_name": "alignments/72d23f38cbcd6715.input.fasta",
+      "original_sha256": "61318f936aa778ad0872d71a15fa502ce9981c4efe3fd807fe29bed1a64e0103",
+      "encoding": "original_bytes"
+    },
+    "domain_annotation_source_027": {
+      "original_name": "alignments/86addeab08d030ea.aligned.fasta",
+      "original_sha256": "3fe62ceee5c7b10b6db0b8f1edb60e85e2f1923442e46e8c1c657f134ad5fb65",
+      "encoding": "original_bytes"
+    },
+    "domain_annotation_source_028": {
+      "original_name": "alignments/86addeab08d030ea.input.fasta",
+      "original_sha256": "f6352ee4d40f51f3f8955cb8651bcee1031accad21ddb4a4bc06f89866cf412f",
+      "encoding": "original_bytes"
+    },
+    "domain_annotation_source_029": {
+      "original_name": "alignments/9a363e4a25b3fa90.aligned.fasta",
+      "original_sha256": "9e3460558e16556aa394d62221b60a930d46770b3b2d8f960e61f02e10599cbe",
+      "encoding": "original_bytes"
+    },
+    "domain_annotation_source_030": {
+      "original_name": "alignments/9a363e4a25b3fa90.input.fasta",
+      "original_sha256": "61318f936aa778ad0872d71a15fa502ce9981c4efe3fd807fe29bed1a64e0103",
+      "encoding": "original_bytes"
+    },
+    "domain_annotation_source_031": {
+      "original_name": "alignments/9bed91c9f7e0535b.aligned.fasta",
+      "original_sha256": "c8fe2999ee920cfad03bd24feb627c254e14665c7c0ae19bc016bbd98688893c",
+      "encoding": "original_bytes"
+    },
+    "domain_annotation_source_032": {
+      "original_name": "alignments/9bed91c9f7e0535b.input.fasta",
+      "original_sha256": "f666b1655dd4bf3f01212111c8b8e984cf81aa44fd5812a69380face3bb50729",
+      "encoding": "original_bytes"
+    },
+    "domain_annotation_source_033": {
+      "original_name": "alignments/a306b07fb8ca2ba3.aligned.fasta",
+      "original_sha256": "fb9433790cc312a421c26db7ca82c2bc98492a91fc0b8a658ff7b7bd44f4b10b",
+      "encoding": "original_bytes"
+    },
+    "domain_annotation_source_034": {
+      "original_name": "alignments/a306b07fb8ca2ba3.input.fasta",
+      "original_sha256": "b01a979448f8ffee150a398f3aa03873dc879f8ce529e4be5711ee670f50210e",
+      "encoding": "original_bytes"
+    },
+    "domain_annotation_source_035": {
+      "original_name": "alignments/a8282ff50d1b16d9.aligned.fasta",
+      "original_sha256": "3f26e8d4dcc7acf577d5a22415597971fbdffb3101efad9881398d08f6dd257a",
+      "encoding": "original_bytes"
+    },
+    "domain_annotation_source_036": {
+      "original_name": "alignments/a8282ff50d1b16d9.input.fasta",
+      "original_sha256": "74cbf0bb7b6319b90b3dde85bddf2081d9a3f1fcdf4a822b19568decbcfd98f5",
+      "encoding": "original_bytes"
+    },
+    "domain_annotation_source_037": {
+      "original_name": "alignments/ad9f067df77285f9.aligned.fasta",
+      "original_sha256": "097e802805de445bd2fdf40856e5838a301f56c19872197844d0169abd5fa526",
+      "encoding": "original_bytes"
+    },
+    "domain_annotation_source_038": {
+      "original_name": "alignments/ad9f067df77285f9.input.fasta",
+      "original_sha256": "31d1a2bcd20c33a6d8fea7d61f2b1c1b20adce6526fd66376ad1524567d58730",
+      "encoding": "original_bytes"
+    },
+    "domain_annotation_source_039": {
+      "original_name": "alignments/b630e38c7ffaefac.aligned.fasta",
+      "original_sha256": "fb9433790cc312a421c26db7ca82c2bc98492a91fc0b8a658ff7b7bd44f4b10b",
+      "encoding": "original_bytes"
+    },
+    "domain_annotation_source_040": {
+      "original_name": "alignments/b630e38c7ffaefac.input.fasta",
+      "original_sha256": "b01a979448f8ffee150a398f3aa03873dc879f8ce529e4be5711ee670f50210e",
+      "encoding": "original_bytes"
+    },
+    "domain_annotation_source_041": {
+      "original_name": "alignments/b8cb773d70b24cf7.aligned.fasta",
+      "original_sha256": "8351518c333761c3d4904072deb987c80bc9dfa34a9a29c52e722815b4ad0754",
+      "encoding": "original_bytes"
+    },
+    "domain_annotation_source_042": {
+      "original_name": "alignments/b8cb773d70b24cf7.input.fasta",
+      "original_sha256": "f6352ee4d40f51f3f8955cb8651bcee1031accad21ddb4a4bc06f89866cf412f",
+      "encoding": "original_bytes"
+    },
+    "domain_annotation_source_043": {
+      "original_name": "alignments/bb654f37d4de386e.aligned.fasta",
+      "original_sha256": "733d5f8b354ccc881c4f0dc7f664b57ebb291f05c47661f9d7cd02e64d2b3cee",
+      "encoding": "original_bytes"
+    },
+    "domain_annotation_source_044": {
+      "original_name": "alignments/bb654f37d4de386e.input.fasta",
+      "original_sha256": "b01a979448f8ffee150a398f3aa03873dc879f8ce529e4be5711ee670f50210e",
+      "encoding": "original_bytes"
+    },
+    "domain_annotation_source_045": {
+      "original_name": "alignments/c61ea2755578bc59.aligned.fasta",
+      "original_sha256": "d335492b26728c26722667cb8ed20dbf07c11023b287a4d1fdd0732873c60550",
+      "encoding": "original_bytes"
+    },
+    "domain_annotation_source_046": {
+      "original_name": "alignments/c61ea2755578bc59.input.fasta",
+      "original_sha256": "88c820bf175799890ba9b40d7a43614f610cadacfe980c40ff351ac33ac43a52",
+      "encoding": "original_bytes"
+    },
+    "domain_annotation_source_047": {
+      "original_name": "alignments/cf6c3521a810aab5.aligned.fasta",
+      "original_sha256": "261f42f7ef607f9e602bca674e26f902af03bce3eca92f03cc140106f2e3b5fa",
+      "encoding": "original_bytes"
+    },
+    "domain_annotation_source_048": {
+      "original_name": "alignments/cf6c3521a810aab5.input.fasta",
+      "original_sha256": "05127b07797f30f174fae5d73d4b35136cfec70ebf9a0342fad6217debecc11a",
+      "encoding": "original_bytes"
+    },
+    "domain_annotation_source_049": {
+      "original_name": "alignments/d3d2fa613551d103.aligned.fasta",
+      "original_sha256": "8351518c333761c3d4904072deb987c80bc9dfa34a9a29c52e722815b4ad0754",
+      "encoding": "original_bytes"
+    },
+    "domain_annotation_source_050": {
+      "original_name": "alignments/d3d2fa613551d103.input.fasta",
+      "original_sha256": "f6352ee4d40f51f3f8955cb8651bcee1031accad21ddb4a4bc06f89866cf412f",
+      "encoding": "original_bytes"
+    },
+    "domain_annotation_source_051": {
+      "original_name": "alignments/d8c13d4785492aca.aligned.fasta",
+      "original_sha256": "9e3460558e16556aa394d62221b60a930d46770b3b2d8f960e61f02e10599cbe",
+      "encoding": "original_bytes"
+    },
+    "domain_annotation_source_052": {
+      "original_name": "alignments/d8c13d4785492aca.input.fasta",
+      "original_sha256": "61318f936aa778ad0872d71a15fa502ce9981c4efe3fd807fe29bed1a64e0103",
+      "encoding": "original_bytes"
+    },
+    "domain_annotation_source_053": {
+      "original_name": "alignments/dc57f80d92e22b90.aligned.fasta",
+      "original_sha256": "4631d8acf776a34b612fe3df038392416e5183dd309efff508060a1afe53acaf",
+      "encoding": "original_bytes"
+    },
+    "domain_annotation_source_054": {
+      "original_name": "alignments/dc57f80d92e22b90.input.fasta",
+      "original_sha256": "f666b1655dd4bf3f01212111c8b8e984cf81aa44fd5812a69380face3bb50729",
+      "encoding": "original_bytes"
+    },
+    "domain_annotation_source_055": {
+      "original_name": "alignments/dd67a6570f3f475b.aligned.fasta",
+      "original_sha256": "3fe62ceee5c7b10b6db0b8f1edb60e85e2f1923442e46e8c1c657f134ad5fb65",
+      "encoding": "original_bytes"
+    },
+    "domain_annotation_source_056": {
+      "original_name": "alignments/dd67a6570f3f475b.input.fasta",
+      "original_sha256": "f6352ee4d40f51f3f8955cb8651bcee1031accad21ddb4a4bc06f89866cf412f",
+      "encoding": "original_bytes"
+    },
+    "domain_annotation_source_057": {
+      "original_name": "alignments/dffe73dd5fd07534.aligned.fasta",
+      "original_sha256": "c8fe2999ee920cfad03bd24feb627c254e14665c7c0ae19bc016bbd98688893c",
+      "encoding": "original_bytes"
+    },
+    "domain_annotation_source_058": {
+      "original_name": "alignments/dffe73dd5fd07534.input.fasta",
+      "original_sha256": "f666b1655dd4bf3f01212111c8b8e984cf81aa44fd5812a69380face3bb50729",
+      "encoding": "original_bytes"
+    },
+    "domain_annotation_source_059": {
+      "original_name": "alignments/f175a6777a26c5c3.aligned.fasta",
+      "original_sha256": "fc87de12cca9b1428568e666e7cf9dba21bffe830dc186d3d58990a72acb6194",
+      "encoding": "original_bytes"
+    },
+    "domain_annotation_source_060": {
+      "original_name": "alignments/f175a6777a26c5c3.input.fasta",
+      "original_sha256": "05127b07797f30f174fae5d73d4b35136cfec70ebf9a0342fad6217debecc11a",
+      "encoding": "original_bytes"
+    },
+    "domain_annotation_source_061": {
+      "original_name": "alignments/fa55cb867371a558.aligned.fasta",
+      "original_sha256": "d335492b26728c26722667cb8ed20dbf07c11023b287a4d1fdd0732873c60550",
+      "encoding": "original_bytes"
+    },
+    "domain_annotation_source_062": {
+      "original_name": "alignments/fa55cb867371a558.input.fasta",
+      "original_sha256": "88c820bf175799890ba9b40d7a43614f610cadacfe980c40ff351ac33ac43a52",
+      "encoding": "original_bytes"
+    },
+    "domain_annotation_source_063": {
+      "original_name": "alignments/fcfa02e0f864a4ab.aligned.fasta",
+      "original_sha256": "354d147f31fbd22f237aab705df77d29572699ea14fddf1250b732c7752bcce3",
+      "encoding": "original_bytes"
+    },
+    "domain_annotation_source_064": {
+      "original_name": "alignments/fcfa02e0f864a4ab.input.fasta",
+      "original_sha256": "61318f936aa778ad0872d71a15fa502ce9981c4efe3fd807fe29bed1a64e0103",
+      "encoding": "original_bytes"
+    },
+    "domain_annotation_source_065": {
+      "original_name": "code_domain_mapping.py",
+      "original_sha256": "4f51b63a527376dc5615a6137bc82f1a1805b107a51bbf4b1d384989a9beb99e",
+      "encoding": "original_bytes"
+    },
+    "domain_annotation_source_066": {
+      "original_name": "domain_mapping_audit.json",
+      "original_sha256": "336b4b6af82d2b841e7dc1d8e90f74b32f2215b9b6e10db57ca90ce0c7b08505",
+      "encoding": "original_bytes"
+    },
+    "domain_annotation_source_067": {
+      "original_name": "sources/M11167.1_D_domains.table3.metadata.json",
+      "original_sha256": "f2eb189f6e632f1efd1306e7162d2b41dd21263eacbccc9635883120b069612f",
+      "encoding": "original_bytes"
+    },
+    "domain_annotation_source_068": {
+      "original_name": "sources/M11167.1_D10_with_domain_context.table3.csv",
+      "original_sha256": "516e6070ff84c75a4dfe5ba979f2c6536e8268fd21e92da5b765bc19ac581621",
+      "encoding": "original_bytes"
+    },
+    "domain_annotation_source_069": {
+      "original_name": "sources/M11167.1_D10.table3.csv",
+      "original_sha256": "7446d3542984b1ccf60af398a3f72fb4a471ef026bdda9f90ac44a75631c81c9",
+      "encoding": "original_bytes"
+    },
+    "domain_annotation_source_070": {
+      "original_name": "sources/M11167.1.fasta",
+      "original_sha256": "2005ece949ac6bc9c647a16576e10f3ec85360e12eb9d679f8fd02459a446718",
+      "encoding": "original_bytes"
+    },
+    "domain_annotation_source_071": {
+      "original_name": "sources/M11167.1.xml",
+      "original_sha256": "79fe2248190b9b85b53b3b4882c5aa3875e984a63935b7b8fff8959f143ab871",
+      "encoding": "original_bytes"
+    },
+    "domain_annotation_source_072": {
+      "original_name": "sources/records_b7a841bb9d8e7266.xml",
+      "original_sha256": "8b958af51ff9830624c233b7cc02011530833165af0f03f004d544bdfa2b57be",
+      "encoding": "original_bytes"
+    },
+    "domain_annotation_source_073": {
+      "original_name": "sources/structural_references.gb.xml",
+      "original_sha256": "a77f83440d8994638f7639c453597cf8ec97a593fbc77b079570eff077bb22e0",
+      "encoding": "original_bytes"
+    },
+    "domain_annotation_source_074": {
+      "original_name": "sources/X00525.1_D_domains.source.csv",
+      "original_sha256": "512d6c0b0d6d0e69feac98d9c2dd8bb87d6645d38e4e2756f71e8a648f5fef53",
+      "encoding": "original_bytes"
+    },
+    "domain_annotation_source_075": {
+      "original_name": "sources/X00525.1_D_domains.source.metadata.json",
+      "original_sha256": "bb066fcda5dba352c18fdd500503e1ace6751d706362e6de6d223fc2a6ce5456",
+      "encoding": "original_bytes"
+    },
+    "domain_annotation_source_076": {
+      "original_name": "sources/X00525.1.fasta",
+      "original_sha256": "2410a0aa7a3064cd8fe5fa40845fdef125f00a42e13f675646431be384132b46",
+      "encoding": "original_bytes"
+    }
+  },
+  "annotation_policy": "Per-accession raw coordinates; source evidence distinguishes structural-reference projection from direct gene annotation. Existing primer results are not recomputed."
+}

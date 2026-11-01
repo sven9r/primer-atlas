@@ -1,0 +1,2 @@
+# Frozen snapshot hashes describe the original bytes on every checkout.
+data/pinned/**/versions/** -text whitespace=cr-at-eol

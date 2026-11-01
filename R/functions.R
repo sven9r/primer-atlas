@@ -1,3 +1,22 @@
+.atlas_functions_sources <- Filter(function(path) is.character(path) && length(path) == 1L &&
+  basename(path) == "functions.R", lapply(sys.frames(), function(frame) get0("ofile", envir = frame, inherits = FALSE)))
+.atlas_functions_source <- if (length(.atlas_functions_sources)) utils::tail(.atlas_functions_sources, 1L)[[1]] else NULL
+.atlas_functions_directory <- if (is.null(.atlas_functions_source)) file.path(getwd(), "R") else
+  dirname(normalizePath(.atlas_functions_source, mustWork = TRUE))
+atlas_evaluate_primer <- local({
+  runtime_file <- file.path(.atlas_functions_directory, "primerminer_runtime.R")
+  runtime <- NULL
+  function(...) {
+    if (is.null(runtime)) {
+      isolated <- new.env(parent = baseenv())
+      source(runtime_file, local = isolated)
+      runtime <<- isolated$atlas_evaluate_primer
+    }
+    runtime(...)
+  }
+})
+rm(.atlas_functions_sources, .atlas_functions_source, .atlas_functions_directory)
+
 iupac <- list(
   A = "A", C = "C", G = "G", T = "T", U = "T",
   R = c("A", "G"), Y = c("C", "T"), S = c("G", "C"),
@@ -1149,15 +1168,6 @@ score_primer_pair_primerminer <- function(
   primer_rows,
   geometry
 ) {
-  if (!requireNamespace("PrimerMiner", quietly = TRUE)) {
-    stop(
-      "PrimerMiner is required to score custom pairs. Run scripts/install_primerminer.R.",
-      call. = FALSE
-    )
-  }
-  suppressPackageStartupMessages(
-    require("PrimerMiner", character.only = TRUE, quietly = TRUE)
-  )
   stopifnot(
     length(alignment_files) > 0L,
     nrow(primer_rows) == 2L,
@@ -1178,7 +1188,7 @@ score_primer_pair_primerminer <- function(
     }
   }
   order_from_path <- function(path) {
-    sub("_COX1_reference_aligned\\.fasta$", "", basename(path))
+    sub("_COX1_(full_)?reference_aligned\\.fasta$", "", basename(path))
   }
 
   primer_template_rows <- list()
@@ -1202,7 +1212,7 @@ score_primer_pair_primerminer <- function(
         geometry$reverse_end[1]
       }
 
-      evaluated <- suppressMessages(PrimerMiner::evaluate_primer(
+      evaluated <- suppressMessages(atlas_evaluate_primer(
         alignment_imp = alignment_path,
         primer_sequ = clean_sequence(primer$sequence[1]),
         start = alignment_start,
@@ -1496,15 +1506,6 @@ score_primer_pair_expanded_reference <- function(
   geometry,
   alignment_offset
 ) {
-  if (!requireNamespace("PrimerMiner", quietly = TRUE)) {
-    stop(
-      "PrimerMiner is required for expanded custom-primer scoring.",
-      call. = FALSE
-    )
-  }
-  suppressPackageStartupMessages(
-    require("PrimerMiner", character.only = TRUE, quietly = TRUE)
-  )
   stopifnot(
     file.exists(alignment_path),
     nrow(primer_rows) == 2L,
@@ -1581,7 +1582,7 @@ score_primer_pair_expanded_reference <- function(
       return(unavailable_direction(nchar(clean_sequence(primer$sequence[1]))))
     }
 
-    evaluated <- suppressMessages(PrimerMiner::evaluate_primer(
+    evaluated <- suppressMessages(atlas_evaluate_primer(
       alignment_imp = alignment_path,
       primer_sequ = clean_sequence(primer$sequence[1]),
       start = start,

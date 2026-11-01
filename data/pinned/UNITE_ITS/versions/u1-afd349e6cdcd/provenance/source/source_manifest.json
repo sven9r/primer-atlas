@@ -1,0 +1,81 @@
+{
+  "archive_member_names": {
+    "developer": "sh_general_release_dynamic_19.02.2025_dev.fasta",
+    "standard": "sh_general_release_dynamic_19.02.2025.fasta"
+  },
+  "artifacts": {
+    "code_unite_panel_builder.py": {
+      "bytes": 24127,
+      "sha256": "489949473800753b2cba44d4bbfe04d5f7da28395b1476a8b334b2c7f4afaaf4"
+    },
+    "import_issues.csv.gz": {
+      "bytes": 578,
+      "rows": 3,
+      "sha256": "cc11803a56e9bf9222edd9bdb142b80409723cc21193d47f028beb5636a4ab3a"
+    },
+    "selected_metadata.csv.gz": {
+      "bytes": 2165054,
+      "rows": 15402,
+      "sha256": "75f5f2ba1019be76680cd145b9b2bd545d696685aa729f8210789bf75f9ffba1"
+    },
+    "selected_raw.fasta.gz": {
+      "bytes": 1948278,
+      "rows": 15402,
+      "sha256": "1b559fe4e11eca5af4825d00b89b17d816cac3b6c069edd8c43b2dbb72179aa4"
+    },
+    "source_census.csv.gz": {
+      "bytes": 14176768,
+      "rows": 102137,
+      "sha256": "8f08b21c7b18a8ad81607fb44472bd1a0ef439b0fc4a7b5682b2559218adf5cb"
+    },
+    "source_coverage.csv": {
+      "bytes": 227882,
+      "rows": 1684,
+      "sha256": "63d051e0e37af5d8833874c2d245ad64ead73847cb2e3f1364897afbf032aec9"
+    }
+  },
+  "built_at_utc": "2026-10-13T07:04:28.396067+00:00",
+  "counts": {
+    "developer_longer_than_standard": 44884,
+    "developer_records": 102137,
+    "developer_same_length_as_standard": 57250,
+    "developer_shorter_than_standard": 3,
+    "eligible_reference_identities": 102134,
+    "order_groups_below_target": 278,
+    "order_groups_with_selected": 373,
+    "resolved_order_groups": 293,
+    "selected_references": 15402,
+    "source_reference_identities": 102137,
+    "standard_embedded_in_developer": 102134,
+    "standard_records": 102137,
+    "unresolved_order_groups": 80,
+    "withheld_reference_identities": 3
+  },
+  "expected_source_records": 102137,
+  "generator_sha256": "489949473800753b2cba44d4bbfe04d5f7da28395b1476a8b334b2c7f4afaaf4",
+  "identifier_basis": "Species hypothesis plus accession token exactly as published; no accession version inferred",
+  "input_sha256": {
+    "archive": "a340864f947c517b671f1054a261e613a6619ef88dd8000de1699f5e1f21413b",
+    "developer": "e75ef3e66b3af93d0f545ee15cf4690c612802a679faab51ba915d46b6ff9c72",
+    "standard": "1bb35a664b20ef03484fe74e857929ccd537d9d51c9eef0305b99a1486e7386e"
+  },
+  "issue_counts": {
+    "withheld_reference": 3
+  },
+  "limitations": [
+    "An ITS record's length does not establish complete 18S, ITS1, 5.8S, ITS2 or 28S coverage.",
+    "Selected references are deliberately balanced, not a representative population sample or amplification validation.",
+    "Source taxonomy placeholders and Incertae sedis remain distinct from resolved taxa.",
+    "Unverified source pair relationships and conflicting identities are withheld, never silently reconciled."
+  ],
+  "per_order_group": 100,
+  "schema_version": "1.0.0",
+  "selection_policy": "Up to target per resolved or unresolved hierarchy-scoped order group; retain every rare eligible reference; unique SH and raw sequence; round-robin all length strata, source RefS flag then novel resolved genus then lower ambiguity then stable hash",
+  "sequence_basis": "Developer FASTA bases exactly as published after uppercase/FASTA-line normalization",
+  "source_census_basis": "One row per paired SH/accession identity; duplicate input occurrences retained as counts/ordinals/issues",
+  "source_doi": "10.15156/BIO/3301229",
+  "source_url": "https://s3.hpc.ut.ee/plutof-public/original/9489f7bc-7cc1-4e0a-84dc-c732476b9acd.tgz",
+  "source_version": "UNITE 10.0; 2025-02-19; Fungi general FASTA dynamic",
+  "taxonomy_source": "UNITE release header; retained without translating to NCBI taxonomy",
+  "version_id": "unite-0d7d5faab0a32a7b0eef"
+}

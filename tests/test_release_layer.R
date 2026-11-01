@@ -18,12 +18,21 @@ stopifnot(nrow(overview) == artifact$rows)
 build_source <- paste(readLines("scripts/build_release.R", warn = FALSE), collapse = "\n")
 publish_source <- paste(readLines("scripts/publish_r2.sh", warn = FALSE), collapse = "\n")
 gate_source <- paste(readLines("scripts/validate_release.R", warn = FALSE), collapse = "\n")
+builder_source <- paste(readLines("scripts/build_expanded_beeprime_reference.R", warn = FALSE), collapse = "\n")
+workflow_source <- paste(readLines(".github/workflows/monthly-release.yml", warn = FALSE), collapse = "\n")
 stopifnot(
   !grepl("write_json(manifest, previous_pointer", build_source, fixed = TRUE),
   grepl("latest.json", publish_source, fixed = TRUE),
   grepl("new_rows >= 0.90 * old_rows", gate_source, fixed = TRUE),
   grepl("new >= old - 0.05", gate_source, fixed = TRUE),
-  grepl("anyDuplicated(taxonomy$accession)", gate_source, fixed = TRUE)
+  grepl("anyDuplicated(taxonomy$accession)", gate_source, fixed = TRUE),
+  grepl("reference_panels$beeprime_expanded", build_source, fixed = TRUE),
+  grepl("beeprime_expanded$taxonomic_scope, \"bees\"", gate_source, fixed = TRUE),
+  grepl("3042114", builder_source, fixed = TRUE),
+  grepl("Previous expanded BeePrime artifact checksum failed", builder_source, fixed = TRUE),
+  grepl("previous_state$stale", builder_source, fixed = TRUE),
+  grepl("build_expanded_beeprime_reference.R", workflow_source, fixed = TRUE),
+  grepl("all(expanded_scores$is_bee %in% TRUE)", gate_source, fixed = TRUE)
 )
 
 message("R2 outage fallback, lazy artifact, and atomic release checks passed.")

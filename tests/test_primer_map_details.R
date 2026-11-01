@@ -54,11 +54,14 @@ shiny::testServer(app$serverFuncSource(), {
 
   session$setInputs(map_organism = "ARTHROPODS")
   arthropod_labels <- names(pair_choices_for_marker("COI"))
+  empty_map <- paste(as.character(output$primer_map), collapse = " ")
   stopifnot(
     !any(grepl("FishF2", arthropod_labels, fixed = TRUE)),
     any(grepl("ZBJ-Art", arthropod_labels, fixed = TRUE)),
     any(grepl("Spidprey", arthropod_labels, fixed = TRUE)),
-    grepl("No primer pairs match", paste(as.character(output$primer_map), collapse = " "), fixed = TRUE)
+    nrow(overview_visible_rows()) == 0L,
+    grepl("No verified primer products match", empty_map, fixed = TRUE),
+    !grepl('class="primer-map"', empty_map, fixed = TRUE)
   )
 
   session$setInputs(map_organism = "ALL")

@@ -20,6 +20,9 @@ review, merge and deployment.
   site checks, counts and selected reference; build detailed rows on demand.
 - Guard initial browser width measurement until Shiny is ready and correct
   detail-handoff handler signatures so fresh map loads have no startup errors.
+- Keep empty template and catalog states valid during organism/marker
+  transitions so a group change cannot close the session before its marker
+  loads, and custom candidates remain usable for markers without a catalog.
 - Standardize the product name as Primer Atlas across app, citation, landing
   page, README, contributor notice and global bibliography download. Marker
   names and scientific sequence identities retain their original scope.

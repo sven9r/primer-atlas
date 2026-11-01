@@ -199,6 +199,27 @@ shiny::testServer(primerExploreServer,args=list(marker=chosen_marker,target_grou
   }
 })
 
+# A supported planned marker starts with no catalog or templates. Empty
+# selectors must synchronize safely and remain usable for custom candidates.
+planned_marker <- shiny::reactiveVal("16S_PROK")
+planned_group <- shiny::reactiveVal("BACTERIA")
+shiny::testServer(primerExploreServer,args=list(marker=planned_marker,target_group=planned_group),{
+  session$setInputs(platform="ALL",mismatches="0",min_bp=0,max_bp=10000,region="ALL",width=620)
+  session$flushReact()
+  stopifnot(nrow(catalog())==0L,nrow(templates())==0L,
+    all(c("primer_id","primer_name","sequence","direction","marker_id") %in% names(catalog())),
+    all(c("template_id","sequence","marker_id") %in% names(templates())),nrow(result()$pairs)==0L)
+  sync()
+  session$setInputs(custom_name="Planned marker forward",custom_sequence="ACGTACGTACGTACGTACGT",custom_direction="forward",add_custom=1L)
+  session$flushReact()
+  stopifnot(length(forward())==1L,!length(reverse()),nrow(catalog())==1L)
+  session$setInputs(custom_name="Planned marker reverse",custom_sequence="TGCATGCATGCATGCATGCA",custom_direction="reverse",add_custom=2L)
+  session$flushReact()
+  stopifnot(length(forward())==1L,length(reverse())==1L,nrow(result()$pairs)==1L,
+    nrow(result()$products)==0L,result()$summary$n_templates==0L,
+    all(result()$components$catalog_origin=="custom_session_input"),all(result()$components$marker_id=="16S_PROK"))
+})
+
 # Optional navigation callbacks receive the actual selected oligo identities
 # and remain quiet for an empty selection or an unrelated version control.
 callback_marker <- shiny::reactiveVal("COI")

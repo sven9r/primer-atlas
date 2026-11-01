@@ -75,9 +75,12 @@
             "R/fungal_primer_overview.R",
             "tests/test_fungal_primer_overview.R",
             "R/fungal_ui.R",
-            "tests/test_fungal_explorer_ui.R"
+            "tests/test_fungal_explorer_ui.R",
+            "R/primer_mixer.R",
+            "tests/test_primer_mixer.R",
+            "tests/test_primer_explore.R"
           ],
-          "change": "Open the first Primer map tab by default; move the welcome page under More/About the Atlas and place reference/search settings below the overview. Preserve shared combination and fit state, with hidden region controls initialized for the map. Avoid empty hidden fungal candidate assembly; select fungal defaults using equivalent validated summaries without constructing display rows or citations. Initialize the advanced fungal alignment only when its detailed panel is visible, preserving snapshots and candidate state while inactive."
+          "change": "Open the first Primer map tab by default; move the welcome page under More/About the Atlas and place reference/search settings below the overview. Preserve shared combination and fit state, with hidden region controls initialized for the map. Avoid empty hidden fungal candidate assembly; select fungal defaults using equivalent validated summaries without constructing display rows or citations. Initialize the advanced fungal alignment only when its detailed panel is visible, preserving snapshots and candidate state while inactive. Preserve typed empty template cohorts during asynchronous target/marker changes so the session remains available while the marker updates. Keep zero-row catalog schemas and empty selector labels usable for custom-only planned markers."
         }
       ],
       "verification": [

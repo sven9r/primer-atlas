@@ -435,6 +435,7 @@ primer_mixer_fungal_templates <- function(snapshot,marker_id) {
 primer_mixer_templates <- function(root = ".", marker_id = NULL, target_group = NULL) {
   result <- data.frame(template_id=character(),sequence=character(),marker_id=character(),organism=character(),
     source_url=character(),version=character(),target_group=character(),stringsAsFactors=FALSE)
+  empty_contract <- result
   group <- if(is.null(target_group)) NULL else toupper(as.character(target_group))
   if(length(group)>1L || (!is.null(group) && is.na(group))) stop("Choose one target group when loading starter templates.")
   all_groups <- is.null(group) || group %in% c("ALL","METAZOA")
@@ -463,6 +464,12 @@ primer_mixer_templates <- function(root = ".", marker_id = NULL, target_group = 
     result <- .primer_mixer_bind(list(result,data.frame(template_id="NC_001322.1_COX1",sequence=seq,marker_id="COI",organism="Drosophila yakuba",
       source_url="https://www.ncbi.nlm.nih.gov/nuccore/NC_001322.1",version="NC_001322.1",target_group="ARTHROPODS",stringsAsFactors=FALSE)))
   }
+  # A target changes before its asynchronous marker selector acknowledges the
+  # new choice. No cohort is valid during e.g. FUNGI + COI. Frame binding may
+  # drop all-empty inputs, so restore the typed zero-row template contract
+  # before filtering or taxonomy enrichment; NULL IDs must never reach Shiny.
+  if(!nrow(result)) for(field in names(empty_contract))
+    if(!field %in% names(result)) result[[field]] <- empty_contract[[field]]
   if (!is.null(marker_id)) result <- result[result$marker_id %in% marker_id,,drop=FALSE]
   if(anyDuplicated(result$template_id)) stop("Starter template identities repeat across source panels.")
   if("partial" %in% names(result)) {

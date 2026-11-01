@@ -70,6 +70,23 @@ stopifnot(primer_mixer_build(catalog,f$primer_id,r$primer_id,missing,"12S_MT")$p
 none <- primer_mixer_build(catalog,f$primer_id,r$primer_id,NULL,"12S_MT")
 stopifnot(nrow(none$pairs)==1L,nrow(none$products)==0L,none$summary$n_templates==0L,
   "sequence" %in% names(none$templates))
+# Target-group and marker inputs update asynchronously. An interim FUNGI/COI
+# combination is a valid empty cohort, not a malformed table or another
+# animal group's fallback. Its typed IDs can safely initialize empty choices.
+for(context in list(c("FUNGI","COI"),c("FUNGI","12S_MT"),c("NO_SUCH_GROUP","COI"),c("ARTHROPODS","NO_SUCH_MARKER"))) {
+  empty_templates <- primer_mixer_templates(target_group=context[1L],marker_id=context[2L])
+  contract <- c("template_id","sequence","marker_id","organism","source_url","version","target_group")
+  stopifnot(nrow(empty_templates)==0L,all(contract %in% names(empty_templates)),
+    all(vapply(empty_templates[,contract,drop=FALSE],is.character,logical(1))),
+    identical(stats::setNames(empty_templates$template_id,character()),stats::setNames(character(),character())))
+}
+transition_templates <- primer_mixer_templates(target_group="FUNGI",marker_id="COI")
+coi_f <- primer_mixer_custom("Transition forward","ACGTACGTACGTACGT","forward","COI")
+coi_r <- primer_mixer_custom("Transition reverse","TGCATGCATGCATGCA","reverse","COI")
+transition <- primer_mixer_build(rbind(coi_f,coi_r),coi_f$primer_id,coi_r$primer_id,transition_templates,"COI")
+stopifnot(nrow(transition$pairs)==1L,nrow(transition$products)==0L,nrow(transition$sites)==0L,
+  transition$summary$n_templates==0L,transition$summary$n_matching_marker_templates==0L,
+  transition$summary$n_exact_products==0L,all(contract %in% names(transition$templates)))
 
 # Source catalog and input chemicals survive normalization. Invalid input
 # fails explicitly instead of silently stripping punctuation or alignment gaps.

@@ -9,6 +9,7 @@ primerExploreServer <- function(id, marker, target_group, fungal_snapshot=NULL, 
     active_marker <- shiny::reactive({ shiny::req(marker()); as.character(marker()) })
     catalog <- shiny::reactive({
       rows <- base_catalog[base_catalog$marker_id==active_marker(),,drop=FALSE]
+      if(!nrow(rows) && !nrow(state$custom)) return(rows)
       .primer_mixer_bind(list(rows,state$custom))
     })
     selection <- function(role) intersect(state[[role]],catalog()$primer_id[catalog()$direction==role])
@@ -19,7 +20,7 @@ primerExploreServer <- function(id, marker, target_group, fungal_snapshot=NULL, 
       for(role in c("forward","reverse")) {
         own <- rows[rows$direction==role,,drop=FALSE]
         scope <- ifelse(nzchar(own$target_scope),paste0(" · ",own$target_scope),"")
-        labels <- paste0(own$primer_name,scope," · ",own$source_sequence)
+        labels <- if(nrow(own)) paste0(own$primer_name,scope," · ",own$source_sequence) else character()
         chosen <- intersect(shiny::isolate(state[[role]]),own$primer_id)
         state[[role]] <- chosen
         ack[[role]] <- chosen
